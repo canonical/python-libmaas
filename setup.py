@@ -11,12 +11,10 @@ from __future__ import (
 
 __metaclass__ = type
 
-from sys import version_info
-
-from setuptools import setup
-
-
-package = b'alburnum.maas' if version_info.major == 2 else 'alburnum.maas'
+from setuptools import (
+    find_packages,
+    setup,
+)
 
 
 setup(
@@ -24,7 +22,7 @@ setup(
     author='Gavin Panella',
     author_email='gavinpanella@gmail.com',
     url='https://github.com/alburnum/alburnum-maas-client',
-    version="0.1",
+    version="0.1.1",
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
@@ -33,9 +31,7 @@ setup(
         'Programming Language :: Python',
         'Topic :: Software Development :: Libraries',
     ],
-    packages={package},
-    package_dir={'alburnum.maas': 'alburnum/maas'},
-    # tests_require={"testtools >= 0.9.32", "fixtures >= 0.3.14"},
+    packages=find_packages(),
     test_suite="alburnum.maas.tests",
     description="A client API library specially for MAAS.",
 )

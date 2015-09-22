@@ -9,7 +9,10 @@ develop: bin/python setup.py
 	bin/python setup.py develop
 
 dist: bin/python setup.py
-	bin/python setup.py egg_info -r sdist
+	bin/python setup.py egg_info sdist
+
+upload: bin/python setup.py
+	bin/python setup.py egg_info sdist upload
 
 test: bin/tox
 	@bin/tox
