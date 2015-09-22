@@ -22,7 +22,7 @@ setup(
     author='Gavin Panella',
     author_email='gavinpanella@gmail.com',
     url='https://github.com/alburnum/alburnum-maas-client',
-    version="0.1.1",
+    version="0.1.2",
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
@@ -32,6 +32,9 @@ setup(
         'Topic :: Software Development :: Libraries',
     ],
     packages=find_packages(),
+    install_requires={
+        "httplib2 >= 0.9",
+    },
     test_suite="alburnum.maas.tests",
     description="A client API library specially for MAAS.",
 )
