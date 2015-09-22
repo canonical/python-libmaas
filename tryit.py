@@ -15,7 +15,7 @@ __metaclass__ = type
 import httplib
 from pprint import pprint
 
-from api import (
+from alburnum.maas.client import (
     CallError,
     SessionAPI,
 )
