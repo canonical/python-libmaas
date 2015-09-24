@@ -1,9 +1,66 @@
 # alburnum-maas-client
 
-Python client API library specially adapted to work with
-MAAS (https://maas.ubuntu.com/).
+Python client API library made especially for [MAAS][1].
 
-This was created by a core MAAS developer (Gavin Panella) so
-ought to work just about. It was written in his own time, and
-it's licensed under the GNU Affero GPLv3 too, the same as MAAS
-itself.
+This was created by a core MAAS developer (Gavin Panella) so ought to
+just about work. It was written in his own time, and it's licensed under
+the GNU Affero GPLv3 too, the same as MAAS itself.
+
+
+## Dependencies
+
+You'll need the `maascli` package. It's not on PyPI unfortunately. On
+Ubuntu, install the `maas-cli` system package:
+
+    $ sudo apt-get install maas-cli
+
+All the other dependencies are declared already in `setup.py`.
+
+
+## Example code
+
+First you need to create a *profile* with the `maas` command-line tool.
+There is [documentation for that][2] on the MAAS website.
+
+Here's a snippet that creates a tag and associates it with every node in
+the MAAS:
+
+```python
+import httplib
+from pprint import pprint
+
+from alburnum.maas.client import (
+    CallError,
+    SessionAPI,
+)
+
+# Load a MAAS CLI profile. The name below (here "madagascar") should be the
+# name of a profile created when using `maas login` at the command-line.
+papi = SessionAPI.fromProfileName("madagascar")
+
+# Create a tag if it doesn't exist.
+tag_name = "foo"
+try:
+    tag = papi.Tag.read(name=tag_name)
+except CallError as error:
+    if error.status == httplib.NOT_FOUND:
+        tag = papi.Tags.new(
+            name=tag_name, comment="%s's Stuff" % tag_name.capitalize())
+    else:
+        raise
+
+# List all the MAAS's tags.
+print(" Tags.list() ".center(50, "="))
+pprint(papi.Tags.list())
+
+# Associate the tag with all nodes.
+print(" Tag.update_nodes() ".center(50, "="))
+pprint(papi.Tag.update_nodes(
+    name=tag["name"], add=[
+        node["system_id"] for node in papi.Nodes.list()
+    ]))
+```
+
+
+[1]: https://maas.ubuntu.com/
+[2]: https://maas.ubuntu.com/docs1.8/maascli.html#logging-in
