@@ -8,10 +8,10 @@ PYTHON := python
 develop: bin/python setup.py
 	bin/python setup.py develop
 
-dist: bin/python setup.py
+dist: bin/python setup.py README
 	bin/python setup.py egg_info sdist
 
-upload: bin/python setup.py
+upload: bin/python setup.py README
 	bin/python setup.py egg_info sdist upload
 
 test: bin/tox
@@ -25,6 +25,11 @@ clean:
 	find . -name '*.egg-info' -print0 | xargs -r0 $(RM) -r
 	find . -name '*~' -print0 | xargs -r0 $(RM)
 	$(RM) -r .eggs .tox
+
+# ---
+
+README: README.md
+	pandoc --from markdown --to rst --output $@ $^
 
 # ---
 
