@@ -21,14 +21,17 @@ __all__ = [
     "SessionAPI",
 ]
 
-from collections import namedtuple
+from collections import (
+    Iterable,
+    namedtuple,
+)
 import json
 import re
 
 import httplib2
 from maascli.api import Action
-from maascli.utils import get_response_content_type
 from maascli.config import ProfileConfig
+from maascli.utils import get_response_content_type
 
 
 class SessionAPI:
@@ -320,8 +323,33 @@ class CallAPI:
 
         :param data: Data to pass in the *body* of the request.
         """
+        uri, body, headers = self.prepare(data)
+        return self.dispatch(uri, body, headers)
+
+    def prepare(self, data):
+        """Prepare the call payload.
+
+        This is used by `call` and can be overridden to marshal the request in
+        a different way.
+
+        :param data: Data to pass in the *body* of the request.
+        :type data: dict
+        """
+        def expand(data):
+            for name, value in data.viewitems():
+                if isinstance(value, Iterable):
+                    for value in value:
+                        yield name, value
+                else:
+                    yield name, value
+
         # `data` must be an iterable yielding 2-tuples.
-        data = data.viewitems()
+        if self.action.method in ("GET", "DELETE"):
+            # MAAS does not expect an entity-body for GET or DELETE.
+            data = expand(data)
+        else:
+            # MAAS expects and entity-body for PUT and POST.
+            data = data.viewitems()
 
         # Bundle things up ready to throw over the wire.
         uri, body, headers = Action.prepare_payload(
@@ -336,6 +364,14 @@ class CallAPI:
         if credentials is not None:
             Action.sign(uri, headers, credentials)
 
+        return uri, body, headers
+
+    def dispatch(self, uri, body, headers):
+        """Dispatch the call via HTTP.
+
+        This is used by `call` and can be overridden to use a different HTTP
+        library.
+        """
         insecure = self.action.handler.session.insecure
         http = httplib2.Http(disable_ssl_certificate_validation=insecure)
         response, content = http.request(

@@ -42,5 +42,11 @@ setup(
         "oauth >= 1.0.1",
     },
     test_suite="alburnum.maas.tests",
+    tests_require={
+        "mock",
+        "setuptools",
+        "testscenarios",
+        "testtools",
+    },
     description="A client API library specially for MAAS.",
 )
