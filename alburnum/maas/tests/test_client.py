@@ -14,16 +14,14 @@ str = None
 __metaclass__ = type
 __all__ = []
 
+import codecs
 from fnmatch import fnmatchcase
 import json
 from os.path import splitext
-from urlparse import (
-    parse_qsl,
-    urlparse,
-)
 from uuid import uuid1
 
 from alburnum.maas import client
+from alburnum.maas.testing import TestCase
 from mock import (
     ANY,
     Mock,
@@ -32,8 +30,11 @@ from pkg_resources import (
     resource_listdir,
     resource_stream,
 )
-from testscenarios import WithScenarios
-from testtools import TestCase
+from six import text_type
+from six.moves.urllib_parse import (
+    parse_qsl,
+    urlparse,
+)
 from testtools.matchers import (
     Equals,
     MatchesStructure,
@@ -42,20 +43,22 @@ from testtools.matchers import (
 
 def load_api_descriptions():
     resource = "alburnum.maas.tests"
-    for filename in resource_listdir(resource, ""):
+    for filename in resource_listdir(resource, "."):
         if fnmatchcase(filename, "api*.json"):
             name, _ = splitext(filename)
             with resource_stream(resource, filename) as stream:
-                yield name, json.load(stream)
+                reader = codecs.getreader("utf-8")
+                yield name, json.load(reader(stream))
 
 
 api_descriptions = list(load_api_descriptions())
+assert len(api_descriptions) != 0
 
 
-class TestActionAPI(WithScenarios, TestCase):
+class TestActionAPI(TestCase):
     """Tests for `ActionAPI`."""
 
-    scenarios = (
+    scenarios = tuple(
         (name, dict(description=description))
         for name, description in api_descriptions
     )
@@ -78,16 +81,16 @@ class TestActionAPI(WithScenarios, TestCase):
         ))
 
 
-class TestCallAPI(WithScenarios, TestCase):
+class TestCallAPI(TestCase):
     """Tests for `CallAPI`."""
 
-    scenarios = (
+    scenarios = tuple(
         (name, dict(description=description))
         for name, description in api_descriptions
     )
 
     def test__marshals_lists_into_query_as_repeat_parameters(self):
-        system_ids = list(unicode(uuid1()) for _ in xrange(3))
+        system_ids = list(text_type(uuid1()) for _ in range(3))
         session = client.SessionAPI(self.description, ("a", "b", "c"))
         call = session.Nodes.deployment_status.bind()
         call.dispatch = Mock()

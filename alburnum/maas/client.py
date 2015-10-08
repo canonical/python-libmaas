@@ -1,11 +1,7 @@
 # Copyright 2015 Alburnum Ltd. This software is licensed under
 # the GNU Affero General Public License version 3 (see LICENSE).
 
-"""Interact with a remote MAAS (https://maas.ubuntu.com/) server.
-
-This depends on some code in the official MAAS ``maascli`` package, which can
-be installed on Ubuntu from the ``maas-cli`` Debian package.
-"""
+"""Interact with a remote MAAS (https://maas.ubuntu.com/) server."""
 
 from __future__ import (
     absolute_import,
@@ -28,10 +24,8 @@ from collections import (
 import json
 import re
 
+from alburnum.maas import utils
 import httplib2
-from maascli.api import Action
-from maascli.config import ProfileConfig
-from maascli.utils import get_response_content_type
 
 
 class SessionAPI:
@@ -53,7 +47,7 @@ class SessionAPI:
 
         :see: `ProfileConfig`.
         """
-        with ProfileConfig.open() as config:
+        with utils.ProfileConfig.open() as config:
             return cls.fromProfile(config[name])
 
     # Set these on instances.
@@ -336,7 +330,7 @@ class CallAPI:
         :type data: dict
         """
         def expand(data):
-            for name, value in data.viewitems():
+            for name, value in data.items():
                 if isinstance(value, Iterable):
                     for value in value:
                         yield name, value
@@ -349,10 +343,10 @@ class CallAPI:
             data = expand(data)
         else:
             # MAAS expects and entity-body for PUT and POST.
-            data = data.viewitems()
+            data = data.items()
 
         # Bundle things up ready to throw over the wire.
-        uri, body, headers = Action.prepare_payload(
+        uri, body, headers = utils.prepare_payload(
             self.action.op, self.action.method, self.uri, data)
 
         # Headers are returned as a list, but they must be a dict for
@@ -362,7 +356,7 @@ class CallAPI:
         # Sign request if credentials have been provided.
         credentials = self.action.handler.session.credentials
         if credentials is not None:
-            Action.sign(uri, headers, credentials)
+            utils.sign(uri, headers, credentials)
 
         return uri, body, headers
 
@@ -379,7 +373,7 @@ class CallAPI:
 
         # Debug output.
         if self.action.handler.session.debug:
-            Action.print_debug(response)
+            print(response)
 
         # 2xx status codes are all okay.
         if response.status // 100 != 2:
@@ -392,7 +386,7 @@ class CallAPI:
             raise CallError(request, response, content, self)
 
         # Decode from JSON if that's what it's declared as.
-        content_type = get_response_content_type(response)
+        content_type = utils.get_response_content_type(response)
         if content_type is None:
             data = content
         elif content_type.endswith('/json'):
