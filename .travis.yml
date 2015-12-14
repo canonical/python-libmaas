@@ -4,7 +4,4 @@ python:
   - "3.4"
   - "3.5"
 install: make bin/tox
-script:
-  - bin/tox -e py27
-  - bin/tox -e py34
-  - bin/tox -e py35
+script: bin/tox -e py
