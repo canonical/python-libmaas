@@ -3,5 +3,9 @@ python:
   - "2.7"
   - "3.4"
   - "3.5"
-install: make bin/tox
-script: bin/tox -e py
+install:
+  - make bin/pip
+  - bin/pip install Twisted
+  - make bin/tox
+script:
+  - bin/tox -e py
