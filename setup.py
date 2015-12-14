@@ -6,34 +6,14 @@
 from __future__ import (
     absolute_import,
     print_function,
-    unicode_literals,
 )
 
 __metaclass__ = type
-
-from sys import version_info
 
 from setuptools import (
     find_packages,
     setup,
 )
-
-
-def native_string(string):
-    """Ensure that `string` is a native string.
-
-    i.e. a byte string on Python 2, a unicode string on Python 3.
-    """
-    if version_info.major == 2:
-        if isinstance(string, unicode):
-            return string.encode("utf-8")
-        else:
-            return string
-    else:
-        if isinstance(string, bytes):
-            return string.decode("utf-8")
-        else:
-            return string
 
 
 setup(
@@ -52,11 +32,11 @@ setup(
     ],
     packages=find_packages(),
     package_data={
-        native_string('alburnum.maas.tests'): ['*.json'],
+        'alburnum.maas.tests': ['*.json'],
     },
     install_requires={
         "httplib2 >= 0.8",
-        "oauth >= 1.0.1",
+        "oauthlib >= 1.0.3",
         "pbr >= 1.8.0",
         "six >= 1.9.0",
     },

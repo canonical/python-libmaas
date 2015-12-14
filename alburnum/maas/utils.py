@@ -28,13 +28,12 @@ import json
 import os
 from os.path import expanduser
 import sqlite3
-import uuid
 
 from alburnum.maas.multipart import (
     build_multipart_message,
     encode_multipart_message,
 )
-import oauth.oauth as oauth
+from oauthlib import oauth1
 from six import PY2
 from six.moves.urllib_parse import (
     quote_plus,
@@ -131,32 +130,57 @@ def prepare_payload(op, method, uri, data):
 class OAuthSigner:
     """Helper class to OAuth-sign an HTTP request."""
 
-    def __init__(self, consumer_key, resource_token, resource_secret):
-        resource_tok_string = "oauth_token_secret=%s&oauth_token=%s" % (
-            resource_secret, resource_token)
-        self.resource_token = oauth.OAuthToken.from_string(resource_tok_string)
-        self.consumer_token = oauth.OAuthConsumer(consumer_key, "")
+    def __init__(
+            self, token_key, token_secret, consumer_key, consumer_secret,
+            realm="OAuth"):
+        """Initialize a ``OAuthAuthorizer``.
 
-    def sign_request(self, url, headers):
+        :type token_key: Unicode string.
+        :type token_secret: Unicode string.
+        :type consumer_key: Unicode string.
+        :type consumer_secret: Unicode string.
+
+        :param realm: Optional.
+        """
+        def _to_unicode(string):
+            if isinstance(string, bytes):
+                return string.decode("ascii")
+            else:
+                return string
+
+        self.token_key = _to_unicode(token_key)
+        self.token_secret = _to_unicode(token_secret)
+        self.consumer_key = _to_unicode(consumer_key)
+        self.consumer_secret = _to_unicode(consumer_secret)
+        self.realm = _to_unicode(realm)
+
+    def sign_request(self, url, method, body, headers):
         """Sign a request.
 
-        @param url: The URL to which the request is to be sent.
-        @param headers: The headers in the request.  These will be updated
-            with the signature.
+        :param url: The URL to which the request is to be sent.
+        :param headers: The headers in the request. These will be updated with
+            the signature.
         """
-        oauth_request = oauth.OAuthRequest.from_consumer_and_token(
-            self.consumer_token, token=self.resource_token, http_url=url,
-            parameters={'oauth_nonce': uuid.uuid4().hex})
-        oauth_request.sign_request(
-            oauth.OAuthSignatureMethod_PLAINTEXT(), self.consumer_token,
-            self.resource_token)
-        headers.update(oauth_request.to_header())
+        client = oauth1.Client(
+            self.consumer_key, self.consumer_secret, self.token_key,
+            self.token_secret, signature_method=oauth1.SIGNATURE_PLAINTEXT,
+            realm=self.realm)
+        # To preserve API backward compatibility convert an empty string body
+        # to `None`. The old "oauth" library would treat the empty string as
+        # "no body", but "oauthlib" requires `None`.
+        body = None if body is None or len(body) == 0 else body
+        uri, signed_headers, body = client.sign(url, method, body, headers)
+        headers.update(signed_headers)
 
 
 def sign(uri, headers, credentials):
-    """Sign the URI and headers."""
-    auth = OAuthSigner(*credentials)
-    auth.sign_request(uri, headers)
+    """Sign the URI and headers.
+
+    A request method of `GET` with no body content is assumed.
+    """
+    token_key, token_secret, consumer_key = credentials
+    auth = OAuthSigner(token_key, token_secret, consumer_key, "")
+    auth.sign_request(uri, method="GET", body=None, headers=headers)
 
 
 class ProfileConfig:

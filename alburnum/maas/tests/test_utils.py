@@ -44,8 +44,9 @@ class TestMAASOAuth(TestCase):
 
     def test_sign_request_adds_header(self):
         headers = {}
-        auth = OAuthSigner('consumer_key', 'resource_token', 'resource_secret')
-        auth.sign_request('http://example.com/', headers)
+        auth = OAuthSigner(
+            'consumer_key', 'resource_token', 'resource_secret', '')
+        auth.sign_request('http://example.com/', "GET", None, headers)
         self.assertIn('Authorization', headers)
 
 
