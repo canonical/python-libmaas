@@ -3,13 +3,16 @@ python:
   - "2.7"
   - "3.4"
   - "3.5"
-before_install:
-  - pip install codecov
+
 install:
-  - make bin/pip
-  - bin/pip install Twisted
-  - make bin/tox
+  - pip install codecov tox
+
 script:
-  - bin/tox -e py
+  - tox -e py
+
 after_success:
-  - codecov
+  - codecov --env TRAVIS_PYTHON_VERSION
+
+branches:
+  only:
+    - master
