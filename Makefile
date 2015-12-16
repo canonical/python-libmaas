@@ -24,7 +24,7 @@ clean:
 	find . -name '*.egg' -print0 | xargs -r0 $(RM) -r
 	find . -name '*.egg-info' -print0 | xargs -r0 $(RM) -r
 	find . -name '*~' -print0 | xargs -r0 $(RM)
-	$(RM) -r .eggs .tox
+	$(RM) -r .eggs .tox .coverage
 
 # ---
 
