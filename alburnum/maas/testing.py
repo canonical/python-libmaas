@@ -14,7 +14,10 @@ str = None
 __metaclass__ = type
 __all__ = [
     "make_file",
+    "make_name",
+    "make_name_without_spaces",
     "make_string",
+    "make_string_without_spaces",
     "TestCase",
 ]
 
@@ -48,6 +51,11 @@ def make_string(size=10):
     return "".join(islice(random_letters_with_spaces, size))
 
 
+def make_string_without_spaces(size=10):
+    """Make a random human-readable string WITHOUT spaces."""
+    return "".join(islice(random_letters, size))
+
+
 def make_name(prefix="name", sep='-', size=6):
     """Make a random name.
 
@@ -58,6 +66,18 @@ def make_name(prefix="name", sep='-', size=6):
     :return: A randomized unicode string.
     """
     return prefix + sep + make_string(size)
+
+
+def make_name_without_spaces(prefix="name", sep='-', size=6):
+    """Make a random name WITHOUT spaces.
+
+    :param prefix: Optional prefix. Defaults to "name".
+    :param sep: Separator that will go between the prefix and the random
+        portion of the name. Defaults to a dash.
+    :param size: Length of the random portion of the name.
+    :return: A randomized unicode string.
+    """
+    return prefix + sep + make_string_without_spaces(size)
 
 
 def make_file(location, name=None, contents=None):

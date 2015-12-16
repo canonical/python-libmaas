@@ -23,6 +23,7 @@ import sqlite3
 
 from alburnum.maas import utils
 from alburnum.maas.testing import (
+    make_name_without_spaces,
     make_string,
     TestCase,
 )
@@ -42,12 +43,43 @@ from twisted.python.filepath import FilePath
 
 class TestMAASOAuth(TestCase):
 
-    def test_sign_request_adds_header(self):
+    def test_OAuthSigner_sign_request_adds_header(self):
+        token_key = make_name_without_spaces("token-key")
+        token_secret = make_name_without_spaces("token-secret")
+        consumer_key = make_name_without_spaces("consumer-key")
+        consumer_secret = make_name_without_spaces("consumer-secret")
+        realm = make_name_without_spaces("realm")
+
         headers = {}
         auth = OAuthSigner(
-            'consumer_key', 'resource_token', 'resource_secret', '')
+            token_key=token_key, token_secret=token_secret,
+            consumer_key=consumer_key, consumer_secret=consumer_secret,
+            realm=realm)
         auth.sign_request('http://example.com/', "GET", None, headers)
+
         self.assertIn('Authorization', headers)
+        authorization = headers["Authorization"]
+        self.assertIn('realm="%s"' % realm, authorization)
+        self.assertIn('oauth_token="%s"' % token_key, authorization)
+        self.assertIn('oauth_consumer_key="%s"' % consumer_key, authorization)
+        self.assertIn('oauth_signature="%s%%26%s"' % (
+            consumer_secret, token_secret), authorization)
+
+    def test_sign_adds_header(self):
+        token_key = make_name_without_spaces("token-key")
+        token_secret = make_name_without_spaces("token-secret")
+        consumer_key = make_name_without_spaces("consumer-key")
+
+        headers = {}
+        utils.sign('http://example.com/', headers, (
+            consumer_key, token_key, token_secret))
+
+        self.assertIn('Authorization', headers)
+        authorization = headers["Authorization"]
+        self.assertIn('realm="OAuth"', authorization)
+        self.assertIn('oauth_token="%s"' % token_key, authorization)
+        self.assertIn('oauth_consumer_key="%s"' % consumer_key, authorization)
+        self.assertIn('oauth_signature="%%26%s"' % token_secret, authorization)
 
 
 class TestProfileConfig(TestCase):

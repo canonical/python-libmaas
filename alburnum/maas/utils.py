@@ -161,6 +161,8 @@ class OAuthSigner:
         :param headers: The headers in the request. These will be updated with
             the signature.
         """
+        # The use of PLAINTEXT here was copied from MAAS, but we should switch
+        # to HMAC once it works server-side.
         client = oauth1.Client(
             self.consumer_key, self.consumer_secret, self.token_key,
             self.token_secret, signature_method=oauth1.SIGNATURE_PLAINTEXT,
@@ -177,8 +179,10 @@ def sign(uri, headers, credentials):
     """Sign the URI and headers.
 
     A request method of `GET` with no body content is assumed.
+
+    :param credentials: A tuple of consumer key, token key, and token secret.
     """
-    token_key, token_secret, consumer_key = credentials
+    consumer_key, token_key, token_secret = credentials
     auth = OAuthSigner(token_key, token_secret, consumer_key, "")
     auth.sign_request(uri, method="GET", body=None, headers=headers)
 
