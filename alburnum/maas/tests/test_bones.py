@@ -20,7 +20,7 @@ import json
 from os.path import splitext
 from uuid import uuid1
 
-from alburnum.maas import client
+from alburnum.maas import bones
 from alburnum.maas.testing import TestCase
 from mock import (
     ANY,
@@ -64,7 +64,7 @@ class TestActionAPI(TestCase):
     )
 
     def test__Version_read(self):
-        session = client.SessionAPI(self.description)
+        session = bones.SessionAPI(self.description)
         action = session.Version.read
         self.assertThat(action, MatchesStructure.byEquality(
             name="read", fullname="Version.read", method="GET",
@@ -72,7 +72,7 @@ class TestActionAPI(TestCase):
         ))
 
     def test__Nodes_deployment_status(self):
-        session = client.SessionAPI(self.description, ("a", "b", "c"))
+        session = bones.SessionAPI(self.description, ("a", "b", "c"))
         action = session.Nodes.deployment_status
         self.assertThat(action, MatchesStructure.byEquality(
             name="deployment_status", fullname="Nodes.deployment_status",
@@ -91,7 +91,7 @@ class TestCallAPI(TestCase):
 
     def test__marshals_lists_into_query_as_repeat_parameters(self):
         system_ids = list(text_type(uuid1()) for _ in range(3))
-        session = client.SessionAPI(self.description, ("a", "b", "c"))
+        session = bones.SessionAPI(self.description, ("a", "b", "c"))
         call = session.Nodes.deployment_status.bind()
         call.dispatch = Mock()
 

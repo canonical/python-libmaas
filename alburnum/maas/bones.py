@@ -398,3 +398,7 @@ class CallAPI:
 
     def __repr__(self):
         return "<Call %s @%s>" % (self.action.fullname, self.uri)
+
+
+def main():
+    pass
