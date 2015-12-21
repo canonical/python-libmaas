@@ -18,13 +18,13 @@ test: bin/tox
 	@bin/tox
 
 clean:
-	$(RM) -r bin build dist include lib local TAGS tags
+	$(RM) -r bin build dist include lib local share
 	find . -name '*.py[co]' -print0 | xargs -r0 $(RM) -r
 	find . -name '__pycache__' -print0 | xargs -r0 $(RM) -r
 	find . -name '*.egg' -print0 | xargs -r0 $(RM) -r
 	find . -name '*.egg-info' -print0 | xargs -r0 $(RM) -r
 	find . -name '*~' -print0 | xargs -r0 $(RM)
-	$(RM) -r .eggs .tox .coverage
+	$(RM) -r .eggs .tox .coverage TAGS tags
 
 # ---
 
