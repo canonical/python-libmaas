@@ -17,17 +17,32 @@ __all__ = [
 ]
 
 import cmd
-import re
 import shlex
-from textwrap import dedent
 
-from alburnum.maas.utils import ProfileConfig
+from alburnum.maas import utils
 import colorclass
 import terminaltables
 
 
-class Shell(cmd.Cmd):
+class ShellType(type):
+    """Metaclass for the MAAS shell."""
 
+    def __new__(cls, name, bases, attrs):
+        for name, attr in attrs.items():
+            if name.startswith("do_") and callable(attr):
+                title, body = utils.parse_docstring(attr)
+                if len(body) > 0:
+                    attr.__doc__ = title + "\n\n" + body
+                else:
+                    attr.__doc__ = title
+        return super(ShellType, cls).__new__(cls, name, bases, attrs)
+
+
+class Shell(cmd.Cmd, metaclass=ShellType):
+    """The MAAS shell."""
+
+    # Improve the clarity of the default, and add a full-stop in order that
+    # MAAS might alude to being developed by civilised human beings.
     nohelp = "*** No help for %s."
 
     # The name of the currently selected profile.
@@ -80,7 +95,7 @@ class Shell(cmd.Cmd):
         """List all profiles."""
         rows = [["Profile name", "URL"]]
 
-        with ProfileConfig.open() as config:
+        with utils.ProfileConfig.open() as config:
             for profile_name in sorted(config):
                 profile = config[profile_name]
                 url, creds = profile["url"], profile["credentials"]
@@ -98,14 +113,14 @@ class Shell(cmd.Cmd):
 
     def do_switch(self, text):
         """Switch to an alternate profile."""
-        with ProfileConfig.open() as config:
+        with utils.ProfileConfig.open() as config:
             if text in config:
                 self.switch_profile(text)
             else:
                 self.error("Unrecognised profile: %s" % text)
 
     def complete_switch(self, text, line, begidx, endidx):
-        with ProfileConfig.open() as config:
+        with utils.ProfileConfig.open() as config:
             return [
                 profile_name for profile_name in config
                 if profile_name.startswith(text)
@@ -133,19 +148,6 @@ class Shell(cmd.Cmd):
         else:
             self.error("Unrecognised arguments: " + text)
             return self.do_help("login")
-
-
-# TODO: Do this via a metaclass or class-decorator.
-for name, func in vars(Shell).items():
-    if name.startswith("do_") and callable(func):
-        doc = func.__doc__
-        if doc is not None:
-            parts = re.split(r'(?:\r\n|\r|\n)+', doc, maxsplit=1)
-            if len(parts) == 2:
-                doc = parts[0] + "\n\n" + dedent(parts[1])
-            else:
-                doc = parts[0]
-            func.__doc__ = doc.strip() + "\n"
 
 
 def main(argv=None):
