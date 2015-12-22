@@ -342,3 +342,65 @@ class TestPayloadPreparationWithFiles(TestCase):
             parameter, parameter, base64.b64encode(contents).decode("ascii"))
 
         self.assertDocTestMatches(expected_body, body.decode("ascii"))
+
+
+class TestDocstringParsing(TestCase):
+    """Tests for docstring parsing with `parse_docstring`."""
+
+    def test_basic(self):
+        self.assertEqual(
+            ("Title", "Body"),
+            utils.parse_docstring("Title\n\nBody"))
+        self.assertEqual(
+            ("A longer title", "A longer body"),
+            utils.parse_docstring(
+                "A longer title\n\nA longer body"))
+
+    def test_no_body(self):
+        # parse_docstring returns an empty string when there's no body.
+        self.assertEqual(
+            ("Title", ""),
+            utils.parse_docstring("Title\n\n"))
+        self.assertEqual(
+            ("Title", ""),
+            utils.parse_docstring("Title"))
+
+    def test_unwrapping(self):
+        # parse_docstring unwraps the title paragraph, and dedents the body
+        # paragraphs.
+        self.assertEqual(
+            ("Title over two lines",
+             "Paragraph over\ntwo lines\n\n"
+             "Another paragraph\nover two lines"),
+            utils.parse_docstring("""
+                Title over
+                two lines
+
+                Paragraph over
+                two lines
+
+                Another paragraph
+                over two lines
+                """))
+
+    def test_gets_docstring_from_function(self):
+        # parse_docstring can extract the docstring when the argument passed
+        # is not a string type.
+        def example():
+            """Title.
+
+            Body.
+            """
+        self.assertEqual(
+            ("Title.", "Body."),
+            utils.parse_docstring(example))
+
+    def test_normalises_whitespace(self):
+        # parse_docstring can parse CRLF/CR/LF text, but always emits LF (\n,
+        # new-line) separated text.
+        self.assertEqual(
+            ("long title", ""),
+            utils.parse_docstring("long\r\ntitle"))
+        self.assertEqual(
+            ("title", "body1\n\nbody2"),
+            utils.parse_docstring("title\n\nbody1\r\rbody2"))

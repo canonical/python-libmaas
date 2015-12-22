@@ -9,10 +9,9 @@ from __future__ import (
     unicode_literals,
     )
 
-str = None
-
 __metaclass__ = type
 __all__ = [
+    "parse_docstring",
     "get_response_content_type",
     "prepare_payload",
     "ProfileConfig",
@@ -24,9 +23,15 @@ from contextlib import (
     contextmanager,
 )
 from email.message import Message
+from functools import partial
+from inspect import (
+    cleandoc,
+    getdoc,
+)
 import json
 import os
 from os.path import expanduser
+import re
 import sqlite3
 
 from alburnum.maas.multipart import (
@@ -253,3 +258,39 @@ class ProfileConfig:
             database.commit()
         finally:
             database.close()
+
+
+re_paragraph_splitter = re.compile(
+    r"(?:\r\n){2,}|\r{2,}|\n{2,}", re.MULTILINE)
+
+paragraph_split = re_paragraph_splitter.split
+docstring_split = partial(paragraph_split, maxsplit=1)
+remove_line_breaks = lambda string: (
+    " ".join(line.strip() for line in string.splitlines()))
+
+newline = "\n"
+empty = ""
+
+
+def parse_docstring(thing):
+    """Parse python docstring for `thing`.
+
+    Returns a tuple: (title, body).  As per docstring convention, title is
+    the docstring's first paragraph and body is the rest.
+    """
+    assert not isinstance(thing, bytes)
+    is_string = isinstance(thing, str)
+    doc = cleandoc(thing) if is_string else getdoc(thing)
+    doc = empty if doc is None else doc
+    assert not isinstance(doc, bytes)
+    # Break the docstring into two parts: title and body.
+    parts = docstring_split(doc)
+    if len(parts) == 2:
+        title, body = parts[0], parts[1]
+    else:
+        title, body = parts[0], empty
+    # Remove line breaks from the title line.
+    title = remove_line_breaks(title)
+    # Normalise line-breaks on newline.
+    body = body.replace("\r\n", newline).replace("\r", newline)
+    return title, body
