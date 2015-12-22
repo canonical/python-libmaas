@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3.5
 # Copyright 2015 Alburnum Ltd. This software is licensed under
 # the GNU Affero General Public License version 3 (see LICENSE).
 
@@ -15,7 +15,7 @@ __metaclass__ = type
 import httplib
 from pprint import pprint
 
-from alburnum.maas.client import (
+from alburnum.maas.bones import (
     CallError,
     SessionAPI,
 )
