@@ -1,7 +1,11 @@
 # Copyright 2015 Alburnum Ltd. This software is licensed under
 # the GNU Affero General Public License version 3 (see LICENSE).
 
-"""Interact with a remote MAAS (https://maas.ubuntu.com/) server."""
+"""Interact with a remote MAAS (https://maas.ubuntu.com/).
+
+These are low-level bindings that closely mirror the shape of MAAS's Web API,
+hence the name "bones".
+"""
 
 from __future__ import (
     absolute_import,
@@ -398,7 +402,3 @@ class CallAPI:
 
     def __repr__(self):
         return "<Call %s @%s>" % (self.action.fullname, self.uri)
-
-
-def main():
-    pass

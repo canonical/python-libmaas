@@ -35,10 +35,12 @@ setup(
         'alburnum.maas.tests': ['*.json'],
     },
     install_requires={
+        "colorclass >= 1.2.0",
         "httplib2 >= 0.8",
         "oauthlib >= 1.0.3",
         "pbr >= 1.8.0",
         "six >= 1.9.0",
+        "terminaltables >= 2.1.0",
     },
     test_suite="alburnum.maas.tests",
     tests_require={
@@ -51,4 +53,9 @@ setup(
         "Twisted",
     },
     description="A client API library specially for MAAS.",
+    entry_points={
+        "console_scripts": {
+            "maas-shell = alburnum.maas.skin:main",
+        },
+    },
 )
