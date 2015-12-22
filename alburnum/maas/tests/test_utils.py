@@ -3,15 +3,6 @@
 
 """Tests for `alburnum.maas.utils`."""
 
-from __future__ import (
-    absolute_import,
-    print_function,
-    unicode_literals,
-    )
-
-str = None
-
-__metaclass__ = type
 __all__ = []
 
 import base64
@@ -20,6 +11,7 @@ from functools import partial
 import os
 import os.path
 import sqlite3
+from unittest.mock import sentinel
 
 from alburnum.maas import utils
 from alburnum.maas.testing import (
@@ -32,8 +24,6 @@ from alburnum.maas.utils import (
     prepare_payload,
     ProfileConfig,
 )
-from mock import sentinel
-from six import PY2
 from testtools.matchers import (
     Equals,
     MatchesListwise,
@@ -141,10 +131,7 @@ class TestProfileConfig(TestCase):
         # database on exit.
         config_file = os.path.join(self.make_dir(), "config")
         config = ProfileConfig.open(config_file)
-        if PY2:
-            self.assertIsInstance(config, contextlib.GeneratorContextManager)
-        else:
-            self.assertIsInstance(config, contextlib._GeneratorContextManager)
+        self.assertIsInstance(config, contextlib._GeneratorContextManager)
         with config as config:
             self.assertIsInstance(config, ProfileConfig)
             with config.cursor() as cursor:

@@ -2,16 +2,6 @@
 # Copyright 2015 Alburnum Ltd. This software is licensed under
 # the GNU Affero General Public License version 3 (see LICENSE).
 
-from __future__ import (
-    absolute_import,
-    print_function,
-    unicode_literals,
-    )
-
-str = None
-
-__metaclass__ = type
-
 import httplib
 from pprint import pprint
 

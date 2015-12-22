@@ -3,15 +3,6 @@
 
 """Utilities for the Alburnum MAAS client."""
 
-from __future__ import (
-    absolute_import,
-    print_function,
-    unicode_literals,
-    )
-
-str = None
-
-__metaclass__ = type
 __all__ = [
     "get_response_content_type",
     "prepare_payload",
@@ -28,17 +19,16 @@ import json
 import os
 from os.path import expanduser
 import sqlite3
+from urllib.parse import (
+    quote_plus,
+    urlparse,
+)
 
 from alburnum.maas.multipart import (
     build_multipart_message,
     encode_multipart_message,
 )
 from oauthlib import oauth1
-from six import PY2
-from six.moves.urllib_parse import (
-    quote_plus,
-    urlparse,
-)
 
 
 def urlencode(data):
@@ -50,24 +40,14 @@ def urlencode(data):
     Unicode strings will be encoded to UTF-8. This is what Django expects; see
     `smart_text` in the Django documentation.
     """
-    if PY2:
-        def enc(string):
-            if isinstance(string, unicode):
-                string = string.encode("utf-8")
-            return quote_plus(string)
+    def dec(string):
+        if isinstance(string, bytes):
+            string = string.decode("utf-8")
+        return quote_plus(string)
 
-        return b"&".join(
-            "%s=%s" % (enc(name), enc(value))
-            for name, value in data)
-    else:
-        def dec(string):
-            if isinstance(string, bytes):
-                string = string.decode("utf-8")
-            return quote_plus(string)
-
-        return "&".join(
-            "%s=%s" % (dec(name), dec(value))
-            for name, value in data)
+    return "&".join(
+        "%s=%s" % (dec(name), dec(value))
+        for name, value in data)
 
 
 def get_response_content_type(response):

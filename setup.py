@@ -3,13 +3,6 @@
 
 """Setuptools installer for alburnum-maas-client."""
 
-from __future__ import (
-    absolute_import,
-    print_function,
-)
-
-__metaclass__ = type
-
 from setuptools import (
     find_packages,
     setup,
@@ -26,8 +19,7 @@ setup(
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
         'Intended Audience :: System Administrators',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python',
+        'Programming Language :: Python :: 3 :: Only',
         'Topic :: Software Development :: Libraries',
     ],
     packages=find_packages(),
@@ -37,14 +29,11 @@ setup(
     install_requires={
         "httplib2 >= 0.8",
         "oauthlib >= 1.0.3",
-        "pbr >= 1.8.0",
-        "six >= 1.9.0",
     },
     test_suite="alburnum.maas.tests",
     tests_require={
         "django >= 1.6",
         "fixtures >= 1.0.0",
-        "mock",
         "setuptools",
         "testscenarios",
         "testtools",

@@ -3,15 +3,6 @@
 
 """Testing framework for `alburnum.maas`."""
 
-from __future__ import (
-    absolute_import,
-    print_function,
-    unicode_literals,
-)
-
-str = None
-
-__metaclass__ = type
 __all__ = [
     "make_file",
     "make_name",
@@ -29,11 +20,9 @@ from itertools import (
 from os import path
 import random
 import string
+from unittest import mock
 
 from fixtures import TempDir
-import mock
-from six import PY2
-from six.moves import map
 import testscenarios
 from testtools import testcase
 from testtools.matchers import DocTestMatches
@@ -159,12 +148,8 @@ class TestCase(WithScenarios, testcase.TestCase):
 
         :return: The patched-in object.
         """
-        if PY2:
-            if isinstance(attribute, unicode):
-                attribute = attribute.encode("ascii")
-        else:
-            if isinstance(attribute, bytes):
-                attribute = attribute.decode("ascii")
+        if isinstance(attribute, bytes):
+            attribute = attribute.decode("ascii")
         if value is mock.sentinel.unset:
             value = mock.MagicMock(__name__=attribute)
         super(TestCase, self).patch(obj, attribute, value)
