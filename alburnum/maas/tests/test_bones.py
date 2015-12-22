@@ -3,37 +3,27 @@
 
 """Tests for `alburnum.maas.client`."""
 
-from __future__ import (
-    absolute_import,
-    print_function,
-    unicode_literals,
-)
-
-str = None
-
-__metaclass__ = type
 __all__ = []
 
 import codecs
 from fnmatch import fnmatchcase
 import json
 from os.path import splitext
+from unittest.mock import (
+    ANY,
+    Mock,
+)
+from urllib.parse import (
+    parse_qsl,
+    urlparse,
+)
 from uuid import uuid1
 
 from alburnum.maas import bones
 from alburnum.maas.testing import TestCase
-from mock import (
-    ANY,
-    Mock,
-)
 from pkg_resources import (
     resource_listdir,
     resource_stream,
-)
-from six import text_type
-from six.moves.urllib_parse import (
-    parse_qsl,
-    urlparse,
 )
 from testtools.matchers import (
     Equals,
@@ -90,7 +80,7 @@ class TestCallAPI(TestCase):
     )
 
     def test__marshals_lists_into_query_as_repeat_parameters(self):
-        system_ids = list(text_type(uuid1()) for _ in range(3))
+        system_ids = list(str(uuid1()) for _ in range(3))
         session = bones.SessionAPI(self.description, ("a", "b", "c"))
         call = session.Nodes.deployment_status.bind()
         call.dispatch = Mock()

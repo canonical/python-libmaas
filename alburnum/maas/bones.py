@@ -7,15 +7,6 @@ These are low-level bindings that closely mirror the shape of MAAS's Web API,
 hence the name "bones".
 """
 
-from __future__ import (
-    absolute_import,
-    print_function,
-    unicode_literals,
-)
-
-str = None
-
-__metaclass__ = type
 __all__ = [
     "CallError",
     "SessionAPI",

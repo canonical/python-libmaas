@@ -3,15 +3,6 @@
 
 """Test multipart MIME helpers."""
 
-from __future__ import (
-    absolute_import,
-    print_function,
-    unicode_literals,
-    )
-
-str = None
-
-__metaclass__ = type
 __all__ = []
 
 from io import BytesIO
@@ -29,7 +20,6 @@ from django.conf import settings
 from django.core.files.uploadhandler import MemoryFileUploadHandler
 from django.http.multipartparser import MultiPartParser
 from django.utils.datastructures import MultiValueDict
-from six import text_type
 from testtools.matchers import (
     EndsWith,
     StartsWith,
@@ -80,7 +70,7 @@ class TestMultiPart(TestCase):
     def test_get_content_type_guesses_type(self):
         guess = get_content_type('text.txt')
         self.assertEqual('text/plain', guess)
-        self.assertIsInstance(guess, text_type)
+        self.assertIsInstance(guess, str)
 
     def test_encode_multipart_data_produces_bytes(self):
         data = {make_string(): make_string().encode('ascii')}

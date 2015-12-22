@@ -3,15 +3,6 @@
 
 """Encoding of MIME multipart data."""
 
-from __future__ import (
-    absolute_import,
-    print_function,
-    unicode_literals,
-    )
-
-str = None
-
-__metaclass__ = type
 __all__ = [
     'encode_multipart_data',
     ]
@@ -20,6 +11,7 @@ from collections import (
     Iterable,
     Mapping,
 )
+from email.generator import BytesGenerator
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from io import (
@@ -28,17 +20,6 @@ from io import (
 )
 from itertools import chain
 import mimetypes
-
-from six import (
-    PY2,
-    text_type,
-)
-
-
-if PY2:
-    from email.generator import Generator
-else:
-    from email.generator import BytesGenerator as Generator
 
 
 def get_content_type(*names):
@@ -100,11 +81,9 @@ def make_payloads(name, content):
     """
     if isinstance(content, bytes):
         yield make_bytes_payload(name, content)
-    elif isinstance(content, text_type):
+    elif isinstance(content, str):
         yield make_string_payload(name, content)
     elif isinstance(content, IOBase):
-        yield make_file_payload(name, content)
-    elif PY2 and isinstance(content, file):
         yield make_file_payload(name, content)
     elif callable(content):
         with content() as content:
@@ -140,7 +119,7 @@ def encode_multipart_message(message):
         assert part["Content-Transfer-Encoding"] == "base64"
     # Flatten the message without headers.
     buf = BytesIO()
-    generator = Generator(buf, False)  # Don't mangle "^From".
+    generator = BytesGenerator(buf, False)  # Don't mangle "^From".
     generator._write_headers = lambda self: None  # Ignore.
     generator.flatten(message)
     # Ensure the body has CRLF-delimited lines. See
