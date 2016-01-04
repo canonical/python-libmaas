@@ -15,6 +15,16 @@ import colorclass
 import terminaltables
 
 
+def with_trailing_space(name):
+    """Add a trailing space to a non-empty string.
+
+    This is useful when generating completion choices; when the completion is
+    unambiguous, <tab> will accept the whole completion and move the cursor
+    one space after the completed text.
+    """
+    return (name) if name.endswith(" ") else (name + " ")
+
+
 class ShellType(type):
     """Metaclass for the MAAS shell."""
 
@@ -74,7 +84,7 @@ class Shell(cmd.Cmd, metaclass=ShellType):
     def completenames(self, text, *ignored):
         dotext = "do_" + text
         return sorted(
-            name[3:] + " " for name in self.get_names()
+            with_trailing_space(name[3:]) for name in self.get_names()
             if name.startswith(dotext) and name != "do_EOF"
         )
 
@@ -113,7 +123,7 @@ class Shell(cmd.Cmd, metaclass=ShellType):
     def complete_switch(self, text, line, begidx, endidx):
         with utils.ProfileConfig.open() as config:
             return [
-                profile_name for profile_name in config
+                with_trailing_space(profile_name) for profile_name in config
                 if profile_name.startswith(text)
             ]
 
