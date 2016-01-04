@@ -81,12 +81,44 @@ class Shell(cmd.Cmd, metaclass=ShellType):
     def do_EOF(self, line):
         raise SystemExit(0)
 
-    def completenames(self, text, *ignored):
-        dotext = "do_" + text
+    def get_names(self):
+        """Override superclass to eliminate `do_EOF` from the list of names.
+
+        In addition, the list return is sorted.
+        """
+        return sorted(name for name in dir(self) if name != "do_EOF")
+
+    def _get_command_names(self):
+        """Return a list of command names."""
+        return [
+            name[3:] for name in self.get_names()
+            if name.startswith("do_")
+        ]
+
+    def _get_help_topics(self):
+        """Return a list of help topics."""
+        return [
+            name[5:] for name in self.get_names()
+            if name.startswith("help_")
+        ]
+
+    def complete_help(self, text, line, begidx, endidx):
+        """Override superclass to eliminate duplication.
+
+        The superclass's help completion is based on other completion methods.
+        However, these include trailing whitespace, so do not compare equal to
+        discovered help topics; this results in duplication.
+        """
+        names = set().union(self._get_command_names(), self._get_help_topics())
         return sorted(
-            with_trailing_space(name[3:]) for name in self.get_names()
-            if name.startswith(dotext) and name != "do_EOF"
+            with_trailing_space(name) for name in names
+            if name.startswith(text)
         )
+
+    def completenames(self, text, *ignored):
+        """Override superclass to add a trailing space to each name."""
+        names = super(Shell, self).completenames(text)
+        return list(map(with_trailing_space, names))
 
     #
     # list
