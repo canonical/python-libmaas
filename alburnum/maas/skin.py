@@ -73,10 +73,10 @@ class Shell(cmd.Cmd, metaclass=ShellType):
 
     def completenames(self, text, *ignored):
         dotext = "do_" + text
-        return [
+        return sorted(
             name[3:] + " " for name in self.get_names()
-            if name.startswith(dotext)
-        ]
+            if name.startswith(dotext) and name != "do_EOF"
+        )
 
     #
     # list
