@@ -10,7 +10,10 @@ __all__ = [
 import cmd
 import shlex
 
-from alburnum.maas import utils
+from alburnum.maas import (
+    auth,
+    utils,
+)
 import colorclass
 import terminaltables
 
@@ -176,11 +179,52 @@ class Shell(cmd.Cmd, metaclass=ShellType):
         parts = shlex.split(text, comments=True)
         if len(parts) == 2:
             name, url = parts
+            creds = None
         elif len(parts) == 3:
             name, url, creds = parts
         else:
             self.error("Unrecognised arguments: " + text)
             return self.do_help("login")
+
+        try:
+            creds = auth.obtain_credentials(creds)
+        except Exception as error:
+            self.error(str(error))
+        else:
+            with utils.ProfileConfig.open() as config:
+                if name in config:
+                    return self.error(
+                        "Profile %s already exists. "
+                        "Log-out first." % name)
+                else:
+                    config[name] = {
+                        "credentials": creds,
+                        "description": "",
+                        "name": name,
+                        "url": url,
+                    }
+
+    #
+    # logout
+    #
+
+    def do_logout(self, text):
+        """Log-out from a remote API, discarding its details."""
+        parts = shlex.split(text, comments=True)
+        if len(parts) == 1:
+            name = parts[0]
+            with utils.ProfileConfig.open() as config:
+                del config[name]
+        else:
+            self.error("Unrecognised arguments: " + text)
+            return self.do_help("logout")
+
+    def complete_logout(self, text, line, begidx, endidx):
+        with utils.ProfileConfig.open() as config:
+            return [
+                with_trailing_space(profile_name) for profile_name in config
+                if profile_name.startswith(text)
+            ]
 
 
 def main(argv=None):
