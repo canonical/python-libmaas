@@ -27,6 +27,7 @@ setup(
         'alburnum.maas.tests': ['*.json'],
     },
     install_requires={
+        "argcomplete >= 1.0",
         "colorclass >= 1.2.0",
         "httplib2 >= 0.8",
         "oauthlib >= 1.0.3",
@@ -44,6 +45,7 @@ setup(
     description="A client API library specially for MAAS.",
     entry_points={
         "console_scripts": {
+            "maas-cmd = alburnum.maas.viscera:main",
             "maas-shell = alburnum.maas.skin:main",
         },
     },

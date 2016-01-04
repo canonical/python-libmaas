@@ -247,7 +247,7 @@ class CallError(Exception):
 
     def __init__(self, request, response, content, call):
         desc_for_request = "%(method)s %(uri)s" % request
-        desc_for_response = "HTTP %(status)d %(reason)s" % vars(response)
+        desc_for_response = "HTTP %(status)d %(reason)s" % response
         desc = "%s -> %s" % (desc_for_request, desc_for_response)
         super(CallError, self).__init__(desc)
         self.request = request
