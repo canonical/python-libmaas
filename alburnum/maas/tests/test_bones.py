@@ -26,6 +26,7 @@ from uuid import uuid1
 
 from alburnum.maas import bones
 from alburnum.maas.testing import TestCase
+from alburnum.maas.tests.test_auth import make_credentials
 import fixtures
 import httplib2
 from pkg_resources import (
@@ -126,6 +127,13 @@ class TestSessionAPI(TestCase):
         self.assertEqual(
             "Expected application/json, got: text/json",
             str(error))
+
+    def test__fromURL_sets_credentials_on_session(self):
+        fixture = self.useFixture(DescriptionServer())
+        credentials = make_credentials()
+        session = bones.SessionAPI.fromURL(
+            fixture.url, credentials=credentials)
+        self.assertIs(credentials, session.credentials)
 
     def test__fromURL_sets_insecure_on_session(self):
         fixture = self.useFixture(DescriptionServer())
