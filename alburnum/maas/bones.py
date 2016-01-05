@@ -16,15 +16,45 @@ from collections import (
     Iterable,
     namedtuple,
 )
+from http import HTTPStatus
 import json
 import re
+import ssl
+from urllib.parse import urljoin
 
 from alburnum.maas import utils
 import httplib2
 
 
+class SessionError(Exception):
+    """Miscellaneous session-related error."""
+
+
 class SessionAPI:
     """Represents an API session with a remote MAAS installation."""
+
+    @classmethod
+    def fromURL(cls, url, *, credentials=None, insecure=False):
+        """Return a `SessionAPI` for a given MAAS instance."""
+        url_describe = urljoin(url, "describe/")
+        http = httplib2.Http(disable_ssl_certificate_validation=insecure)
+
+        try:
+            response, content = http.request(url_describe, "GET")
+        except ssl.SSLError:
+            raise SessionError("Certificate verification failed.")
+
+        if response.status != HTTPStatus.OK:
+            raise SessionError(
+                "{0} -> {1.status} {1.reason}".format(url, response))
+        elif response["content-type"] != "application/json":
+            raise SessionError(
+                "Expected application/json, got: %(content-type)s"
+                % response)
+        else:
+            # MAAS will only ever produce JSON as ASCII or UTF-8.
+            description = json.loads(content.decode('utf-8'))
+            return cls(description, credentials)
 
     @classmethod
     def fromProfile(cls, profile):
@@ -52,8 +82,7 @@ class SessionAPI:
     def __init__(self, description, credentials=None):
         """Construct a `SessionAPI`.
 
-        :param description: The description of the remote API. See
-            `fetch_api_description`.
+        :param description: The description of the remote API. See `fromURL`.
         :param credentials: Credentials for the remote system. Optional.
         """
         super(SessionAPI, self).__init__()
@@ -84,6 +113,10 @@ class SessionAPI:
     @property
     def credentials(self):
         return self.__credentials
+
+    @property
+    def description(self):
+        return self.__description
 
 
 class HandlerAPI:
@@ -385,7 +418,7 @@ class CallAPI:
         if content_type is None:
             data = content
         elif content_type.endswith('/json'):
-            data = json.loads(content)
+            data = json.loads(content.decode("utf-8"))  # Assume it's UTF-8.
         else:
             data = content
 

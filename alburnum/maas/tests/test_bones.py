@@ -5,10 +5,14 @@
 
 __all__ = []
 
-import codecs
 from fnmatch import fnmatchcase
+import http
+import http.server
 import json
 from os.path import splitext
+from pathlib import Path
+import ssl
+import threading
 from unittest.mock import (
     ANY,
     Mock,
@@ -21,9 +25,11 @@ from uuid import uuid1
 
 from alburnum.maas import bones
 from alburnum.maas.testing import TestCase
+import fixtures
+import httplib2
 from pkg_resources import (
+    resource_filename,
     resource_listdir,
-    resource_stream,
 )
 from testtools.matchers import (
     Equals,
@@ -31,22 +37,125 @@ from testtools.matchers import (
 )
 
 
-def load_api_descriptions():
+def list_api_descriptions():
     resource = "alburnum.maas.tests"
     for filename in resource_listdir(resource, "."):
         if fnmatchcase(filename, "api*.json"):
+            path = resource_filename(resource, filename)
             name, _ = splitext(filename)
-            with resource_stream(resource, filename) as stream:
-                reader = codecs.getreader("utf-8")
-                yield name, json.load(reader(stream))
+            yield name, Path(path)
+
+
+class DescriptionHandler(http.server.BaseHTTPRequestHandler):
+    """An HTTP request handler that serves only API descriptions.
+
+    The `desc` attribute ought to be specified, for example by subclassing, or
+    by using the `make` class-method.
+
+    The `content_type` attribute can be overridden to simulate a different
+    Content-Type header for the description.
+    """
+
+    # Override these in subclasses.
+    description = b""
+    content_type = "application/json"
+
+    @classmethod
+    def make(cls, description=description):
+        return type(
+            "DescriptionHandler", (cls, ),
+            {"description": description},
+        )
+
+    def do_GET(self):
+        if self.path == "/MAAS/api/1.0/describe/":
+            self.send_response(http.HTTPStatus.OK)
+            self.send_header("Content-Type", self.content_type)
+            self.send_header("Content-Length", str(len(self.description)))
+            self.end_headers()
+            self.wfile.write(self.description)
+        else:
+            self.send_error(http.HTTPStatus.NOT_FOUND)
+
+
+class DescriptionServer(fixtures.Fixture):
+    """Fixture to start up an HTTP server for API descriptions only.
+
+    :ivar handler: A `DescriptionHandler` subclass.
+    :ivar server: An `http.server.HTTPServer` instance.
+    :ivar url: A URL that points to the API that `server` is mocking.
+    """
+
+    def __init__(self, description):
+        super(DescriptionServer, self).__init__()
+        self.description = description
+
+    def _setUp(self):
+        self.handler = DescriptionHandler.make(self.description)
+        self.server = http.server.HTTPServer(("", 0), self.handler)
+        self.url = "http://%s:%d/MAAS/api/1.0/" % self.server.server_address
+        threading.Thread(target=self.server.serve_forever).start()
+        self.addCleanup(self.server.server_close)
+        self.addCleanup(self.server.shutdown)
+
+
+class TestSessionAPI(TestCase):
+
+    def test__fromURL_raises_SessionError_when_TLS_fails(self):
+        request = self.patch(httplib2.Http, "request")
+        request.side_effect = ssl.SSLError
+        error = self.assertRaises(
+            bones.SessionError, bones.SessionAPI.fromURL, "")
+        self.assertEqual("Certificate verification failed.", str(error))
+
+    def test__fromURL_raises_SessionError_when_request_fails(self):
+        fixture = self.useFixture(DescriptionServer(b"bogus"))
+        error = self.assertRaises(
+            bones.SessionError, bones.SessionAPI.fromURL,
+            fixture.url + "bogus/")
+        self.assertEqual(
+            fixture.url + "bogus/ -> 404 Not Found",
+            str(error))
+
+    def test__fromURL_raises_SessionError_when_content_not_json(self):
+        fixture = self.useFixture(DescriptionServer(b"{}"))
+        fixture.handler.content_type = "text/json"
+        error = self.assertRaises(
+            bones.SessionError, bones.SessionAPI.fromURL, fixture.url)
+        self.assertEqual(
+            "Expected application/json, got: text/json",
+            str(error))
+
+
+class TestSessionAPI_APIVersions(TestCase):
+    """Tests for `SessionAPI` with multiple API versions."""
+
+    scenarios = tuple(
+        (name, dict(path=path))
+        for name, path in list_api_descriptions()
+    )
+
+    def test__fromURL_downloads_description(self):
+        description = self.path.read_bytes()
+        fixture = self.useFixture(DescriptionServer(description))
+        session = bones.SessionAPI.fromURL(fixture.url)
+        self.assertEqual(
+            json.loads(description.decode("utf-8")),
+            session.description)
+
+
+def load_api_descriptions():
+    for name, path in list_api_descriptions():
+        description = path.read_text("utf-8")
+        yield name, json.loads(description)
 
 
 api_descriptions = list(load_api_descriptions())
 assert len(api_descriptions) != 0
 
 
-class TestActionAPI(TestCase):
-    """Tests for `ActionAPI`."""
+class TestActionAPI_APIVersions(TestCase):
+    """Tests for `ActionAPI` with multiple API versions."""
 
     scenarios = tuple(
         (name, dict(description=description))
@@ -71,8 +180,8 @@ class TestActionAPI(TestCase):
         ))
 
 
-class TestCallAPI(TestCase):
-    """Tests for `CallAPI`."""
+class TestCallAPI_APIVersions(TestCase):
+    """Tests for `CallAPI` with multiple API versions."""
 
     scenarios = tuple(
         (name, dict(description=description))
