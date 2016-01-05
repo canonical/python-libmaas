@@ -54,7 +54,9 @@ class SessionAPI:
         else:
             # MAAS will only ever produce JSON as ASCII or UTF-8.
             description = json.loads(content.decode('utf-8'))
-            return cls(description, credentials)
+            session = cls(description, credentials)
+            session.insecure = insecure
+            return session
 
     @classmethod
     def fromProfile(cls, profile):

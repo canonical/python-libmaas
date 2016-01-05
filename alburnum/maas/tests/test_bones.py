@@ -16,6 +16,7 @@ import threading
 from unittest.mock import (
     ANY,
     Mock,
+    sentinel,
 )
 from urllib.parse import (
     parse_qsl,
@@ -57,7 +58,7 @@ class DescriptionHandler(http.server.BaseHTTPRequestHandler):
     """
 
     # Override these in subclasses.
-    description = b""
+    description = b'{"resources": []}'
     content_type = "application/json"
 
     @classmethod
@@ -86,7 +87,7 @@ class DescriptionServer(fixtures.Fixture):
     :ivar url: A URL that points to the API that `server` is mocking.
     """
 
-    def __init__(self, description):
+    def __init__(self, description=DescriptionHandler.description):
         super(DescriptionServer, self).__init__()
         self.description = description
 
@@ -118,13 +119,19 @@ class TestSessionAPI(TestCase):
             str(error))
 
     def test__fromURL_raises_SessionError_when_content_not_json(self):
-        fixture = self.useFixture(DescriptionServer(b"{}"))
+        fixture = self.useFixture(DescriptionServer())
         fixture.handler.content_type = "text/json"
         error = self.assertRaises(
             bones.SessionError, bones.SessionAPI.fromURL, fixture.url)
         self.assertEqual(
             "Expected application/json, got: text/json",
             str(error))
+
+    def test__fromURL_sets_insecure_on_session(self):
+        fixture = self.useFixture(DescriptionServer())
+        session = bones.SessionAPI.fromURL(
+            fixture.url, insecure=sentinel.insecure)
+        self.assertIs(sentinel.insecure, session.insecure)
 
 
 class TestSessionAPI_APIVersions(TestCase):
