@@ -14,13 +14,16 @@ import argparse
 import sys
 from textwrap import fill
 
+from alburnum.maas import bones
 from alburnum.maas.auth import obtain_credentials
 from alburnum.maas.bones import CallError
+from alburnum.maas.creds import Credentials
 from alburnum.maas.utils import (
     parse_docstring,
     ProfileConfig,
 )
 import argcomplete
+import terminaltables
 
 
 def api_url(url):  # TODO
@@ -31,8 +34,15 @@ def check_valid_apikey(_1, _2, _3):  # TODO
     return True
 
 
-def fetch_api_description(url, insecure=False):  # TODO
-    return ""
+def make_table(data):
+    if sys.stdout.isatty():
+        return terminaltables.SingleTable(data)
+    else:
+        return terminaltables.AsciiTable(data)
+
+
+def print_table(data):
+    print(make_table(data).table)
 
 
 class ArgumentParser(argparse.ArgumentParser):
@@ -42,17 +52,9 @@ class ArgumentParser(argparse.ArgumentParser):
     a lazily evaluated `subparsers` property.
     """
 
-    def _print_error(self, message):
-        """Print the specified message to stderr.
-
-        This method is used to isolate write to stderr, so that those writes
-        can be intercepted in a unit test.
-        """
-        sys.stderr.write(message)
-
     def __init__(self, *args, **kwargs):
-        kwargs.setdefault(
-            "formatter_class", argparse.RawDescriptionHelpFormatter)
+        if "formatter_class" not in kwargs:
+            kwargs["formatter_class"] = argparse.RawDescriptionHelpFormatter
         super(ArgumentParser, self).__init__(*args, **kwargs)
 
     def add_subparsers(self):
@@ -77,8 +79,9 @@ class ArgumentParser(argparse.ArgumentParser):
         valid arguments.
         """
         self.print_help(sys.stderr)
-        self._print_error('\n' + message + '\n')
-        sys.exit(2)
+        print(file=sys.stderr)
+        print(message, file=sys.stderr)
+        raise SystemExit(2)
 
 
 class Command(metaclass=ABCMeta):
@@ -163,14 +166,15 @@ class cmd_login(Command):
             else:
                 if not valid_apikey:
                     raise SystemExit("The MAAS server rejected your API key.")
-        # Get description of remote API.
-        description = fetch_api_description(options.url, options.insecure)
+        # Establish a session with the remote API.
+        session = bones.SessionAPI.fromURL(
+            options.url, credentials=credentials, insecure=options.insecure)
         # Save the config.
         profile_name = options.profile_name
         with ProfileConfig.open() as config:
             config[profile_name] = {
                 "credentials": credentials,
-                "description": description,
+                "description": session.description,
                 "name": profile_name,
                 "url": options.url,
                 }
@@ -205,8 +209,10 @@ class cmd_refresh(Command):
         with ProfileConfig.open() as config:
             for profile_name in config:
                 profile = config[profile_name]
-                url = profile["url"]
-                profile["description"] = fetch_api_description(url)
+                url, creds = profile["url"], profile["credentials"]
+                session = bones.SessionAPI.fromURL(
+                    url, credentials=Credentials(*creds))
+                profile["description"] = session.description
                 config[profile_name] = profile
 
 
@@ -234,15 +240,18 @@ class cmd_list(Command):
     """List remote APIs that have been logged-in to."""
 
     def __call__(self, options):
+        rows = [["Profile name", "URL"]]
+
         with ProfileConfig.open() as config:
-            for profile_name in config:
+            for profile_name in sorted(config):
                 profile = config[profile_name]
-                url = profile["url"]
-                creds = profile["credentials"]
+                url, creds = profile["url"], profile["credentials"]
                 if creds is None:
-                    print(profile_name, url)
+                    rows.append([profile_name, url, "(anonymous)"])
                 else:
-                    print(profile_name, url, creds)
+                    rows.append([profile_name, url])
+
+        print_table(rows)
 
 
 def prepare_parser(argv):
