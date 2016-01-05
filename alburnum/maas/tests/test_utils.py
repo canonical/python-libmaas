@@ -25,6 +25,7 @@ from alburnum.maas.utils import (
     ProfileConfig,
 )
 from testtools.matchers import (
+    AfterPreprocessing,
     Equals,
     MatchesListwise,
 )
@@ -391,3 +392,23 @@ class TestDocstringParsing(TestCase):
         self.assertEqual(
             ("title", "body1\n\nbody2"),
             utils.parse_docstring("title\n\nbody1\r\rbody2"))
+
+
+class TestFunctions(TestCase):
+    """Tests for miscellaneous functions in `alburnum.maas.utils`."""
+
+    def test_api_url(self):
+        transformations = list({
+            "http://example.com/": "http://example.com/api/1.0/",
+            "http://example.com/foo": "http://example.com/foo/api/1.0/",
+            "http://example.com/foo/": "http://example.com/foo/api/1.0/",
+            "http://example.com/api/7.9": "http://example.com/api/7.9/",
+            "http://example.com/api/7.9/": "http://example.com/api/7.9/",
+            }.items())
+        urls = [url for url, url_out in transformations]
+        urls_out = [url_out for url, url_out in transformations]
+        expected = [
+            AfterPreprocessing(utils.api_url, Equals(url_out))
+            for url_out in urls_out
+            ]
+        self.assertThat(urls, MatchesListwise(expected))

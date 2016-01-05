@@ -14,20 +14,15 @@ import argparse
 import sys
 from textwrap import fill
 
-from alburnum.maas import bones
+from alburnum.maas import (
+    bones,
+    utils,
+)
 from alburnum.maas.auth import obtain_credentials
 from alburnum.maas.bones import CallError
 from alburnum.maas.creds import Credentials
-from alburnum.maas.utils import (
-    parse_docstring,
-    ProfileConfig,
-)
 import argcomplete
 import terminaltables
-
-
-def api_url(url):  # TODO
-    return url
 
 
 def check_valid_apikey(_1, _2, _3):  # TODO
@@ -112,7 +107,7 @@ class Command(metaclass=ABCMeta):
 
         :type parser: An instance of `ArgumentParser`.
         """
-        help_title, help_body = parse_docstring(cls)
+        help_title, help_body = utils.parse_docstring(cls)
         command_parser = parser.subparsers.add_parser(
             cls.name() if name is None else name, help=help_title,
             description=help_title, epilog=help_body)
@@ -134,7 +129,7 @@ class cmd_login(Command):
                 "server and credentials within this tool."
                 ))
         parser.add_argument(
-            "url", type=api_url, help=(
+            "url", type=utils.api_url, help=(
                 "The URL of the remote API, e.g. http://example.com/MAAS/ "
                 "or http://example.com/MAAS/api/1.0/ if you wish to specify "
                 "the API version."))
@@ -171,7 +166,7 @@ class cmd_login(Command):
             options.url, credentials=credentials, insecure=options.insecure)
         # Save the config.
         profile_name = options.profile_name
-        with ProfileConfig.open() as config:
+        with utils.ProfileConfig.open() as config:
             config[profile_name] = {
                 "credentials": credentials,
                 "description": session.description,
@@ -206,7 +201,7 @@ class cmd_refresh(Command):
     """
 
     def __call__(self, options):
-        with ProfileConfig.open() as config:
+        with utils.ProfileConfig.open() as config:
             for profile_name in config:
                 profile = config[profile_name]
                 url, creds = profile["url"], profile["credentials"]
@@ -232,7 +227,7 @@ class cmd_logout(Command):
                 ))
 
     def __call__(self, options):
-        with ProfileConfig.open() as config:
+        with utils.ProfileConfig.open() as config:
             del config[options.profile_name]
 
 
@@ -242,7 +237,7 @@ class cmd_list(Command):
     def __call__(self, options):
         rows = [["Profile name", "URL"]]
 
-        with ProfileConfig.open() as config:
+        with utils.ProfileConfig.open() as config:
             for profile_name in sorted(config):
                 profile = config[profile_name]
                 url, creds = profile["url"], profile["credentials"]
