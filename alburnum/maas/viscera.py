@@ -29,6 +29,9 @@ from alburnum.maas.utils import (
 )
 
 
+undefined = object()
+
+
 def dir_class(cls):
     """Return a list of names available on `cls`.
 
@@ -88,9 +91,6 @@ class Object(metaclass=ObjectType):
             return "<%s>" % (self.__class__.__name__, )
         else:
             return "<%s %s>" % (self.__class__.__name__, desc)
-
-
-undefined = object()
 
 
 class ObjectField:
@@ -226,20 +226,26 @@ class OriginBase:
         self.__populate()
 
     def __populate(self):
-        for name, handler in self.__session.handlers:
+        # Some objects will not have handlers in the underlying session, but
+        # we want to bind them anyway, hence we iterate through all names.
+        handlers = dict(self.__session.handlers)
+        names = set().union(handlers, self.__objects)
+        for name in names:
+            handler = handlers.get(name, None)
             base = self.__objects.get(name, Object)
             assert issubclass(base, Object)
+            # Put the _origin and _handler in the class's attributes, and set
+            # the module to something informative.
+            attrs = {"_origin": self, "_handler": handler}
+            attrs["__module__"] = "origin"  # Could do better?
             # Make default methods for actions that are not handled.
-            attrs = {
-                name: self.__method(action)
-                for name, action in handler.actions
-                if not hasattr(base, name)
-            }
-            # Put the _origin and _handler in the class's attributes.
-            attrs["_origin"] = self
-            attrs["_handler"] = handler
-            # Set the module to something informative.
-            attrs["__module__"] = "origin"
+            if handler is not None:
+                methods = {
+                    name: self.__method(action)
+                    for name, action in handler.actions
+                    if not hasattr(base, name)
+                }
+                attrs.update(methods)
             # Construct a new class derived from base, in effect "binding" it
             # to this origin.
             obj = type(name, (base,), attrs)
@@ -357,20 +363,21 @@ class Tag(Object):
 
 
 class FilesType(ObjectType):
+    """Metaclass for `Files`."""
 
     def __iter__(cls):
-        for data in cls._handler.list():
-            yield cls._origin.File(data)
+        return map(cls._origin.File, cls._handler.list())
+
+    def list(self):
+        raise NotImplementedError("list has been disabled; use read instead")
 
 
 class Files(Object, metaclass=FilesType):
     """The set of files stored in MAAS."""
 
-    list = ObjectMethod()
-
-    @list.classmethod
-    def list(cls):
-        return [cls._origin.File(data) for data in cls._handler.list()]
+    @classmethod
+    def read(cls):
+        return list(cls)
 
 
 class File(Object):
@@ -378,6 +385,25 @@ class File(Object):
 
     filename = ReadOnlyField(ObjectTypedField(
         "filename", check_string, check_string))
+
+
+class UsersType(ObjectType):
+    """Metaclass for `Users`."""
+
+    def __iter__(cls):
+        return map(cls._origin.User, cls._handler.read())
+
+
+class Users(Object, metaclass=UsersType):
+    """The set of users."""
+
+    @classmethod
+    def read(cls):
+        return list(cls)
+
+
+class User(Object):
+    """A user."""
 
 
 #
