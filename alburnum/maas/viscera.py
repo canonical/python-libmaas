@@ -21,7 +21,12 @@ __all__ = [
     "OriginBase",
 ]
 
+from itertools import starmap
 from types import MethodType
+from typing import (
+    List,
+    Optional,
+)
 
 from alburnum.maas.utils import (
     get_all_subclasses,
@@ -30,6 +35,22 @@ from alburnum.maas.utils import (
 
 
 undefined = object()
+
+
+class Disabled:
+    """A disabled method."""
+
+    def __init__(self, name, alternative=None):
+        super(Disabled, self).__init__()
+        self.name, self.alternative = name, alternative
+
+    def __call__(self, *args, **kwargs):
+        if self.alternative is None:
+            raise RuntimeError("%s has been disabled" % (self.name,))
+        else:
+            raise RuntimeError(
+                "%s has been disabled; use %s instead" % (
+                    self.name, self.alternative))
 
 
 def dir_class(cls):
@@ -43,6 +64,16 @@ def dir_class(cls):
         if isinstance(value, ObjectMethod):
             if value.has_classmethod:
                 yield name
+        elif isinstance(value, Disabled):
+            pass  # Hide this; disabled.
+        else:
+            yield name
+    # Metaclass attributes.
+    for name, value in vars_class(type(cls)).items():
+        if name == "mro":
+            pass  # Hide this; not interesting.
+        elif isinstance(value, Disabled):
+            pass  # Hide this; disabled.
         else:
             yield name
 
@@ -60,6 +91,8 @@ def dir_instance(inst):
         if isinstance(value, ObjectMethod):
             if value.has_instancemethod:
                 yield name
+        elif isinstance(value, Disabled):
+            pass  # Hide this; disabled.
         else:
             yield name
 
@@ -85,8 +118,12 @@ class Object(metaclass=ObjectType):
         return self.__class__.__qualname__
 
     def __repr__(self):
-        data = sorted(self._data.items())
-        desc = " ".join("%s=%r" % (name, value) for name, value in data)
+        fields = sorted(
+            name for name, value in vars_class(type(self)).items()
+            if isinstance(value, ObjectField))
+        values = (getattr(self, name) for name in fields)
+        pairs = starmap("{0}={1!r}".format, zip(fields, values))
+        desc = " ".join(pairs)
         if len(desc) == 0:
             return "<%s>" % (self.__class__.__name__, )
         else:
@@ -95,10 +132,11 @@ class Object(metaclass=ObjectType):
 
 class ObjectField:
 
-    def __init__(self, name, *, default=undefined):
+    def __init__(self, name, *, default=undefined, readonly=False):
         super(ObjectField, self).__init__()
         self.name = name
         self.default = default
+        self.readonly = readonly
 
     def __get__(self, instance, owner):
         if instance is None:
@@ -112,17 +150,27 @@ class ObjectField:
                 return self.default
 
     def __set__(self, instance, value):
-        instance._data[self.name] = value
+        if self.readonly:
+            raise AttributeError("%s is read-only" % self.name)
+        else:
+            instance._data[self.name] = value
 
     def __delete__(self, instance):
-        if self.name in instance._data:
+        if self.readonly:
+            raise AttributeError("%s is read-only" % self.name)
+        elif self.name in instance._data:
             del instance._data[self.name]
+        else:
+            pass  # Nothing to do.
 
 
 class ObjectTypedField(ObjectField):
 
-    def __init__(self, name, d2v=None, v2d=None, *, default=undefined):
-        super(ObjectTypedField, self).__init__(name, default=default)
+    def __init__(
+            self, name, d2v=None, v2d=None, *, default=undefined,
+            readonly=False):
+        super(ObjectTypedField, self).__init__(
+            name, default=default, readonly=readonly)
         self.d2v = (lambda value: value) if d2v is None else d2v
         self.v2d = (lambda value: value) if v2d is None else v2d
         if default is not undefined:
@@ -135,33 +183,12 @@ class ObjectTypedField(ObjectField):
         if instance is None:
             return self
         else:
-            if self.name in instance._data:
-                datum = instance._data[self.name]
-                return self.d2v(datum)
-            elif self.default is undefined:
-                raise AttributeError()
-            else:
-                return self.default
+            datum = super(ObjectTypedField, self).__get__(instance, owner)
+            return self.default if datum is self.default else self.d2v(datum)
 
     def __set__(self, instance, value):
         datum = self.v2d(value)
-        instance._data[self.name] = datum
-
-
-class ReadOnlyField:
-
-    def __init__(self, descriptor):
-        super(ReadOnlyField, self).__init__()
-        self.descriptor = descriptor
-
-    def __get__(self, instance, owner):
-        return self.descriptor.__get__(instance, owner)
-
-    def __set__(self, instance, value):
-        raise AttributeError()
-
-    def __delete__(self, instance):
-        raise AttributeError()
+        super(ObjectTypedField, self).__set__(instance, datum)
 
 
 class ObjectMethod:
@@ -321,18 +348,18 @@ class OriginBase:
 #
 
 
-def check_string(value):
-    if isinstance(value, str):
-        return value
-    else:
-        raise TypeError("%r is not of type str" % (value,))
+def check(expected):
+    def checker(value):
+        if issubclass(type(value), expected):
+            return value
+        else:
+            raise TypeError(
+                "%r is not of type %s" % (value, expected))
+    return checker
 
 
-def check_string_or_none(value):
-    if value is None:
-        return value
-    else:
-        return check_string(value)
+def check_optional(expected):
+    return check(Optional[expected])
 
 
 #
@@ -340,25 +367,41 @@ def check_string_or_none(value):
 #
 
 
-class Tags(Object):
-    """The set of tags."""
+class TagsType(ObjectType):
+    """Metaclass for `Tags`."""
 
-    @classmethod
-    def list(cls):
-        return [cls._origin.Tag(data) for data in cls._handler.list()]
+    def __iter__(cls):
+        return map(cls._origin.Tag, cls._handler.list())
+
+    def create(cls, name, *, comment="", definition="", kernel_opts=""):
+        data = cls._handler.new(
+            name=name, comment=comment, definition=definition,
+            kernel_opts=kernel_opts)
+        return cls(data)
+
+    new = Disabled("new", "create")  # API is malformed in MAAS server.
+
+    def read(cls):
+        return list(cls)
+
+    list = Disabled("list", "read")  # API is malformed in MAAS server.
+
+
+class Tags(Object, metaclass=TagsType):
+    """The set of tags."""
 
 
 class Tag(Object):
     """A tag."""
 
-    name = ReadOnlyField(ObjectTypedField(
-        "name", check_string, check_string))
+    name = ObjectTypedField(
+        "name", check(str), check(str), readonly=True)
     comment = ObjectTypedField(
-        "comment", check_string, check_string, default="")
+        "comment", check(str), check(str), default="")
     definition = ObjectTypedField(
-        "definition", check_string, check_string, default="")
+        "definition", check(str), check(str), default="")
     kernel_opts = ObjectTypedField(
-        "kernel_opts", check_string_or_none, check_string_or_none,
+        "kernel_opts", check_optional(str), check_optional(str),
         default=None)
 
 
@@ -368,23 +411,88 @@ class FilesType(ObjectType):
     def __iter__(cls):
         return map(cls._origin.File, cls._handler.list())
 
-    def list(self):
-        raise NotImplementedError("list has been disabled; use read instead")
+    def read(cls):
+        return list(cls)
+
+    list = Disabled("list", "read")  # API is malformed in MAAS server.
 
 
 class Files(Object, metaclass=FilesType):
     """The set of files stored in MAAS."""
 
-    @classmethod
-    def read(cls):
-        return list(cls)
-
 
 class File(Object):
     """A file stored in MAAS."""
 
-    filename = ReadOnlyField(ObjectTypedField(
-        "filename", check_string, check_string))
+    filename = ObjectTypedField(
+        "filename", check(str), check(str), readonly=True)
+
+
+class NodesType(ObjectType):
+    """Metaclass for `Nodes`."""
+
+    def __iter__(cls):
+        return map(cls._origin.Node, cls._handler.list())
+
+    def read(cls):
+        return list(cls)
+
+    list = Disabled("list", "read")  # API is malformed in MAAS server.
+
+
+class Nodes(Object, metaclass=NodesType):
+    """The set of nodes stored in MAAS."""
+
+
+class Node(Object):
+    """A node stored in MAAS."""
+
+    architecture = ObjectTypedField(
+        "architecture", check(str), check(str))
+    boot_disk = ObjectTypedField(
+        "boot_disk", check_optional(str), check_optional(str))
+    boot_type = ObjectTypedField(
+        "boot_type", check(str), check(str))
+    cpu_count = ObjectTypedField(
+        "cpu_count", check(int), check(int))
+    disable_ipv4 = ObjectTypedField(
+        "disable_ipv4", check(bool), check(bool))
+    distro_series = ObjectTypedField(
+        "distro_series", check(str), check(str))
+    hostname = ObjectTypedField(
+        "hostname", check(str), check(str))
+    hwe_kernel = ObjectTypedField(
+        "hwe_kernel", check_optional(str), check_optional(str))
+    ip_addresses = ObjectTypedField(
+        "ip_addresses", check(List[str]), check(List[str]), readonly=True)
+    memory = ObjectTypedField(
+        "memory", check(int), check(int))
+    min_hwe_kernel = ObjectTypedField(
+        "min_hwe_kernel", check_optional(str), check_optional(str))
+
+    # blockdevice_set
+    # interface_set
+    # macaddress_set
+    # netboot
+    # osystem
+    # owner
+    # physicalblockdevice_set
+    # power_state
+    # power_type
+    # pxe_mac
+    # resource_uri
+    # routers
+    # status
+    # storage
+    # substatus
+    # substatus_action
+    # substatus_message
+    # substatus_name
+    # swap_size
+    # system_id
+    # tag_names
+    # virtualblockdevice_set
+    # zone
 
 
 class UsersType(ObjectType):

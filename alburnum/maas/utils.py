@@ -317,4 +317,4 @@ def vars_class(cls):
     belonging to the given class and not its ancestors.
     """
     return dict(chain.from_iterable(
-        vars(cls).items() for cls in reversed(cls.mro())))
+        vars(cls).items() for cls in reversed(cls.__mro__)))
