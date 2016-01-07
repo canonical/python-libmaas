@@ -120,6 +120,12 @@ class SessionAPI:
     def description(self):
         return self.__description
 
+    @property
+    def handlers(self):
+        for name, value in vars(self).items():
+            if not name.startswith("_") and isinstance(value, HandlerAPI):
+                yield name, value
+
 
 class HandlerAPI:
     """Represents remote objects and operations, and collections thereof.
@@ -186,6 +192,12 @@ class HandlerAPI:
     def session(self):
         """The parent `SessionAPI`."""
         return self.__session
+
+    @property
+    def actions(self):
+        for name, value in vars(self).items():
+            if not name.startswith("_") and isinstance(value, ActionAPI):
+                yield name, value
 
     def __repr__(self):
         return "<Handler %s %s>" % (self.name, self.uri)
@@ -282,7 +294,7 @@ class CallError(Exception):
 
     def __init__(self, request, response, content, call):
         desc_for_request = "%(method)s %(uri)s" % request
-        desc_for_response = "HTTP %(status)d %(reason)s" % response
+        desc_for_response = "HTTP %s %s" % (response.status, response.reason)
         desc = "%s -> %s" % (desc_for_request, desc_for_response)
         super(CallError, self).__init__(desc)
         self.request = request

@@ -2,7 +2,7 @@
 # Copyright 2015 Alburnum Ltd. This software is licensed under
 # the GNU Affero General Public License version 3 (see LICENSE).
 
-import httplib
+from http import HTTPStatus
 from pprint import pprint
 
 from alburnum.maas.bones import (
@@ -21,7 +21,7 @@ if __name__ == "__main__":
     try:
         tag = papi.Tag.read(name=tag_name)
     except CallError as error:
-        if error.status == httplib.NOT_FOUND:
+        if error.status == HTTPStatus.NOT_FOUND:
             tag = papi.Tags.new(
                 name=tag_name, comment="%s's Stuff" % tag_name.capitalize())
         else:
