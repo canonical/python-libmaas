@@ -5,11 +5,13 @@
 
 __all__ = [
     "api_url",
+    "get_all_subclasses",
     "get_response_content_type",
     "parse_docstring",
     "prepare_payload",
     "ProfileConfig",
     "sign",
+    "vars_class",
 ]
 
 from contextlib import (
@@ -22,6 +24,7 @@ from inspect import (
     cleandoc,
     getdoc,
 )
+from itertools import chain
 import json
 import os
 from os.path import expanduser
@@ -298,3 +301,20 @@ def api_url(string):
     if re.search("/api/[0-9.]+/?$", url.path) is None:
         url = url._replace(path=url.path + "api/1.0/")
     return url.geturl()
+
+
+def get_all_subclasses(cls):
+    """Get all subclasses of `cls`, recursively."""
+    for cls in cls.__subclasses__():
+        yield from get_all_subclasses(cls)
+        yield cls
+
+
+def vars_class(cls):
+    """Return a dict of vars for the given class, including all ancestors.
+
+    This differs from the usual behaviour of `vars` which returns attributes
+    belonging to the given class and not its ancestors.
+    """
+    return dict(chain.from_iterable(
+        vars(cls).items() for cls in reversed(cls.mro())))

@@ -15,27 +15,68 @@ __all__ = [
     "Object",
     "ObjectField",
     "ObjectMethod",
+    "ObjectType",
+    "ObjectTypedField",
     "Origin",
     "OriginBase",
 ]
 
 from types import MethodType
 
+from alburnum.maas.utils import (
+    get_all_subclasses,
+    vars_class,
+)
 
-class Object:
-    """An object in a MAAS installation.
 
-    * Objects have data attributes. If the handler supports it, these can be
-      updated.
+def dir_class(cls):
+    """Return a list of names available on `cls`.
 
-    * Objects may have operations.
-
+    Eliminates names that bind to an `ObjectMethod` without a corresponding
+    class method; see `ObjectMethod`.
     """
+    # Class attributes (including methods).
+    for name, value in vars_class(cls).items():
+        if isinstance(value, ObjectMethod):
+            if value.has_classmethod:
+                yield name
+        else:
+            yield name
+
+
+def dir_instance(inst):
+    """Return a list of names available on `inst`.
+
+    Eliminates names that bind to an `ObjectMethod` without a corresponding
+    instance method; see `ObjectMethod`.
+    """
+    # Instance attributes.
+    yield from vars(inst)
+    # Class attributes (including methods).
+    for name, value in vars_class(type(inst)).items():
+        if isinstance(value, ObjectMethod):
+            if value.has_instancemethod:
+                yield name
+        else:
+            yield name
+
+
+class ObjectType(type):
+
+    def __dir__(cls):
+        return list(dir_class(cls))
+
+
+class Object(metaclass=ObjectType):
+    """An object in a MAAS installation."""
 
     def __init__(self, data):
         super(Object, self).__init__()
         assert isinstance(data, dict)
         self._data = data
+
+    def __dir__(self):
+        return list(dir_instance(self))
 
     def __str__(self):
         return self.__class__.__qualname__
@@ -49,11 +90,12 @@ class Object:
             return "<%s %s>" % (self.__class__.__name__, desc)
 
 
+undefined = object()
+
+
 class ObjectField:
 
-    unset = object()
-
-    def __init__(self, name, *, default=unset):
+    def __init__(self, name, *, default=undefined):
         super(ObjectField, self).__init__()
         self.name = name
         self.default = default
@@ -64,9 +106,8 @@ class ObjectField:
         else:
             if self.name in instance._data:
                 return instance._data[self.name]
-            elif self.default is self.unset:
-                raise AttributeError(
-                    "%s has no attribute '%s'" % (instance, self.name))
+            elif self.default is undefined:
+                raise AttributeError()
             else:
                 return self.default
 
@@ -75,41 +116,105 @@ class ObjectField:
 
     def __delete__(self, instance):
         if self.name in instance._data:
-            if self.default is self.unset:
-                del instance._data[self.name]
-            else:
-                instance._data[self.name] = self.default
+            del instance._data[self.name]
+
+
+class ObjectTypedField(ObjectField):
+
+    def __init__(self, name, d2v=None, v2d=None, *, default=undefined):
+        super(ObjectTypedField, self).__init__(name, default=default)
+        self.d2v = (lambda value: value) if d2v is None else d2v
+        self.v2d = (lambda value: value) if v2d is None else v2d
+        if default is not undefined:
+            if self.d2v(self.v2d(default)) != default:
+                raise TypeError(
+                    "The default of %r cannot be round-tripped through the "
+                    "conversion/validation functions given." % (default, ))
+
+    def __get__(self, instance, owner):
+        if instance is None:
+            return self
         else:
-            if self.default is self.unset:
-                pass  # Nothing to do.
+            if self.name in instance._data:
+                datum = instance._data[self.name]
+                return self.d2v(datum)
+            elif self.default is undefined:
+                raise AttributeError()
             else:
-                instance._data[self.name] = self.default
+                return self.default
+
+    def __set__(self, instance, value):
+        datum = self.v2d(value)
+        instance._data[self.name] = datum
+
+
+class ReadOnlyField:
+
+    def __init__(self, descriptor):
+        super(ReadOnlyField, self).__init__()
+        self.descriptor = descriptor
+
+    def __get__(self, instance, owner):
+        return self.descriptor.__get__(instance, owner)
+
+    def __set__(self, instance, value):
+        raise AttributeError()
+
+    def __delete__(self, instance):
+        raise AttributeError()
 
 
 class ObjectMethod:
 
-    def __init__(self, for_class=None, for_instance=None):
+    def __init__(self, _classmethod=None, _instancemethod=None):
         super(ObjectMethod, self).__init__()
-        self.for_class = for_class
-        self.for_instance = for_instance
+        self.__classmethod = _classmethod
+        self.__instancemethod = _instancemethod
 
     def __get__(self, instance, owner):
         if instance is None:
-            if self.for_class is None:
+            if self.__classmethod is None:
                 raise AttributeError(
                     "%s has no matching class attribute" % (instance, ))
             else:
-                return MethodType(self.for_class, owner)
+                return MethodType(self.__classmethod, owner)
         else:
-            if self.for_instance is None:
+            if self.__instancemethod is None:
                 raise AttributeError(
                     "%s has no matching instance attribute" % (instance, ))
             else:
-                return MethodType(self.for_instance, instance)
+                return MethodType(self.__instancemethod, instance)
+
+    def __set__(self, instance, value):
+        # Non-data descriptors (those without __set__) can be shadowed by
+        # instance attributes, so prevent that by making this a read-only data
+        # descriptor.
+        raise AttributeError(
+            "%s has no matching instance attribute" % (instance, ))
+
+    def classmethod(self, func):
+        """Set/modify the class method."""
+        self.__classmethod = func
+        return self
+
+    @property
+    def has_classmethod(self):
+        """Has a class method been set?"""
+        return self.__classmethod is not None
+
+    def instancemethod(self, func):
+        """Set/modify the instance method."""
+        self.__instancemethod = func
+        return self
+
+    @property
+    def has_instancemethod(self):
+        """Has an instance method been set?"""
+        return self.__instancemethod is not None
 
 
 class OriginBase:
-    """Represents an originating remote MAAS installation."""
+    """Represents a remote MAAS installation."""
 
     def __init__(self, session, *, objects=None):
         """
@@ -205,6 +310,30 @@ class OriginBase:
         return method
 
 
+#
+# Conversion/validation functions for use with ObjectTypedField.
+#
+
+
+def check_string(value):
+    if isinstance(value, str):
+        return value
+    else:
+        raise TypeError("%r is not of type str" % (value,))
+
+
+def check_string_or_none(value):
+    if value is None:
+        return value
+    else:
+        return check_string(value)
+
+
+#
+# Specialised objects.
+#
+
+
 class Tags(Object):
     """The set of tags."""
 
@@ -216,13 +345,18 @@ class Tags(Object):
 class Tag(Object):
     """A tag."""
 
-    name = ObjectField("name")
-    comment = ObjectField("comment", default="")
-    definition = ObjectField("definition", default="")
-    kernel_opts = ObjectField("kernel_opts", default=None)
+    name = ReadOnlyField(ObjectTypedField(
+        "name", check_string, check_string))
+    comment = ObjectTypedField(
+        "comment", check_string, check_string, default="")
+    definition = ObjectTypedField(
+        "definition", check_string, check_string, default="")
+    kernel_opts = ObjectTypedField(
+        "kernel_opts", check_string_or_none, check_string_or_none,
+        default=None)
 
 
-class FilesType(type):
+class FilesType(ObjectType):
 
     def __iter__(cls):
         for data in cls._handler.list():
@@ -232,7 +366,9 @@ class FilesType(type):
 class Files(Object, metaclass=FilesType):
     """The set of files stored in MAAS."""
 
-    @classmethod
+    list = ObjectMethod()
+
+    @list.classmethod
     def list(cls):
         return [cls._origin.File(data) for data in cls._handler.list()]
 
@@ -240,17 +376,30 @@ class Files(Object, metaclass=FilesType):
 class File(Object):
     """A file stored in MAAS."""
 
+    filename = ReadOnlyField(ObjectTypedField(
+        "filename", check_string, check_string))
 
+
+#
+# Now it's possible to define the default Origin, which uses the specialised
+# objects created in this module. Most people should use this.
+#
+
+
+# Specialised objects defined in this module.
 objects = {
-    "File": File,
-    "Files": Files,
-    "Tag": Tag,
-    "Tags": Tags,
+    subclass.__name__: subclass
+    for subclass in get_all_subclasses(Object)
+    if subclass.__module__ == __name__
 }
 
 
 class Origin(OriginBase):
-    """Represents an originating remote MAAS installation."""
+    """Represents a remote MAAS installation.
+
+    Uses specialised objects defined in its originating module. This is
+    probably the best choice for most people.
+    """
 
     def __init__(self, session):
         """
