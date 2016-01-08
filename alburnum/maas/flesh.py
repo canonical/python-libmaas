@@ -11,12 +11,15 @@ from abc import (
     abstractmethod,
 )
 import argparse
+from itertools import chain
+from operator import itemgetter
 import sys
 from textwrap import fill
 
 from alburnum.maas import (
     bones,
     utils,
+    viscera,
 )
 from alburnum.maas.auth import obtain_credentials
 from alburnum.maas.bones import CallError
@@ -29,7 +32,21 @@ def check_valid_apikey(_1, _2, _3):  # TODO
     return True
 
 
+def prep_table(data):
+    """Ensure that `data` is a list of lists of strings.
+
+    The `terminaltables` library strongly insists on `list`s of `list`s; even
+    tuples are rejected. It also does not grok `None` or any other non-string
+    as column values.
+    """
+    return [
+        [("" if col is None else str(col)) for col in row]
+        for row in data
+    ]
+
+
 def make_table(data):
+    data = prep_table(data)
     if sys.stdout.isatty():
         return terminaltables.SingleTable(data)
     else:
@@ -96,10 +113,9 @@ class Command(metaclass=ABCMeta):
     @classmethod
     def name(cls):
         """Return the preferred name as which this command will be known."""
-        if cls.__name__.startswith("cmd_"):
-            return cls.__name__[4:]
-        else:
-            return cls.__name__
+        name = cls.__name__.replace("_", "-").lower()
+        name = name[4:] if name.startswith("cmd-") else name
+        return name
 
     @classmethod
     def register(cls, parser, name=None):
@@ -192,25 +208,6 @@ class cmd_login(Command):
             print()
 
 
-class cmd_refresh(Command):
-    """Refresh the API descriptions of all profiles.
-
-    This retrieves the latest version of the help information for each
-    profile.  Use it to update your command-line client's information after
-    an upgrade to the MAAS server.
-    """
-
-    def __call__(self, options):
-        with utils.ProfileConfig.open() as config:
-            for profile_name in config:
-                profile = config[profile_name]
-                url, creds = profile["url"], profile["credentials"]
-                session = bones.SessionAPI.fromURL(
-                    url, credentials=Credentials(*creds))
-                profile["description"] = session.description
-                config[profile_name] = profile
-
-
 class cmd_logout(Command):
     """Log out of a remote API, purging any stored credentials.
 
@@ -231,7 +228,7 @@ class cmd_logout(Command):
             del config[options.profile_name]
 
 
-class cmd_list(Command):
+class cmd_list_profiles(Command):
     """List remote APIs that have been logged-in to."""
 
     def __call__(self, options):
@@ -249,6 +246,106 @@ class cmd_list(Command):
         print_table(rows)
 
 
+class cmd_refresh_profiles(Command):
+    """Refresh the API descriptions of all profiles.
+
+    This retrieves the latest version of the help information for each
+    profile.  Use it to update your command-line client's information after
+    an upgrade to the MAAS server.
+    """
+
+    def __call__(self, options):
+        with utils.ProfileConfig.open() as config:
+            for profile_name in config:
+                profile = config[profile_name]
+                url, creds = profile["url"], profile["credentials"]
+                session = bones.SessionAPI.fromURL(
+                    url, credentials=Credentials(*creds))
+                profile["description"] = session.description
+                config[profile_name] = profile
+
+
+class OriginCommand(Command):
+
+    def __init__(self, parser):
+        super(OriginCommand, self).__init__(parser)
+        parser.add_argument("profile_name", metavar="profile-name")
+
+    def __call__(self, options):
+        session = bones.SessionAPI.fromProfileName(options.profile_name)
+        origin = viscera.Origin(session)
+        return self.execute(origin, options)
+
+    def execute(self, options, origin):
+        raise NotImplementedError()
+
+
+class cmd_list_nodes(OriginCommand):
+    """List nodes."""
+
+    def execute(self, origin, options):
+        head = [["Hostname", "System ID", "Arch", "#CPUs", "RAM"]]
+        body = (
+            (node.hostname, node.system_id, node.architecture,
+             node.cpus, node.memory)
+            for node in origin.Nodes
+        )
+        body = sorted(body, key=itemgetter(0))
+        print_table(chain(head, body))
+
+
+class cmd_list_tags(OriginCommand):
+    """List tags."""
+
+    def execute(self, origin, options):
+        head = [["Tag name", "Definition", "Kernel options", "Comment"]]
+        body = (
+            (tag.name, tag.definition, tag.kernel_opts, tag.comment)
+            for tag in origin.Tags
+        )
+        body = sorted(body, key=itemgetter(0))
+        print_table(chain(head, body))
+
+
+class cmd_list_files(OriginCommand):
+    """List files."""
+
+    def execute(self, origin, options):
+        head = [["File name"]]
+        body = ((file.filename,) for file in origin.Files)
+        body = sorted(body, key=itemgetter(0))
+        print_table(chain(head, body))
+
+
+class cmd_list_users(OriginCommand):
+    """List users."""
+
+    def execute(self, origin, options):
+        head = [["User name", "Email address", "Admin?"]]
+        body = (
+            (user.username, user.email,
+             "Yes" if user.is_admin else "No")
+            for user in origin.Users
+        )
+        body = sorted(body, key=itemgetter(0))
+        print_table(chain(head, body))
+
+
+class cmd_list_xxx(OriginCommand):
+    """List xxxs."""
+
+    def execute(self, origin, options):
+        xxxs = list(origin.Xxxs)
+        first = xxxs[0]  # Making an assumption...
+        fields = sorted(first._data)
+        head = [fields]
+        body = (
+            (xxx._data.get(field) for field in fields)
+            for xxx in xxxs
+        )
+        print_table(chain(head, body))
+
+
 def prepare_parser(argv):
     """Create and populate an argument parser."""
     parser = ArgumentParser(
@@ -258,8 +355,14 @@ def prepare_parser(argv):
     # Basic commands.
     cmd_login.register(parser)
     cmd_logout.register(parser)
-    cmd_list.register(parser)
-    cmd_refresh.register(parser)
+    cmd_list_profiles.register(parser)
+    cmd_refresh_profiles.register(parser)
+
+    # Other commands.
+    cmd_list_nodes.register(parser)
+    cmd_list_tags.register(parser)
+    cmd_list_files.register(parser)
+    cmd_list_users.register(parser)
 
     parser.add_argument(
         '--debug', action='store_true', default=False,

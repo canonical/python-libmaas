@@ -537,7 +537,7 @@ class Node(Object):
         "boot_disk", check_optional(str), check_optional(str))
     boot_type = ObjectTypedField(
         "boot_type", check(str), check(str))
-    cpu_count = ObjectTypedField(
+    cpus = ObjectTypedField(
         "cpu_count", check(int), check(int))
     disable_ipv4 = ObjectTypedField(
         "disable_ipv4", check(bool), check(bool))
@@ -638,6 +638,13 @@ class Users(ObjectSet, metaclass=UsersType):
 
 class User(Object):
     """A user."""
+
+    username = ObjectTypedField(
+        "username", check(str), check(str))
+    email = ObjectTypedField(
+        "email", check(str), check(str))
+    is_admin = ObjectTypedField(
+        "is_superuser", check(bool), check(bool))
 
 
 #
