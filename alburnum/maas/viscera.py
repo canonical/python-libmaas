@@ -21,11 +21,17 @@ __all__ = [
     "OriginBase",
 ]
 
-from itertools import starmap
+import base64
+from itertools import (
+    chain,
+    starmap,
+)
 from types import MethodType
 from typing import (
     List,
     Optional,
+    Sequence,
+    Union,
 )
 
 from alburnum.maas.utils import (
@@ -97,19 +103,45 @@ def dir_instance(inst):
             yield name
 
 
+class OriginObjectRef:
+    """A reference to an object in the origin.
+
+    Use this on an `Object` to reference a related object type via a bound
+    origin (see `OriginBase`). By default this guesses that the name of the
+    referenced object is the singular of the owner's name. For example,
+    given::
+
+      class Things(Object):
+          _object = OriginObjectRef()
+
+    `Things._object` would look for `Things._origin.Thing`. When referencing
+    something that has non-trivial singular/plural naming, specify the name to
+    the `OriginObjectRef` constructor.
+    """
+
+    def __init__(self, name=None):
+        super(OriginObjectRef, self).__init__()
+        self.name = name
+
+    def __get__(self, instance, owner):
+        if self.name is None:
+            return getattr(owner._origin, owner.__name__.rstrip("s"))
+        else:
+            return getattr(owner._origin, self.name)
+
+    def __set__(self, instance, value):
+        raise AttributeError()
+
+
 class ObjectType(type):
 
     def __dir__(cls):
         return list(dir_class(cls))
 
 
-class Object(metaclass=ObjectType):
-    """An object in a MAAS installation."""
+class ObjectBasics:
 
-    def __init__(self, data):
-        super(Object, self).__init__()
-        assert isinstance(data, dict)
-        self._data = data
+    __slots__ = ()
 
     def __dir__(self):
         return list(dir_instance(self))
@@ -128,6 +160,28 @@ class Object(metaclass=ObjectType):
             return "<%s>" % (self.__class__.__name__, )
         else:
             return "<%s %s>" % (self.__class__.__name__, desc)
+
+
+class Object(ObjectBasics, metaclass=ObjectType):
+    """An object in a MAAS installation."""
+
+    __slots__ = ("_data", )
+
+    def __init__(self, data):
+        super(Object, self).__init__()
+        assert isinstance(data, dict)
+        self._data = data
+
+
+class ObjectSet(ObjectBasics, list, metaclass=ObjectType):
+    """A set of objects in a MAAS installation."""
+
+    __slots__ = ()
+
+    _object = OriginObjectRef()
+
+    def __init__(self, items):
+        super(ObjectSet, self).__init__(items)
 
 
 class ObjectField:
@@ -260,19 +314,22 @@ class OriginBase:
         for name in names:
             handler = handlers.get(name, None)
             base = self.__objects.get(name, Object)
-            assert issubclass(base, Object)
+            assert issubclass(type(base), ObjectType)
             # Put the _origin and _handler in the class's attributes, and set
             # the module to something informative.
             attrs = {"_origin": self, "_handler": handler}
             attrs["__module__"] = "origin"  # Could do better?
             # Make default methods for actions that are not handled.
             if handler is not None:
-                methods = {
-                    name: self.__method(action)
-                    for name, action in handler.actions
-                    if not hasattr(base, name)
-                }
-                attrs.update(methods)
+                if issubclass(base, Object):
+                    methods = {
+                        "_" + name: self.__method(action)
+                        for name, action in handler.actions
+                        if not hasattr(base, name)
+                    }
+                    attrs.update(methods)
+                elif issubclass(base, ObjectSet):
+                    pass  # TODO?
             # Construct a new class derived from base, in effect "binding" it
             # to this origin.
             obj = type(name, (base,), attrs)
@@ -297,7 +354,7 @@ class OriginBase:
 
             def for_class(cls, **params):
                 data = action(**params)
-                return cls(data)
+                return cls._object(data)
 
             method = ObjectMethod(pretty(for_class), None)
 
@@ -371,23 +428,23 @@ class TagsType(ObjectType):
     """Metaclass for `Tags`."""
 
     def __iter__(cls):
-        return map(cls._origin.Tag, cls._handler.list())
+        return map(cls._object, cls._handler.list())
 
     def create(cls, name, *, comment="", definition="", kernel_opts=""):
         data = cls._handler.new(
             name=name, comment=comment, definition=definition,
             kernel_opts=kernel_opts)
-        return cls(data)
+        return cls._object(data)
 
     new = Disabled("new", "create")  # API is malformed in MAAS server.
 
     def read(cls):
-        return list(cls)
+        return cls(cls)
 
     list = Disabled("list", "read")  # API is malformed in MAAS server.
 
 
-class Tags(Object, metaclass=TagsType):
+class Tags(ObjectSet, metaclass=TagsType):
     """The set of tags."""
 
 
@@ -395,7 +452,7 @@ class Tag(Object):
     """A tag."""
 
     name = ObjectTypedField(
-        "name", check(str), check(str), readonly=True)
+        "name", check(str), readonly=True)
     comment = ObjectTypedField(
         "comment", check(str), check(str), default="")
     definition = ObjectTypedField(
@@ -409,7 +466,7 @@ class FilesType(ObjectType):
     """Metaclass for `Files`."""
 
     def __iter__(cls):
-        return map(cls._origin.File, cls._handler.list())
+        return map(cls._object, cls._handler.list())
 
     def read(cls):
         return list(cls)
@@ -417,7 +474,7 @@ class FilesType(ObjectType):
     list = Disabled("list", "read")  # API is malformed in MAAS server.
 
 
-class Files(Object, metaclass=FilesType):
+class Files(ObjectSet, metaclass=FilesType):
     """The set of files stored in MAAS."""
 
 
@@ -425,22 +482,49 @@ class File(Object):
     """A file stored in MAAS."""
 
     filename = ObjectTypedField(
-        "filename", check(str), check(str), readonly=True)
+        "filename", check(str), readonly=True)
 
 
 class NodesType(ObjectType):
     """Metaclass for `Nodes`."""
 
     def __iter__(cls):
-        return map(cls._origin.Node, cls._handler.list())
+        return map(cls._object, cls._handler.list())
 
     def read(cls):
         return list(cls)
 
     list = Disabled("list", "read")  # API is malformed in MAAS server.
 
+    def acquire(
+            cls, *, hostname: str=None, architecture: str=None,
+            cpus: int=None, memory: float=None, tags: Sequence[str]=None):
+        """
+        :param hostname: The hostname to match.
+        :param architecture: The architecture to match, e.g. "amd64".
+        :param cpus: The minimum number of CPUs to match.
+        :param memory: The minimum amount of RAM to match.
+        :param tags: The tags to match, as a sequence. Each tag may be
+            prefixed with a hyphen to denote that the given tag should NOT be
+            associated with a matched node.
+        """
+        params = {}
+        if hostname is not None:
+            params["hostname"] = hostname
+        if architecture is not None:
+            params["architecture"] = architecture
+        if cpus is not None:
+            params["cpu_count"] = str(cpus)
+        if memory is not None:
+            params["mem"] = str(memory)
+        if tags is not None:
+            params["tags"] = [tag for tag in tags if not tag.startswith("-")]
+            params["not_tags"] = [tag for tag in tags if tag.startswith("-")]
+        data = cls._handler.acquire(**params)
+        return cls._object(data)
 
-class Nodes(Object, metaclass=NodesType):
+
+class Nodes(ObjectSet, metaclass=NodesType):
     """The set of nodes stored in MAAS."""
 
 
@@ -464,7 +548,7 @@ class Node(Object):
     hwe_kernel = ObjectTypedField(
         "hwe_kernel", check_optional(str), check_optional(str))
     ip_addresses = ObjectTypedField(
-        "ip_addresses", check(List[str]), check(List[str]), readonly=True)
+        "ip_addresses", check(List[str]), readonly=True)
     memory = ObjectTypedField(
         "memory", check(int), check(int))
     min_hwe_kernel = ObjectTypedField(
@@ -489,20 +573,62 @@ class Node(Object):
     # substatus_message
     # substatus_name
     # swap_size
+
+    system_id = ObjectTypedField(
+        "system_id", check(str), readonly=True)
+
     # system_id
     # tag_names
     # virtualblockdevice_set
     # zone
+
+    def start(
+            self, user_data: Union[bytes, str]=None, distro_series: str=None,
+            hwe_kernel: str=None, comment: str=None):
+        """Start this node.
+
+        :param user_data: User-data to provide to the node when booting. If
+            provided as a byte string, it will be base-64 encoded prior to
+            transmission. If provided as a Unicode string it will be assumed
+            to be already base-64 encoded.
+        :param distro_series: The OS to deploy.
+        :param hwe_kernel: The HWE kernel to deploy. Probably only relevant
+            when deploying Ubuntu.
+        :param comment: A comment for the event log.
+        """
+        params = {"system_id": self.system_id}
+        if user_data is not None:
+            if isinstance(user_data, bytes):
+                params["user_data"] = base64.encodebytes(user_data)
+            else:
+                # Already base-64 encoded. Convert to a byte string in
+                # preparation for multipart assembly.
+                params["user_data"] = user_data.encode("ascii")
+        if distro_series is not None:
+            params["distro_series"] = distro_series
+        if hwe_kernel is not None:
+            params["hwe_kernel"] = hwe_kernel
+        if comment is not None:
+            params["comment"] = comment
+        data = self._handler.start(**params)
+        return type(self)(data)
+
+    def release(self, comment: str=None):
+        params = {"system_id": self.system_id}
+        if comment is not None:
+            params["comment"] = comment
+        data = self._handler.release(**params)
+        return type(self)(data)
 
 
 class UsersType(ObjectType):
     """Metaclass for `Users`."""
 
     def __iter__(cls):
-        return map(cls._origin.User, cls._handler.read())
+        return map(cls._object, cls._handler.read())
 
 
-class Users(Object, metaclass=UsersType):
+class Users(ObjectSet, metaclass=UsersType):
     """The set of users."""
 
     @classmethod
@@ -523,7 +649,10 @@ class User(Object):
 # Specialised objects defined in this module.
 objects = {
     subclass.__name__: subclass
-    for subclass in get_all_subclasses(Object)
+    for subclass in chain(
+        get_all_subclasses(Object),
+        get_all_subclasses(ObjectSet),
+    )
     if subclass.__module__ == __name__
 }
 
