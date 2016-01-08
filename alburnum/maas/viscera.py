@@ -562,6 +562,11 @@ class Node(Object):
     # osystem
     # owner
     # physicalblockdevice_set
+
+    # TODO: Use an enum here.
+    power_state = ObjectTypedField(
+        "power_state", check(str), readonly=True)
+
     # power_state
     # power_type
     # pxe_mac
@@ -569,10 +574,16 @@ class Node(Object):
     # routers
     # status
     # storage
-    # substatus
-    # substatus_action
-    # substatus_message
-    # substatus_name
+
+    substatus = ObjectTypedField(
+        "substatus", check(int), readonly=True)
+    substatus_action = ObjectTypedField(
+        "substatus_action", check_optional(str), readonly=True)
+    substatus_message = ObjectTypedField(
+        "substatus_message", check_optional(str), readonly=True)
+    substatus_name = ObjectTypedField(
+        "substatus_name", check(str), readonly=True)
+
     # swap_size
 
     system_id = ObjectTypedField(

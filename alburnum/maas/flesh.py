@@ -25,6 +25,7 @@ from alburnum.maas.auth import obtain_credentials
 from alburnum.maas.bones import CallError
 from alburnum.maas.creds import Credentials
 import argcomplete
+import colorclass
 import terminaltables
 
 
@@ -32,7 +33,25 @@ def check_valid_apikey(_1, _2, _3):  # TODO
     return True
 
 
-def prep_table(data):
+def colorized(text):
+    if sys.stdout.isatty():
+        # Don't return value_colors; returning the Color instance allows
+        # terminaltables to correctly calculate alignment and padding.
+        return colorclass.Color(text)
+    else:
+        return colorclass.Color(text).value_no_colors
+
+
+def prep(cell):
+    if cell is None:
+        return ""
+    elif isinstance(cell, str):
+        return cell
+    else:
+        return str(cell)
+
+
+def prep_table(data, prep=prep):
     """Ensure that `data` is a list of lists of strings.
 
     The `terminaltables` library strongly insists on `list`s of `list`s; even
@@ -40,7 +59,7 @@ def prep_table(data):
     as column values.
     """
     return [
-        [("" if col is None else str(col)) for col in row]
+        [prep(col) for col in row]
         for row in data
     ]
 
@@ -283,11 +302,57 @@ class OriginCommand(Command):
 class cmd_list_nodes(OriginCommand):
     """List nodes."""
 
+    status_colours = {
+        # "New": "",  # White.
+        "Commissioning": "autoyellow",
+        "Failed commissioning": "autored",
+        "Missing": "red",
+        "Ready": "autogreen",
+        "Reserved": "autoblue",
+        "Allocated": "autoblue",
+        "Deploying": "autoblue",
+        "Deployed": "autoblue",
+        # "Retired": "",  # White.
+        "Broken": "autored",
+        "Failed deployment": "autored",
+        "Releasing": "autoblue",
+        "Releasing failed": "autored",
+        "Disk erasing": "autoblue",
+        "Failed disk erasing": "autored",
+    }
+
+    def colourised_status(self, node):
+        status = node.substatus_name
+        if status in self.status_colours:
+            colour = self.status_colours[status]
+            return colorized("{%s}%s{/%s}" % (colour, status, colour))
+        else:
+            return status
+
+    power_colours = {
+        "on": "autogreen",
+        # "off": "",  # White.
+        "error": "autored",
+    }
+
+    def colourised_power(self, node):
+        state = node.power_state
+        if state in self.power_colours:
+            colour = self.power_colours[state]
+            return colorized("{%s}%s{/%s}" % (
+                colour, state.capitalize(), colour))
+        else:
+            return state.capitalize()
+
     def execute(self, origin, options):
-        head = [["Hostname", "System ID", "Arch", "#CPUs", "RAM"]]
+        head = [
+            ["Hostname", "System ID", "Arch", "#CPUs",
+             "RAM", "Status", "Power"],
+        ]
         body = (
             (node.hostname, node.system_id, node.architecture,
-             node.cpus, node.memory)
+             node.cpus, node.memory, self.colourised_status(node),
+             self.colourised_power(node))
             for node in origin.Nodes
         )
         body = sorted(body, key=itemgetter(0))
@@ -323,8 +388,8 @@ class cmd_list_users(OriginCommand):
     def execute(self, origin, options):
         head = [["User name", "Email address", "Admin?"]]
         body = (
-            (user.username, user.email,
-             "Yes" if user.is_admin else "No")
+            (user.username, user.email, colorized(
+                "{autogreen}Yes{/autogreen}" if user.is_admin else "No"))
             for user in origin.Users
         )
         body = sorted(body, key=itemgetter(0))
