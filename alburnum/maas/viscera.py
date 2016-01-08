@@ -532,11 +532,12 @@ class Node(Object):
     """A node stored in MAAS."""
 
     architecture = ObjectTypedField(
-        "architecture", check(str), check(str))
+        "architecture", check_optional(str), check_optional(str))
     boot_disk = ObjectTypedField(
         "boot_disk", check_optional(str), check_optional(str))
-    boot_type = ObjectTypedField(
-        "boot_type", check(str), check(str))
+
+    # boot_type
+
     cpus = ObjectTypedField(
         "cpu_count", check(int), check(int))
     disable_ipv4 = ObjectTypedField(
