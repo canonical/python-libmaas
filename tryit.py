@@ -14,7 +14,7 @@ from alburnum.maas import (
 
 parser = ArgumentParser()
 parser.add_argument(
-    "profile", default="madagascar", help=(
+    "profile", nargs="?", default="madagascar", help=(
         "Name of MAAS CLI profile to use. This should be the name of a "
         "profile created when using `maas login` at the command-line. "
         "(default: %(default)s)"
@@ -70,13 +70,13 @@ if __name__ == "__main__":
             node["system_id"] for node in session.Nodes.list()
         ]))
 
-    title("Working with `viscera`, the higher-level API.")
-
     #          "
     # m   m  mmm     mmm    mmm    mmm    m mm   mmm
     # "m m"    #    #   "  #"  "  #"  #   #"  " "   #
     #  #m#     #     """m  #      #""""   #     m"""#
     #   #    mm#mm  "mmm"  "#mm"  "#mm"   #     "mm"#
+
+    title("Working with `viscera`, the higher-level API.")
 
     origin = viscera.Origin(session)
 
