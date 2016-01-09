@@ -138,6 +138,10 @@ class ObjectType(type):
     def __dir__(cls):
         return list(dir_class(cls))
 
+    def __new__(cls, name, bases, attrs):
+        attrs.setdefault("__slots__", ())
+        return super(ObjectType, cls).__new__(cls, name, bases, attrs)
+
 
 class ObjectBasics:
 
@@ -165,7 +169,7 @@ class ObjectBasics:
 class Object(ObjectBasics, metaclass=ObjectType):
     """An object in a MAAS installation."""
 
-    __slots__ = ("_data", )
+    __slots__ = "__weakref__", "_data"
 
     def __init__(self, data):
         super(Object, self).__init__()
@@ -176,7 +180,7 @@ class Object(ObjectBasics, metaclass=ObjectType):
 class ObjectSet(ObjectBasics, list, metaclass=ObjectType):
     """A set of objects in a MAAS installation."""
 
-    __slots__ = ()
+    __slots__ = "__weakref__",
 
     _object = OriginObjectRef()
 
@@ -221,14 +225,16 @@ class ObjectField:
 class ObjectTypedField(ObjectField):
 
     def __init__(
-            self, name, d2v=None, v2d=None, *, default=undefined,
-            readonly=False):
+            self, name, datum_to_value=None, value_to_datum=None, *,
+            default=undefined, readonly=False):
         super(ObjectTypedField, self).__init__(
             name, default=default, readonly=readonly)
-        self.d2v = (lambda value: value) if d2v is None else d2v
-        self.v2d = (lambda value: value) if v2d is None else v2d
+        self.datum_to_value = (
+            (lambda d: d) if datum_to_value is None else datum_to_value)
+        self.value_to_datum = (
+            (lambda v: v) if value_to_datum is None else value_to_datum)
         if default is not undefined:
-            if self.d2v(self.v2d(default)) != default:
+            if self.datum_to_value(self.value_to_datum(default)) != default:
                 raise TypeError(
                     "The default of %r cannot be round-tripped through the "
                     "conversion/validation functions given." % (default, ))
@@ -238,10 +244,13 @@ class ObjectTypedField(ObjectField):
             return self
         else:
             datum = super(ObjectTypedField, self).__get__(instance, owner)
-            return self.default if datum is self.default else self.d2v(datum)
+            if datum is self.default:
+                return datum
+            else:
+                return self.datum_to_value(datum)
 
     def __set__(self, instance, value):
-        datum = self.v2d(value)
+        datum = self.value_to_datum(value)
         super(ObjectTypedField, self).__set__(instance, datum)
 
 
@@ -323,7 +332,7 @@ class OriginBase:
             if handler is not None:
                 if issubclass(base, Object):
                     methods = {
-                        "_" + name: self.__method(action)
+                        "_%s" % name: self.__method(action)
                         for name, action in handler.actions
                         if not hasattr(base, name)
                     }
