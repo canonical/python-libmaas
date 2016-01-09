@@ -22,6 +22,7 @@ __all__ = [
 ]
 
 import base64
+from http import HTTPStatus
 from itertools import (
     chain,
     starmap,
@@ -34,6 +35,7 @@ from typing import (
     Union,
 )
 
+from alburnum.maas.bones import CallError
 from alburnum.maas.utils import (
     get_all_subclasses,
     vars_class,
@@ -527,10 +529,25 @@ class NodesType(ObjectType):
         if memory is not None:
             params["mem"] = str(memory)
         if tags is not None:
-            params["tags"] = [tag for tag in tags if not tag.startswith("-")]
-            params["not_tags"] = [tag for tag in tags if tag.startswith("-")]
-        data = cls._handler.acquire(**params)
-        return cls._object(data)
+            params["tags"] = [
+                tag for tag in tags if not tag.startswith("-")]
+            params["not_tags"] = [
+                tag[1:] for tag in tags if tag.startswith("-")]
+
+        try:
+            data = cls._handler.acquire(**params)
+        except CallError as error:
+            if error.status == HTTPStatus.CONFLICT:
+                message = "No node matching the given criteria was found."
+                raise NodeNotFound(message) from error
+            else:
+                raise
+        else:
+            return cls._object(data)
+
+
+class NodeNotFound(Exception):
+    """Node was not found."""
 
 
 class Nodes(ObjectSet, metaclass=NodesType):
