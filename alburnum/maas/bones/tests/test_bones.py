@@ -5,24 +5,14 @@
 
 __all__ = []
 
-import fixtures
+from fnmatch import fnmatchcase
 import http
 import http.server
-import httplib2
 import json
-import ssl
-import threading
-from fnmatch import fnmatchcase
 from os.path import splitext
 from pathlib import Path
-from pkg_resources import (
-    resource_filename,
-    resource_listdir,
-)
-from testtools.matchers import (
-    Equals,
-    MatchesStructure,
-)
+import ssl
+import threading
 from unittest.mock import (
     ANY,
     Mock,
@@ -37,6 +27,16 @@ from uuid import uuid1
 from alburnum.maas import bones
 from alburnum.maas.testing import TestCase
 from alburnum.maas.utils.tests.test_auth import make_credentials
+import fixtures
+import httplib2
+from pkg_resources import (
+    resource_filename,
+    resource_listdir,
+)
+from testtools.matchers import (
+    Equals,
+    MatchesStructure,
+)
 
 
 def list_api_descriptions():

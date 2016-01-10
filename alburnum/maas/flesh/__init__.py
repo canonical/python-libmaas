@@ -6,23 +6,19 @@
 
 __all__ = []
 
-import argcomplete
-import argparse
-import collections
-import colorclass
-import csv
-import enum
-import json
-import sys
-import terminaltables
-import yaml
 from abc import (
     ABCMeta,
     abstractmethod,
 )
+import argparse
+import collections
+import csv
+import enum
 from io import StringIO
+import json
 from operator import itemgetter
 from os import environ
+import sys
 from textwrap import fill
 
 from alburnum.maas import (
@@ -33,6 +29,10 @@ from alburnum.maas import (
 from alburnum.maas.bones import CallError
 from alburnum.maas.utils.auth import obtain_credentials
 from alburnum.maas.utils.creds import Credentials
+import argcomplete
+import colorclass
+import terminaltables
+import yaml
 
 
 def check_valid_apikey(_1, _2, _3):  # TODO

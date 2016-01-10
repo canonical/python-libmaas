@@ -6,8 +6,8 @@
 
 __all__ = []
 
-import sys
 from argparse import Namespace
+import sys
 from unittest.mock import (
     ANY,
     sentinel,

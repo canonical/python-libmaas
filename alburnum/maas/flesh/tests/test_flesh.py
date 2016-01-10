@@ -6,13 +6,11 @@
 
 __all__ = []
 
-import sys
 from io import StringIO
+import sys
 from textwrap import dedent
 
-from alburnum.maas import (
-    flesh,
-)
+from alburnum.maas import flesh
 from alburnum.maas.testing import (
     make_name,
     TestCase,

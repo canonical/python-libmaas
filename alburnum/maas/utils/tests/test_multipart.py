@@ -5,16 +5,8 @@
 
 __all__ = []
 
-from django.conf import settings
-from django.core.files.uploadhandler import MemoryFileUploadHandler
-from django.http.multipartparser import MultiPartParser
-from django.utils.datastructures import MultiValueDict
 from io import BytesIO
 from os import urandom
-from testtools.matchers import (
-    EndsWith,
-    StartsWith,
-)
 
 from alburnum.maas.testing import (
     make_string,
@@ -23,6 +15,14 @@ from alburnum.maas.testing import (
 from alburnum.maas.utils.multipart import (
     encode_multipart_data,
     get_content_type,
+)
+from django.conf import settings
+from django.core.files.uploadhandler import MemoryFileUploadHandler
+from django.http.multipartparser import MultiPartParser
+from django.utils.datastructures import MultiValueDict
+from testtools.matchers import (
+    EndsWith,
+    StartsWith,
 )
 
 # Django, sigh, needs this.

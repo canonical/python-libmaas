@@ -8,14 +8,12 @@ __all__ = [
 ]
 
 import cmd
-import colorclass
 import shlex
-import terminaltables
 
-from alburnum.maas import (
-    utils,
-)
+from alburnum.maas import utils
 from alburnum.maas.utils import auth
+import colorclass
+import terminaltables
 
 
 def with_trailing_space(name):

@@ -6,10 +6,9 @@
 
 __all__ = []
 
-from testtools.matchers import IsInstance
-
 from alburnum.maas.testing import TestCase
 from alburnum.maas.utils.creds import Credentials
+from testtools.matchers import IsInstance
 
 
 class TestCredentials(TestCase):

@@ -8,8 +8,8 @@ __all__ = [
     'obtain_credentials',
     ]
 
-import sys
 from getpass import getpass
+import sys
 
 from alburnum.maas.utils.creds import Credentials
 
