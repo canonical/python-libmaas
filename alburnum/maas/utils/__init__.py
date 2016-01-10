@@ -14,6 +14,10 @@ __all__ = [
     "vars_class",
 ]
 
+import json
+import os
+import re
+import sqlite3
 from contextlib import (
     closing,
     contextmanager,
@@ -25,21 +29,17 @@ from inspect import (
     getdoc,
 )
 from itertools import chain
-import json
-import os
+from oauthlib import oauth1
 from os.path import expanduser
-import re
-import sqlite3
 from urllib.parse import (
     quote_plus,
     urlparse,
 )
 
-from alburnum.maas.multipart import (
+from alburnum.maas.utils.multipart import (
     build_multipart_message,
     encode_multipart_message,
 )
-from oauthlib import oauth1
 
 
 def urlencode(data):

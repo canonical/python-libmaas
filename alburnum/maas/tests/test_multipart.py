@@ -5,24 +5,24 @@
 
 __all__ = []
 
-from io import BytesIO
-from os import urandom
-
-from alburnum.maas.multipart import (
-    encode_multipart_data,
-    get_content_type,
-)
-from alburnum.maas.testing import (
-    make_string,
-    TestCase,
-)
 from django.conf import settings
 from django.core.files.uploadhandler import MemoryFileUploadHandler
 from django.http.multipartparser import MultiPartParser
 from django.utils.datastructures import MultiValueDict
+from io import BytesIO
+from os import urandom
 from testtools.matchers import (
     EndsWith,
     StartsWith,
+)
+
+from alburnum.maas.testing import (
+    make_string,
+    TestCase,
+)
+from alburnum.maas.utils.multipart import (
+    encode_multipart_data,
+    get_content_type,
 )
 
 # Django, sigh, needs this.

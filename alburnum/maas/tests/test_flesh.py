@@ -6,12 +6,11 @@
 
 __all__ = []
 
-from io import StringIO
 import sys
+from io import StringIO
 from textwrap import dedent
 
 from alburnum.maas import (
-    auth,
     flesh,
 )
 from alburnum.maas.testing import (
@@ -19,6 +18,7 @@ from alburnum.maas.testing import (
     TestCase,
 )
 from alburnum.maas.tests.test_auth import make_options
+from alburnum.maas.utils import auth
 
 
 class TestLogin(TestCase):

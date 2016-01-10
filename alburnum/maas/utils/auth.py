@@ -8,10 +8,10 @@ __all__ = [
     'obtain_credentials',
     ]
 
-from getpass import getpass
 import sys
+from getpass import getpass
 
-from alburnum.maas.creds import Credentials
+from alburnum.maas.utils.creds import Credentials
 
 
 def try_getpass(prompt):

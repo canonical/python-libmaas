@@ -6,19 +6,19 @@
 
 __all__ = []
 
-from argparse import Namespace
 import sys
+from argparse import Namespace
 from unittest.mock import (
     ANY,
     sentinel,
 )
 
-from alburnum.maas import auth
-from alburnum.maas.creds import Credentials
 from alburnum.maas.testing import (
     make_name,
     TestCase,
 )
+from alburnum.maas.utils import auth
+from alburnum.maas.utils.creds import Credentials
 
 
 def make_credentials():
