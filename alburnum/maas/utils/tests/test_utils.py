@@ -8,6 +8,7 @@ __all__ = []
 import base64
 import contextlib
 from functools import partial
+from itertools import cycle
 import os
 import os.path
 import sqlite3
@@ -23,12 +24,14 @@ from alburnum.maas.utils import (
     OAuthSigner,
     prepare_payload,
     ProfileConfig,
+    retries,
 )
 from testtools.matchers import (
     AfterPreprocessing,
     Equals,
     MatchesListwise,
 )
+from twisted.internet.task import Clock
 from twisted.python.filepath import FilePath
 
 
@@ -412,3 +415,111 @@ class TestFunctions(TestCase):
             for url_out in urls_out
             ]
         self.assertThat(urls, MatchesListwise(expected))
+
+
+class TestRetries(TestCase):
+
+    def assertRetry(
+            self, clock, observed, expected_elapsed, expected_remaining,
+            expected_wait):
+        """Assert that the retry tuple matches the given expectations.
+
+        Retry tuples are those returned by `retries`.
+        """
+        self.assertThat(observed, MatchesListwise([
+            Equals(expected_elapsed),  # elapsed
+            Equals(expected_remaining),  # remaining
+            Equals(expected_wait),  # wait
+        ]))
+
+    def test_yields_elapsed_remaining_and_wait(self):
+        # Take control of time.
+        clock = Clock()
+
+        gen_retries = retries(5, 2, time=clock.seconds)
+        # No time has passed, 5 seconds remain, and it suggests sleeping
+        # for 2 seconds.
+        self.assertRetry(clock, next(gen_retries), 0, 5, 2)
+        # Mimic sleeping for the suggested sleep time.
+        clock.advance(2)
+        # Now 2 seconds have passed, 3 seconds remain, and it suggests
+        # sleeping for 2 more seconds.
+        self.assertRetry(clock, next(gen_retries), 2, 3, 2)
+        # Mimic sleeping for the suggested sleep time.
+        clock.advance(2)
+        # Now 4 seconds have passed, 1 second remains, and it suggests
+        # sleeping for just 1 more second.
+        self.assertRetry(clock, next(gen_retries), 4, 1, 1)
+        # Mimic sleeping for the suggested sleep time.
+        clock.advance(1)
+        # There's always a final chance to try something.
+        self.assertRetry(clock, next(gen_retries), 5, 0, 0)
+        # All done.
+        self.assertRaises(StopIteration, next, gen_retries)
+
+    def test_calculates_times_with_reference_to_current_time(self):
+        # Take control of time.
+        clock = Clock()
+
+        gen_retries = retries(5, 2, time=clock.seconds)
+        # No time has passed, 5 seconds remain, and it suggests sleeping
+        # for 2 seconds.
+        self.assertRetry(clock, next(gen_retries), 0, 5, 2)
+        # Mimic sleeping for 4 seconds, more than the suggested.
+        clock.advance(4)
+        # Now 4 seconds have passed, 1 second remains, and it suggests
+        # sleeping for just 1 more second.
+        self.assertRetry(clock, next(gen_retries), 4, 1, 1)
+        # Don't sleep, ask again immediately, and the same answer is given.
+        self.assertRetry(clock, next(gen_retries), 4, 1, 1)
+        # Mimic sleeping for 100 seconds, much more than the suggested.
+        clock.advance(100)
+        # There's always a final chance to try something, but the elapsed and
+        # remaining figures are still calculated with reference to the current
+        # time. The wait time never goes below zero.
+        self.assertRetry(clock, next(gen_retries), 104, -99, 0)
+        # All done.
+        self.assertRaises(StopIteration, next, gen_retries)
+
+    def test_captures_start_time_when_called(self):
+        # Take control of time.
+        clock = Clock()
+
+        gen_retries = retries(5, 2, time=clock.seconds)
+        clock.advance(4)
+        # 4 seconds have passed, so 1 second remains, and it suggests sleeping
+        # for 1 second.
+        self.assertRetry(clock, next(gen_retries), 4, 1, 1)
+
+    def test_intervals_can_be_an_iterable(self):
+        # Take control of time.
+        clock = Clock()
+        # Use intervals of 1s, 2s, 3, and then back to 1s.
+        intervals = cycle((1.0, 2.0, 3.0))
+
+        gen_retries = retries(5, intervals, time=clock.seconds)
+        # No time has passed, 5 seconds remain, and it suggests sleeping
+        # for 1 second, then 2, then 3, then 1 again.
+        self.assertRetry(clock, next(gen_retries), 0, 5, 1)
+        self.assertRetry(clock, next(gen_retries), 0, 5, 2)
+        self.assertRetry(clock, next(gen_retries), 0, 5, 3)
+        self.assertRetry(clock, next(gen_retries), 0, 5, 1)
+        # Mimic sleeping for 3.5 seconds, more than the suggested.
+        clock.advance(3.5)
+        # Now 3.5 seconds have passed, 1.5 seconds remain, and it suggests
+        # sleeping for 1.5 seconds, 0.5 less than the next expected interval
+        # of 2.0 seconds.
+        self.assertRetry(clock, next(gen_retries), 3.5, 1.5, 1.5)
+        # Don't sleep, ask again immediately, and the same answer is given.
+        self.assertRetry(clock, next(gen_retries), 3.5, 1.5, 1.5)
+        # Don't sleep, ask again immediately, and 1.0 seconds is given,
+        # because we're back to the 1.0 second interval.
+        self.assertRetry(clock, next(gen_retries), 3.5, 1.5, 1.0)
+        # Mimic sleeping for 100 seconds, much more than the suggested.
+        clock.advance(100)
+        # There's always a final chance to try something, but the elapsed and
+        # remaining figures are still calculated with reference to the current
+        # time. The wait time never goes below zero.
+        self.assertRetry(clock, next(gen_retries), 103.5, -98.5, 0.0)
+        # All done.
+        self.assertRaises(StopIteration, next, gen_retries)
