@@ -11,7 +11,11 @@ from abc import (
     abstractmethod,
 )
 import argparse
+import collections
+import enum
+from functools import partial
 from itertools import chain
+import json
 from operator import itemgetter
 import sys
 from textwrap import fill
@@ -27,6 +31,7 @@ from alburnum.maas.creds import Credentials
 import argcomplete
 import colorclass
 import terminaltables
+import yaml
 
 
 def check_valid_apikey(_1, _2, _3):  # TODO
@@ -297,10 +302,109 @@ class OriginCommand(Command):
             "Implement execute() in subclasses.")
 
 
-class cmd_list_nodes(OriginCommand):
-    """List nodes."""
+class RenderTarget(enum.Enum):
 
-    status_colours = {
+    table_plain = "table-plain"
+    table_pretty = "table-pretty"
+    dump_yaml = "dump-yaml"
+    dump_json = "dump-json"
+
+
+class Table:
+
+    def __init__(self, *columns):
+        super(Table, self).__init__()
+        self.columns = collections.OrderedDict(
+            (column.name, column) for column in columns)
+
+    def __getitem__(self, name):
+        return self.columns[name]
+
+    def render(self, target, data):
+        columns = self.columns.values()
+        rows = [
+            [column.cell(value).render(target)
+             for value, column in zip(row, columns)]
+            for row in data
+        ]
+        if target is RenderTarget.dump_yaml:
+            return yaml.safe_dump({
+                "columns": [
+                    (column.name, column.title)
+                    for column in columns
+                ],
+                "data": rows,
+            })
+        elif target is RenderTarget.dump_json:
+            return json.dumps({
+                "columns": [
+                    (column.name, column.title)
+                    for column in columns
+                ],
+                "data": rows,
+            })
+        elif target is RenderTarget.table_plain:
+            rows.insert(0, [column.title for column in columns])
+            return terminaltables.AsciiTable(rows)
+        elif target is RenderTarget.table_pretty:
+            rows.insert(0, [column.title for column in columns])
+            return terminaltables.SingleTable(rows)
+        else:
+            raise ValueError(
+                "Cannot render %r for %s" % (self.value, target))
+
+    def __repr__(self):
+        return "<%s [%s]>" % (
+            self.__class__.__name__, " ".join(self.columns))
+
+
+class Cell:
+
+    def __init__(self, value, column=None):
+        super(Cell, self).__init__()
+        self.value = value
+        self.column = column
+
+    def render(self, target):
+        if target is RenderTarget.dump_yaml:
+            return self.value
+        elif target is RenderTarget.dump_json:
+            return self.value
+        elif target is RenderTarget.table_plain:
+            if isinstance(self.value, colorclass.Color):
+                return self.value.value_no_colors
+            else:
+                return str(self.value)
+        elif target is RenderTarget.table_pretty:
+            if isinstance(self.value, colorclass.Color):
+                return self.value
+            else:
+                return str(self.value)
+        else:
+            raise ValueError(
+                "Cannot render %r for %s" % (self.value, target))
+
+    def __repr__(self):
+        return "<%s %r>" % (
+            self.__class__.__name__, self.value)
+
+
+class Column:
+
+    def __init__(self, name, title=None, cell=Cell):
+        super(Column, self).__init__()
+        self.name = name
+        self.title = title
+        self.cell = partial(cell, column=self)
+
+    def __repr__(self):
+        return "<%s name=%s title=%r>" % (
+            self.__class__.__name__, self.name, self.title)
+
+
+class NodeSubStatusNameCell(Cell):
+
+    colours = {
         # "New": "",  # White.
         "Commissioning": "autoyellow",
         "Failed commissioning": "autored",
@@ -319,42 +423,64 @@ class cmd_list_nodes(OriginCommand):
         "Failed disk erasing": "autored",
     }
 
-    def colourised_status(self, node):
-        status = node.substatus_name
-        if status in self.status_colours:
-            colour = self.status_colours[status]
-            return colorized("{%s}%s{/%s}" % (colour, status, colour))
+    def render(self, target):
+        if target == RenderTarget.table_pretty:
+            if self.value in self.colours:
+                colour = self.colours[self.value]
+                return colorclass.Color("{%s}%s{/%s}" % (
+                    colour, self.value, colour))
+            else:
+                return self.value
         else:
-            return status
+            return super().render(target)
 
-    power_colours = {
+
+class NodePowerCell(Cell):
+
+    colours = {
         "on": "autogreen",
         # "off": "",  # White.
         "error": "autored",
     }
 
-    def colourised_power(self, node):
-        state = node.power_state
-        if state in self.power_colours:
-            colour = self.power_colours[state]
-            return colorized("{%s}%s{/%s}" % (
-                colour, state.capitalize(), colour))
+    def render(self, target):
+        if target == RenderTarget.table_pretty:
+            if self.value in self.colours:
+                colour = self.colours[self.value]
+                return colorclass.Color("{%s}%s{/%s}" % (
+                    colour, self.value.capitalize(), colour))
+            else:
+                return self.value
         else:
-            return state.capitalize()
+            return super().render(target)
+
+
+NodesTable = Table(
+    Column("hostname", "Hostname"),
+    Column("system_id", "System ID"),
+    Column("architecture", "Architecture"),
+    Column("cpus", "#CPUs"),
+    Column("memory", "RAM"),
+    Column("status", "Status", NodeSubStatusNameCell),
+    Column("power", "Power", NodePowerCell),
+)
+
+
+class cmd_list_nodes(OriginCommand):
+    """List nodes."""
 
     def execute(self, origin, options):
-        head = [
-            ["Hostname", "System ID", "Arch", "#CPUs",
-             "RAM", "Status", "Power"],
-        ]
-        body = (
-            (node.hostname, node.system_id, node.architecture,
-             node.cpus, node.memory, self.colourised_status(node),
-             self.colourised_power(node))
+        data = (
+            (node.hostname, node.system_id, node.architecture, node.cpus,
+             node.memory, node.substatus_name, node.power_state)
             for node in origin.Nodes
         )
-        body = sorted(body, key=itemgetter(0))
-        print_table(chain(head, body))
+        body = sorted(data, key=itemgetter(0))
+        if sys.stdout.isatty():
+            table = NodesTable.render(RenderTarget.table_pretty, body)
+        else:
+            table = NodesTable.render(RenderTarget.table_plain, body)
+        print(table.table)
 
 
 class cmd_list_tags(OriginCommand):
