@@ -14,6 +14,7 @@ import argparse
 from os import environ
 import sys
 from textwrap import fill
+from time import sleep
 
 from alburnum.maas import (
     bones,
@@ -79,6 +80,10 @@ class ArgumentParser(argparse.ArgumentParser):
         valid arguments.
         """
         self.exit(2, colorized("{autored}Error:{/autored} ") + message + "\n")
+
+
+class CommandError(Exception):
+    """A command has failed during execution."""
 
 
 class Command(metaclass=ABCMeta):
@@ -354,11 +359,27 @@ class cmd_release_node(OriginTableCommand):
     def __init__(self, parser):
         super(cmd_release_node, self).__init__(parser)
         parser.add_argument("--system-id", required=True)
+        parser.add_argument(
+            "--wait", type=int, default=0, help=(
+                "Number of seconds to wait for release to complete."))
 
     def execute(self, origin, options, target):
-        node = origin.Node.read(system_id=options.system_id).release()
+        node = origin.Node.read(system_id=options.system_id)
+        node = node.release()
+
+        with utils.Spinner():
+            for elapsed, remaining, wait in utils.retries(options.wait, 1.0):
+                if node.substatus_name == "Ready":
+                    break
+                else:
+                    sleep(wait)
+                    node = node.release()
+
         table = tables.NodesTable()
         print(table.render(target, [node]))
+
+        if node.substatus_name != "Ready":
+            raise CommandError("Node was not released.")
 
 
 def prepare_parser(argv):
