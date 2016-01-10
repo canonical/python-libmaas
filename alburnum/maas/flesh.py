@@ -12,11 +12,12 @@ from abc import (
 )
 import argparse
 import collections
+import csv
 import enum
-from functools import partial
-from itertools import chain
+from io import StringIO
 import json
 from operator import itemgetter
+from os import environ
 import sys
 from textwrap import fill
 
@@ -149,6 +150,24 @@ class Command(metaclass=ABCMeta):
             cls.name() if name is None else name, help=help_title,
             description=help_title, epilog=help_body)
         command_parser.set_defaults(execute=cls(command_parser))
+
+
+class TableCommand(Command):
+
+    def __init__(self, parser):
+        super(TableCommand, self).__init__(parser)
+        if sys.stdout.isatty():
+            default_target = RenderTarget.pretty
+        else:
+            default_target = RenderTarget.plain
+        parser.add_argument(
+            "--output-format", type=RenderTarget, choices=RenderTarget,
+            default=default_target, help=(
+                "Output tabular data as a formatted table (pretty), a "
+                "formatted table using only ASCII for borders (plain), or "
+                "one of several dump formats. Default: %(default)s."
+            ),
+        )
 
 
 class cmd_login(Command):
@@ -286,11 +305,22 @@ class cmd_refresh_profiles(Command):
                 config[profile_name] = profile
 
 
-class OriginCommand(Command):
+class OriginCommandBase(Command):
 
     def __init__(self, parser):
-        super(OriginCommand, self).__init__(parser)
-        parser.add_argument("profile_name", metavar="profile-name")
+        super(OriginCommandBase, self).__init__(parser)
+        default = environ.get("MAAS_PROFILE")
+        parser.add_argument(
+            "--profile-name", metavar="NAME", required=(default is None),
+            default=default, help=(
+                "The name of the remote MAAS instance to use. Use "
+                "`list-profiles` to obtain a list of valid profiles. "
+                "This can also be set via the MAAS_PROFILE environment "
+                "variable."
+            ))
+
+
+class OriginCommand(OriginCommandBase):
 
     def __call__(self, options):
         session = bones.SessionAPI.fromProfileName(options.profile_name)
@@ -302,12 +332,30 @@ class OriginCommand(Command):
             "Implement execute() in subclasses.")
 
 
+class OriginTableCommand(OriginCommandBase, TableCommand):
+
+    def __call__(self, options):
+        session = bones.SessionAPI.fromProfileName(options.profile_name)
+        origin = viscera.Origin(session)
+        return self.execute(origin, options, target=options.output_format)
+
+    def execute(self, options, origin, *, target):
+        raise NotImplementedError(
+            "Implement execute() in subclasses.")
+
+
 class RenderTarget(enum.Enum):
 
-    table_plain = "table-plain"
-    table_pretty = "table-pretty"
-    dump_yaml = "dump-yaml"
-    dump_json = "dump-json"
+    plain = "plain"
+    pretty = "pretty"
+    dump_yaml = "yaml"
+    dump_json = "json"
+    dump_csv = "csv"
+
+    def __str__(self):
+        # Return the value. This makes it better to use as a choices option to
+        # argparse at the command-line.
+        return self.value
 
 
 class Table:
@@ -323,32 +371,40 @@ class Table:
     def render(self, target, data):
         columns = self.columns.values()
         rows = [
-            [column.cell(value).render(target)
-             for value, column in zip(row, columns)]
+            [column.render(target, datum)
+             for datum, column in zip(row, columns)]
             for row in data
         ]
-        if target is RenderTarget.dump_yaml:
-            return yaml.safe_dump({
+        if target in (RenderTarget.dump_yaml, RenderTarget.dump_json):
+            data = {
                 "columns": [
-                    (column.name, column.title)
+                    {"name": column.name, "title": column.title}
                     for column in columns
                 ],
-                "data": rows,
-            })
-        elif target is RenderTarget.dump_json:
-            return json.dumps({
-                "columns": [
-                    (column.name, column.title)
-                    for column in columns
+                "data": [
+                    {column.name: datum
+                     for column, datum in zip(columns, row)}
+                    for row in rows
                 ],
-                "data": rows,
-            })
-        elif target is RenderTarget.table_plain:
+            }
+            if target is RenderTarget.dump_yaml:
+                return yaml.safe_dump(data, default_flow_style=False)
+            elif target is RenderTarget.dump_json:
+                return json.dumps(data)
+            else:
+                raise AssertionError(target)
+        elif target is RenderTarget.plain:
             rows.insert(0, [column.title for column in columns])
-            return terminaltables.AsciiTable(rows)
-        elif target is RenderTarget.table_pretty:
+            return terminaltables.AsciiTable(rows).table
+        elif target is RenderTarget.pretty:
             rows.insert(0, [column.title for column in columns])
-            return terminaltables.SingleTable(rows)
+            return terminaltables.SingleTable(rows).table
+        elif target is RenderTarget.dump_csv:
+            output = StringIO()
+            writer = csv.writer(output)
+            writer.writerow([column.name for column in columns])
+            writer.writerows(rows)
+            return output.getvalue()
         else:
             raise ValueError(
                 "Cannot render %r for %s" % (self.value, target))
@@ -358,51 +414,58 @@ class Table:
             self.__class__.__name__, " ".join(self.columns))
 
 
-class Cell:
-
-    def __init__(self, value, column=None):
-        super(Cell, self).__init__()
-        self.value = value
-        self.column = column
-
-    def render(self, target):
-        if target is RenderTarget.dump_yaml:
-            return self.value
-        elif target is RenderTarget.dump_json:
-            return self.value
-        elif target is RenderTarget.table_plain:
-            if isinstance(self.value, colorclass.Color):
-                return self.value.value_no_colors
-            else:
-                return str(self.value)
-        elif target is RenderTarget.table_pretty:
-            if isinstance(self.value, colorclass.Color):
-                return self.value
-            else:
-                return str(self.value)
-        else:
-            raise ValueError(
-                "Cannot render %r for %s" % (self.value, target))
-
-    def __repr__(self):
-        return "<%s %r>" % (
-            self.__class__.__name__, self.value)
-
-
 class Column:
 
-    def __init__(self, name, title=None, cell=Cell):
+    def __init__(self, name, title=None):
         super(Column, self).__init__()
         self.name = name
-        self.title = title
-        self.cell = partial(cell, column=self)
+        self.title = name if title is None else title
+
+    def render(self, target, datum):
+        if target is RenderTarget.dump_yaml:
+            return datum
+        elif target is RenderTarget.dump_json:
+            return datum
+        elif target is RenderTarget.dump_csv:
+            return datum
+        elif target is RenderTarget.plain:
+            if datum is None:
+                return ""
+            elif isinstance(datum, colorclass.Color):
+                return datum.value_no_colors
+            else:
+                return str(datum)
+        elif target is RenderTarget.pretty:
+            if datum is None:
+                return ""
+            elif isinstance(datum, colorclass.Color):
+                return datum
+            else:
+                return str(datum)
+        else:
+            raise ValueError(
+                "Cannot render %r for %s" % (datum, target))
 
     def __repr__(self):
         return "<%s name=%s title=%r>" % (
             self.__class__.__name__, self.name, self.title)
 
 
-class NodeSubStatusNameCell(Cell):
+class NodeMemoryColumn(Column):
+
+    def render(self, target, memory):
+        # `memory` is in MB.
+        if target in (RenderTarget.pretty, RenderTarget.plain):
+            if memory < 1024.0:  # <1GB
+                memory = "%0.1f MB" % (memory)
+            elif memory < 1048576.0:  # <1TB
+                memory = "%0.1f GB" % (memory / 1024.0)
+            else:
+                memory = "%0.1f TB" % (memory / 1048576.0)
+        return super().render(target, memory)
+
+
+class NodeSubStatusNameColumn(Column):
 
     colours = {
         # "New": "",  # White.
@@ -423,19 +486,19 @@ class NodeSubStatusNameCell(Cell):
         "Failed disk erasing": "autored",
     }
 
-    def render(self, target):
-        if target == RenderTarget.table_pretty:
-            if self.value in self.colours:
-                colour = self.colours[self.value]
+    def render(self, target, datum):
+        if target == RenderTarget.pretty:
+            if datum in self.colours:
+                colour = self.colours[datum]
                 return colorclass.Color("{%s}%s{/%s}" % (
-                    colour, self.value, colour))
+                    colour, datum, colour))
             else:
-                return self.value
+                return datum
         else:
-            return super().render(target)
+            return super().render(target, datum)
 
 
-class NodePowerCell(Cell):
+class NodePowerColumn(Column):
 
     colours = {
         "on": "autogreen",
@@ -443,99 +506,137 @@ class NodePowerCell(Cell):
         "error": "autored",
     }
 
-    def render(self, target):
-        if target == RenderTarget.table_pretty:
-            if self.value in self.colours:
-                colour = self.colours[self.value]
+    def render(self, target, data):
+        if target == RenderTarget.pretty:
+            if data in self.colours:
+                colour = self.colours[data]
                 return colorclass.Color("{%s}%s{/%s}" % (
-                    colour, self.value.capitalize(), colour))
+                    colour, data.capitalize(), colour))
             else:
-                return self.value
+                return data.capitalize()
+        elif target == RenderTarget.plain:
+            return super().render(target, data.capitalize())
         else:
-            return super().render(target)
+            return super().render(target, data)
 
 
-NodesTable = Table(
-    Column("hostname", "Hostname"),
-    Column("system_id", "System ID"),
-    Column("architecture", "Architecture"),
-    Column("cpus", "#CPUs"),
-    Column("memory", "RAM"),
-    Column("status", "Status", NodeSubStatusNameCell),
-    Column("power", "Power", NodePowerCell),
-)
+class NodesTable(Table):
 
+    def __init__(self):
+        super().__init__(
+            Column("hostname", "Hostname"),
+            Column("system_id", "System ID"),
+            Column("architecture", "Architecture"),
+            Column("cpus", "#CPUs"),
+            NodeMemoryColumn("memory", "RAM"),
+            NodeSubStatusNameColumn("status", "Status"),
+            NodePowerColumn("power", "Power"),
+        )
 
-class cmd_list_nodes(OriginCommand):
-    """List nodes."""
-
-    def execute(self, origin, options):
+    def render(self, target, nodes):
         data = (
             (node.hostname, node.system_id, node.architecture, node.cpus,
              node.memory, node.substatus_name, node.power_state)
-            for node in origin.Nodes
+            for node in nodes
         )
-        body = sorted(data, key=itemgetter(0))
-        if sys.stdout.isatty():
-            table = NodesTable.render(RenderTarget.table_pretty, body)
-        else:
-            table = NodesTable.render(RenderTarget.table_plain, body)
-        print(table.table)
+        data = sorted(data, key=itemgetter(0))
+        return super().render(target, data)
 
 
-class cmd_list_tags(OriginCommand):
+class cmd_list_nodes(OriginTableCommand):
+    """List nodes."""
+
+    def execute(self, origin, options, target):
+        table = NodesTable().render(target, origin.Nodes)
+        print(table)
+
+
+class TagsTable(Table):
+
+    def __init__(self):
+        super().__init__(
+            Column("name", "Tag name"),
+            Column("definition", "Definition"),
+            Column("kernel_opts", "Kernel options"),
+            Column("comment", "Comment"),
+        )
+
+    def render(self, target, tags):
+        data = (
+            (tag.name, tag.definition, tag.kernel_opts, tag.comment)
+            for tag in tags
+        )
+        data = sorted(data, key=itemgetter(0))
+        return super().render(target, data)
+
+
+class cmd_list_tags(OriginTableCommand):
     """List tags."""
 
-    def execute(self, origin, options):
-        head = [["Tag name", "Definition", "Kernel options", "Comment"]]
-        body = (
-            (tag.name, tag.definition, tag.kernel_opts, tag.comment)
-            for tag in origin.Tags
+    def execute(self, origin, options, target):
+        table = TagsTable().render(target, origin.Tags)
+        print(table)
+
+
+class FilesTable(Table):
+
+    def __init__(self):
+        super().__init__(
+            Column("filename", "File name"),
         )
-        body = sorted(body, key=itemgetter(0))
-        print_table(chain(head, body))
+
+    def render(self, target, files):
+        data = ((f.filename,) for f in files)
+        data = sorted(data, key=itemgetter(0))
+        return super().render(target, data)
 
 
-class cmd_list_files(OriginCommand):
+class cmd_list_files(OriginTableCommand):
     """List files."""
 
-    def execute(self, origin, options):
-        head = [["File name"]]
-        body = ((file.filename,) for file in origin.Files)
-        body = sorted(body, key=itemgetter(0))
-        print_table(chain(head, body))
+    def execute(self, origin, options, target):
+        table = FilesTable().render(target, origin.Files)
+        print(table)
 
 
-class cmd_list_users(OriginCommand):
+class UserIsAdminColumn(Column):
+
+    yes, no = "Yes", "Np"
+    yes_pretty = colorclass.Color("{autogreen}Yes{/autogreen}")
+
+    def render(self, target, is_admin):
+        if target is RenderTarget.plain:
+            return self.yes if is_admin else self.no
+        elif target is RenderTarget.pretty:
+            return self.yes_pretty if is_admin else self.no
+        else:
+            return super().render(target, is_admin)
+
+
+class UsersTable(Table):
+
+    def __init__(self):
+        super().__init__(
+            Column("username", "User name"),
+            Column("email", "Email address"),
+            UserIsAdminColumn("is_admin", "Admin?"),
+        )
+
+    def render(self, target, users):
+        data = ((user.username,) for user in users)
+        data = sorted(data, key=itemgetter(0))
+        return super().render(target, data)
+
+
+class cmd_list_users(OriginTableCommand):
     """List users."""
 
-    def execute(self, origin, options):
-        head = [["User name", "Email address", "Admin?"]]
-        body = (
-            (user.username, user.email, colorized(
-                "{autogreen}Yes{/autogreen}" if user.is_admin else "No"))
-            for user in origin.Users
-        )
-        body = sorted(body, key=itemgetter(0))
-        print_table(chain(head, body))
+    def execute(self, origin, options, target):
+        table = UsersTable().render(target, origin.Users)
+        print(table)
 
 
-class cmd_list_xxx(OriginCommand):
-    """List xxxs."""
-
-    def execute(self, origin, options):
-        xxxs = list(origin.Xxxs)
-        first = xxxs[0]  # Making an assumption...
-        fields = sorted(first._data)
-        head = [fields]
-        body = (
-            (xxx._data.get(field) for field in fields)
-            for xxx in xxxs
-        )
-        print_table(chain(head, body))
-
-
-class cmd_acquire_node(OriginCommand):
+class cmd_acquire_node(OriginTableCommand):
 
     def __init__(self, parser):
         super(cmd_acquire_node, self).__init__(parser)
@@ -545,12 +646,26 @@ class cmd_acquire_node(OriginCommand):
         parser.add_argument("--memory", type=float)
         parser.add_argument("--tags", default="")
 
-    def execute(self, origin, options):
+    def execute(self, origin, options, target):
         node = origin.Nodes.acquire(
             hostname=options.hostname, architecture=options.architecture,
             cpus=options.cpus, memory=options.memory,
             tags=options.tags.split())
-        print(repr(node))
+        table = NodesTable().render(target, [node])
+        print(table)
+
+
+class cmd_release_node(OriginTableCommand):
+
+    def __init__(self, parser):
+        super(cmd_release_node, self).__init__(parser)
+        parser.add_argument("--system-id", required=True)
+
+    def execute(self, origin, options, target):
+        node = origin.Node.read(system_id=options.system_id)
+        node = node.release()
+        table = NodesTable().render(target, [node])
+        print(table)
 
 
 def prepare_parser(argv):
@@ -573,6 +688,7 @@ def prepare_parser(argv):
 
     # Node lifecycle.
     cmd_acquire_node.register(parser)
+    cmd_release_node.register(parser)
 
     parser.add_argument(
         '--debug', action='store_true', default=False,

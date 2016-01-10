@@ -554,7 +554,14 @@ class Nodes(ObjectSet, metaclass=NodesType):
     """The set of nodes stored in MAAS."""
 
 
-class Node(Object):
+class NodeType(ObjectType):
+
+    def read(cls, system_id):
+        data = cls._handler.read(system_id=system_id)
+        return cls(data)
+
+
+class Node(Object, metaclass=NodeType):
     """A node stored in MAAS."""
 
     architecture = ObjectTypedField(
