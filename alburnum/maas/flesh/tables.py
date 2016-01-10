@@ -4,15 +4,16 @@
 """Tables for representing information from MAAS."""
 
 __all__ = [
-    "NodeMemoryColumn",
-    "NodeSubStatusNameColumn",
-    "NodePowerColumn",
+    "FilesTable",
     "NodesTable",
+    "ProfilesTable",
+    "TagsTable",
+    "UsersTable",
 ]
 
 from operator import itemgetter
 
-import colorclass
+from colorclass import Color
 
 from .tabular import (
     Column,
@@ -60,7 +61,7 @@ class NodeSubStatusNameColumn(Column):
         if target == RenderTarget.pretty:
             if datum in self.colours:
                 colour = self.colours[datum]
-                return colorclass.Color("{%s}%s{/%s}" % (
+                return Color("{%s}%s{/%s}" % (
                     colour, datum, colour))
             else:
                 return datum
@@ -80,7 +81,7 @@ class NodePowerColumn(Column):
         if target == RenderTarget.pretty:
             if data in self.colours:
                 colour = self.colours[data]
-                return colorclass.Color("{%s}%s{/%s}" % (
+                return Color("{%s}%s{/%s}" % (
                     colour, data.capitalize(), colour))
             else:
                 return data.capitalize()
@@ -148,7 +149,7 @@ class FilesTable(Table):
 class UserIsAdminColumn(Column):
 
     yes, no = "Yes", "Np"
-    yes_pretty = colorclass.Color("{autogreen}Yes{/autogreen}")
+    yes_pretty = Color("{autogreen}Yes{/autogreen}")
 
     def render(self, target, is_admin):
         if target is RenderTarget.plain:
@@ -170,5 +171,32 @@ class UsersTable(Table):
 
     def render(self, target, users):
         data = ((user.username,) for user in users)
+        data = sorted(data, key=itemgetter(0))
+        return super().render(target, data)
+
+
+class ProfileAnonymousColumn(Column):
+
+    def render(self, target, is_anonymous):
+        if target in (RenderTarget.pretty, RenderTarget.plain):
+            return "Yes" if is_anonymous else "No"
+        else:
+            return super().render(target, is_anonymous)
+
+
+class ProfilesTable(Table):
+
+    def __init__(self):
+        super().__init__(
+            Column("name", "Profile name"),
+            Column("url", "URL"),
+            ProfileAnonymousColumn("is_anonymous", "Anonymous?"),
+        )
+
+    def render(self, target, profiles):
+        data = (
+            (profile["name"], profile["url"], profile["credentials"] is None)
+            for profile in (profiles[name] for name in profiles)
+        )
         data = sorted(data, key=itemgetter(0))
         return super().render(target, data)

@@ -25,7 +25,6 @@ from alburnum.maas.utils.auth import obtain_credentials
 from alburnum.maas.utils.creds import Credentials
 import argcomplete
 import colorclass
-import terminaltables
 
 from . import (
     tables,
@@ -44,40 +43,6 @@ def colorized(text):
         return colorclass.Color(text)
     else:
         return colorclass.Color(text).value_no_colors
-
-
-def prep(cell):
-    if cell is None:
-        return ""
-    elif isinstance(cell, str):
-        return cell
-    else:
-        return str(cell)
-
-
-def prep_table(data, prep=prep):
-    """Ensure that `data` is a list of lists of strings.
-
-    The `terminaltables` library strongly insists on `list`s of `list`s; even
-    tuples are rejected. It also does not grok `None` or any other non-string
-    as column values.
-    """
-    return [
-        [prep(col) for col in row]
-        for row in data
-    ]
-
-
-def make_table(data):
-    data = prep_table(data)
-    if sys.stdout.isatty():
-        return terminaltables.SingleTable(data)
-    else:
-        return terminaltables.AsciiTable(data)
-
-
-def print_table(data):
-    print(make_table(data).table)
 
 
 class ArgumentParser(argparse.ArgumentParser):
@@ -266,22 +231,13 @@ class cmd_logout(Command):
             del config[options.profile_name]
 
 
-class cmd_list_profiles(Command):
+class cmd_list_profiles(TableCommand):
     """List remote APIs that have been logged-in to."""
 
     def __call__(self, options):
-        rows = [["Profile name", "URL"]]
-
+        table = tables.ProfilesTable()
         with utils.ProfileConfig.open() as config:
-            for profile_name in sorted(config):
-                profile = config[profile_name]
-                url, creds = profile["url"], profile["credentials"]
-                if creds is None:
-                    rows.append([profile_name, url, "(anonymous)"])
-                else:
-                    rows.append([profile_name, url])
-
-        print_table(rows)
+            print(table.render(options.output_format, config))
 
 
 class cmd_refresh_profiles(Command):
@@ -346,32 +302,32 @@ class cmd_list_nodes(OriginTableCommand):
     """List nodes."""
 
     def execute(self, origin, options, target):
-        table = tables.NodesTable().render(target, origin.Nodes)
-        print(table)
+        table = tables.NodesTable()
+        print(table.render(target, origin.Nodes))
 
 
 class cmd_list_tags(OriginTableCommand):
     """List tags."""
 
     def execute(self, origin, options, target):
-        table = tables.TagsTable().render(target, origin.Tags)
-        print(table)
+        table = tables.TagsTable()
+        print(table.render(target, origin.Tags))
 
 
 class cmd_list_files(OriginTableCommand):
     """List files."""
 
     def execute(self, origin, options, target):
-        table = tables.FilesTable().render(target, origin.Files)
-        print(table)
+        table = tables.FilesTable()
+        print(table.render(target, origin.Files))
 
 
 class cmd_list_users(OriginTableCommand):
     """List users."""
 
     def execute(self, origin, options, target):
-        table = tables.UsersTable().render(target, origin.Users)
-        print(table)
+        table = tables.UsersTable()
+        print(table.render(target, origin.Users))
 
 
 class cmd_acquire_node(OriginTableCommand):
@@ -389,8 +345,8 @@ class cmd_acquire_node(OriginTableCommand):
             hostname=options.hostname, architecture=options.architecture,
             cpus=options.cpus, memory=options.memory,
             tags=options.tags.split())
-        table = tables.NodesTable().render(target, [node])
-        print(table)
+        table = tables.NodesTable()
+        print(table.render(target, [node]))
 
 
 class cmd_release_node(OriginTableCommand):
@@ -400,10 +356,9 @@ class cmd_release_node(OriginTableCommand):
         parser.add_argument("--system-id", required=True)
 
     def execute(self, origin, options, target):
-        node = origin.Node.read(system_id=options.system_id)
-        node = node.release()
-        table = tables.NodesTable().render(target, [node])
-        print(table)
+        node = origin.Node.read(system_id=options.system_id).release()
+        table = tables.NodesTable()
+        print(table.render(target, [node]))
 
 
 def prepare_parser(argv):

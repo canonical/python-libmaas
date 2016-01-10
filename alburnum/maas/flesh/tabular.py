@@ -14,6 +14,7 @@ import csv
 import enum
 from io import StringIO
 import json
+from os import linesep
 
 import colorclass
 import terminaltables
@@ -22,11 +23,14 @@ import yaml
 
 class RenderTarget(enum.Enum):
 
+    # Human-readable tabluar output.
     plain = "plain"
     pretty = "pretty"
-    dump_yaml = "yaml"
-    dump_json = "json"
-    dump_csv = "csv"
+
+    # Machine-readable output.
+    yaml = "yaml"
+    json = "json"
+    csv = "csv"
 
     def __str__(self):
         # Return the value. This makes it better to use as a choices option to
@@ -51,39 +55,53 @@ class Table:
              for datum, column in zip(row, columns)]
             for row in data
         ]
-        if target in (RenderTarget.dump_yaml, RenderTarget.dump_json):
-            data = {
-                "columns": [
-                    {"name": column.name, "title": column.title}
-                    for column in columns
-                ],
-                "data": [
-                    {column.name: datum
-                     for column, datum in zip(columns, row)}
-                    for row in rows
-                ],
-            }
-            if target is RenderTarget.dump_yaml:
-                return yaml.safe_dump(data, default_flow_style=False)
-            elif target is RenderTarget.dump_json:
-                return json.dumps(data)
-            else:
-                raise AssertionError(target)
-        elif target is RenderTarget.plain:
-            rows.insert(0, [column.title for column in columns])
-            return terminaltables.AsciiTable(rows).table
-        elif target is RenderTarget.pretty:
-            rows.insert(0, [column.title for column in columns])
-            return terminaltables.SingleTable(rows).table
-        elif target is RenderTarget.dump_csv:
-            output = StringIO()
-            writer = csv.writer(output)
-            writer.writerow([column.name for column in columns])
-            writer.writerows(rows)
-            return output.getvalue()
-        else:
+        renderer = getattr(self, "_render_%s" % target.name, None)
+        if renderer is None:
             raise ValueError(
-                "Cannot render %r for %s" % (self.value, target))
+                "Cannot render %r for %s." % (self.value, target))
+        else:
+            return renderer(columns, rows)
+
+    def _render_plain(self, columns, rows):
+        rows.insert(0, [column.title for column in columns])
+        return terminaltables.AsciiTable(rows).table
+
+    def _render_pretty(self, columns, rows):
+        rows.insert(0, [column.title for column in columns])
+        return terminaltables.SingleTable(rows).table
+
+    def _render_yaml(self, columns, rows):
+        return yaml.safe_dump({
+            "columns": [
+                {"name": column.name, "title": column.title}
+                for column in columns
+            ],
+            "data": [
+                {column.name: datum
+                 for column, datum in zip(columns, row)}
+                for row in rows
+            ],
+        }, default_flow_style=False).rstrip(linesep)
+
+    def _render_json(self, columns, rows):
+        return json.dumps({
+            "columns": [
+                {"name": column.name, "title": column.title}
+                for column in columns
+            ],
+            "data": [
+                {column.name: datum
+                 for column, datum in zip(columns, row)}
+                for row in rows
+            ],
+        })
+
+    def _render_csv(self, columns, rows):
+        output = StringIO()
+        writer = csv.writer(output)
+        writer.writerow([column.name for column in columns])
+        writer.writerows(rows)
+        return output.getvalue().rstrip(linesep)
 
     def __repr__(self):
         return "<%s [%s]>" % (
@@ -98,11 +116,11 @@ class Column:
         self.title = name if title is None else title
 
     def render(self, target, datum):
-        if target is RenderTarget.dump_yaml:
+        if target is RenderTarget.yaml:
             return datum
-        elif target is RenderTarget.dump_json:
+        elif target is RenderTarget.json:
             return datum
-        elif target is RenderTarget.dump_csv:
+        elif target is RenderTarget.csv:
             return datum
         elif target is RenderTarget.plain:
             if datum is None:
