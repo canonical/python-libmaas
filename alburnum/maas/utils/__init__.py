@@ -12,6 +12,7 @@ __all__ = [
     "ProfileConfig",
     "retries",
     "sign",
+    "Spinner",
     "vars_class",
 ]
 
@@ -28,6 +29,7 @@ from inspect import (
 )
 from itertools import (
     chain,
+    cycle,
     repeat,
 )
 import json
@@ -35,6 +37,8 @@ import os
 from os.path import expanduser
 import re
 import sqlite3
+import sys
+import threading
 from time import time
 from urllib.parse import (
     quote_plus,
@@ -380,3 +384,45 @@ def gen_retries(start, end, intervals, time=time):
         else:
             yield now - start, end - now, 0
             break
+
+
+class Spinner:
+    """Display a spinner at the terminal, if it's a TTY.
+
+    Use as a context manager.
+    """
+
+    def __init__(self, frames='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏', stream=sys.stdout):
+        super(Spinner, self).__init__()
+        self.frames = frames
+        self.stream = stream
+
+    def __enter__(self):
+        if self.stream.isatty():
+            frames = cycle(self.frames)
+            stream = self.stream
+            done = threading.Event()
+
+            def run():
+                # Disable cursor.
+                stream.write("\033[?25l")
+                stream.flush()
+                try:
+                    # Write out successive frames (and a backspace) every 0.1
+                    # seconds until done is set.
+                    while not done.wait(0.1):
+                        stream.write("%s\b" % next(frames))
+                        stream.flush()
+                finally:
+                    # Enable cursor.
+                    stream.write("\033[?25h")
+                    stream.flush()
+
+            self.__done = done
+            self.__thread = threading.Thread(target=run)
+            self.__thread.start()
+
+    def __exit__(self, *exc_info):
+        if self.stream.isatty():
+            self.__done.set()
+            self.__thread.join()
