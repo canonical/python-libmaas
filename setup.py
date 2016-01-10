@@ -20,6 +20,7 @@ setup(
         'Intended Audience :: Developers',
         'Intended Audience :: System Administrators',
         'Programming Language :: Python :: 3 :: Only',
+        'Programming Language :: Python :: 3.5',
         'Topic :: Software Development :: Libraries',
     ],
     packages=find_packages(),
