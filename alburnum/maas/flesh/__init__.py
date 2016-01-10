@@ -11,12 +11,6 @@ from abc import (
     abstractmethod,
 )
 import argparse
-import collections
-import csv
-import enum
-from io import StringIO
-import json
-from operator import itemgetter
 from os import environ
 import sys
 from textwrap import fill
@@ -32,7 +26,11 @@ from alburnum.maas.utils.creds import Credentials
 import argcomplete
 import colorclass
 import terminaltables
-import yaml
+
+from . import (
+    tables,
+    tabular,
+)
 
 
 def check_valid_apikey(_1, _2, _3):  # TODO
@@ -157,12 +155,12 @@ class TableCommand(Command):
     def __init__(self, parser):
         super(TableCommand, self).__init__(parser)
         if sys.stdout.isatty():
-            default_target = RenderTarget.pretty
+            default_target = tabular.RenderTarget.pretty
         else:
-            default_target = RenderTarget.plain
+            default_target = tabular.RenderTarget.plain
         parser.add_argument(
-            "--output-format", type=RenderTarget, choices=RenderTarget,
-            default=default_target, help=(
+            "--output-format", type=tabular.RenderTarget,
+            choices=tabular.RenderTarget, default=default_target, help=(
                 "Output tabular data as a formatted table (pretty), a "
                 "formatted table using only ASCII for borders (plain), or "
                 "one of several dump formats. Default: %(default)s."
@@ -344,295 +342,35 @@ class OriginTableCommand(OriginCommandBase, TableCommand):
             "Implement execute() in subclasses.")
 
 
-class RenderTarget(enum.Enum):
-
-    plain = "plain"
-    pretty = "pretty"
-    dump_yaml = "yaml"
-    dump_json = "json"
-    dump_csv = "csv"
-
-    def __str__(self):
-        # Return the value. This makes it better to use as a choices option to
-        # argparse at the command-line.
-        return self.value
-
-
-class Table:
-
-    def __init__(self, *columns):
-        super(Table, self).__init__()
-        self.columns = collections.OrderedDict(
-            (column.name, column) for column in columns)
-
-    def __getitem__(self, name):
-        return self.columns[name]
-
-    def render(self, target, data):
-        columns = self.columns.values()
-        rows = [
-            [column.render(target, datum)
-             for datum, column in zip(row, columns)]
-            for row in data
-        ]
-        if target in (RenderTarget.dump_yaml, RenderTarget.dump_json):
-            data = {
-                "columns": [
-                    {"name": column.name, "title": column.title}
-                    for column in columns
-                ],
-                "data": [
-                    {column.name: datum
-                     for column, datum in zip(columns, row)}
-                    for row in rows
-                ],
-            }
-            if target is RenderTarget.dump_yaml:
-                return yaml.safe_dump(data, default_flow_style=False)
-            elif target is RenderTarget.dump_json:
-                return json.dumps(data)
-            else:
-                raise AssertionError(target)
-        elif target is RenderTarget.plain:
-            rows.insert(0, [column.title for column in columns])
-            return terminaltables.AsciiTable(rows).table
-        elif target is RenderTarget.pretty:
-            rows.insert(0, [column.title for column in columns])
-            return terminaltables.SingleTable(rows).table
-        elif target is RenderTarget.dump_csv:
-            output = StringIO()
-            writer = csv.writer(output)
-            writer.writerow([column.name for column in columns])
-            writer.writerows(rows)
-            return output.getvalue()
-        else:
-            raise ValueError(
-                "Cannot render %r for %s" % (self.value, target))
-
-    def __repr__(self):
-        return "<%s [%s]>" % (
-            self.__class__.__name__, " ".join(self.columns))
-
-
-class Column:
-
-    def __init__(self, name, title=None):
-        super(Column, self).__init__()
-        self.name = name
-        self.title = name if title is None else title
-
-    def render(self, target, datum):
-        if target is RenderTarget.dump_yaml:
-            return datum
-        elif target is RenderTarget.dump_json:
-            return datum
-        elif target is RenderTarget.dump_csv:
-            return datum
-        elif target is RenderTarget.plain:
-            if datum is None:
-                return ""
-            elif isinstance(datum, colorclass.Color):
-                return datum.value_no_colors
-            else:
-                return str(datum)
-        elif target is RenderTarget.pretty:
-            if datum is None:
-                return ""
-            elif isinstance(datum, colorclass.Color):
-                return datum
-            else:
-                return str(datum)
-        else:
-            raise ValueError(
-                "Cannot render %r for %s" % (datum, target))
-
-    def __repr__(self):
-        return "<%s name=%s title=%r>" % (
-            self.__class__.__name__, self.name, self.title)
-
-
-class NodeMemoryColumn(Column):
-
-    def render(self, target, memory):
-        # `memory` is in MB.
-        if target in (RenderTarget.pretty, RenderTarget.plain):
-            if memory < 1024.0:  # <1GB
-                memory = "%0.1f MB" % (memory)
-            elif memory < 1048576.0:  # <1TB
-                memory = "%0.1f GB" % (memory / 1024.0)
-            else:
-                memory = "%0.1f TB" % (memory / 1048576.0)
-        return super().render(target, memory)
-
-
-class NodeSubStatusNameColumn(Column):
-
-    colours = {
-        # "New": "",  # White.
-        "Commissioning": "autoyellow",
-        "Failed commissioning": "autored",
-        "Missing": "red",
-        "Ready": "autogreen",
-        "Reserved": "autoblue",
-        "Allocated": "autoblue",
-        "Deploying": "autoblue",
-        "Deployed": "autoblue",
-        # "Retired": "",  # White.
-        "Broken": "autored",
-        "Failed deployment": "autored",
-        "Releasing": "autoblue",
-        "Releasing failed": "autored",
-        "Disk erasing": "autoblue",
-        "Failed disk erasing": "autored",
-    }
-
-    def render(self, target, datum):
-        if target == RenderTarget.pretty:
-            if datum in self.colours:
-                colour = self.colours[datum]
-                return colorclass.Color("{%s}%s{/%s}" % (
-                    colour, datum, colour))
-            else:
-                return datum
-        else:
-            return super().render(target, datum)
-
-
-class NodePowerColumn(Column):
-
-    colours = {
-        "on": "autogreen",
-        # "off": "",  # White.
-        "error": "autored",
-    }
-
-    def render(self, target, data):
-        if target == RenderTarget.pretty:
-            if data in self.colours:
-                colour = self.colours[data]
-                return colorclass.Color("{%s}%s{/%s}" % (
-                    colour, data.capitalize(), colour))
-            else:
-                return data.capitalize()
-        elif target == RenderTarget.plain:
-            return super().render(target, data.capitalize())
-        else:
-            return super().render(target, data)
-
-
-class NodesTable(Table):
-
-    def __init__(self):
-        super().__init__(
-            Column("hostname", "Hostname"),
-            Column("system_id", "System ID"),
-            Column("architecture", "Architecture"),
-            Column("cpus", "#CPUs"),
-            NodeMemoryColumn("memory", "RAM"),
-            NodeSubStatusNameColumn("status", "Status"),
-            NodePowerColumn("power", "Power"),
-        )
-
-    def render(self, target, nodes):
-        data = (
-            (node.hostname, node.system_id, node.architecture, node.cpus,
-             node.memory, node.substatus_name, node.power_state)
-            for node in nodes
-        )
-        data = sorted(data, key=itemgetter(0))
-        return super().render(target, data)
-
-
 class cmd_list_nodes(OriginTableCommand):
     """List nodes."""
 
     def execute(self, origin, options, target):
-        table = NodesTable().render(target, origin.Nodes)
+        table = tables.NodesTable().render(target, origin.Nodes)
         print(table)
-
-
-class TagsTable(Table):
-
-    def __init__(self):
-        super().__init__(
-            Column("name", "Tag name"),
-            Column("definition", "Definition"),
-            Column("kernel_opts", "Kernel options"),
-            Column("comment", "Comment"),
-        )
-
-    def render(self, target, tags):
-        data = (
-            (tag.name, tag.definition, tag.kernel_opts, tag.comment)
-            for tag in tags
-        )
-        data = sorted(data, key=itemgetter(0))
-        return super().render(target, data)
 
 
 class cmd_list_tags(OriginTableCommand):
     """List tags."""
 
     def execute(self, origin, options, target):
-        table = TagsTable().render(target, origin.Tags)
+        table = tables.TagsTable().render(target, origin.Tags)
         print(table)
-
-
-class FilesTable(Table):
-
-    def __init__(self):
-        super().__init__(
-            Column("filename", "File name"),
-        )
-
-    def render(self, target, files):
-        data = ((f.filename,) for f in files)
-        data = sorted(data, key=itemgetter(0))
-        return super().render(target, data)
 
 
 class cmd_list_files(OriginTableCommand):
     """List files."""
 
     def execute(self, origin, options, target):
-        table = FilesTable().render(target, origin.Files)
+        table = tables.FilesTable().render(target, origin.Files)
         print(table)
-
-
-class UserIsAdminColumn(Column):
-
-    yes, no = "Yes", "Np"
-    yes_pretty = colorclass.Color("{autogreen}Yes{/autogreen}")
-
-    def render(self, target, is_admin):
-        if target is RenderTarget.plain:
-            return self.yes if is_admin else self.no
-        elif target is RenderTarget.pretty:
-            return self.yes_pretty if is_admin else self.no
-        else:
-            return super().render(target, is_admin)
-
-
-class UsersTable(Table):
-
-    def __init__(self):
-        super().__init__(
-            Column("username", "User name"),
-            Column("email", "Email address"),
-            UserIsAdminColumn("is_admin", "Admin?"),
-        )
-
-    def render(self, target, users):
-        data = ((user.username,) for user in users)
-        data = sorted(data, key=itemgetter(0))
-        return super().render(target, data)
 
 
 class cmd_list_users(OriginTableCommand):
     """List users."""
 
     def execute(self, origin, options, target):
-        table = UsersTable().render(target, origin.Users)
+        table = tables.UsersTable().render(target, origin.Users)
         print(table)
 
 
@@ -651,7 +389,7 @@ class cmd_acquire_node(OriginTableCommand):
             hostname=options.hostname, architecture=options.architecture,
             cpus=options.cpus, memory=options.memory,
             tags=options.tags.split())
-        table = NodesTable().render(target, [node])
+        table = tables.NodesTable().render(target, [node])
         print(table)
 
 
@@ -664,7 +402,7 @@ class cmd_release_node(OriginTableCommand):
     def execute(self, origin, options, target):
         node = origin.Node.read(system_id=options.system_id)
         node = node.release()
-        table = NodesTable().render(target, [node])
+        table = tables.NodesTable().render(target, [node])
         print(table)
 
 
