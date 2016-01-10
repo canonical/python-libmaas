@@ -5,14 +5,24 @@
 
 __all__ = []
 
-from fnmatch import fnmatchcase
+import fixtures
 import http
 import http.server
+import httplib2
 import json
-from os.path import splitext
-from pathlib import Path
 import ssl
 import threading
+from fnmatch import fnmatchcase
+from os.path import splitext
+from pathlib import Path
+from pkg_resources import (
+    resource_filename,
+    resource_listdir,
+)
+from testtools.matchers import (
+    Equals,
+    MatchesStructure,
+)
 from unittest.mock import (
     ANY,
     Mock,
@@ -26,24 +36,13 @@ from uuid import uuid1
 
 from alburnum.maas import bones
 from alburnum.maas.testing import TestCase
-from alburnum.maas.tests.test_auth import make_credentials
-import fixtures
-import httplib2
-from pkg_resources import (
-    resource_filename,
-    resource_listdir,
-)
-from testtools.matchers import (
-    Equals,
-    MatchesStructure,
-)
+from alburnum.maas.utils.tests.test_auth import make_credentials
 
 
 def list_api_descriptions():
-    resource = "alburnum.maas.tests"
-    for filename in resource_listdir(resource, "."):
+    for filename in resource_listdir(__name__, "."):
         if fnmatchcase(filename, "api*.json"):
-            path = resource_filename(resource, filename)
+            path = resource_filename(__name__, filename)
             name, _ = splitext(filename)
             yield name, Path(path)
 

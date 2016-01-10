@@ -24,7 +24,7 @@ setup(
     ],
     packages=find_packages(),
     package_data={
-        'alburnum.maas.tests': ['*.json'],
+        'alburnum.maas.bones.tests': ['*.json'],
     },
     install_requires={
         "argcomplete >= 1.0",
@@ -34,7 +34,7 @@ setup(
         "PyYAML >= 3.11",
         "terminaltables >= 2.1.0",
     },
-    test_suite="alburnum.maas.tests",
+    test_suite="alburnum.maas",
     tests_require={
         "django >= 1.6",
         "fixtures >= 1.0.0",

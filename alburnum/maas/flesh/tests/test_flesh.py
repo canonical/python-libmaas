@@ -17,8 +17,8 @@ from alburnum.maas.testing import (
     make_name,
     TestCase,
 )
-from alburnum.maas.tests.test_auth import make_options
 from alburnum.maas.utils import auth
+from alburnum.maas.utils.tests.test_auth import make_options
 
 
 class TestLogin(TestCase):
