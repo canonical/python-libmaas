@@ -14,7 +14,7 @@ setup(
     author='Gavin Panella',
     author_email='gavinpanella@gmail.com',
     url='https://github.com/alburnum/alburnum-maas-client',
-    version="0.2.0",
+    version="0.3.0",
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
