@@ -47,7 +47,7 @@ setup(
     description="A client API library specially for MAAS.",
     entry_points={
         "console_scripts": {
-            "maas-cmd = alburnum.maas.flesh:main",
+            "maas = alburnum.maas.flesh:main",
             "maas-shell = alburnum.maas.skin:main",
         },
     },
