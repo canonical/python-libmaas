@@ -29,10 +29,12 @@ setup(
     },
     install_requires={
         "argcomplete >= 1.0",
+        "beautifulsoup4 >= 4.4.1",
         "colorclass >= 1.2.0",
         "httplib2 >= 0.8",
         "oauthlib >= 1.0.3",
         "PyYAML >= 3.11",
+        "requests >= 2.9.1",
         "terminaltables >= 2.1.0",
     },
     test_suite="alburnum.maas",
