@@ -208,10 +208,11 @@ class cmd_login_base(Command):
 
 
 class cmd_login(cmd_login_base):
-    """Log in to a remote MAAS with username and password.
+    """Log-in to a remote MAAS with username and password.
 
-    If credentials are not provided on the command-line, they will be prompted
-    for interactively.
+    The username and password will NOT be saved; a new API key will be
+    obtained from MAAS and associated with the new profile. This key can be
+    selectively revoked from the Web UI, for example, at a later date.
     """
 
     def __init__(self, parser):
@@ -224,9 +225,9 @@ class cmd_login(cmd_login_base):
             "password", nargs="?", default=None, help=(
                 "The password used to login to MAAS. Omit both the username "
                 "and the password for anonymous API access, or pass a single "
-                "hyphen to allow the password to be provided via stdin. If a "
-                "username is provided but no password, you will be prompted "
-                "interactively for it."
+                "hyphen to allow the password to be provided via standard-"
+                "input. If a username is provided but no password, the "
+                "password will be prompted for, interactively."
             ),
         )
 
@@ -273,22 +274,22 @@ class cmd_login(cmd_login_base):
 
 
 class cmd_login_api(cmd_login_base):
-    """Log in to a remote MAAS with an *API key*.
-
-    If credentials are not provided on the command-line, they will be prompted
-    for interactively.
-    """
+    """Log-in to a remote MAAS with an *API key*."""
 
     def __init__(self, parser):
         super(cmd_login_api, self).__init__(parser)
         parser.add_argument(
             "credentials", nargs="?", default=None, help=(
-                "The credentials, also known as the API key, for the "
-                "remote MAAS server. These can be found in the user "
-                "preferences page in the web UI; they take the form of "
-                "a long random-looking string composed of three parts, "
-                "separated by colons."
-                ))
+                "The credentials, also known as the API key, for the remote "
+                "MAAS server. These can be found in the user preferences page "
+                "in the Web UI; they take the form of a long random-looking "
+                "string composed of three parts, separated by colons. Specify "
+                "an empty string for anonymous API access, or pass a single "
+                "hyphen to allow the credentials to be provided via standard-"
+                "input. If no credentials are provided, they will be prompted "
+                "for, interactively."
+            ),
+        )
 
     def __call__(self, options):
         # Try and obtain credentials interactively if they're not given, or
@@ -300,7 +301,7 @@ class cmd_login_api(cmd_login_base):
 
 
 class cmd_logout(Command):
-    """Log out of a remote API, purging any stored credentials.
+    """Log-out of a remote API, purging any stored credentials.
 
     This will remove the given profile from your command-line  client.  You
     can re-create it by logging in again later.

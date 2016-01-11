@@ -169,7 +169,7 @@ class Shell(cmd.Cmd, metaclass=ShellType):
     #
 
     def do_login(self, text):
-        """Log in to a remote API, and remember its details.
+        """Log-in to a remote API, and remember its details.
 
         If credentials are not provided on the command-line, they will be
         prompted for interactively.
