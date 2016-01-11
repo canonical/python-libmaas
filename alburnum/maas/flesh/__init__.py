@@ -161,7 +161,8 @@ class cmd_login_base(Command):
             '-k', '--insecure', action='store_true', help=(
                 "Disable SSL certificate check"), default=False)
 
-    def save_profile(self, options, credentials):
+    @staticmethod
+    def save_profile(options, credentials: Credentials):
         # Check for bogus credentials. Do this early so that the user is not
         # surprised when next invoking the MAAS CLI.
         if credentials is not None:
