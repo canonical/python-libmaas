@@ -1,7 +1,11 @@
 # Copyright 2015 Alburnum Ltd. This software is licensed under
 # the GNU Affero General Public License version 3 (see LICENSE).
 
-"""Interact with a remote MAAS (https://maas.ubuntu.com/) server."""
+"""Interact with a remote MAAS (https://maas.ubuntu.com/).
+
+These are low-level bindings that closely mirror the shape of MAAS's Web API,
+hence the name "bones".
+"""
 
 __all__ = [
     "CallError",
@@ -12,15 +16,47 @@ from collections import (
     Iterable,
     namedtuple,
 )
+from http import HTTPStatus
 import json
 import re
+import ssl
+from urllib.parse import urljoin
 
 from alburnum.maas import utils
 import httplib2
 
 
+class SessionError(Exception):
+    """Miscellaneous session-related error."""
+
+
 class SessionAPI:
     """Represents an API session with a remote MAAS installation."""
+
+    @classmethod
+    def fromURL(cls, url, *, credentials=None, insecure=False):
+        """Return a `SessionAPI` for a given MAAS instance."""
+        url_describe = urljoin(url, "describe/")
+        http = httplib2.Http(disable_ssl_certificate_validation=insecure)
+
+        try:
+            response, content = http.request(url_describe, "GET")
+        except ssl.SSLError:
+            raise SessionError("Certificate verification failed.")
+
+        if response.status != HTTPStatus.OK:
+            raise SessionError(
+                "{0} -> {1.status} {1.reason}".format(url, response))
+        elif response["content-type"] != "application/json":
+            raise SessionError(
+                "Expected application/json, got: %(content-type)s"
+                % response)
+        else:
+            # MAAS will only ever produce JSON as ASCII or UTF-8.
+            description = json.loads(content.decode('utf-8'))
+            session = cls(description, credentials)
+            session.insecure = insecure
+            return session
 
     @classmethod
     def fromProfile(cls, profile):
@@ -48,8 +84,7 @@ class SessionAPI:
     def __init__(self, description, credentials=None):
         """Construct a `SessionAPI`.
 
-        :param description: The description of the remote API. See
-            `fetch_api_description`.
+        :param description: The description of the remote API. See `fromURL`.
         :param credentials: Credentials for the remote system. Optional.
         """
         super(SessionAPI, self).__init__()
@@ -80,6 +115,16 @@ class SessionAPI:
     @property
     def credentials(self):
         return self.__credentials
+
+    @property
+    def description(self):
+        return self.__description
+
+    @property
+    def handlers(self):
+        for name, value in vars(self).items():
+            if not name.startswith("_") and isinstance(value, HandlerAPI):
+                yield name, value
 
 
 class HandlerAPI:
@@ -147,6 +192,12 @@ class HandlerAPI:
     def session(self):
         """The parent `SessionAPI`."""
         return self.__session
+
+    @property
+    def actions(self):
+        for name, value in vars(self).items():
+            if not name.startswith("_") and isinstance(value, ActionAPI):
+                yield name, value
 
     def __repr__(self):
         return "<Handler %s %s>" % (self.name, self.uri)
@@ -243,7 +294,7 @@ class CallError(Exception):
 
     def __init__(self, request, response, content, call):
         desc_for_request = "%(method)s %(uri)s" % request
-        desc_for_response = "HTTP %(status)d %(reason)s" % vars(response)
+        desc_for_response = "HTTP %s %s" % (response.status, response.reason)
         desc = "%s -> %s" % (desc_for_request, desc_for_response)
         super(CallError, self).__init__(desc)
         self.request = request
@@ -381,7 +432,7 @@ class CallAPI:
         if content_type is None:
             data = content
         elif content_type.endswith('/json'):
-            data = json.loads(content)
+            data = json.loads(content.decode("utf-8"))  # Assume it's UTF-8.
         else:
             data = content
 
@@ -389,7 +440,3 @@ class CallAPI:
 
     def __repr__(self):
         return "<Call %s @%s>" % (self.action.fullname, self.uri)
-
-
-def main():
-    pass
