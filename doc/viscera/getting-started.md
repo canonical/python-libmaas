@@ -5,7 +5,7 @@
 
 Either work from a branch:
 
-```sh
+```console
 $ git clone https://github.com/alburnum/alburnum-maas-client.git
 $ cd alburnum-maas-client
 $ make
@@ -13,7 +13,7 @@ $ make
 
 Or install from [PyPI](https://pypi.python.org/):
 
-```sh
+```console
 $ virtualenv --python=python3.5 maas
 $ cd maas
 $ bin/pip install alburnum-maas-client
@@ -23,9 +23,9 @@ $ bin/pip install alburnum-maas-client
 
 Log-in using the command-line tool:
 
-```sh
+```console
 $ bin/maas login foo http://example.com:5240/MAAS/ admin
-Password: ...
+Password: …
 ```
 
 __TODO__: Log-in programmatically.
@@ -45,7 +45,7 @@ The `origin` instance is the root object of the API.
 
 Log-out using the command-line tool:
 
-```sh
+```console
 $ bin/maas logout foo
 ```
 

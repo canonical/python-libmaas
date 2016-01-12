@@ -4,6 +4,22 @@ For documentation on the MAAS server components, visit
 [maas.ubuntu.com](https://maas.ubuntu.com/docs/).
 
 
+## Command-line
+
+```console
+$ bin/maas login --help
+$ bin/maas login exmpl http://example.com:5240/MAAS/ my_username
+Password: …
+$ bin/maas list-nodes --profile-name exmpl
+┌───────────────┬───────────┬───────────────┬───────┬────────┬───────────┬───────┐
+│ Hostname      │ System ID │ Architecture  │ #CPUs │ RAM    │ Status    │ Power │
+├───────────────┼───────────┼───────────────┼───────┼────────┼───────────┼───────┤
+│ botswana.maas │ 433334    │ amd64/generic │ 4     │ 8.0 GB │ Ready     │ Off   │
+│ namibia.maas  │ 433333    │ amd64/generic │ 4     │ 8.0 GB │ Allocated │ Off   │
+└───────────────┴───────────┴───────────────┴───────┴────────┴───────────┴───────┘
+```
+
+
 ## Client libraries
 
 There are two client libraries that make use of MAAS's Web API:
