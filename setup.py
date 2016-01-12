@@ -11,11 +11,12 @@ setup(
     author='Gavin Panella',
     author_email='gavinpanella@gmail.com',
     url='https://github.com/alburnum/alburnum-maas-client',
-    version="0.3.0",
+    version="0.3.1",
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
         'Intended Audience :: System Administrators',
+        'License :: OSI Approved :: GNU Affero General Public License v3',
         'Programming Language :: Python :: 3 :: Only',
         'Programming Language :: Python :: 3.5',
         'Topic :: Software Development :: Libraries',
