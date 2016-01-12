@@ -9,6 +9,12 @@ the GNU Affero GPLv3 too, the same as MAAS itself.
 [![Build Status](https://travis-ci.org/alburnum/alburnum-maas-client.svg?branch=master)](https://travis-ci.org/alburnum/alburnum-maas-client)
 [![codecov.io](https://codecov.io/github/alburnum/alburnum-maas-client/coverage.svg?branch=master)](https://codecov.io/github/alburnum/alburnum-maas-client?branch=master)
 
+This package was begun by Alburnum Ltd, and some of it has come from
+[MAAS itself](https://code.launchpad.net/~maas-committers/maas/trunk)
+upon which Canonical Ltd have the copyright. However, Alburnum Ltd
+licenses its parts under the AGPLv3, and MAAS is also under the AGPLv3,
+so everything should be good.
+
 
 ## Dependencies
 

@@ -10,6 +10,12 @@ the GNU Affero GPLv3 too, the same as MAAS itself.
 
 |Build Status| |codecov.io|
 
+This package was begun by Alburnum Ltd, and some of it has come from
+`MAAS itself <https://code.launchpad.net/~maas-committers/maas/trunk>`__
+upon which Canonical Ltd have the copyright. However, Alburnum Ltd
+licenses its parts under the AGPLv3, and MAAS is also under the AGPLv3,
+so everything should be good.
+
 Dependencies
 ------------
 
