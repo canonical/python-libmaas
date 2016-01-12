@@ -1,6 +1,3 @@
-# Copyright 2015 Alburnum Ltd. This software is licensed under
-# the GNU Affero General Public License version 3 (see LICENSE).
-
 PYTHON := python3.5
 
 # ---
@@ -31,6 +28,9 @@ clean:
 README: README.md
 	pandoc --from markdown --to rst --output $@ $^
 
+docs: bin/mkdocs
+	bin/mkdocs build --config-file doc.yaml --clean --strict
+
 # ---
 
 bin/tox: bin/pip
@@ -39,6 +39,9 @@ bin/tox: bin/pip
 bin/python bin/pip:
 	virtualenv --python=$(PYTHON) --quiet $(CURDIR)
 
+bin/mkdocs: bin/pip
+	bin/pip install --quiet --ignore-installed "mkdocs >= 0.14.0"
+
 # ---
 
-.PHONY: develop dist test clean
+.PHONY: develop dist docs test clean

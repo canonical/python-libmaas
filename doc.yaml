@@ -1,0 +1,10 @@
+docs_dir: doc
+markdown_extensions:
+  - codehilite
+  - sane_lists
+  - smarty
+repo_url: https://github.com/alburnum/alburnum-maas-client
+site_name: MAAS Client Library & CLI
+strict: true
+theme: readthedocs
+use_directory_urls: false

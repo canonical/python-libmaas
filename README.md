@@ -9,6 +9,12 @@ the GNU Affero GPLv3 too, the same as MAAS itself.
 [![Build Status](https://travis-ci.org/alburnum/alburnum-maas-client.svg?branch=master)](https://travis-ci.org/alburnum/alburnum-maas-client)
 [![codecov.io](https://codecov.io/github/alburnum/alburnum-maas-client/coverage.svg?branch=master)](https://codecov.io/github/alburnum/alburnum-maas-client?branch=master)
 
+This package was begun by Alburnum Ltd, and some of it has come from
+[MAAS itself](https://code.launchpad.net/~maas-committers/maas/trunk)
+upon which Canonical Ltd have the copyright. However, Alburnum Ltd
+licenses its parts under the AGPLv3, and MAAS is also under the AGPLv3,
+so everything should be good.
+
 
 ## Dependencies
 
@@ -32,35 +38,32 @@ the MAAS:
 import httplib
 from pprint import pprint
 
-from alburnum.maas.client import (
-    CallError,
-    SessionAPI,
-)
+from alburnum.maas import bones
 
 # Load a MAAS CLI profile. The name below (here "madagascar") should be the
 # name of a profile created when using `maas login` at the command-line.
-papi = SessionAPI.fromProfileName("madagascar")
+session = bones.SessionAPI.fromProfileName(options.profile)
 
 # Create a tag if it doesn't exist.
 tag_name = "foo"
 try:
-    tag = papi.Tag.read(name=tag_name)
-except CallError as error:
-    if error.status == httplib.NOT_FOUND:
-        tag = papi.Tags.new(
+    tag = session.Tag.read(name=tag_name)
+except bones.CallError as error:
+    if error.status == HTTPStatus.NOT_FOUND:
+        tag = session.Tags.new(
             name=tag_name, comment="%s's Stuff" % tag_name.capitalize())
     else:
         raise
 
 # List all the MAAS's tags.
 print(" Tags.list() ".center(50, "="))
-pprint(papi.Tags.list())
+pprint(session.Tags.list())
 
 # Associate the tag with all nodes.
 print(" Tag.update_nodes() ".center(50, "="))
-pprint(papi.Tag.update_nodes(
+pprint(session.Tag.update_nodes(
     name=tag["name"], add=[
-        node["system_id"] for node in papi.Nodes.list()
+        node["system_id"] for node in session.Nodes.list()
     ]))
 ```
 

@@ -1,6 +1,4 @@
 #!/usr/bin/env python3.5
-# Copyright 2015 Alburnum Ltd. This software is licensed under
-# the GNU Affero General Public License version 3 (see LICENSE).
 
 from argparse import ArgumentParser
 from http import HTTPStatus

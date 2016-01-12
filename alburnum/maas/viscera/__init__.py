@@ -1,6 +1,3 @@
-# Copyright 2015 Alburnum Ltd. This software is licensed under
-# the GNU Affero General Public License version 3 (see LICENSE).
-
 """Interact with a remote MAAS (https://maas.ubuntu.com/).
 
 These are highish-level bindings that provide user-oriented objects to

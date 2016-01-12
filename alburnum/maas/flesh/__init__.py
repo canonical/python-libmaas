@@ -1,7 +1,3 @@
-# Copyright 2012-2015 Canonical Ltd. Copyright 2015 Alburnum Ltd.
-# This software is licensed under the GNU Affero General Public
-# License version 3 (see LICENSE).
-
 """Commands for interacting with a remote MAAS."""
 
 __all__ = []

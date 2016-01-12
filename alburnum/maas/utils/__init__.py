@@ -1,6 +1,3 @@
-# Copyright 2015 Alburnum Ltd. This software is licensed under
-# the GNU Affero General Public License version 3 (see LICENSE).
-
 """Utilities for the Alburnum MAAS client."""
 
 __all__ = [
