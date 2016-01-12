@@ -1,6 +1,3 @@
-# Copyright 2015 Alburnum Ltd. This software is licensed under
-# the GNU Affero General Public License version 3 (see LICENSE).
-
 """Testing framework for `alburnum.maas`."""
 
 __all__ = [
