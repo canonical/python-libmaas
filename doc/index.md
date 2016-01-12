@@ -17,7 +17,8 @@ There are two client libraries that make use of MAAS's Web API:
   _viscera_ presents a saner API, designed for developers rather than
   machines.
 
-The implementation of _viscera_ makes use of _bones_. _Viscera_ is the
-API that should be preferred for application development.
+The implementation of [_viscera_](viscera/index.md) makes use of
+[_bones_](bones/index.md). _Viscera_ is the API that should be preferred
+for application development.
 
 Next: [Get started with _viscera_](viscera/getting-started.md)
