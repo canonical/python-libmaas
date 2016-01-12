@@ -1,0 +1,74 @@
+{
+    "docs": [
+        {
+            "location": "/index.html",
+            "text": "Welcome to MAAS\u2019s new command-line tool & Python client libraries.\n\n\nFor documentation on the MAAS server components, visit\n\nmaas.ubuntu.com\n.\n\n\nCommand-line\n\n\n$\n bin/maas login --help\n\n$\n bin/maas login exmpl http://example.com:5240/MAAS/ my_username\n\nPassword: \u2026\n\n\n$\n bin/maas list-nodes --profile-name exmpl\n\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\n\n\u2502 Hostname      \u2502 System ID \u2502 Architecture  \u2502 #CPUs \u2502 RAM    \u2502 Status    \u2502 Power \u2502\n\n\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n\n\n\u2502 botswana.maas \u2502 433334    \u2502 amd64/generic \u2502 4     \u2502 8.0 GB \u2502 Ready     \u2502 Off   \u2502\n\n\n\u2502 namibia.maas  \u2502 433333    \u2502 amd64/generic \u2502 4     \u2502 8.0 GB \u2502 Allocated \u2502 Off   \u2502\n\n\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\n\n\n\n\n\nClient libraries\n\n\nThere are two client libraries that make use of MAAS\u2019s Web API:\n\n\n\n\n\n\nA lower-level library that closely mirrors MAAS\u2019s Web API, referred to\n  as \nbones\n. The MAAS server publishes a description of its Web API and\n  \nbones\n provides a convenient mechanism to interact with it.\n\n\n\n\n\n\nA higher-level library that\u2019s designed for developers, referred to as\n  \nviscera\n. MAAS\u2019s Web API is sometimes unfriendly or inconsistent, but\n  \nviscera\n presents a saner API, designed for developers rather than\n  machines.\n\n\n\n\n\n\nThe implementation of \nviscera\n makes use of\n\nbones\n. \nViscera\n is the API that should be preferred\nfor application development.\n\n\nNext: \nGet started with \nviscera",
+            "title": "Home"
+        },
+        {
+            "location": "/index.html#welcome-to-maass-new-command-line-tool-python-client-libraries",
+            "text": "For documentation on the MAAS server components, visit maas.ubuntu.com .",
+            "title": "Welcome to MAAS's new command-line tool & Python client libraries."
+        },
+        {
+            "location": "/index.html#command-line",
+            "text": "$  bin/maas login --help $  bin/maas login exmpl http://example.com:5240/MAAS/ my_username Password: \u2026  $  bin/maas list-nodes --profile-name exmpl \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510  \u2502 Hostname      \u2502 System ID \u2502 Architecture  \u2502 #CPUs \u2502 RAM    \u2502 Status    \u2502 Power \u2502  \u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524  \u2502 botswana.maas \u2502 433334    \u2502 amd64/generic \u2502 4     \u2502 8.0 GB \u2502 Ready     \u2502 Off   \u2502  \u2502 namibia.maas  \u2502 433333    \u2502 amd64/generic \u2502 4     \u2502 8.0 GB \u2502 Allocated \u2502 Off   \u2502  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518",
+            "title": "Command-line"
+        },
+        {
+            "location": "/index.html#client-libraries",
+            "text": "There are two client libraries that make use of MAAS\u2019s Web API:    A lower-level library that closely mirrors MAAS\u2019s Web API, referred to\n  as  bones . The MAAS server publishes a description of its Web API and\n   bones  provides a convenient mechanism to interact with it.    A higher-level library that\u2019s designed for developers, referred to as\n   viscera . MAAS\u2019s Web API is sometimes unfriendly or inconsistent, but\n   viscera  presents a saner API, designed for developers rather than\n  machines.    The implementation of  viscera  makes use of bones .  Viscera  is the API that should be preferred\nfor application development.  Next:  Get started with  viscera",
+            "title": "Client libraries"
+        },
+        {
+            "location": "/bones/index.html",
+            "text": "Bones\n: Low-level Python client API",
+            "title": "Home"
+        },
+        {
+            "location": "/bones/index.html#bones-low-level-python-client-api",
+            "text": "",
+            "title": "Bones: Low-level Python client API"
+        },
+        {
+            "location": "/viscera/getting-started/index.html",
+            "text": "Getting started with \nviscera\n\n\nInstallation\n\n\nEither work from a branch:\n\n\n$\n git clone https://github.com/alburnum/alburnum-maas-client.git\n\n$\n \ncd \nalburnum-maas-client\n\n$\n make\n\n\n\n\n\nOr install from \nPyPI\n:\n\n\n$\n virtualenv --python\n=\npython3.5 maas\n\n$\n \ncd \nmaas\n\n$\n bin/pip install alburnum-maas-client\n\n\n\n\n\nLogging-in\n\n\nLog-in using the command-line tool:\n\n\n$\n bin/maas login foo http://example.com:5240/MAAS/ admin\n\nPassword: \u2026\n\n\n\n\n\n\nTODO\n: Log-in programmatically.\n\n\nThen start an interactive Python shell (e.g. \nbin/python\n):\n\n\n>>> \nfrom\n \nalburnum.maas\n \nimport\n \nbones\n,\n \nviscera\n\n\n>>> \nsession\n \n=\n \nbones\n.\nSessionAPI\n.\nfromProfileName\n(\n\"foo\"\n)\n\n\n>>> \norigin\n \n=\n \nviscera\n.\nOrigin\n(\nsession\n)\n\n\n\n\n\n\nThe \norigin\n instance is the root object of the API.\n\n\nLogging out\n\n\nLog-out using the command-line tool:\n\n\n$\n bin/maas \nlogout \nfoo\n\n\n\n\n\nTODO\n: Log-out programmatically.\n\n\nNodes\n\n\nListing nodes:\n\n\n>>> \nfor\n \nnode\n \nin\n \norigin\n.\nNodes\n:\n\n\n... \n    \nprint\n(\nnode\n)\n\n\n\n\n\n\nAcquiring and starting nodes:\n\n\n>>> \nhelp\n(\norigin\n.\nNodes\n.\nacquire\n)\n\n\nacquire(*, hostname:str=None, architecture:str=None, cpus:int=None,\n\n\n        memory:float=None, tags:typing.Sequence=None) method of\n\n\n            alburnum.maas.viscera.NodesType instance\n\n\n    :param hostname: The hostname to match.\n\n\n    :param architecture: The architecture to match, e.g. \"amd64\".\n\n\n    :param cpus: The minimum number of CPUs to match.\n\n\n    :param memory: The minimum amount of RAM to match.\n\n\n    :param tags: The tags to match, as a sequence. Each tag may be\n\n\n        prefixed with a hyphen to denote that the given tag should NOT be\n\n\n        associated with a matched node.\n\n\n>>> \nnode\n \n=\n \norigin\n.\nNodes\n.\nacquire\n(\ntags\n=\n(\n\"foo\"\n,\n \n\"-bar\"\n))\n\n\n>>> \nprint\n(\nnode\n.\nsubstatus_name\n)\n\n\nAcquired\n\n\n>>> \nnode\n.\nstart\n()\n\n\n>>> \nprint\n(\nnode\n.\nsubstatus_name\n)\n\n\nDeploying",
+            "title": "Getting started"
+        },
+        {
+            "location": "/viscera/getting-started/index.html#getting-started-with-viscera",
+            "text": "",
+            "title": "Getting started with viscera"
+        },
+        {
+            "location": "/viscera/getting-started/index.html#installation",
+            "text": "Either work from a branch:  $  git clone https://github.com/alburnum/alburnum-maas-client.git $   cd  alburnum-maas-client $  make  Or install from  PyPI :  $  virtualenv --python = python3.5 maas $   cd  maas $  bin/pip install alburnum-maas-client",
+            "title": "Installation"
+        },
+        {
+            "location": "/viscera/getting-started/index.html#logging-in",
+            "text": "Log-in using the command-line tool:  $  bin/maas login foo http://example.com:5240/MAAS/ admin Password: \u2026   TODO : Log-in programmatically.  Then start an interactive Python shell (e.g.  bin/python ):  >>>  from   alburnum.maas   import   bones ,   viscera  >>>  session   =   bones . SessionAPI . fromProfileName ( \"foo\" )  >>>  origin   =   viscera . Origin ( session )   The  origin  instance is the root object of the API.",
+            "title": "Logging-in"
+        },
+        {
+            "location": "/viscera/getting-started/index.html#logging-out",
+            "text": "Log-out using the command-line tool:  $  bin/maas  logout  foo  TODO : Log-out programmatically.",
+            "title": "Logging out"
+        },
+        {
+            "location": "/viscera/getting-started/index.html#nodes",
+            "text": "Listing nodes:  >>>  for   node   in   origin . Nodes :  ...       print ( node )   Acquiring and starting nodes:  >>>  help ( origin . Nodes . acquire )  acquire(*, hostname:str=None, architecture:str=None, cpus:int=None,          memory:float=None, tags:typing.Sequence=None) method of              alburnum.maas.viscera.NodesType instance      :param hostname: The hostname to match.      :param architecture: The architecture to match, e.g. \"amd64\".      :param cpus: The minimum number of CPUs to match.      :param memory: The minimum amount of RAM to match.      :param tags: The tags to match, as a sequence. Each tag may be          prefixed with a hyphen to denote that the given tag should NOT be          associated with a matched node.  >>>  node   =   origin . Nodes . acquire ( tags = ( \"foo\" ,   \"-bar\" ))  >>>  print ( node . substatus_name )  Acquired  >>>  node . start ()  >>>  print ( node . substatus_name )  Deploying",
+            "title": "Nodes"
+        },
+        {
+            "location": "/viscera/index.html",
+            "text": "Viscera\n: High-level Python client API",
+            "title": "Home"
+        },
+        {
+            "location": "/viscera/index.html#viscera-high-level-python-client-api",
+            "text": "",
+            "title": "Viscera: High-level Python client API"
+        }
+    ]
+}
