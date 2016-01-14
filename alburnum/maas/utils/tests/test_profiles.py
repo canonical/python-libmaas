@@ -11,10 +11,6 @@ from alburnum.maas.testing import (
     make_name_without_spaces,
     TestCase,
 )
-from alburnum.maas.utils.profiles import (
-    Profile,
-    ProfileConfig,
-)
 from testtools.matchers import (
     Equals,
     Is,
@@ -22,6 +18,10 @@ from testtools.matchers import (
 )
 from twisted.python.filepath import FilePath
 
+from ..profiles import (
+    Profile,
+    ProfileConfig,
+)
 from .test_auth import make_credentials
 
 

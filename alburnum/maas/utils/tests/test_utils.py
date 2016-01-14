@@ -9,16 +9,10 @@ import os
 import os.path
 from unittest.mock import sentinel
 
-from alburnum.maas import utils
 from alburnum.maas.testing import (
     make_name_without_spaces,
     make_string,
     TestCase,
-)
-from alburnum.maas.utils import (
-    OAuthSigner,
-    prepare_payload,
-    retries,
 )
 from testtools.matchers import (
     AfterPreprocessing,
@@ -26,6 +20,8 @@ from testtools.matchers import (
     MatchesListwise,
 )
 from twisted.internet.task import Clock
+
+from ... import utils
 
 
 class TestMAASOAuth(TestCase):
@@ -38,7 +34,7 @@ class TestMAASOAuth(TestCase):
         realm = make_name_without_spaces("realm")
 
         headers = {}
-        auth = OAuthSigner(
+        auth = utils.OAuthSigner(
             token_key=token_key, token_secret=token_secret,
             consumer_key=consumer_key, consumer_secret=consumer_secret,
             realm=realm)
@@ -195,7 +191,7 @@ class TestPayloadPreparation(TestCase):
         encode_multipart = self.patch(utils, "encode_multipart_message")
         encode_multipart.return_value = sentinel.headers, sentinel.body
         # The payload returned is a 3-tuple of (uri, body, headers).
-        payload = prepare_payload(
+        payload = utils.prepare_payload(
             op=self.op, method=self.method,
             uri=self.uri_base, data=self.data)
         expected = (
@@ -212,7 +208,7 @@ class TestPayloadPreparation(TestCase):
 
 
 class TestPayloadPreparationWithFiles(TestCase):
-    """Tests for `maascli.prepare_payload` involving files."""
+    """Tests for `prepare_payload` involving files."""
 
     def test_files_are_included(self):
         parameter = make_string()
@@ -223,7 +219,7 @@ class TestPayloadPreparationWithFiles(TestCase):
         # opener` tuple, where `opener` is a callable that returns an
         # open file handle.
         data = [(parameter, partial(open, filename, "rb"))]
-        uri, body, headers = prepare_payload(
+        uri, body, headers = utils.prepare_payload(
             op=None, method="POST", uri="http://localhost", data=data)
 
         expected_body_template = """\
@@ -343,7 +339,7 @@ class TestRetries(TestCase):
         # Take control of time.
         clock = Clock()
 
-        gen_retries = retries(5, 2, time=clock.seconds)
+        gen_retries = utils.retries(5, 2, time=clock.seconds)
         # No time has passed, 5 seconds remain, and it suggests sleeping
         # for 2 seconds.
         self.assertRetry(clock, next(gen_retries), 0, 5, 2)
@@ -368,7 +364,7 @@ class TestRetries(TestCase):
         # Take control of time.
         clock = Clock()
 
-        gen_retries = retries(5, 2, time=clock.seconds)
+        gen_retries = utils.retries(5, 2, time=clock.seconds)
         # No time has passed, 5 seconds remain, and it suggests sleeping
         # for 2 seconds.
         self.assertRetry(clock, next(gen_retries), 0, 5, 2)
@@ -392,7 +388,7 @@ class TestRetries(TestCase):
         # Take control of time.
         clock = Clock()
 
-        gen_retries = retries(5, 2, time=clock.seconds)
+        gen_retries = utils.retries(5, 2, time=clock.seconds)
         clock.advance(4)
         # 4 seconds have passed, so 1 second remains, and it suggests sleeping
         # for 1 second.
@@ -404,7 +400,7 @@ class TestRetries(TestCase):
         # Use intervals of 1s, 2s, 3, and then back to 1s.
         intervals = cycle((1.0, 2.0, 3.0))
 
-        gen_retries = retries(5, intervals, time=clock.seconds)
+        gen_retries = utils.retries(5, intervals, time=clock.seconds)
         # No time has passed, 5 seconds remain, and it suggests sleeping
         # for 1 second, then 2, then 3, then 1 again.
         self.assertRetry(clock, next(gen_retries), 0, 5, 1)

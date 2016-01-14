@@ -13,8 +13,9 @@ from alburnum.maas.testing import (
     make_name,
     TestCase,
 )
-from alburnum.maas.utils import auth
-from alburnum.maas.utils.creds import Credentials
+
+from .. import auth
+from ..creds import Credentials
 
 
 def make_credentials():
