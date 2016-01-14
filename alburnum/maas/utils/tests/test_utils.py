@@ -3,12 +3,10 @@
 __all__ = []
 
 import base64
-import contextlib
 from functools import partial
 from itertools import cycle
 import os
 import os.path
-import sqlite3
 from unittest.mock import sentinel
 
 from alburnum.maas import utils
@@ -20,7 +18,6 @@ from alburnum.maas.testing import (
 from alburnum.maas.utils import (
     OAuthSigner,
     prepare_payload,
-    ProfileConfig,
     retries,
 )
 from testtools.matchers import (
@@ -29,7 +26,6 @@ from testtools.matchers import (
     MatchesListwise,
 )
 from twisted.internet.task import Clock
-from twisted.python.filepath import FilePath
 
 
 class TestMAASOAuth(TestCase):
@@ -71,92 +67,6 @@ class TestMAASOAuth(TestCase):
         self.assertIn('oauth_token="%s"' % token_key, authorization)
         self.assertIn('oauth_consumer_key="%s"' % consumer_key, authorization)
         self.assertIn('oauth_signature="%%26%s"' % token_secret, authorization)
-
-
-class TestProfileConfig(TestCase):
-    """Tests for `ProfileConfig`."""
-
-    def test_init(self):
-        database = sqlite3.connect(":memory:")
-        config = ProfileConfig(database)
-        with config.cursor() as cursor:
-            # The profiles table has been created.
-            self.assertEqual(
-                cursor.execute(
-                    "SELECT COUNT(*) FROM sqlite_master"
-                    " WHERE type = 'table'"
-                    "   AND name = 'profiles'").fetchone(),
-                (1,))
-
-    def test_profiles_pristine(self):
-        # A pristine configuration has no profiles.
-        database = sqlite3.connect(":memory:")
-        config = ProfileConfig(database)
-        self.assertSetEqual(set(), set(config))
-
-    def test_adding_profile(self):
-        database = sqlite3.connect(":memory:")
-        config = ProfileConfig(database)
-        config["alice"] = {"abc": 123}
-        self.assertEqual({"alice"}, set(config))
-        self.assertEqual({"abc": 123}, config["alice"])
-
-    def test_replacing_profile(self):
-        database = sqlite3.connect(":memory:")
-        config = ProfileConfig(database)
-        config["alice"] = {"abc": 123}
-        config["alice"] = {"def": 456}
-        self.assertEqual({"alice"}, set(config))
-        self.assertEqual({"def": 456}, config["alice"])
-
-    def test_getting_profile(self):
-        database = sqlite3.connect(":memory:")
-        config = ProfileConfig(database)
-        config["alice"] = {"abc": 123}
-        self.assertEqual({"abc": 123}, config["alice"])
-
-    def test_getting_non_existent_profile(self):
-        database = sqlite3.connect(":memory:")
-        config = ProfileConfig(database)
-        self.assertRaises(KeyError, lambda: config["alice"])
-
-    def test_removing_profile(self):
-        database = sqlite3.connect(":memory:")
-        config = ProfileConfig(database)
-        config["alice"] = {"abc": 123}
-        del config["alice"]
-        self.assertEqual(set(), set(config))
-
-    def test_open_and_close(self):
-        # ProfileConfig.open() returns a context manager that closes the
-        # database on exit.
-        config_file = os.path.join(self.make_dir(), "config")
-        config = ProfileConfig.open(config_file)
-        self.assertIsInstance(config, contextlib._GeneratorContextManager)
-        with config as config:
-            self.assertIsInstance(config, ProfileConfig)
-            with config.cursor() as cursor:
-                self.assertEqual(
-                    (1,), cursor.execute("SELECT 1").fetchone())
-        self.assertRaises(sqlite3.ProgrammingError, config.cursor)
-
-    def test_open_permissions_new_database(self):
-        # ProfileConfig.open() applies restrictive file permissions to newly
-        # created configuration databases.
-        config_file = os.path.join(self.make_dir(), "config")
-        with ProfileConfig.open(config_file):
-            perms = FilePath(config_file).getPermissions()
-            self.assertEqual("rw-------", perms.shorthand())
-
-    def test_open_permissions_existing_database(self):
-        # ProfileConfig.open() leaves the file permissions of existing
-        # configuration databases.
-        config_file = os.path.join(self.make_dir(), "config")
-        open(config_file, "wb").close()  # touch.
-        os.chmod(config_file, 0o644)  # u=rw,go=r
-        with ProfileConfig.open(config_file):
-            perms = FilePath(config_file).getPermissions()
-            self.assertEqual("rw-r--r--", perms.shorthand())
 
 
 class TestPayloadPreparation(TestCase):
