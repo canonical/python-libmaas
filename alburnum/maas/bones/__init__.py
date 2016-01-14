@@ -71,7 +71,7 @@ class SessionAPI:
 
         :see: `ProfileConfig`.
         """
-        with profiles.ProfileConfig.open() as config:
+        with profiles.ProfileManager.open() as config:
             return cls.fromProfile(config.load(name))
 
     # Set these on instances.

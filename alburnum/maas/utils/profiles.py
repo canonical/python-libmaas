@@ -2,7 +2,7 @@
 
 __all__ = [
     "Profile",
-    "ProfileConfig",
+    "ProfileManager",
     "ProfileNotFound",
 ]
 
@@ -111,7 +111,7 @@ class ProfileNotFound(KeyError):
             "Profile '%s' not found." % (name,))
 
 
-class ProfileConfig:
+class ProfileManager:
     """Store profile configurations in an sqlite3 database."""
 
     def __init__(self, database):

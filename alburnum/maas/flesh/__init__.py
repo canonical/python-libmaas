@@ -181,7 +181,7 @@ class cmd_login_base(Command):
         profile = profiles.Profile(
             options.profile_name, options.url, credentials=credentials,
             description=session.description)
-        with profiles.ProfileConfig.open() as config:
+        with profiles.ProfileManager.open() as config:
             config.save(profile)
 
         return profile
@@ -311,7 +311,7 @@ class cmd_logout(Command):
                 ))
 
     def __call__(self, options):
-        with profiles.ProfileConfig.open() as config:
+        with profiles.ProfileManager.open() as config:
             config.delete(options.profile_name)
 
 
@@ -320,7 +320,7 @@ class cmd_list_profiles(TableCommand):
 
     def __call__(self, options):
         table = tables.ProfilesTable()
-        with profiles.ProfileConfig.open() as config:
+        with profiles.ProfileManager.open() as config:
             print(table.render(options.output_format, config))
 
 
@@ -333,7 +333,7 @@ class cmd_refresh_profiles(Command):
     """
 
     def __call__(self, options):
-        with profiles.ProfileConfig.open() as config:
+        with profiles.ProfileManager.open() as config:
             for profile_name in config:
                 profile = config.load(profile_name)
                 session = bones.SessionAPI.fromProfile(profile)

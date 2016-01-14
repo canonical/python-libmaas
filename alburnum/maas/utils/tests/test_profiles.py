@@ -20,7 +20,7 @@ from twisted.python.filepath import FilePath
 
 from ..profiles import (
     Profile,
-    ProfileConfig,
+    ProfileManager,
 )
 from .test_auth import make_credentials
 
@@ -84,7 +84,7 @@ class TestProfileConfig(TestCase):
 
     def test_init(self):
         database = sqlite3.connect(":memory:")
-        config = ProfileConfig(database)
+        config = ProfileManager(database)
         with config.cursor() as cursor:
             # The profiles table has been created.
             self.assertEqual(
@@ -97,12 +97,12 @@ class TestProfileConfig(TestCase):
     def test_profiles_pristine(self):
         # A pristine configuration has no profiles.
         database = sqlite3.connect(":memory:")
-        config = ProfileConfig(database)
+        config = ProfileManager(database)
         self.assertSetEqual(set(), set(config))
 
     def test_saving_and_loading_profile(self):
         database = sqlite3.connect(":memory:")
-        config = ProfileConfig(database)
+        config = ProfileManager(database)
         profile = make_profile()
         config.save(profile)
         self.assertEqual({profile.name}, set(config))
@@ -110,7 +110,7 @@ class TestProfileConfig(TestCase):
 
     def test_replacing_profile(self):
         database = sqlite3.connect(":memory:")
-        config = ProfileConfig(database)
+        config = ProfileManager(database)
         profile1 = make_profile().replace(name="alice")
         profile2 = make_profile().replace(name="alice")
         self.assertNotEqual(profile1, profile2)
@@ -121,12 +121,12 @@ class TestProfileConfig(TestCase):
 
     def test_loading_non_existent_profile(self):
         database = sqlite3.connect(":memory:")
-        config = ProfileConfig(database)
+        config = ProfileManager(database)
         self.assertRaises(KeyError, config.load, "alice")
 
     def test_removing_profile(self):
         database = sqlite3.connect(":memory:")
-        config = ProfileConfig(database)
+        config = ProfileManager(database)
         profile = make_profile()
         config.save(profile)
         config.delete(profile.name)
@@ -136,10 +136,10 @@ class TestProfileConfig(TestCase):
         # ProfileConfig.open() returns a context manager that closes the
         # database on exit.
         config_file = os.path.join(self.make_dir(), "config")
-        config = ProfileConfig.open(config_file)
+        config = ProfileManager.open(config_file)
         self.assertIsInstance(config, contextlib._GeneratorContextManager)
         with config as config:
-            self.assertIsInstance(config, ProfileConfig)
+            self.assertIsInstance(config, ProfileManager)
             with config.cursor() as cursor:
                 self.assertEqual(
                     (1,), cursor.execute("SELECT 1").fetchone())
@@ -149,7 +149,7 @@ class TestProfileConfig(TestCase):
         # ProfileConfig.open() applies restrictive file permissions to newly
         # created configuration databases.
         config_file = os.path.join(self.make_dir(), "config")
-        with ProfileConfig.open(config_file):
+        with ProfileManager.open(config_file):
             perms = FilePath(config_file).getPermissions()
             self.assertEqual("rw-------", perms.shorthand())
 
@@ -159,6 +159,6 @@ class TestProfileConfig(TestCase):
         config_file = os.path.join(self.make_dir(), "config")
         open(config_file, "wb").close()  # touch.
         os.chmod(config_file, 0o644)  # u=rw,go=r
-        with ProfileConfig.open(config_file):
+        with ProfileManager.open(config_file):
             perms = FilePath(config_file).getPermissions()
             self.assertEqual("rw-r--r--", perms.shorthand())
