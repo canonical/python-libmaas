@@ -13,24 +13,26 @@ from textwrap import fill
 from time import sleep
 from urllib.parse import urlparse
 
-from alburnum.maas import (
-    bones,
-    utils,
-    viscera,
-)
-from alburnum.maas.bones import CallError
-from alburnum.maas.utils.auth import (
-    obtain_credentials,
-    obtain_password,
-    obtain_token,
-)
-from alburnum.maas.utils.creds import Credentials
 import argcomplete
 import colorclass
 
 from . import (
     tables,
     tabular,
+)
+from .. import (
+    bones,
+    utils,
+    viscera,
+)
+from ..utils import (
+    creds,
+    profiles,
+)
+from ..utils.auth import (
+    obtain_credentials,
+    obtain_password,
+    obtain_token,
 )
 
 
@@ -158,14 +160,14 @@ class cmd_login_base(Command):
                 "Disable SSL certificate check"), default=False)
 
     @staticmethod
-    def save_profile(options, credentials: Credentials):
+    def save_profile(options, credentials: creds.Credentials):
         # Check for bogus credentials. Do this early so that the user is not
         # surprised when next invoking the MAAS CLI.
         if credentials is not None:
             try:
                 valid_apikey = check_valid_apikey(
                     options.url, credentials, options.insecure)
-            except CallError as e:
+            except bones.CallError as e:
                 raise SystemExit("%s" % e)
             else:
                 if not valid_apikey:
@@ -175,16 +177,12 @@ class cmd_login_base(Command):
         session = bones.SessionAPI.fromURL(
             options.url, credentials=credentials, insecure=options.insecure)
 
-        # Save the config.
-        profile_name = options.profile_name
-        with utils.ProfileConfig.open() as config:
-            config[profile_name] = {
-                "credentials": credentials,
-                "description": session.description,
-                "name": profile_name,
-                "url": options.url,
-                }
-            profile = config[profile_name]
+        # Make a new profile and save it.
+        profile = profiles.Profile(
+            options.profile_name, options.url, credentials=credentials,
+            description=session.description)
+        with profiles.ProfileConfig.open() as config:
+            config.save(profile)
 
         return profile
 
@@ -313,8 +311,8 @@ class cmd_logout(Command):
                 ))
 
     def __call__(self, options):
-        with utils.ProfileConfig.open() as config:
-            del config[options.profile_name]
+        with profiles.ProfileConfig.open() as config:
+            config.delete(options.profile_name)
 
 
 class cmd_list_profiles(TableCommand):
@@ -322,7 +320,7 @@ class cmd_list_profiles(TableCommand):
 
     def __call__(self, options):
         table = tables.ProfilesTable()
-        with utils.ProfileConfig.open() as config:
+        with profiles.ProfileConfig.open() as config:
             print(table.render(options.output_format, config))
 
 
@@ -335,14 +333,12 @@ class cmd_refresh_profiles(Command):
     """
 
     def __call__(self, options):
-        with utils.ProfileConfig.open() as config:
+        with profiles.ProfileConfig.open() as config:
             for profile_name in config:
-                profile = config[profile_name]
-                url, creds = profile["url"], profile["credentials"]
-                session = bones.SessionAPI.fromURL(
-                    url, credentials=Credentials(*creds))
-                profile["description"] = session.description
-                config[profile_name] = profile
+                profile = config.load(profile_name)
+                session = bones.SessionAPI.fromProfile(profile)
+                profile = profile.replace(description=session.description)
+                config.save(profile)
 
 
 class OriginCommandBase(Command):

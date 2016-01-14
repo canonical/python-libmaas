@@ -19,8 +19,10 @@ import re
 import ssl
 from urllib.parse import urljoin
 
-from alburnum.maas import utils
 import httplib2
+
+from .. import utils
+from ..utils import profiles
 
 
 class SessionError(Exception):
@@ -61,9 +63,7 @@ class SessionAPI:
 
         :see: `ProfileConfig`.
         """
-        description = profile["description"]
-        credentials = profile["credentials"]
-        return cls(description, credentials)
+        return cls(profile.description, profile.credentials)
 
     @classmethod
     def fromProfileName(cls, name):
@@ -71,8 +71,8 @@ class SessionAPI:
 
         :see: `ProfileConfig`.
         """
-        with utils.ProfileConfig.open() as config:
-            return cls.fromProfile(config[name])
+        with profiles.ProfileConfig.open() as config:
+            return cls.fromProfile(config.load(name))
 
     # Set these on instances.
     insecure = False
