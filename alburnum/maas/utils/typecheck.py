@@ -20,10 +20,9 @@ class ArgumentTypeError(TypeError):
 
     def __init__(self, func, name, value, expected):
         super(ArgumentTypeError, self).__init__(
-            "In %s, for argument '%s', %r is not of type %s; "
-            "it is of type %s." % (
-                name_of(func), name, value, name_of(expected),
-                name_of(type(value))))
+            "In %s, for argument '%s', %r is not of type %s; it is of type %s."
+            % (name_of(func), name, value, name_of(expected),
+               name_of(type(value))))
 
 
 class ReturnTypeError(TypeError):
@@ -31,10 +30,8 @@ class ReturnTypeError(TypeError):
 
     def __init__(self, func, value, expected):
         super(ReturnTypeError, self).__init__(
-            "In %s, the returned value %r is not of type %s; "
-            "it is of type %s." % (
-                name_of(func), value, name_of(expected),
-                name_of(type(value))))
+            "In %s, the returned value %r is not of type %s; it is of type %s."
+            % (name_of(func), value, name_of(expected), name_of(type(value))))
 
 
 def typed(func):
@@ -123,6 +120,18 @@ def is_typesig(typesig):
 
 
 def name_of(thing):
+    try:
+        module = thing.__module__
+    except AttributeError:
+        return qualname_of(thing)
+    else:
+        if module == "typing":
+            return repr(thing)
+        else:
+            return qualname_of(thing)
+
+
+def qualname_of(thing):
     try:
         return thing.__qualname__
     except AttributeError:
