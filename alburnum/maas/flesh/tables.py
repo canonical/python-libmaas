@@ -192,8 +192,8 @@ class ProfilesTable(Table):
 
     def render(self, target, profiles):
         data = (
-            (profile["name"], profile["url"], profile["credentials"] is None)
-            for profile in (profiles[name] for name in profiles)
+            (profile.name, profile.url, profile.credentials is None)
+            for profile in (profiles.load(name) for name in profiles)
         )
         data = sorted(data, key=itemgetter(0))
         return super().render(target, data)

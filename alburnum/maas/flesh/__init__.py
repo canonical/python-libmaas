@@ -191,13 +191,13 @@ class cmd_login_base(Command):
         """Explain what to do next."""
         what_next = [
             "{{autogreen}}Congratulations!{{/autogreen}} You are logged in "
-            "to the MAAS server at {{autoblue}}{url}{{/autoblue}} with the "
-            "profile name {{autoblue}}{name}{{/autoblue}}.",
+            "to the MAAS server at {{autoblue}}{profile.url}{{/autoblue}} "
+            "with the profile name {{autoblue}}{profile.name}{{/autoblue}}.",
             "For help with the available commands, try:",
             "  maas --help",
             ]
         for message in what_next:
-            message = message.format(**profile)
+            message = message.format(profile=profile)
             print(colorized(fill(message)))
             print()
 

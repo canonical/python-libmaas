@@ -20,7 +20,10 @@ from typing import Optional
 from . import api_url
 from .creds import Credentials
 from .typecheck import typed
-from .types import JSONObject
+from .types import (
+    JSONObject,
+    JSONValue,
+)
 
 
 class Profile(tuple):
@@ -111,6 +114,14 @@ class ProfileNotFound(KeyError):
             "Profile '%s' not found." % (name,))
 
 
+class OptionNotFound(KeyError):
+    """The named option was not found."""
+
+    def __init__(self, name):
+        super(OptionNotFound, self).__init__(
+            "Option '%s' not found." % (name,))
+
+
 class ProfileManager:
     """Store profile configurations in an sqlite3 database."""
 
@@ -119,6 +130,11 @@ class ProfileManager:
         with self.cursor() as cursor:
             cursor.execute(
                 "CREATE TABLE IF NOT EXISTS profiles "
+                "(id INTEGER PRIMARY KEY,"
+                " name TEXT NOT NULL UNIQUE,"
+                " data BLOB)")
+            cursor.execute(
+                "CREATE TABLE IF NOT EXISTS options "
                 "(id INTEGER PRIMARY KEY,"
                 " name TEXT NOT NULL UNIQUE,"
                 " data BLOB)")
@@ -159,6 +175,57 @@ class ProfileManager:
         with self.cursor() as cursor:
             cursor.execute(
                 "DELETE FROM profiles"
+                " WHERE name = ?", (name,))
+
+    @property
+    def default(self) -> Optional[Profile]:
+        """The default profile to use, or `None`."""
+        try:
+            profile_name = self.__get_option("default-profile-name")
+        except OptionNotFound:
+            return None
+        else:
+            try:
+                profile = self.load(profile_name)
+            except ProfileNotFound:
+                return None
+            else:
+                return profile
+
+    @default.setter
+    @typed
+    def default(self, profile: Profile):
+        self.save(profile)
+        self.__set_option("default-profile-name", profile.name)
+
+    @default.deleter
+    def default(self):
+        self.__delete_option("default-profile-name")
+
+    @typed
+    def __get_option(self, name: str) -> JSONValue:
+        with self.cursor() as cursor:
+            data = cursor.execute(
+                "SELECT data FROM options"
+                " WHERE name = ?", (name,)).fetchone()
+        if data is None:
+            raise OptionNotFound(name)
+        else:
+            return json.loads(data[0])
+
+    @typed
+    def __set_option(self, name: str, value: JSONValue):
+        data = json.dumps(value)
+        with self.cursor() as cursor:
+            cursor.execute(
+                "INSERT OR REPLACE INTO options (name, data) "
+                "VALUES (?, ?)", (name, data))
+
+    @typed
+    def __delete_option(self, name: str):
+        with self.cursor() as cursor:
+            cursor.execute(
+                "DELETE FROM options"
                 " WHERE name = ?", (name,))
 
     @classmethod

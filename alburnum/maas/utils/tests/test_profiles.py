@@ -79,8 +79,8 @@ class TestProfile(TestCase):
             "<Profile {0.name} (anonymous) {0.url}>".format(profile)))
 
 
-class TestProfileConfig(TestCase):
-    """Tests for `ProfileConfig`."""
+class TestProfileManager(TestCase):
+    """Tests for `ProfileManager`."""
 
     def test_init(self):
         database = sqlite3.connect(":memory:")
@@ -133,7 +133,7 @@ class TestProfileConfig(TestCase):
         self.assertEqual(set(), set(config))
 
     def test_open_and_close(self):
-        # ProfileConfig.open() returns a context manager that closes the
+        # ProfileManager.open() returns a context manager that closes the
         # database on exit.
         config_file = os.path.join(self.make_dir(), "config")
         config = ProfileManager.open(config_file)
@@ -146,7 +146,7 @@ class TestProfileConfig(TestCase):
         self.assertRaises(sqlite3.ProgrammingError, config.cursor)
 
     def test_open_permissions_new_database(self):
-        # ProfileConfig.open() applies restrictive file permissions to newly
+        # ProfileManager.open() applies restrictive file permissions to newly
         # created configuration databases.
         config_file = os.path.join(self.make_dir(), "config")
         with ProfileManager.open(config_file):
@@ -154,7 +154,7 @@ class TestProfileConfig(TestCase):
             self.assertEqual("rw-------", perms.shorthand())
 
     def test_open_permissions_existing_database(self):
-        # ProfileConfig.open() leaves the file permissions of existing
+        # ProfileManager.open() leaves the file permissions of existing
         # configuration databases.
         config_file = os.path.join(self.make_dir(), "config")
         open(config_file, "wb").close()  # touch.
@@ -162,3 +162,44 @@ class TestProfileConfig(TestCase):
         with ProfileManager.open(config_file):
             perms = FilePath(config_file).getPermissions()
             self.assertEqual("rw-r--r--", perms.shorthand())
+
+
+class TestProfileManagerOptions(TestCase):
+    """Tests for `ProfileManager` options."""
+
+    def test_getting_and_setting_default_profile(self):
+        database = sqlite3.connect(":memory:")
+        config = ProfileManager(database)
+        self.assertIsNone(config.default)
+        profile = make_profile()
+        config.default = profile
+        self.assertEqual(profile, config.default)
+        # A side-effect is that the profile is saved.
+        self.assertEqual({profile.name}, set(config))
+
+    def test_default_profile_is_persisted(self):
+        database = sqlite3.connect(":memory:")
+        config1 = ProfileManager(database)
+        config2 = ProfileManager(database)
+        profile = make_profile()
+        config1.default = profile
+        self.assertEqual(profile, config2.default)
+
+    def test_clearing_default_profile(self):
+        database = sqlite3.connect(":memory:")
+        config = ProfileManager(database)
+        profile = make_profile()
+        config.default = profile
+        del config.default
+        self.assertIsNone(config.default)
+        # The profile itself is not removed.
+        self.assertEqual({profile.name}, set(config))
+
+    def test_getting_default_profile_when_profile_has_been_deleted(self):
+        database = sqlite3.connect(":memory:")
+        config = ProfileManager(database)
+        config.default = make_profile()
+        config.delete(config.default.name)
+        self.assertIsNone(config.default)
+        # The profile itself is gone.
+        self.assertEqual(set(), set(config))
