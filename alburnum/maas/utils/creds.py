@@ -14,6 +14,7 @@ __all__ = [
     ]
 
 from collections import namedtuple
+from typing import Optional
 
 
 CredentialsBase = namedtuple(
@@ -26,14 +27,45 @@ class Credentials(CredentialsBase):
     __slots__ = ()
 
     @classmethod
-    def parse(cls, credentials):
-        parts = credentials.split(":")
-        if len(parts) == 3:
-            return cls(*parts)
+    def parse(cls, credentials) -> Optional["Credentials"]:
+        """Parse/interpret some given credentials.
+
+        These may take the form of:
+
+        * An empty string.
+
+        * An empty sequence.
+
+        * A string, containing three parts (consumer key, token key, and token
+          secret) separated by colons.
+
+        * A sequence of three strings (consumer key, token key, and token
+          secret).
+
+        * None.
+
+        """
+        if credentials is None:
+            return None
+        elif isinstance(credentials, str):
+            if credentials == "":
+                return None
+            elif credentials.count(":") == 2:
+                return cls(*credentials.split(":"))
+            else:
+                raise ValueError(
+                    "Malformed credentials. Expected 3 colon-separated "
+                    "parts, got %r." % (credentials, ))
         else:
-            raise ValueError(
-                "Malformed credentials string. Expected 3 colon-"
-                "separated parts, got %r." % (credentials, ))
+            parts = list(credentials)
+            if len(parts) == 0:
+                return None
+            elif len(parts) == 3:
+                return cls(*parts)
+            else:
+                raise ValueError(
+                    "Malformed credentials. Expected 3 parts, "
+                    "got %r." % (credentials, ))
 
     def __str__(self):
         return ":".join(self)
