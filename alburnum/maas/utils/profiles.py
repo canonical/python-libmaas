@@ -6,24 +6,28 @@ __all__ = [
     "ProfileNotFound",
 ]
 
-from contextlib import (
-    closing,
-    contextmanager,
-)
+from contextlib import contextmanager
 from copy import deepcopy
 import json
 import os
-from os.path import expanduser
+from os.path import (
+    exists,
+    expanduser,
+    isfile,
+    samefile,
+)
 import sqlite3
-from typing import Optional
+from textwrap import dedent
+from typing import (
+    Optional,
+    Sequence,
+    Union,
+)
 
 from . import api_url
 from .creds import Credentials
 from .typecheck import typed
-from .types import (
-    JSONObject,
-    JSONValue,
-)
+from .types import JSONObject
 
 
 class Profile(tuple):
@@ -33,10 +37,12 @@ class Profile(tuple):
 
     @typed
     def __new__(
-            cls, name: str, url: str, *, credentials: Optional[Credentials],
+            cls, name: str, url: str, *,
+            credentials: Union[Credentials, Sequence, str, None],
             description: dict, **other: JSONObject):
-        return super(Profile, cls).__new__(
-            cls, (name, api_url(url), credentials, description, other))
+        return super(Profile, cls).__new__(cls, (
+            name, api_url(url), Credentials.parse(credentials),
+            description, other))
 
     @property
     def name(self) -> str:
@@ -114,12 +120,30 @@ class ProfileNotFound(Exception):
             "Profile '%s' not found." % (name,))
 
 
-class OptionNotFound(Exception):
-    """The named option was not found."""
+def schema_create(conn):
+    conn.executescript(dedent("""\
+    CREATE TABLE IF NOT EXISTS profiles
+      (id INTEGER PRIMARY KEY,
+       name TEXT NOT NULL UNIQUE,
+       data BLOB NOT NULL,
+       selected BOOLEAN NOT NULL DEFAULT FALSE)
+    ;
+    CREATE UNIQUE INDEX IF NOT EXISTS
+      only_one_profile_selected ON profiles
+      (selected IS NOT NULL) WHERE selected
+    ;
+    """))
 
-    def __init__(self, name):
-        super(OptionNotFound, self).__init__(
-            "Option '%s' not found." % (name,))
+
+def schema_import(conn, dbpath):
+    conn.execute(
+        "ATTACH DATABASE ? AS source", (dbpath,))
+    conn.execute(
+        "INSERT OR IGNORE INTO profiles (name, data)"
+        " SELECT name, data FROM source.profiles"
+        " WHERE data IS NOT NULL")
+    conn.execute(
+        "DETACH DATABASE source")
 
 
 class ProfileManager:
@@ -127,110 +151,76 @@ class ProfileManager:
 
     def __init__(self, database):
         self.database = database
-        with self.cursor() as cursor:
-            cursor.execute(
-                "CREATE TABLE IF NOT EXISTS profiles "
-                "(id INTEGER PRIMARY KEY,"
-                " name TEXT NOT NULL UNIQUE,"
-                " data BLOB)")
-            cursor.execute(
-                "CREATE TABLE IF NOT EXISTS options "
-                "(id INTEGER PRIMARY KEY,"
-                " name TEXT NOT NULL UNIQUE,"
-                " data BLOB)")
-
-    def cursor(self):
-        return closing(self.database.cursor())
+        schema_create(database)
 
     def __iter__(self):
-        with self.cursor() as cursor:
-            results = cursor.execute(
-                "SELECT name FROM profiles").fetchall()
+        results = self.database.execute("SELECT name FROM profiles").fetchall()
         return (name for (name,) in results)
 
     @typed
     def load(self, name: str) -> Profile:
-        with self.cursor() as cursor:
-            data = cursor.execute(
-                "SELECT data FROM profiles"
-                " WHERE name = ?", (name,)).fetchone()
-        if data is None:
+        found = self.database.execute(
+            "SELECT data FROM profiles"
+            " WHERE name = ?", (name,)).fetchone()
+        if found is None:
             raise ProfileNotFound(name)
         else:
-            state = json.loads(data[0])
-            creds = state.pop("credentials", None)
-            return Profile(credentials=Credentials.parse(creds), **state)
+            state = json.loads(found[0])
+            state["name"] = name  # Belt-n-braces.
+            return Profile(**state)
 
     @typed
     def save(self, profile: Profile):
         state = profile.dump()
         data = json.dumps(state)
-        with self.cursor() as cursor:
-            cursor.execute(
-                "INSERT OR REPLACE INTO profiles (name, data) "
-                "VALUES (?, ?)", (profile.name, data))
+        # On the face of it `INSERT OR REPLACE` would be an obvious way to do
+        # this. However, on conflict it will erase the value of the `selected`
+        # column to the default (which is false). Hence we do it in two steps,
+        # within a transaction.
+        with self.database:
+            # Ensure there's a row for this profile.
+            self.database.execute(
+                "INSERT OR IGNORE INTO profiles (name, data) VALUES (?, '')",
+                (profile.name,))
+            # Update the row's data.
+            self.database.execute(
+                "UPDATE profiles SET data = ? WHERE name = ?",
+                (data, profile.name))
 
     @typed
     def delete(self, name: str):
-        with self.cursor() as cursor:
-            cursor.execute(
-                "DELETE FROM profiles"
-                " WHERE name = ?", (name,))
+        self.database.execute(
+            "DELETE FROM profiles WHERE name = ?", (name,))
 
     @property
     def default(self) -> Optional[Profile]:
-        """The default profile to use, or `None`."""
-        try:
-            profile_name = self.__get_option("default-profile-name")
-        except OptionNotFound:
+        """The name of the default profile to use, or `None`."""
+        found = self.database.execute(
+            "SELECT name, data FROM profiles WHERE selected"
+            " ORDER BY name LIMIT 1").fetchone()
+        if found is None:
             return None
         else:
-            try:
-                profile = self.load(profile_name)
-            except ProfileNotFound:
-                return None
-            else:
-                return profile
+            state = json.loads(found[1])
+            state["name"] = found[0]  # Belt-n-braces.
+            return Profile(**state)
 
     @default.setter
     @typed
     def default(self, profile: Profile):
-        self.save(profile)
-        self.__set_option("default-profile-name", profile.name)
+        with self.database:
+            self.save(profile)
+            self.database.execute(
+                "UPDATE profiles SET selected = (name = ?)",
+                (profile.name,))
 
     @default.deleter
     def default(self):
-        self.__delete_option("default-profile-name")
-
-    @typed
-    def __get_option(self, name: str) -> JSONValue:
-        with self.cursor() as cursor:
-            data = cursor.execute(
-                "SELECT data FROM options"
-                " WHERE name = ?", (name,)).fetchone()
-        if data is None:
-            raise OptionNotFound(name)
-        else:
-            return json.loads(data[0])
-
-    @typed
-    def __set_option(self, name: str, value: JSONValue):
-        data = json.dumps(value)
-        with self.cursor() as cursor:
-            cursor.execute(
-                "INSERT OR REPLACE INTO options (name, data) "
-                "VALUES (?, ?)", (name, data))
-
-    @typed
-    def __delete_option(self, name: str):
-        with self.cursor() as cursor:
-            cursor.execute(
-                "DELETE FROM options"
-                " WHERE name = ?", (name,))
+        self.database.execute("UPDATE profiles SET selected = 0")
 
     @classmethod
     @contextmanager
-    def open(cls, dbpath=expanduser("~/.maascli.db")):
+    def open(cls, dbpath=expanduser("~/.maas.db")):
         """Load a profiles database.
 
         Called without arguments this will open (and create) a database in the
@@ -238,13 +228,25 @@ class ProfileManager:
 
         **Note** that this returns a context manager which will close the
         database on exit, saving if the exit is clean.
+
+        :param dbpath: The path to the database file to create and open.
         """
+        # See if we ought to do a one-time migration.
+        migrate_from = expanduser("~/.maascli.db")
+        migrate = isfile(migrate_from) and not exists(dbpath)
         # Initialise filename with restrictive permissions...
         os.close(os.open(dbpath, os.O_CREAT | os.O_APPEND, 0o600))
+        # Final check to see if it's safe to migrate.
+        migrate = migrate and not samefile(migrate_from, dbpath)
         # before opening it with sqlite.
         database = sqlite3.connect(dbpath)
         try:
-            yield cls(database)
+            manager = cls(database)
+            if migrate:
+                schema_import(database, migrate_from)
+                yield manager
+            else:
+                yield manager
         except:
             raise
         else:

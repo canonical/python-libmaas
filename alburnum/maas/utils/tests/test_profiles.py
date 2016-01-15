@@ -18,9 +18,11 @@ from testtools.matchers import (
 )
 from twisted.python.filepath import FilePath
 
+from .. import profiles
 from ..profiles import (
     Profile,
     ProfileManager,
+    ProfileNotFound,
 )
 from .test_auth import make_credentials
 
@@ -85,14 +87,13 @@ class TestProfileManager(TestCase):
     def test_init(self):
         database = sqlite3.connect(":memory:")
         config = ProfileManager(database)
-        with config.cursor() as cursor:
-            # The profiles table has been created.
-            self.assertEqual(
-                cursor.execute(
-                    "SELECT COUNT(*) FROM sqlite_master"
-                    " WHERE type = 'table'"
-                    "   AND name = 'profiles'").fetchone(),
-                (1,))
+        # The profiles table has been created.
+        self.assertEqual(
+            config.database.execute(
+                "SELECT COUNT(*) FROM sqlite_master"
+                " WHERE type = 'table'"
+                "   AND name = 'profiles'").fetchone(),
+            (1,))
 
     def test_profiles_pristine(self):
         # A pristine configuration has no profiles.
@@ -108,6 +109,16 @@ class TestProfileManager(TestCase):
         self.assertEqual({profile.name}, set(config))
         self.assertEqual(profile, config.load(profile.name))
 
+    def test_saving_failure_does_not_corrupt_database(self):
+        database = sqlite3.connect(":memory:")
+        config = ProfileManager(database)
+        profile_good = make_profile()
+        config.save(profile_good)
+        profile_bad = profile_good.replace(foo=object())
+        self.assertRaises(TypeError, config.save, profile_bad)
+        self.assertEqual({profile_good.name}, set(config))
+        self.assertEqual(profile_good, config.load(profile_good.name))
+
     def test_replacing_profile(self):
         database = sqlite3.connect(":memory:")
         config = ProfileManager(database)
@@ -122,7 +133,7 @@ class TestProfileManager(TestCase):
     def test_loading_non_existent_profile(self):
         database = sqlite3.connect(":memory:")
         config = ProfileManager(database)
-        self.assertRaises(KeyError, config.load, "alice")
+        self.assertRaises(ProfileNotFound, config.load, "alice")
 
     def test_removing_profile(self):
         database = sqlite3.connect(":memory:")
@@ -140,10 +151,11 @@ class TestProfileManager(TestCase):
         self.assertIsInstance(config, contextlib._GeneratorContextManager)
         with config as config:
             self.assertIsInstance(config, ProfileManager)
-            with config.cursor() as cursor:
-                self.assertEqual(
-                    (1,), cursor.execute("SELECT 1").fetchone())
-        self.assertRaises(sqlite3.ProgrammingError, config.cursor)
+            self.assertEqual(
+                (1,), config.database.execute("SELECT 1").fetchone())
+        self.assertRaises(
+            sqlite3.ProgrammingError, config.database.execute,
+            "SELECT 1")
 
     def test_open_permissions_new_database(self):
         # ProfileManager.open() applies restrictive file permissions to newly
@@ -163,9 +175,48 @@ class TestProfileManager(TestCase):
             perms = FilePath(config_file).getPermissions()
             self.assertEqual("rw-r--r--", perms.shorthand())
 
+    def test_open_does_one_time_migration(self):
+        home = self.make_dir()
+        dbpath_old = os.path.join(home, ".maascli.db")
+        dbpath_new = os.path.join(home, ".maas.db")
 
-class TestProfileManagerOptions(TestCase):
-    """Tests for `ProfileManager` options."""
+        def expanduser(path):
+            # We expect the paths to be expanded to be one of those below.
+            paths = {"~/.maas.db": dbpath_new, "~/.maascli.db": dbpath_old}
+            return paths[path]
+
+        # expanduser() is used by ProfileManager.open().
+        self.patch(profiles, "expanduser", expanduser)
+
+        # A profile that will be migrated.
+        profile = make_profile()
+
+        # Populate the old database with a profile. We're using the new
+        # ProfileManager but that's okay; the schemas are compatible.
+        with ProfileManager.open(dbpath_old) as config_old:
+            config_old.save(profile)
+
+        # Immediately as we open the new database, profiles from the old
+        # database are migrated.
+        with ProfileManager.open(dbpath_new) as config_new:
+            self.assertEqual({profile.name}, set(config_new))
+            profile_migrated = config_new.load(profile.name)
+            self.assertEqual(profile, profile_migrated)
+            # Before closing, delete the migrated profile.
+            config_new.delete(profile.name)
+
+        # After reopening the new database we see the migrated profile that we
+        # deleted has stayed deleted; it has not been migrated a second time.
+        with ProfileManager.open(dbpath_new) as config_new:
+            self.assertRaises(ProfileNotFound, config_new.load, profile.name)
+
+        # It is still present and correct in the old database.
+        with ProfileManager.open(dbpath_old) as config_old:
+            self.assertEqual(profile, config_old.load(profile.name))
+
+
+class TestProfileManagerDefault(TestCase):
+    """Tests for `ProfileManager` default profile."""
 
     def test_getting_and_setting_default_profile(self):
         database = sqlite3.connect(":memory:")
@@ -184,6 +235,24 @@ class TestProfileManagerOptions(TestCase):
         profile = make_profile()
         config1.default = profile
         self.assertEqual(profile, config2.default)
+
+    def test_default_profile_remains_default_after_subsequent_save(self):
+        database = sqlite3.connect(":memory:")
+        profile = make_profile()
+        config = ProfileManager(database)
+        config.default = profile
+        profile = profile.replace(foo="bar")
+        config.save(profile)
+        self.assertEqual(profile, config.default)
+
+    def test_default_profile_remains_default_after_failed_save(self):
+        database = sqlite3.connect(":memory:")
+        profile_good = make_profile()
+        config = ProfileManager(database)
+        config.default = profile_good
+        profile_bad = profile_good.replace(foo=object())
+        self.assertRaises(TypeError, config.save, profile_bad)
+        self.assertEqual(profile_good, config.default)
 
     def test_clearing_default_profile(self):
         database = sqlite3.connect(":memory:")
