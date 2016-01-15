@@ -47,6 +47,8 @@ class Credentials(CredentialsBase):
         """
         if credentials is None:
             return None
+        elif isinstance(credentials, cls):
+            return credentials
         elif isinstance(credentials, str):
             if credentials == "":
                 return None

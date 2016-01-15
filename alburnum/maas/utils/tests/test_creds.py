@@ -45,3 +45,7 @@ class TestCredentials(TestCase):
 
     def test_parse_returns_None_when_passed_None(self):
         self.assertIsNone(Credentials.parse(None))
+
+    def test_parse_returns_credentials_when_passed_credentials(self):
+        creds = Credentials("foo", "bar", "baz")
+        self.assertIs(creds, Credentials.parse(creds))
