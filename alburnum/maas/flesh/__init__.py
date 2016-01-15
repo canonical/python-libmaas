@@ -51,9 +51,13 @@ def colorized(text):
 
 def get_profile_names():
     with profiles.ProfileManager.open() as config:
-        default = config.default
-        return sorted(config), (
-            None if default is None else default.name)
+        return sorted(config), config.default
+
+
+# Get profile names and the default profile now to avoid repetition when
+# defining arguments (e.g. default and choices). Doing this as module-import
+# time is imperfect but good enough for now.
+PROFILE_NAMES, PROFILE_DEFAULT = get_profile_names()
 
 
 class ArgumentParser(argparse.ArgumentParser):
@@ -189,7 +193,8 @@ class cmd_login_base(Command):
             options.profile_name, options.url, credentials=credentials,
             description=session.description)
         with profiles.ProfileManager.open() as config:
-            config.default = profile
+            config.save(profile)
+            config.default = profile.name
 
         return profile
 
@@ -307,12 +312,13 @@ class cmd_switch(Command):
 
     def __init__(self, parser):
         super(cmd_switch, self).__init__(parser)
-        profiles, default = get_profile_names()
         parser.add_argument(
-            "profile_name", metavar="profile-name", choices=profiles, help=(
+            "profile_name", metavar="profile-name", choices=PROFILE_NAMES,
+            help=(
                 "The name with which a remote server and its credentials "
                 "are referred to within this tool."
-                ))
+            ),
+        )
 
     def __call__(self, options):
         with profiles.ProfileManager.open() as config:
@@ -329,15 +335,16 @@ class cmd_logout(Command):
 
     def __init__(self, parser):
         super(cmd_logout, self).__init__(parser)
-        profiles, default = get_profile_names()
         parser.add_argument(
             "profile_name", metavar="profile-name", nargs="?",
-            default=default, choices=profiles, help=(
+            choices=PROFILE_NAMES, help=(
                 "The name with which a remote server and its "
                 "credentials are referred to within this tool." +
-                ("" if default is None else " [default: %(default)s]")
+                ("" if PROFILE_DEFAULT is None else " [default: %(default)s]")
             ),
         )
+        if PROFILE_DEFAULT is not None:
+            parser.set_defaults(profile_name=PROFILE_DEFAULT.name)
 
     def __call__(self, options):
         with profiles.ProfileManager.open() as config:
@@ -374,14 +381,15 @@ class OriginCommandBase(Command):
 
     def __init__(self, parser):
         super(OriginCommandBase, self).__init__(parser)
-        profiles, default = get_profile_names()
         parser.add_argument(
-            "--profile-name", metavar="NAME", required=(default is None),
-            default=default, choices=profiles, help=(
+            "--profile-name", metavar="NAME", choices=PROFILE_NAMES,
+            required=(PROFILE_DEFAULT is None), help=(
                 "The name of the remote MAAS instance to use. Use "
                 "`list-profiles` to obtain a list of valid profiles." +
-                ("" if default is None else " [default: %(default)s]")
+                ("" if PROFILE_DEFAULT is None else " [default: %(default)s]")
             ))
+        if PROFILE_DEFAULT is not None:
+            parser.set_defaults(profile_name=PROFILE_DEFAULT.name)
 
 
 class OriginCommand(OriginCommandBase):

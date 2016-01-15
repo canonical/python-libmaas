@@ -7,31 +7,30 @@ import sys
 from textwrap import dedent
 
 from alburnum.maas import flesh
-from alburnum.maas.testing import (
-    make_name,
-    TestCase,
-)
+from alburnum.maas.testing import TestCase
 from alburnum.maas.utils import auth
 from alburnum.maas.utils.tests.test_auth import make_options
+
+from ...utils.tests.test_profiles import make_profile
 
 
 class TestLoginBase(TestCase):
     """Tests for `cmd_login_base`."""
 
     def test_print_whats_next(self):
-        profile = {"name": make_name("profile"), "url": make_name("url")}
+        profile = make_profile()
         stdout = self.patch(sys, "stdout", StringIO())
         flesh.cmd_login_base.print_whats_next(profile)
         expected = dedent("""\
             Congratulations! You are logged in to the MAAS
-            server at %(url)s with the profile name
-            %(name)s.
+            server at {profile.url} with the profile name
+            {profile.name}.
 
             For help with the available commands, try:
 
               maas --help
 
-            """) % profile
+            """).format(profile=profile)
         observed = stdout.getvalue()
         self.assertDocTestMatches(expected, observed)
 
