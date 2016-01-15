@@ -49,6 +49,13 @@ def colorized(text):
         return colorclass.Color(text).value_no_colors
 
 
+def get_profile_names():
+    with profiles.ProfileManager.open() as config:
+        default = config.default
+        return sorted(config), (
+            None if default is None else default.name)
+
+
 class ArgumentParser(argparse.ArgumentParser):
     """Specialisation of argparse's parser with better support for subparsers.
 
@@ -177,12 +184,12 @@ class cmd_login_base(Command):
         session = bones.SessionAPI.fromURL(
             options.url, credentials=credentials, insecure=options.insecure)
 
-        # Make a new profile and save it.
+        # Make a new profile and save it as the default.
         profile = profiles.Profile(
             options.profile_name, options.url, credentials=credentials,
             description=session.description)
         with profiles.ProfileManager.open() as config:
-            config.save(profile)
+            config.default = profile
 
         return profile
 
@@ -295,20 +302,42 @@ class cmd_login_api(cmd_login_base):
         self.print_whats_next(profile)
 
 
+class cmd_switch(Command):
+    """Switch the default profile."""
+
+    def __init__(self, parser):
+        super(cmd_switch, self).__init__(parser)
+        profiles, default = get_profile_names()
+        parser.add_argument(
+            "profile_name", metavar="profile-name", choices=profiles, help=(
+                "The name with which a remote server and its credentials "
+                "are referred to within this tool."
+                ))
+
+    def __call__(self, options):
+        with profiles.ProfileManager.open() as config:
+            profile = config.load(options.profile_name)
+            config.default = profile
+
+
 class cmd_logout(Command):
     """Log-out of a remote API, purging any stored credentials.
 
-    This will remove the given profile from your command-line  client.  You
-    can re-create it by logging in again later.
+    This will remove the given profile from your command-line client. You can
+    re-create it by logging in again later.
     """
 
     def __init__(self, parser):
         super(cmd_logout, self).__init__(parser)
+        profiles, default = get_profile_names()
         parser.add_argument(
-            "profile_name", metavar="profile-name", help=(
-                "The name with which a remote server and its credentials "
-                "are referred to within this tool."
-                ))
+            "profile_name", metavar="profile-name", nargs="?",
+            default=default, choices=profiles, help=(
+                "The name with which a remote server and its "
+                "credentials are referred to within this tool." +
+                ("" if default is None else " [default: %(default)s]")
+            ),
+        )
 
     def __call__(self, options):
         with profiles.ProfileManager.open() as config:
@@ -345,14 +374,13 @@ class OriginCommandBase(Command):
 
     def __init__(self, parser):
         super(OriginCommandBase, self).__init__(parser)
-        default = environ.get("MAAS_PROFILE")
+        profiles, default = get_profile_names()
         parser.add_argument(
             "--profile-name", metavar="NAME", required=(default is None),
-            default=default, help=(
+            default=default, choices=profiles, help=(
                 "The name of the remote MAAS instance to use. Use "
-                "`list-profiles` to obtain a list of valid profiles. "
-                "This can also be set via the MAAS_PROFILE environment "
-                "variable."
+                "`list-profiles` to obtain a list of valid profiles." +
+                ("" if default is None else " [default: %(default)s]")
             ))
 
 
@@ -507,6 +535,7 @@ def prepare_parser(argv):
     # Basic commands.
     cmd_login.register(parser)
     cmd_login_api.register(parser)
+    cmd_switch.register(parser)
     cmd_logout.register(parser)
     cmd_list_profiles.register(parser)
     cmd_refresh_profiles.register(parser)

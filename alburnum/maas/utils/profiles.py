@@ -106,7 +106,7 @@ class Profile(tuple):
                 self.__class__.__name__, self.name, self.url)
 
 
-class ProfileNotFound(KeyError):
+class ProfileNotFound(Exception):
     """The named profile was not found."""
 
     def __init__(self, name):
@@ -114,7 +114,7 @@ class ProfileNotFound(KeyError):
             "Profile '%s' not found." % (name,))
 
 
-class OptionNotFound(KeyError):
+class OptionNotFound(Exception):
     """The named option was not found."""
 
     def __init__(self, name):
