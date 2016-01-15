@@ -121,21 +121,45 @@ class ProfileNotFound(Exception):
 
 
 def schema_create(conn):
-    conn.executescript(dedent("""\
+    """Create the index for storing profiles.
+
+    This is idempotent; it can be called every time a database is opened to
+    make sure it's ready to use and up-to-date.
+
+    :param conn: A connection to an SQLite3 database.
+    """
+    conn.execute(dedent("""\
     CREATE TABLE IF NOT EXISTS profiles
       (id INTEGER PRIMARY KEY,
        name TEXT NOT NULL UNIQUE,
        data BLOB NOT NULL,
        selected BOOLEAN NOT NULL DEFAULT FALSE)
-    ;
-    CREATE UNIQUE INDEX IF NOT EXISTS
-      only_one_profile_selected ON profiles
-      (selected IS NOT NULL) WHERE selected
-    ;
     """))
+    # Partial indexes are only available in >=3.8.0 and expressions in indexes
+    # are only available in >=3.9.0 (https://www.sqlite.org/partialindex.html
+    # & https://www.sqlite.org/expridx.html). Don't bother with any kind of
+    # index before that because it would complicate upgrades.
+    if sqlite3.sqlite_version_info >= (3, 9, 0):
+        # This index is for data integrity -- ensuring that only one profile
+        # is the default ("selected") profile -- and speed a distant second.
+        conn.execute(dedent("""\
+        CREATE UNIQUE INDEX IF NOT EXISTS
+          only_one_profile_selected ON profiles
+          (selected IS NOT NULL) WHERE selected
+        """))
 
 
 def schema_import(conn, dbpath):
+    """Import profiles from another database.
+
+    This does not overwrite existing profiles in the target database. Profiles
+    in the source database that share names with those in the target database
+    are ignored.
+
+    :param conn: A connection to an SQLite3 database into which to copy
+        profiles.
+    :param dbpath: The filesystem path to the source SQLite3 database.
+    """
     conn.execute(
         "ATTACH DATABASE ? AS source", (dbpath,))
     conn.execute(
