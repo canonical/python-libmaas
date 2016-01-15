@@ -181,6 +181,17 @@ class ProfileAnonymousColumn(Column):
             return super().render(target, is_anonymous)
 
 
+class ProfileDefaultColumn(Column):
+
+    def render(self, target, is_anonymous):
+        if target is RenderTarget.pretty:
+            return "✓" if is_anonymous else " "
+        elif target is RenderTarget.plain:
+            return "X" if is_anonymous else " "
+        else:
+            return super().render(target, is_anonymous)
+
+
 class ProfilesTable(Table):
 
     def __init__(self):
@@ -188,12 +199,16 @@ class ProfilesTable(Table):
             Column("name", "Profile name"),
             Column("url", "URL"),
             ProfileAnonymousColumn("is_anonymous", "Anonymous?"),
+            ProfileDefaultColumn("is_default", "Default?"),
         )
 
     def render(self, target, profiles):
+        default = profiles.default
+        default_name = None if default is None else default.name
         data = (
-            (profile["name"], profile["url"], profile["credentials"] is None)
-            for profile in (profiles[name] for name in profiles)
+            (profile.name, profile.url, (profile.credentials is None),
+             (profile.name == default_name))
+            for profile in (profiles.load(name) for name in profiles)
         )
         data = sorted(data, key=itemgetter(0))
         return super().render(target, data)

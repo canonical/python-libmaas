@@ -13,24 +13,26 @@ from textwrap import fill
 from time import sleep
 from urllib.parse import urlparse
 
-from alburnum.maas import (
-    bones,
-    utils,
-    viscera,
-)
-from alburnum.maas.bones import CallError
-from alburnum.maas.utils.auth import (
-    obtain_credentials,
-    obtain_password,
-    obtain_token,
-)
-from alburnum.maas.utils.creds import Credentials
 import argcomplete
 import colorclass
 
 from . import (
     tables,
     tabular,
+)
+from .. import (
+    bones,
+    utils,
+    viscera,
+)
+from ..utils import (
+    creds,
+    profiles,
+)
+from ..utils.auth import (
+    obtain_credentials,
+    obtain_password,
+    obtain_token,
 )
 
 
@@ -45,6 +47,17 @@ def colorized(text):
         return colorclass.Color(text)
     else:
         return colorclass.Color(text).value_no_colors
+
+
+def get_profile_names():
+    with profiles.ProfileManager.open() as config:
+        return sorted(config), config.default
+
+
+# Get profile names and the default profile now to avoid repetition when
+# defining arguments (e.g. default and choices). Doing this as module-import
+# time is imperfect but good enough for now.
+PROFILE_NAMES, PROFILE_DEFAULT = get_profile_names()
 
 
 class ArgumentParser(argparse.ArgumentParser):
@@ -158,14 +171,14 @@ class cmd_login_base(Command):
                 "Disable SSL certificate check"), default=False)
 
     @staticmethod
-    def save_profile(options, credentials: Credentials):
+    def save_profile(options, credentials: creds.Credentials):
         # Check for bogus credentials. Do this early so that the user is not
         # surprised when next invoking the MAAS CLI.
         if credentials is not None:
             try:
                 valid_apikey = check_valid_apikey(
                     options.url, credentials, options.insecure)
-            except CallError as e:
+            except bones.CallError as e:
                 raise SystemExit("%s" % e)
             else:
                 if not valid_apikey:
@@ -175,16 +188,13 @@ class cmd_login_base(Command):
         session = bones.SessionAPI.fromURL(
             options.url, credentials=credentials, insecure=options.insecure)
 
-        # Save the config.
-        profile_name = options.profile_name
-        with utils.ProfileConfig.open() as config:
-            config[profile_name] = {
-                "credentials": credentials,
-                "description": session.description,
-                "name": profile_name,
-                "url": options.url,
-                }
-            profile = config[profile_name]
+        # Make a new profile and save it as the default.
+        profile = profiles.Profile(
+            options.profile_name, options.url, credentials=credentials,
+            description=session.description)
+        with profiles.ProfileManager.open() as config:
+            config.save(profile)
+            config.default = profile.name
 
         return profile
 
@@ -193,13 +203,13 @@ class cmd_login_base(Command):
         """Explain what to do next."""
         what_next = [
             "{{autogreen}}Congratulations!{{/autogreen}} You are logged in "
-            "to the MAAS server at {{autoblue}}{url}{{/autoblue}} with the "
-            "profile name {{autoblue}}{name}{{/autoblue}}.",
+            "to the MAAS server at {{autoblue}}{profile.url}{{/autoblue}} "
+            "with the profile name {{autoblue}}{profile.name}{{/autoblue}}.",
             "For help with the available commands, try:",
             "  maas --help",
             ]
         for message in what_next:
-            message = message.format(**profile)
+            message = message.format(profile=profile)
             print(colorized(fill(message)))
             print()
 
@@ -297,24 +307,48 @@ class cmd_login_api(cmd_login_base):
         self.print_whats_next(profile)
 
 
+class cmd_switch(Command):
+    """Switch the default profile."""
+
+    def __init__(self, parser):
+        super(cmd_switch, self).__init__(parser)
+        parser.add_argument(
+            "profile_name", metavar="profile-name", choices=PROFILE_NAMES,
+            help=(
+                "The name with which a remote server and its credentials "
+                "are referred to within this tool."
+            ),
+        )
+
+    def __call__(self, options):
+        with profiles.ProfileManager.open() as config:
+            profile = config.load(options.profile_name)
+            config.default = profile
+
+
 class cmd_logout(Command):
     """Log-out of a remote API, purging any stored credentials.
 
-    This will remove the given profile from your command-line  client.  You
-    can re-create it by logging in again later.
+    This will remove the given profile from your command-line client. You can
+    re-create it by logging in again later.
     """
 
     def __init__(self, parser):
         super(cmd_logout, self).__init__(parser)
         parser.add_argument(
-            "profile_name", metavar="profile-name", help=(
-                "The name with which a remote server and its credentials "
-                "are referred to within this tool."
-                ))
+            "profile_name", metavar="profile-name", nargs="?",
+            choices=PROFILE_NAMES, help=(
+                "The name with which a remote server and its "
+                "credentials are referred to within this tool." +
+                ("" if PROFILE_DEFAULT is None else " [default: %(default)s]")
+            ),
+        )
+        if PROFILE_DEFAULT is not None:
+            parser.set_defaults(profile_name=PROFILE_DEFAULT.name)
 
     def __call__(self, options):
-        with utils.ProfileConfig.open() as config:
-            del config[options.profile_name]
+        with profiles.ProfileManager.open() as config:
+            config.delete(options.profile_name)
 
 
 class cmd_list_profiles(TableCommand):
@@ -322,7 +356,7 @@ class cmd_list_profiles(TableCommand):
 
     def __call__(self, options):
         table = tables.ProfilesTable()
-        with utils.ProfileConfig.open() as config:
+        with profiles.ProfileManager.open() as config:
             print(table.render(options.output_format, config))
 
 
@@ -335,29 +369,27 @@ class cmd_refresh_profiles(Command):
     """
 
     def __call__(self, options):
-        with utils.ProfileConfig.open() as config:
+        with profiles.ProfileManager.open() as config:
             for profile_name in config:
-                profile = config[profile_name]
-                url, creds = profile["url"], profile["credentials"]
-                session = bones.SessionAPI.fromURL(
-                    url, credentials=Credentials(*creds))
-                profile["description"] = session.description
-                config[profile_name] = profile
+                profile = config.load(profile_name)
+                session = bones.SessionAPI.fromProfile(profile)
+                profile = profile.replace(description=session.description)
+                config.save(profile)
 
 
 class OriginCommandBase(Command):
 
     def __init__(self, parser):
         super(OriginCommandBase, self).__init__(parser)
-        default = environ.get("MAAS_PROFILE")
         parser.add_argument(
-            "--profile-name", metavar="NAME", required=(default is None),
-            default=default, help=(
+            "--profile-name", metavar="NAME", choices=PROFILE_NAMES,
+            required=(PROFILE_DEFAULT is None), help=(
                 "The name of the remote MAAS instance to use. Use "
-                "`list-profiles` to obtain a list of valid profiles. "
-                "This can also be set via the MAAS_PROFILE environment "
-                "variable."
+                "`list-profiles` to obtain a list of valid profiles." +
+                ("" if PROFILE_DEFAULT is None else " [default: %(default)s]")
             ))
+        if PROFILE_DEFAULT is not None:
+            parser.set_defaults(profile_name=PROFILE_DEFAULT.name)
 
 
 class OriginCommand(OriginCommandBase):
@@ -511,6 +543,7 @@ def prepare_parser(argv):
     # Basic commands.
     cmd_login.register(parser)
     cmd_login_api.register(parser)
+    cmd_switch.register(parser)
     cmd_logout.register(parser)
     cmd_list_profiles.register(parser)
     cmd_refresh_profiles.register(parser)

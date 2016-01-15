@@ -3,25 +3,16 @@
 __all__ = []
 
 import base64
-import contextlib
 from functools import partial
 from itertools import cycle
 import os
 import os.path
-import sqlite3
 from unittest.mock import sentinel
 
-from alburnum.maas import utils
 from alburnum.maas.testing import (
     make_name_without_spaces,
     make_string,
     TestCase,
-)
-from alburnum.maas.utils import (
-    OAuthSigner,
-    prepare_payload,
-    ProfileConfig,
-    retries,
 )
 from testtools.matchers import (
     AfterPreprocessing,
@@ -29,7 +20,8 @@ from testtools.matchers import (
     MatchesListwise,
 )
 from twisted.internet.task import Clock
-from twisted.python.filepath import FilePath
+
+from ... import utils
 
 
 class TestMAASOAuth(TestCase):
@@ -42,7 +34,7 @@ class TestMAASOAuth(TestCase):
         realm = make_name_without_spaces("realm")
 
         headers = {}
-        auth = OAuthSigner(
+        auth = utils.OAuthSigner(
             token_key=token_key, token_secret=token_secret,
             consumer_key=consumer_key, consumer_secret=consumer_secret,
             realm=realm)
@@ -71,92 +63,6 @@ class TestMAASOAuth(TestCase):
         self.assertIn('oauth_token="%s"' % token_key, authorization)
         self.assertIn('oauth_consumer_key="%s"' % consumer_key, authorization)
         self.assertIn('oauth_signature="%%26%s"' % token_secret, authorization)
-
-
-class TestProfileConfig(TestCase):
-    """Tests for `ProfileConfig`."""
-
-    def test_init(self):
-        database = sqlite3.connect(":memory:")
-        config = ProfileConfig(database)
-        with config.cursor() as cursor:
-            # The profiles table has been created.
-            self.assertEqual(
-                cursor.execute(
-                    "SELECT COUNT(*) FROM sqlite_master"
-                    " WHERE type = 'table'"
-                    "   AND name = 'profiles'").fetchone(),
-                (1,))
-
-    def test_profiles_pristine(self):
-        # A pristine configuration has no profiles.
-        database = sqlite3.connect(":memory:")
-        config = ProfileConfig(database)
-        self.assertSetEqual(set(), set(config))
-
-    def test_adding_profile(self):
-        database = sqlite3.connect(":memory:")
-        config = ProfileConfig(database)
-        config["alice"] = {"abc": 123}
-        self.assertEqual({"alice"}, set(config))
-        self.assertEqual({"abc": 123}, config["alice"])
-
-    def test_replacing_profile(self):
-        database = sqlite3.connect(":memory:")
-        config = ProfileConfig(database)
-        config["alice"] = {"abc": 123}
-        config["alice"] = {"def": 456}
-        self.assertEqual({"alice"}, set(config))
-        self.assertEqual({"def": 456}, config["alice"])
-
-    def test_getting_profile(self):
-        database = sqlite3.connect(":memory:")
-        config = ProfileConfig(database)
-        config["alice"] = {"abc": 123}
-        self.assertEqual({"abc": 123}, config["alice"])
-
-    def test_getting_non_existent_profile(self):
-        database = sqlite3.connect(":memory:")
-        config = ProfileConfig(database)
-        self.assertRaises(KeyError, lambda: config["alice"])
-
-    def test_removing_profile(self):
-        database = sqlite3.connect(":memory:")
-        config = ProfileConfig(database)
-        config["alice"] = {"abc": 123}
-        del config["alice"]
-        self.assertEqual(set(), set(config))
-
-    def test_open_and_close(self):
-        # ProfileConfig.open() returns a context manager that closes the
-        # database on exit.
-        config_file = os.path.join(self.make_dir(), "config")
-        config = ProfileConfig.open(config_file)
-        self.assertIsInstance(config, contextlib._GeneratorContextManager)
-        with config as config:
-            self.assertIsInstance(config, ProfileConfig)
-            with config.cursor() as cursor:
-                self.assertEqual(
-                    (1,), cursor.execute("SELECT 1").fetchone())
-        self.assertRaises(sqlite3.ProgrammingError, config.cursor)
-
-    def test_open_permissions_new_database(self):
-        # ProfileConfig.open() applies restrictive file permissions to newly
-        # created configuration databases.
-        config_file = os.path.join(self.make_dir(), "config")
-        with ProfileConfig.open(config_file):
-            perms = FilePath(config_file).getPermissions()
-            self.assertEqual("rw-------", perms.shorthand())
-
-    def test_open_permissions_existing_database(self):
-        # ProfileConfig.open() leaves the file permissions of existing
-        # configuration databases.
-        config_file = os.path.join(self.make_dir(), "config")
-        open(config_file, "wb").close()  # touch.
-        os.chmod(config_file, 0o644)  # u=rw,go=r
-        with ProfileConfig.open(config_file):
-            perms = FilePath(config_file).getPermissions()
-            self.assertEqual("rw-r--r--", perms.shorthand())
 
 
 class TestPayloadPreparation(TestCase):
@@ -285,7 +191,7 @@ class TestPayloadPreparation(TestCase):
         encode_multipart = self.patch(utils, "encode_multipart_message")
         encode_multipart.return_value = sentinel.headers, sentinel.body
         # The payload returned is a 3-tuple of (uri, body, headers).
-        payload = prepare_payload(
+        payload = utils.prepare_payload(
             op=self.op, method=self.method,
             uri=self.uri_base, data=self.data)
         expected = (
@@ -302,7 +208,7 @@ class TestPayloadPreparation(TestCase):
 
 
 class TestPayloadPreparationWithFiles(TestCase):
-    """Tests for `maascli.prepare_payload` involving files."""
+    """Tests for `prepare_payload` involving files."""
 
     def test_files_are_included(self):
         parameter = make_string()
@@ -313,7 +219,7 @@ class TestPayloadPreparationWithFiles(TestCase):
         # opener` tuple, where `opener` is a callable that returns an
         # open file handle.
         data = [(parameter, partial(open, filename, "rb"))]
-        uri, body, headers = prepare_payload(
+        uri, body, headers = utils.prepare_payload(
             op=None, method="POST", uri="http://localhost", data=data)
 
         expected_body_template = """\
@@ -433,7 +339,7 @@ class TestRetries(TestCase):
         # Take control of time.
         clock = Clock()
 
-        gen_retries = retries(5, 2, time=clock.seconds)
+        gen_retries = utils.retries(5, 2, time=clock.seconds)
         # No time has passed, 5 seconds remain, and it suggests sleeping
         # for 2 seconds.
         self.assertRetry(clock, next(gen_retries), 0, 5, 2)
@@ -458,7 +364,7 @@ class TestRetries(TestCase):
         # Take control of time.
         clock = Clock()
 
-        gen_retries = retries(5, 2, time=clock.seconds)
+        gen_retries = utils.retries(5, 2, time=clock.seconds)
         # No time has passed, 5 seconds remain, and it suggests sleeping
         # for 2 seconds.
         self.assertRetry(clock, next(gen_retries), 0, 5, 2)
@@ -482,7 +388,7 @@ class TestRetries(TestCase):
         # Take control of time.
         clock = Clock()
 
-        gen_retries = retries(5, 2, time=clock.seconds)
+        gen_retries = utils.retries(5, 2, time=clock.seconds)
         clock.advance(4)
         # 4 seconds have passed, so 1 second remains, and it suggests sleeping
         # for 1 second.
@@ -494,7 +400,7 @@ class TestRetries(TestCase):
         # Use intervals of 1s, 2s, 3, and then back to 1s.
         intervals = cycle((1.0, 2.0, 3.0))
 
-        gen_retries = retries(5, intervals, time=clock.seconds)
+        gen_retries = utils.retries(5, intervals, time=clock.seconds)
         # No time has passed, 5 seconds remain, and it suggests sleeping
         # for 1 second, then 2, then 3, then 1 again.
         self.assertRetry(clock, next(gen_retries), 0, 5, 1)

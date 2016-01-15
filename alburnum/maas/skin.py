@@ -7,10 +7,14 @@ __all__ = [
 import cmd
 import shlex
 
-from alburnum.maas import utils
-from alburnum.maas.utils import auth
 import colorclass
 import terminaltables
+
+from . import utils
+from .utils import (
+    auth,
+    profiles,
+)
 
 
 def with_trailing_space(name):
@@ -126,14 +130,13 @@ class Shell(cmd.Cmd, metaclass=ShellType):
         """List all profiles."""
         rows = [["Profile name", "URL"]]
 
-        with utils.ProfileConfig.open() as config:
+        with profiles.ProfileManager.open() as config:
             for profile_name in sorted(config):
-                profile = config[profile_name]
-                url, creds = profile["url"], profile["credentials"]
-                if creds is None:
-                    rows.append([profile_name, url, "(anonymous)"])
+                profile = config.load(profile_name)
+                if profile.credentials is None:
+                    rows.append([profile_name, profile.url, "(anonymous)"])
                 else:
-                    rows.append([profile_name, url])
+                    rows.append([profile_name, profile.url])
 
         table = self.make_table(rows)
         self.message(table.table)
@@ -144,14 +147,14 @@ class Shell(cmd.Cmd, metaclass=ShellType):
 
     def do_switch(self, text):
         """Switch to an alternate profile."""
-        with utils.ProfileConfig.open() as config:
+        with profiles.ProfileManager.open() as config:
             if text in config:
                 self.switch_profile(text)
             else:
                 self.error("Unrecognised profile: %s" % text)
 
     def complete_switch(self, text, line, begidx, endidx):
-        with utils.ProfileConfig.open() as config:
+        with profiles.ProfileManager.open() as config:
             return [
                 with_trailing_space(profile_name) for profile_name in config
                 if profile_name.startswith(text)
@@ -186,18 +189,16 @@ class Shell(cmd.Cmd, metaclass=ShellType):
         except Exception as error:
             self.error(str(error))
         else:
-            with utils.ProfileConfig.open() as config:
+            profile = profiles.Profile(
+                name=name, url=url, credentials=creds,
+                description={"resources": []})
+            with profiles.ProfileManager.open() as config:
                 if name in config:
                     return self.error(
                         "Profile %s already exists. "
                         "Log-out first." % name)
                 else:
-                    config[name] = {
-                        "credentials": creds,
-                        "description": "",
-                        "name": name,
-                        "url": url,
-                    }
+                    config.save(profile)
 
     #
     # logout
@@ -208,14 +209,14 @@ class Shell(cmd.Cmd, metaclass=ShellType):
         parts = shlex.split(text, comments=True)
         if len(parts) == 1:
             name = parts[0]
-            with utils.ProfileConfig.open() as config:
-                del config[name]
+            with profiles.ProfileManager.open() as config:
+                config.delete(name)
         else:
             self.error("Unrecognised arguments: " + text)
             return self.do_help("logout")
 
     def complete_logout(self, text, line, begidx, endidx):
-        with utils.ProfileConfig.open() as config:
+        with profiles.ProfileManager.open() as config:
             return [
                 with_trailing_space(profile_name) for profile_name in config
                 if profile_name.startswith(text)
