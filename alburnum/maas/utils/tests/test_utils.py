@@ -239,25 +239,32 @@ class TestPayloadPreparationWithFiles(TestCase):
 
 
 class TestDocstringParsing(TestCase):
-    """Tests for docstring parsing with `parse_docstring`."""
+    """Tests for docstring parsing with `parse_docstring`.
+
+    This also runs the same tests against `parse_docstring_lazily`.
+    """
+
+    scenarios = (
+        ("normal", dict(parse=utils.parse_docstring)),
+        ("lazily", dict(parse=utils.parse_docstring_lazily)),
+    )
 
     def test_basic(self):
         self.assertEqual(
             ("Title", "Body"),
-            utils.parse_docstring("Title\n\nBody"))
+            self.parse("Title\n\nBody"))
         self.assertEqual(
             ("A longer title", "A longer body"),
-            utils.parse_docstring(
-                "A longer title\n\nA longer body"))
+            self.parse("A longer title\n\nA longer body"))
 
     def test_no_body(self):
         # parse_docstring returns an empty string when there's no body.
         self.assertEqual(
             ("Title", ""),
-            utils.parse_docstring("Title\n\n"))
+            self.parse("Title\n\n"))
         self.assertEqual(
             ("Title", ""),
-            utils.parse_docstring("Title"))
+            self.parse("Title"))
 
     def test_unwrapping(self):
         # parse_docstring unwraps the title paragraph, and dedents the body
@@ -266,7 +273,7 @@ class TestDocstringParsing(TestCase):
             ("Title over two lines",
              "Paragraph over\ntwo lines\n\n"
              "Another paragraph\nover two lines"),
-            utils.parse_docstring("""
+            self.parse("""
                 Title over
                 two lines
 
@@ -287,17 +294,17 @@ class TestDocstringParsing(TestCase):
             """
         self.assertEqual(
             ("Title.", "Body."),
-            utils.parse_docstring(example))
+            self.parse(example))
 
     def test_normalises_whitespace(self):
         # parse_docstring can parse CRLF/CR/LF text, but always emits LF (\n,
         # new-line) separated text.
         self.assertEqual(
             ("long title", ""),
-            utils.parse_docstring("long\r\ntitle"))
+            self.parse("long\r\ntitle"))
         self.assertEqual(
             ("title", "body1\n\nbody2"),
-            utils.parse_docstring("title\n\nbody1\r\rbody2"))
+            self.parse("title\n\nbody1\r\rbody2"))
 
 
 class TestFunctions(TestCase):
