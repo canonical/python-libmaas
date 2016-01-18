@@ -126,7 +126,7 @@ class Command(metaclass=ABCMeta):
 
         :type parser: An instance of `ArgumentParser`.
         """
-        help_title, help_body = utils.lazy_parse_docstring(cls)
+        help_title, help_body = utils.parse_docstring_lazily(cls)
         command_parser = parser.subparsers.add_parser(
             cls.name() if name is None else name, help=help_title,
             description=help_title, epilog=help_body)
