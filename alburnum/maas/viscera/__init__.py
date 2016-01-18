@@ -9,6 +9,8 @@ and functions here are the meat and organs around the "bones", but not the
 """
 
 __all__ = [
+    "check",
+    "check_optional",
     "Object",
     "ObjectField",
     "ObjectMethod",
@@ -18,21 +20,14 @@ __all__ = [
     "OriginBase",
 ]
 
-import base64
-from http import HTTPStatus
+from importlib import import_module
 from itertools import (
     chain,
     starmap,
 )
 from types import MethodType
-from typing import (
-    List,
-    Optional,
-    Sequence,
-    Union,
-)
+from typing import Optional
 
-from alburnum.maas.bones import CallError
 from alburnum.maas.utils import (
     get_all_subclasses,
     vars_class,
@@ -89,9 +84,9 @@ def dir_instance(inst):
     Eliminates names that bind to an `ObjectMethod` without a corresponding
     instance method; see `ObjectMethod`.
     """
-    # Instance attributes.
-    yield from vars(inst)
-    # Class attributes (including methods).
+    # Skip instance attributes; __slots__ is automatically defined, and
+    # descriptors are used to define attributes. Instead, go straight to class
+    # attributes (including methods).
     for name, value in vars_class(type(inst)).items():
         if isinstance(value, ObjectMethod):
             if value.has_instancemethod:
@@ -493,176 +488,6 @@ class File(Object):
         "filename", check(str), readonly=True)
 
 
-class NodesType(ObjectType):
-    """Metaclass for `Nodes`."""
-
-    def __iter__(cls):
-        return map(cls._object, cls._handler.list())
-
-    def read(cls):
-        return list(cls)
-
-    list = Disabled("list", "read")  # API is malformed in MAAS server.
-
-    def acquire(
-            cls, *, hostname: str=None, architecture: str=None,
-            cpus: int=None, memory: float=None, tags: Sequence[str]=None):
-        """
-        :param hostname: The hostname to match.
-        :param architecture: The architecture to match, e.g. "amd64".
-        :param cpus: The minimum number of CPUs to match.
-        :param memory: The minimum amount of RAM to match.
-        :param tags: The tags to match, as a sequence. Each tag may be
-            prefixed with a hyphen to denote that the given tag should NOT be
-            associated with a matched node.
-        """
-        params = {}
-        if hostname is not None:
-            params["hostname"] = hostname
-        if architecture is not None:
-            params["architecture"] = architecture
-        if cpus is not None:
-            params["cpu_count"] = str(cpus)
-        if memory is not None:
-            params["mem"] = str(memory)
-        if tags is not None:
-            params["tags"] = [
-                tag for tag in tags if not tag.startswith("-")]
-            params["not_tags"] = [
-                tag[1:] for tag in tags if tag.startswith("-")]
-
-        try:
-            data = cls._handler.acquire(**params)
-        except CallError as error:
-            if error.status == HTTPStatus.CONFLICT:
-                message = "No node matching the given criteria was found."
-                raise NodeNotFound(message) from error
-            else:
-                raise
-        else:
-            return cls._object(data)
-
-
-class NodeNotFound(Exception):
-    """Node was not found."""
-
-
-class Nodes(ObjectSet, metaclass=NodesType):
-    """The set of nodes stored in MAAS."""
-
-
-class NodeType(ObjectType):
-
-    def read(cls, system_id):
-        data = cls._handler.read(system_id=system_id)
-        return cls(data)
-
-
-class Node(Object, metaclass=NodeType):
-    """A node stored in MAAS."""
-
-    architecture = ObjectTypedField(
-        "architecture", check_optional(str), check_optional(str))
-    boot_disk = ObjectTypedField(
-        "boot_disk", check_optional(str), check_optional(str))
-
-    # boot_type
-
-    cpus = ObjectTypedField(
-        "cpu_count", check(int), check(int))
-    disable_ipv4 = ObjectTypedField(
-        "disable_ipv4", check(bool), check(bool))
-    distro_series = ObjectTypedField(
-        "distro_series", check(str), check(str))
-    hostname = ObjectTypedField(
-        "hostname", check(str), check(str))
-    hwe_kernel = ObjectTypedField(
-        "hwe_kernel", check_optional(str), check_optional(str))
-    ip_addresses = ObjectTypedField(
-        "ip_addresses", check(List[str]), readonly=True)
-    memory = ObjectTypedField(
-        "memory", check(int), check(int))
-    min_hwe_kernel = ObjectTypedField(
-        "min_hwe_kernel", check_optional(str), check_optional(str))
-
-    # blockdevice_set
-    # interface_set
-    # macaddress_set
-    # netboot
-    # osystem
-    # owner
-    # physicalblockdevice_set
-
-    # TODO: Use an enum here.
-    power_state = ObjectTypedField(
-        "power_state", check(str), readonly=True)
-
-    # power_state
-    # power_type
-    # pxe_mac
-    # resource_uri
-    # routers
-    # status
-    # storage
-
-    substatus = ObjectTypedField(
-        "substatus", check(int), readonly=True)
-    substatus_action = ObjectTypedField(
-        "substatus_action", check_optional(str), readonly=True)
-    substatus_message = ObjectTypedField(
-        "substatus_message", check_optional(str), readonly=True)
-    substatus_name = ObjectTypedField(
-        "substatus_name", check(str), readonly=True)
-
-    # swap_size
-
-    system_id = ObjectTypedField(
-        "system_id", check(str), readonly=True)
-
-    # system_id
-    # tag_names
-    # virtualblockdevice_set
-    # zone
-
-    def start(
-            self, user_data: Union[bytes, str]=None, distro_series: str=None,
-            hwe_kernel: str=None, comment: str=None):
-        """Start this node.
-
-        :param user_data: User-data to provide to the node when booting. If
-            provided as a byte string, it will be base-64 encoded prior to
-            transmission. If provided as a Unicode string it will be assumed
-            to be already base-64 encoded.
-        :param distro_series: The OS to deploy.
-        :param hwe_kernel: The HWE kernel to deploy. Probably only relevant
-            when deploying Ubuntu.
-        :param comment: A comment for the event log.
-        """
-        params = {"system_id": self.system_id}
-        if user_data is not None:
-            if isinstance(user_data, bytes):
-                params["user_data"] = base64.encodebytes(user_data)
-            else:
-                # Already base-64 encoded. Convert to a byte string in
-                # preparation for multipart assembly.
-                params["user_data"] = user_data.encode("ascii")
-        if distro_series is not None:
-            params["distro_series"] = distro_series
-        if hwe_kernel is not None:
-            params["hwe_kernel"] = hwe_kernel
-        if comment is not None:
-            params["comment"] = comment
-        data = self._handler.start(**params)
-        return type(self)(data)
-
-    def release(self, comment: str=None):
-        params = {"system_id": self.system_id}
-        if comment is not None:
-            params["comment"] = comment
-        data = self._handler.release(**params)
-        return type(self)(data)
-
-
 class UsersType(ObjectType):
     """Metaclass for `Users`."""
 
@@ -695,26 +520,37 @@ class User(Object):
 #
 
 
-# Specialised objects defined in this module.
-objects = {
-    subclass.__name__: subclass
-    for subclass in chain(
-        get_all_subclasses(Object),
-        get_all_subclasses(ObjectSet),
-    )
-    if subclass.__module__ == __name__
-}
+def find_objects(modules):
+    """Find subclasses of `Object` and `ObjectSet` in the given modules.
+
+    :param modules: The full *names* of modules to include. These modules MUST
+        have been imported in advance.
+    """
+    return {
+        subclass.__name__: subclass
+        for subclass in chain(
+            get_all_subclasses(Object),
+            get_all_subclasses(ObjectSet),
+        )
+        if subclass.__module__ in modules
+    }
 
 
 class Origin(OriginBase):
     """Represents a remote MAAS installation.
 
-    Uses specialised objects defined in its originating module. This is
-    probably the best choice for most people.
+    Uses specialised objects defined in its originating module and specific
+    submodules. This is probably the best choice for most people.
     """
 
     def __init__(self, session):
         """
         :param session: A `bones.SessionAPI` instance.
+
         """
-        super(Origin, self).__init__(session, objects=objects)
+        super(Origin, self).__init__(
+            session, objects=find_objects({
+                import_module(name, __name__).__name__
+                for name in {".", ".nodes"}
+            }),
+        )
