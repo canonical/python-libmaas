@@ -1,8 +1,8 @@
 """Objects for nodes."""
 
 __all__ = [
-    "Nodes",
     "Node",
+    "Nodes",
 ]
 
 import base64

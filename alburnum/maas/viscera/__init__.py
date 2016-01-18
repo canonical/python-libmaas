@@ -423,100 +423,8 @@ def check_optional(expected):
 
 
 #
-# Specialised objects.
-#
-
-
-class TagsType(ObjectType):
-    """Metaclass for `Tags`."""
-
-    def __iter__(cls):
-        return map(cls._object, cls._handler.list())
-
-    def create(cls, name, *, comment="", definition="", kernel_opts=""):
-        data = cls._handler.new(
-            name=name, comment=comment, definition=definition,
-            kernel_opts=kernel_opts)
-        return cls._object(data)
-
-    new = Disabled("new", "create")  # API is malformed in MAAS server.
-
-    def read(cls):
-        return cls(cls)
-
-    list = Disabled("list", "read")  # API is malformed in MAAS server.
-
-
-class Tags(ObjectSet, metaclass=TagsType):
-    """The set of tags."""
-
-
-class Tag(Object):
-    """A tag."""
-
-    name = ObjectTypedField(
-        "name", check(str), readonly=True)
-    comment = ObjectTypedField(
-        "comment", check(str), check(str), default="")
-    definition = ObjectTypedField(
-        "definition", check(str), check(str), default="")
-    kernel_opts = ObjectTypedField(
-        "kernel_opts", check_optional(str), check_optional(str),
-        default=None)
-
-
-class FilesType(ObjectType):
-    """Metaclass for `Files`."""
-
-    def __iter__(cls):
-        return map(cls._object, cls._handler.list())
-
-    def read(cls):
-        return list(cls)
-
-    list = Disabled("list", "read")  # API is malformed in MAAS server.
-
-
-class Files(ObjectSet, metaclass=FilesType):
-    """The set of files stored in MAAS."""
-
-
-class File(Object):
-    """A file stored in MAAS."""
-
-    filename = ObjectTypedField(
-        "filename", check(str), readonly=True)
-
-
-class UsersType(ObjectType):
-    """Metaclass for `Users`."""
-
-    def __iter__(cls):
-        return map(cls._object, cls._handler.read())
-
-
-class Users(ObjectSet, metaclass=UsersType):
-    """The set of users."""
-
-    @classmethod
-    def read(cls):
-        return list(cls)
-
-
-class User(Object):
-    """A user."""
-
-    username = ObjectTypedField(
-        "username", check(str), check(str))
-    email = ObjectTypedField(
-        "email", check(str), check(str))
-    is_admin = ObjectTypedField(
-        "is_superuser", check(bool), check(bool))
-
-
-#
-# Now it's possible to define the default Origin, which uses the specialised
-# objects created in this module. Most people should use this.
+# Now it's possible to define the default Origin, which uses a predefined set
+# of specialised objects. Most people should use this.
 #
 
 
@@ -551,6 +459,6 @@ class Origin(OriginBase):
         super(Origin, self).__init__(
             session, objects=find_objects({
                 import_module(name, __name__).__name__
-                for name in {".", ".nodes"}
+                for name in {".", ".files", ".nodes", ".tags", ".users"}
             }),
         )
