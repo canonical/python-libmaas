@@ -93,6 +93,8 @@ def dir_instance(inst):
                 yield name
         elif isinstance(value, Disabled):
             pass  # Hide this; disabled.
+        elif isinstance(value, (classmethod, staticmethod)):
+            pass  # Hide this; not interesting here.
         else:
             yield name
 

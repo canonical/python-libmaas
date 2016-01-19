@@ -140,20 +140,40 @@ class TestDirInstance(TestCase):
             list(dir_instance(example)),
             Not(Contains("attribute")))
 
-    def test__includes_other_class_attributes(self):
+    def test__excludes_class_methods(self):
 
         class Example:
-            alice = "is the first"
-            bob = lambda self: "just bob"
             carol = classmethod(lambda cls: "carol")
-            dave = property(lambda self: "dave or david")
-            erin = staticmethod(lambda: "or eve?")
 
         example = Example()
 
         self.assertThat(
             list(dir_instance(example)),
-            ContainsAll(["alice", "bob", "carol", "dave", "erin"]))
+            Not(Contains("carol")))
+
+    def test__excludes_static_methods(self):
+
+        class Example:
+            steve = staticmethod(lambda: "or eve?")
+
+        example = Example()
+
+        self.assertThat(
+            list(dir_instance(example)),
+            Not(Contains("steve")))
+
+    def test__includes_other_class_attributes(self):
+
+        class Example:
+            alice = "is the first"
+            bob = lambda self: "just bob"
+            dave = property(lambda self: "or david")
+
+        example = Example()
+
+        self.assertThat(
+            list(dir_instance(example)),
+            ContainsAll(["alice", "bob", "dave"]))
 
     def test__excludes_instance_attributes(self):
         # In a bit of a departure, dir_instance(foo) will NOT return instance
