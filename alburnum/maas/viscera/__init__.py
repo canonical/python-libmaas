@@ -197,9 +197,52 @@ class ObjectSet(ObjectBasics, metaclass=ObjectType):
 
 
 class ObjectField:
+    """A field on an `Object`.
+
+    By default, no conversion and/or validation is performed; the value
+    retrieved from MAAS's Web API (tranmitted as JSON) is returned when
+    accessing this field, and is set or deleted when setting or deleting this
+    field.
+
+    It is possible to declare this field as read-only and to specify a default
+    value when the corresponding datum is not found.
+
+    A word on the "value" and "datum" nomenclature used here:
+
+    * A "value" is a Python-side value, i.e. the one you'll work with in a
+      program that uses this API.
+
+    * A "datum" is an item of data obtained from MAAS's Web API, or ready to
+      be sent back to MAAS's Web API. It is almost always something that can
+      be dumped as JSON.
+
+    A value passed into a field must be converted to a datum and vice-versa.
+    To support this, two methods can be customised in `ObjectField`
+    subclasses: ``value_to_datum`` and ``datum_to_value``.
+
+    These methods serve to both convert and validate, but the default
+    implementions do nothing.
+
+    Alternatively, simple conversion functions can be passed to the `Checked`
+    constructor.
+
+    """
 
     @classmethod
     def Checked(cls, name, datum_to_value=None, value_to_datum=None, **other):
+        """Create a custom `ObjectField` that validates values and datums.
+
+        :param name: The name of the field. This is the name that's used to
+            store the datum in the MAAS-side data dictionary.
+        :param datum_to_value: A callable taking a single ``datum`` argument,
+            passed positionally. This callable should convert the datum to a
+            Python-side value, and/or raise an exception for invalid datums.
+        :param value_to_datum: A callable taking a single ``value`` argument,
+            passed positionally. This callable should convert the value to a
+            MAAS-side datum, and/or raise an exception for invalid values.
+        :param other: Additional arguments to pass to the default
+            `ObjectField` constructor.
+        """
         attrs = {}
         if datum_to_value is not None:
             @wraps(datum_to_value)
@@ -215,20 +258,45 @@ class ObjectField:
         return cls(name, **other)
 
     def __init__(self, name, *, default=undefined, readonly=False):
+        """Create a `ObjectField` with an optional default.
+
+        :param name: The name of the field. This is the name that's used to
+            store the datum in the MAAS-side data dictionary.
+        :param default: A default value to return when `name` is not found in
+            the MAAS-side data dictionary.
+        :param readonly: If true, prevent setting or deleting of this field.
+        """
         super(ObjectField, self).__init__()
         self.name = name
         self.default = default
         self.readonly = readonly
 
     def datum_to_value(self, instance, datum):
-        """Convert a given MAAS-side datum to a Python-side value."""
+        """Convert a given MAAS-side datum to a Python-side value.
+
+        :param instance: The `Object` instance on which this field is
+            currently operating. This method should treat it as read-only, for
+            example to perform validation with regards to other fields.
+        :param datum: The MAAS-side datum to validate and convert into a
+            Python-side value.
+        :return: A value derived from the given datum.
+        """
         return datum
 
     def value_to_datum(self, instance, value):
-        """Convert a given Python-side value to a MAAS-side datum."""
+        """Convert a given Python-side value to a MAAS-side datum.
+
+        :param instance: The `Object` instance on which this field is
+            currently operating. This method should treat it as read-only, for
+            example to perform validation with regards to other fields.
+        :param datum: The Python-side value to validate and convert into a
+            MAAS-side datum.
+        :return: A datum derived from the given value.
+        """
         return value
 
     def __get__(self, instance, owner):
+        """Standard Python descriptor method."""
         if instance is None:
             return self
         else:
@@ -241,6 +309,7 @@ class ObjectField:
                 return self.default
 
     def __set__(self, instance, value):
+        """Standard Python descriptor method."""
         if self.readonly:
             raise AttributeError("%s is read-only" % self.name)
         else:
@@ -248,6 +317,7 @@ class ObjectField:
             instance._data[self.name] = datum
 
     def __delete__(self, instance):
+        """Standard Python descriptor method."""
         if self.readonly:
             raise AttributeError("%s is read-only" % self.name)
         elif self.name in instance._data:
