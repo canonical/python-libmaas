@@ -2,13 +2,18 @@
 
 __all__ = []
 
+from random import randrange
 from unittest.mock import sentinel
 
-from alburnum.maas.testing import TestCase
+from alburnum.maas.testing import (
+    make_name_without_spaces,
+    TestCase,
+)
 from testtools.matchers import (
     Contains,
     ContainsAll,
     Equals,
+    HasLength,
     Not,
 )
 
@@ -16,7 +21,11 @@ from .. import (
     dir_class,
     dir_instance,
     Disabled,
+    Object,
+    ObjectBasics,
+    ObjectField,
     ObjectMethod,
+    ObjectSet,
     ObjectType,
 )
 from ... import viscera
@@ -218,3 +227,82 @@ class TestObjectType(TestCase):
         dir_class.return_value = iter([sentinel.name])
 
         self.assertThat(dir(Dummy), Equals([sentinel.name]))
+
+
+class TestObjectBasics(TestCase):
+    """Tests for `ObjectBasics`."""
+
+    def test__defines_slots(self):
+        self.assertThat(ObjectBasics.__slots__, Equals(()))
+
+    def test__uses_dir_instance(self):
+        dir_instance = self.patch(viscera, "dir_instance")
+        dir_instance.return_value = iter([sentinel.name])
+
+        self.assertThat(dir(ObjectBasics()), Equals([sentinel.name]))
+
+    def test__stringification_returns_qualified_class_name(self):
+        self.assertThat(str(ObjectBasics()), Equals(ObjectBasics.__qualname__))
+
+    def test__string_representation_includes_ObjectField_values(self):
+
+        class Example(ObjectBasics):
+            alice = ObjectField("alice")
+            bob = ObjectField("bob")
+
+        example = Example()
+        example._data = {
+            "alice": make_name_without_spaces("alice"),
+            "bob": make_name_without_spaces("bob"),
+        }
+
+        self.assertThat(repr(example), Equals(
+            "<Example alice=%(alice)r bob=%(bob)r>" % example._data))
+
+
+class TestObject(TestCase):
+    """Tests for `Object`."""
+
+    def test__defines_slots(self):
+        self.assertThat(
+            Object.__slots__,
+            Equals(("__weakref__", "_data")))
+
+    def test__inherits_ObjectBasics(self):
+        self.assertThat(Object.__mro__, Contains(ObjectBasics))
+
+    def test__init_sets__data(self):
+        data = {"alice": make_name_without_spaces("alice")}
+        self.assertThat(Object(data)._data, Equals(data))
+
+
+class TestObjectSet(TestCase):
+    """Tests for `ObjectSet`."""
+
+    def test__defines_slots(self):
+        self.assertThat(
+            ObjectSet.__slots__,
+            Equals(("__weakref__", "_items")))
+
+    def test__inherits_ObjectBasics(self):
+        self.assertThat(ObjectSet.__mro__, Contains(ObjectBasics))
+
+    def test__init_sets__items(self):
+        items = [{"alice": make_name_without_spaces("alice")}]
+        self.assertThat(ObjectSet(items)._items, Equals(items))
+
+    def test__length_is_number_of_items(self):
+        items = [0] * randrange(0, 100)
+        objectset = ObjectSet(items)
+        self.assertThat(objectset, HasLength(len(items)))
+
+    def test__items_can_be_indexed(self):
+        items = [make_name_without_spaces(str(index)) for index in range(5)]
+        objectset = ObjectSet(items)
+        for index, item in enumerate(items):
+            self.assertThat(objectset[index], Equals(item))
+
+    def test__iteration_yield_items(self):
+        items = [make_name_without_spaces(str(index)) for index in range(5)]
+        objectset = ObjectSet(items)
+        self.assertThat(list(objectset), Equals(items))

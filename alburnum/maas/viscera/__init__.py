@@ -20,6 +20,7 @@ __all__ = [
     "OriginBase",
 ]
 
+from collections import Sequence
 from importlib import import_module
 from itertools import (
     chain,
@@ -132,7 +133,7 @@ class OriginObjectRef:
 class ObjectType(type):
 
     def __dir__(cls):
-        return list(dir_class(cls))
+        return dir_class(cls)
 
     def __new__(cls, name, bases, attrs):
         attrs.setdefault("__slots__", ())
@@ -144,7 +145,7 @@ class ObjectBasics:
     __slots__ = ()
 
     def __dir__(self):
-        return list(dir_instance(self))
+        return dir_instance(self)
 
     def __str__(self):
         return self.__class__.__qualname__
@@ -173,15 +174,26 @@ class Object(ObjectBasics, metaclass=ObjectType):
         self._data = data
 
 
-class ObjectSet(ObjectBasics, list, metaclass=ObjectType):
+class ObjectSet(ObjectBasics, metaclass=ObjectType):
     """A set of objects in a MAAS installation."""
 
-    __slots__ = "__weakref__",
+    __slots__ = "__weakref__", "_items"
 
     _object = OriginObjectRef()
 
     def __init__(self, items):
-        super(ObjectSet, self).__init__(items)
+        super(ObjectSet, self).__init__()
+        assert isinstance(items, Sequence)
+        self._items = items
+
+    def __len__(self):
+        return len(self._items)
+
+    def __getitem__(self, spec):
+        return self._items[spec]
+
+    def __iter__(self):
+        return iter(self._items)
 
 
 class ObjectField:
