@@ -10,9 +10,9 @@ from . import (
     check_optional,
     Disabled,
     Object,
+    ObjectField,
     ObjectSet,
     ObjectType,
-    ObjectTypedField,
 )
 
 
@@ -43,12 +43,12 @@ class Tags(ObjectSet, metaclass=TagsType):
 class Tag(Object):
     """A tag."""
 
-    name = ObjectTypedField(
+    name = ObjectField.Checked(
         "name", check(str), readonly=True)
-    comment = ObjectTypedField(
+    comment = ObjectField.Checked(
         "comment", check(str), check(str), default="")
-    definition = ObjectTypedField(
+    definition = ObjectField.Checked(
         "definition", check(str), check(str), default="")
-    kernel_opts = ObjectTypedField(
+    kernel_opts = ObjectField.Checked(
         "kernel_opts", check_optional(str), check_optional(str),
         default=None)

@@ -14,6 +14,8 @@ from testtools.matchers import (
     ContainsAll,
     Equals,
     HasLength,
+    Is,
+    MatchesStructure,
     Not,
 )
 
@@ -306,3 +308,157 @@ class TestObjectSet(TestCase):
         items = [make_name_without_spaces(str(index)) for index in range(5)]
         objectset = ObjectSet(items)
         self.assertThat(list(objectset), Equals(items))
+
+
+class TestObjectField(TestCase):
+    """Tests for `ObjectField`."""
+
+    def test__gets_sets_and_deletes_the_given_name_from_object(self):
+
+        class Example(Object):
+            alice = ObjectField("alice")
+
+        example = Example({})
+
+        # At first, referencing "alice" yields an exception.
+        self.assertRaises(AttributeError, getattr, example, "alice")
+        self.assertThat(example._data, Equals({}))
+
+        # Setting "alice" stores the value in the object's _data dict.
+        example.alice = sentinel.alice
+        self.assertThat(example.alice, Is(sentinel.alice))
+        self.assertThat(example._data, Equals({"alice": sentinel.alice}))
+
+        # Deleting "alice" removes the value from the object's _data dict, and
+        # referencing "alice" yields an exception.
+        del example.alice
+        self.assertRaises(AttributeError, getattr, example, "alice")
+        self.assertThat(example._data, Equals({}))
+
+    def test__default_is_returned_when_value_not_found_in_object(self):
+
+        class Example(Object):
+            alice = ObjectField("alice", default=sentinel.alice_default)
+
+        example = Example({})
+
+        # At first, referencing "alice" yields the default value.
+        self.assertThat(example.alice, Is(sentinel.alice_default))
+        self.assertThat(example._data, Equals({}))
+
+        # Setting "alice" stores the value in the object's _data dict.
+        example.alice = sentinel.alice
+        self.assertThat(example, MatchesStructure(alice=Is(sentinel.alice)))
+        self.assertThat(example._data, Equals({"alice": sentinel.alice}))
+
+        # Deleting "alice" removes the value from the object's _data dict, and
+        # referencing "alice" again yields the default value.
+        del example.alice
+        self.assertThat(example.alice, Is(sentinel.alice_default))
+        self.assertThat(example._data, Equals({}))
+
+    def test__readonly_prevents_setting_or_deleting(self):
+
+        class Example(Object):
+            alice = ObjectField("alice", readonly=True)
+
+        example = Example({"alice": sentinel.in_wonderland})
+
+        self.assertThat(example.alice, Is(sentinel.in_wonderland))
+        self.assertRaises(AttributeError, setattr, example, "alice", 123)
+        self.assertThat(example.alice, Is(sentinel.in_wonderland))
+        self.assertRaises(AttributeError, delattr, example, "alice")
+        self.assertThat(example.alice, Is(sentinel.in_wonderland))
+
+    def test__conversion_and_validation_happens(self):
+
+        class AliceField(ObjectField):
+            """A most peculiar field."""
+
+            def datum_to_value(self, instance, datum):
+                return datum + instance.datum_to_value_delta
+
+            def value_to_datum(self, instance, value):
+                return value + instance.value_to_datum_delta
+
+        class Example(Object):
+            alice = AliceField("alice")
+            # Deltas to apply to datums and values.
+            datum_to_value_delta = 2
+            value_to_datum_delta = 3
+
+        example = Example({})
+        example.alice = 0
+
+        # value_to_datum_delta was added to the value we specified before
+        # being stored in the object's _data dict.
+        self.assertThat(example._data, Equals({"alice": 3}))
+
+        # datum_to_value_delta is added to the datum in the object's _data
+        # dict before being returned to us.
+        self.assertThat(example.alice, Equals(5))
+
+    def test__default_is_not_subject_to_conversion_or_validation(self):
+
+        class AliceField(ObjectField):
+            """Another most peculiar field."""
+
+            def datum_to_value(self, instance, datum):
+                raise AssertionError("datum_to_value")
+
+            def value_to_datum(self, instance, value):
+                raise AssertionError("value_to_datum")
+
+        class Example(Object):
+            alice = AliceField("alice", default=sentinel.alice_default)
+
+        example = Example({})
+
+        # The default given is treated as a Python-side value rather than a
+        # MAAS-side datum, so is not passed through datum_to_value (or
+        # value_to_datum for that matter).
+        self.assertThat(example.alice, Is(sentinel.alice_default))
+
+
+class TestObjectFieldChecked(TestCase):
+    """Tests for `ObjectField.Checked`."""
+
+    def test__creates_subclass(self):
+        field = ObjectField.Checked("alice")
+        self.assertThat(type(field).__mro__, Contains(ObjectField))
+        self.assertThat(type(field), Not(Is(ObjectField)))
+        self.assertThat(
+            type(field).__name__,
+            Equals("ObjectField.Checked#alice"))
+
+    def test__overrides_datum_to_value(self):
+        add_one = lambda value: value + 1
+        field = ObjectField.Checked("alice", datum_to_value=add_one)
+        self.assertThat(field.datum_to_value(None, 1), Equals(2))
+
+    def test__overrides_value_to_daturm(self):
+        add_one = lambda value: value + 1
+        field = ObjectField.Checked("alice", value_to_datum=add_one)
+        self.assertThat(field.value_to_datum(None, 1), Equals(2))
+
+    def test__works_in_place(self):
+
+        # Deltas to apply to datums and values.
+        datum_to_value_delta = 2
+        value_to_datum_delta = 3
+
+        class Example(Object):
+            alice = ObjectField.Checked(
+                "alice", (lambda datum: datum + datum_to_value_delta),
+                (lambda value: value + value_to_datum_delta))
+
+        example = Example({})
+        example.alice = 0
+
+        # value_to_datum_delta was added to the value we specified before
+        # being stored in the object's _data dict.
+        self.assertThat(example._data, Equals({"alice": 3}))
+
+        # datum_to_value_delta is added to the datum in the object's _data
+        # dict before being returned to us.
+        self.assertThat(example.alice, Equals(5))

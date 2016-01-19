@@ -20,9 +20,9 @@ from . import (
     check_optional,
     Disabled,
     Object,
+    ObjectField,
     ObjectSet,
     ObjectType,
-    ObjectTypedField,
 )
 
 
@@ -94,28 +94,28 @@ class NodeType(ObjectType):
 class Node(Object, metaclass=NodeType):
     """A node stored in MAAS."""
 
-    architecture = ObjectTypedField(
+    architecture = ObjectField.Checked(
         "architecture", check_optional(str), check_optional(str))
-    boot_disk = ObjectTypedField(
+    boot_disk = ObjectField.Checked(
         "boot_disk", check_optional(str), check_optional(str))
 
     # boot_type
 
-    cpus = ObjectTypedField(
+    cpus = ObjectField.Checked(
         "cpu_count", check(int), check(int))
-    disable_ipv4 = ObjectTypedField(
+    disable_ipv4 = ObjectField.Checked(
         "disable_ipv4", check(bool), check(bool))
-    distro_series = ObjectTypedField(
+    distro_series = ObjectField.Checked(
         "distro_series", check(str), check(str))
-    hostname = ObjectTypedField(
+    hostname = ObjectField.Checked(
         "hostname", check(str), check(str))
-    hwe_kernel = ObjectTypedField(
+    hwe_kernel = ObjectField.Checked(
         "hwe_kernel", check_optional(str), check_optional(str))
-    ip_addresses = ObjectTypedField(
+    ip_addresses = ObjectField.Checked(
         "ip_addresses", check(List[str]), readonly=True)
-    memory = ObjectTypedField(
+    memory = ObjectField.Checked(
         "memory", check(int), check(int))
-    min_hwe_kernel = ObjectTypedField(
+    min_hwe_kernel = ObjectField.Checked(
         "min_hwe_kernel", check_optional(str), check_optional(str))
 
     # blockdevice_set
@@ -127,7 +127,7 @@ class Node(Object, metaclass=NodeType):
     # physicalblockdevice_set
 
     # TODO: Use an enum here.
-    power_state = ObjectTypedField(
+    power_state = ObjectField.Checked(
         "power_state", check(str), readonly=True)
 
     # power_state
@@ -138,18 +138,18 @@ class Node(Object, metaclass=NodeType):
     # status
     # storage
 
-    substatus = ObjectTypedField(
+    substatus = ObjectField.Checked(
         "substatus", check(int), readonly=True)
-    substatus_action = ObjectTypedField(
+    substatus_action = ObjectField.Checked(
         "substatus_action", check_optional(str), readonly=True)
-    substatus_message = ObjectTypedField(
+    substatus_message = ObjectField.Checked(
         "substatus_message", check_optional(str), readonly=True)
-    substatus_name = ObjectTypedField(
+    substatus_name = ObjectField.Checked(
         "substatus_name", check(str), readonly=True)
 
     # swap_size
 
-    system_id = ObjectTypedField(
+    system_id = ObjectField.Checked(
         "system_id", check(str), readonly=True)
 
     # system_id

@@ -9,9 +9,9 @@ from . import (
     check,
     Disabled,
     Object,
+    ObjectField,
     ObjectSet,
     ObjectType,
-    ObjectTypedField,
 )
 
 
@@ -34,5 +34,5 @@ class Files(ObjectSet, metaclass=FilesType):
 class File(Object):
     """A file stored in MAAS."""
 
-    filename = ObjectTypedField(
+    filename = ObjectField.Checked(
         "filename", check(str), readonly=True)

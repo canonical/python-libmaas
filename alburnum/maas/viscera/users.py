@@ -8,9 +8,9 @@ __all__ = [
 from . import (
     check,
     Object,
+    ObjectField,
     ObjectSet,
     ObjectType,
-    ObjectTypedField,
 )
 
 
@@ -32,9 +32,9 @@ class Users(ObjectSet, metaclass=UsersType):
 class User(Object):
     """A user."""
 
-    username = ObjectTypedField(
+    username = ObjectField.Checked(
         "username", check(str), check(str))
-    email = ObjectTypedField(
+    email = ObjectField.Checked(
         "email", check(str), check(str))
-    is_admin = ObjectTypedField(
+    is_admin = ObjectField.Checked(
         "is_superuser", check(bool), check(bool))

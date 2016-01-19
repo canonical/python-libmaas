@@ -15,12 +15,12 @@ __all__ = [
     "ObjectField",
     "ObjectMethod",
     "ObjectType",
-    "ObjectTypedField",
     "Origin",
     "OriginBase",
 ]
 
 from collections import Sequence
+from functools import wraps
 from importlib import import_module
 from itertools import (
     chain,
@@ -198,20 +198,45 @@ class ObjectSet(ObjectBasics, metaclass=ObjectType):
 
 class ObjectField:
 
+    @classmethod
+    def Checked(cls, name, datum_to_value=None, value_to_datum=None, **other):
+        attrs = {}
+        if datum_to_value is not None:
+            @wraps(datum_to_value)
+            def datum_to_value_method(instance, datum):
+                return datum_to_value(datum)
+            attrs["datum_to_value"] = staticmethod(datum_to_value_method)
+        if value_to_datum is not None:
+            @wraps(value_to_datum)
+            def value_to_datum_method(instance, value):
+                return value_to_datum(value)
+            attrs["value_to_datum"] = staticmethod(value_to_datum_method)
+        cls = type("%s.Checked#%s" % (cls.__name__, name), (cls,), attrs)
+        return cls(name, **other)
+
     def __init__(self, name, *, default=undefined, readonly=False):
         super(ObjectField, self).__init__()
         self.name = name
         self.default = default
         self.readonly = readonly
 
+    def datum_to_value(self, instance, datum):
+        """Convert a given MAAS-side datum to a Python-side value."""
+        return datum
+
+    def value_to_datum(self, instance, value):
+        """Convert a given Python-side value to a MAAS-side datum."""
+        return value
+
     def __get__(self, instance, owner):
         if instance is None:
             return self
         else:
             if self.name in instance._data:
-                return instance._data[self.name]
+                datum = instance._data[self.name]
+                return self.datum_to_value(instance, datum)
             elif self.default is undefined:
-                raise AttributeError()
+                raise AttributeError(self.name)
             else:
                 return self.default
 
@@ -219,7 +244,8 @@ class ObjectField:
         if self.readonly:
             raise AttributeError("%s is read-only" % self.name)
         else:
-            instance._data[self.name] = value
+            datum = self.value_to_datum(instance, value)
+            instance._data[self.name] = datum
 
     def __delete__(self, instance):
         if self.readonly:
@@ -228,38 +254,6 @@ class ObjectField:
             del instance._data[self.name]
         else:
             pass  # Nothing to do.
-
-
-class ObjectTypedField(ObjectField):
-
-    def __init__(
-            self, name, datum_to_value=None, value_to_datum=None, *,
-            default=undefined, readonly=False):
-        super(ObjectTypedField, self).__init__(
-            name, default=default, readonly=readonly)
-        self.datum_to_value = (
-            (lambda d: d) if datum_to_value is None else datum_to_value)
-        self.value_to_datum = (
-            (lambda v: v) if value_to_datum is None else value_to_datum)
-        if default is not undefined:
-            if self.datum_to_value(self.value_to_datum(default)) != default:
-                raise TypeError(
-                    "The default of %r cannot be round-tripped through the "
-                    "conversion/validation functions given." % (default, ))
-
-    def __get__(self, instance, owner):
-        if instance is None:
-            return self
-        else:
-            datum = super(ObjectTypedField, self).__get__(instance, owner)
-            if datum is self.default:
-                return datum
-            else:
-                return self.datum_to_value(datum)
-
-    def __set__(self, instance, value):
-        datum = self.value_to_datum(value)
-        super(ObjectTypedField, self).__set__(instance, datum)
 
 
 class ObjectMethod:
