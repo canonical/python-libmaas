@@ -7,6 +7,7 @@ from abc import (
     abstractmethod,
 )
 import argparse
+import code
 import sys
 from textwrap import fill
 from time import sleep
@@ -533,6 +534,75 @@ class cmd_release_node(OriginTableCommand):
             raise CommandError("Node was not released.")
 
 
+class cmd_shell(Command):
+    """Start an interactive shell with some convenient local variables.
+
+    If IPython is available it will be used, otherwise the familiar Python
+    REPL will be started. If a script is piped in, it is read in its entirety
+    then executed with the same namespace as the interactive shell.
+    """
+
+    def __init__(self, parser):
+        super(cmd_shell, self).__init__(parser)
+        parser.add_argument(
+            "--profile-name", metavar="NAME", choices=PROFILE_NAMES,
+            required=False, help=(
+                "The name of the remote MAAS instance to use. Use "
+                "`list-profiles` to obtain a list of valid profiles." +
+                ("" if PROFILE_DEFAULT is None else " [default: %(default)s]")
+            ))
+        if PROFILE_DEFAULT is None:
+            parser.set_defaults(profile_name=None)
+        else:
+            parser.set_defaults(profile_name=PROFILE_DEFAULT.name)
+
+    def __call__(self, options):
+        """Execute this command."""
+
+        namespace = {}  # The namespace that code will run in.
+        variables = {}  # Descriptions of the namespace variables.
+
+        # If a profile has been selected, set up a `bones` session and a
+        # `viscera` origin in the default namespace.
+        if options.profile_name is not None:
+            session = bones.SessionAPI.fromProfileName(options.profile_name)
+            namespace["session"] = session
+            variables["session"] = (
+                "A `bones` session, configured for %s."
+                % options.profile_name)
+            origin = viscera.Origin(session)
+            namespace["origin"] = origin
+            variables["origin"] = (
+                "A `viscera` origin, configured for %s."
+                % options.profile_name)
+
+        # Display some introductory text if this is fully interactive.
+        if sys.stdin.isatty() and sys.stdout.isatty():
+            banner = ["{automagenta}Welcome to the MAAS shell.{/automagenta}"]
+            if len(variables) > 0:
+                banner += ["", "Predefined variables:", ""]
+                banner += [
+                    "{autoyellow}%10s{/autoyellow}: %s" % variable
+                    for variable in sorted(variables.items())
+                ]
+            for line in banner:
+                print(colorized(line))
+
+        # Start IPython or the REPL if stdin is from a terminal, otherwise
+        # slurp everything and exec it within `namespace`.
+        if sys.stdin.isatty():
+            try:
+                import IPython
+            except ImportError:
+                code.InteractiveConsole(namespace).interact(" ")
+            else:
+                IPython.start_ipython(
+                    argv=[], display_banner=False, user_ns=namespace)
+        else:
+            source = sys.stdin.read()
+            exec(source, namespace, namespace)
+
+
 def prepare_parser(argv):
     """Create and populate an argument parser."""
     parser = ArgumentParser(
@@ -546,6 +616,7 @@ def prepare_parser(argv):
     cmd_logout.register(parser)
     cmd_list_profiles.register(parser)
     cmd_refresh_profiles.register(parser)
+    cmd_shell.register(parser)
 
     # Other commands.
     cmd_list_nodes.register(parser)
