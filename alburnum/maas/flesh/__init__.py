@@ -4,6 +4,8 @@ __all__ = [
     "colorized",
     "Command",
     "CommandError",
+    "OriginCommand",
+    "OriginTableCommand",
     "PROFILE_DEFAULT",
     "PROFILE_NAMES",
     "TableCommand",
@@ -70,11 +72,6 @@ class ArgumentParser(argparse.ArgumentParser):
     a lazily evaluated `subparsers` property.
     """
 
-    def __init__(self, *args, **kwargs):
-        if "formatter_class" not in kwargs:
-            kwargs["formatter_class"] = argparse.RawDescriptionHelpFormatter
-        super(ArgumentParser, self).__init__(*args, **kwargs)
-
     def add_subparsers(self):
         raise NotImplementedError(
             "add_subparsers has been disabled")
@@ -85,7 +82,7 @@ class ArgumentParser(argparse.ArgumentParser):
             return self.__subparsers
         except AttributeError:
             parent = super(ArgumentParser, self)
-            self.__subparsers = parent.add_subparsers(title="drill down")
+            self.__subparsers = parent.add_subparsers(title="sub-commands")
             self.__subparsers.metavar = "COMMAND"
             return self.__subparsers
 
@@ -192,38 +189,6 @@ class OriginTableCommand(OriginCommandBase, TableCommand):
     def execute(self, options, origin, *, target):
         raise NotImplementedError(
             "Implement execute() in subclasses.")
-
-
-class cmd_list_nodes(OriginTableCommand):
-    """List nodes."""
-
-    def execute(self, origin, options, target):
-        table = tables.NodesTable()
-        print(table.render(target, origin.Nodes))
-
-
-class cmd_list_tags(OriginTableCommand):
-    """List tags."""
-
-    def execute(self, origin, options, target):
-        table = tables.TagsTable()
-        print(table.render(target, origin.Tags))
-
-
-class cmd_list_files(OriginTableCommand):
-    """List files."""
-
-    def execute(self, origin, options, target):
-        table = tables.FilesTable()
-        print(table.render(target, origin.Files))
-
-
-class cmd_list_users(OriginTableCommand):
-    """List users."""
-
-    def execute(self, origin, options, target):
-        table = tables.UsersTable()
-        print(table.render(target, origin.Users))
 
 
 class cmd_acquire_node(OriginTableCommand):
@@ -390,16 +355,14 @@ def prepare_parser(argv):
     # Top-level commands.
     cmd_shell.register(parser)
 
-    # Profile commands.
-    from .profiles import register as profiles_register
-    profiles_register(parser.subparsers.add_parser(
-        "profiles", help="Profiles.", description="Profiles."))
+    # Sub-commands.
+    from . import (
+        subcmd_profiles,
+        subcmd_list,
+    )
 
-    # Other commands.
-    cmd_list_nodes.register(parser)
-    cmd_list_tags.register(parser)
-    cmd_list_files.register(parser)
-    cmd_list_users.register(parser)
+    subcmd_profiles.register_as("profiles", parser)
+    subcmd_list.register_as("list", parser)
 
     # Node lifecycle.
     cmd_acquire_node.register(parser)
@@ -413,10 +376,24 @@ def prepare_parser(argv):
     return parser
 
 
+def post_mortem(traceback):
+    """Work with an exception in a post-mortem debugger.
+
+    Try to use `ipdb` first, falling back to `pdb`.
+    """
+    try:
+        from ipdb import post_mortem
+    except ImportError:
+        from pdb import post_mortem
+
+    post_mortem(traceback)
+
+
 def main(argv=sys.argv):
     parser = prepare_parser(argv)
     argcomplete.autocomplete(parser)
 
+    options = None
     try:
         options = parser.parse_args(argv[1:])
         try:
@@ -428,7 +405,9 @@ def main(argv=sys.argv):
     except KeyboardInterrupt:
         raise SystemExit(1)
     except Exception as error:
-        if options.debug:
+        if options is None or options.debug:
+            *_, exc_traceback = sys.exc_info()
+            post_mortem(exc_traceback)
             raise
         else:
             # Note: this will call sys.exit() when finished.

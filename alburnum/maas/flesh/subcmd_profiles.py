@@ -1,7 +1,7 @@
 """Commands for working with local profiles."""
 
 __all__ = [
-    "register",
+    "register_as",
 ]
 
 from textwrap import fill
@@ -163,11 +163,14 @@ class cmd_login(cmd_login_base):
         self.print_whats_next(profile)
 
 
-class cmd_login_api(cmd_login_base):
-    """Log-in to a remote MAAS with an *API key*."""
+class cmd_add(cmd_login_base):
+    """Add a profile for a remote MAAS using an *API key*.
+
+    The `login` command will typically be more convenient.
+    """
 
     def __init__(self, parser):
-        super(cmd_login_api, self).__init__(parser)
+        super(cmd_add, self).__init__(parser)
         parser.add_argument(
             "credentials", nargs="?", default=None, help=(
                 "The credentials, also known as the API key, for the remote "
@@ -190,6 +193,31 @@ class cmd_login_api(cmd_login_base):
         self.print_whats_next(profile)
 
 
+class cmd_remove(Command):
+    """Remove a profile, purging any stored credentials.
+
+    This will remove the given profile from your command-line client. You can
+    re-create it later using `add` or `login`.
+    """
+
+    def __init__(self, parser):
+        super(cmd_remove, self).__init__(parser)
+        parser.add_argument(
+            "profile_name", metavar="profile-name", nargs="?",
+            choices=PROFILE_NAMES, help=(
+                "The name with which a remote server and its "
+                "credentials are referred to within this tool." +
+                ("" if PROFILE_DEFAULT is None else " [default: %(default)s]")
+            ),
+        )
+        if PROFILE_DEFAULT is not None:
+            parser.set_defaults(profile_name=PROFILE_DEFAULT.name)
+
+    def __call__(self, options):
+        with profiles.ProfileManager.open() as config:
+            config.delete(options.profile_name)
+
+
 class cmd_switch(Command):
     """Switch the default profile."""
 
@@ -207,31 +235,6 @@ class cmd_switch(Command):
         with profiles.ProfileManager.open() as config:
             profile = config.load(options.profile_name)
             config.default = profile
-
-
-class cmd_logout(Command):
-    """Log-out of a remote API, purging any stored credentials.
-
-    This will remove the given profile from your command-line client. You can
-    re-create it by logging in again later.
-    """
-
-    def __init__(self, parser):
-        super(cmd_logout, self).__init__(parser)
-        parser.add_argument(
-            "profile_name", metavar="profile-name", nargs="?",
-            choices=PROFILE_NAMES, help=(
-                "The name with which a remote server and its "
-                "credentials are referred to within this tool." +
-                ("" if PROFILE_DEFAULT is None else " [default: %(default)s]")
-            ),
-        )
-        if PROFILE_DEFAULT is not None:
-            parser.set_defaults(profile_name=PROFILE_DEFAULT.name)
-
-    def __call__(self, options):
-        with profiles.ProfileManager.open() as config:
-            config.delete(options.profile_name)
 
 
 class cmd_list(TableCommand):
@@ -260,11 +263,25 @@ class cmd_refresh(Command):
                 config.save(profile)
 
 
-def register(parser):
+def register_as(name, parser):
     """Register profile commands with the given parser."""
+    parser = parser.subparsers.add_parser(
+        name, help="Manage profiles, e.g. adding, removing, logging-in.",
+        description=(
+            "A profile is a convenient way to refer to a remote MAAS "
+            "installation. It encompasses the URL, the credentials, and "
+            "the retrieved API description. Each profile has a unique name "
+            "which can be provided to commands that work with remote MAAS "
+            "installations, or a default profile can be chosen."
+        ),
+        epilog=colorized(
+            "If in doubt, try {autogreen}login{/autogreen}."
+        ),
+    )
+
+    cmd_add.register(parser)
+    cmd_remove.register(parser)
     cmd_login.register(parser)
-    cmd_login_api.register(parser)
-    cmd_switch.register(parser)
-    cmd_logout.register(parser)
     cmd_list.register(parser)
+    cmd_switch.register(parser)
     cmd_refresh.register(parser)
