@@ -1,4 +1,4 @@
-"""Tests for `alburnum.maas.flesh.subcmd_profiles`."""
+"""Tests for `alburnum.maas.flesh.profiles`."""
 
 __all__ = []
 
@@ -8,7 +8,7 @@ from textwrap import dedent
 
 from alburnum.maas.testing import TestCase
 
-from .. import subcmd_profiles
+from .. import profiles
 from ...utils import auth
 from ...utils.tests.test_auth import make_options
 from ...utils.tests.test_profiles import make_profile
@@ -20,7 +20,7 @@ class TestLoginBase(TestCase):
     def test_print_whats_next(self):
         profile = make_profile()
         stdout = self.patch(sys, "stdout", StringIO())
-        subcmd_profiles.cmd_login_base.print_whats_next(profile)
+        profiles.cmd_login_base.print_whats_next(profile)
         expected = dedent("""\
             Congratulations! You are logged in to the MAAS
             server at {profile.url} with the profile name
@@ -36,10 +36,10 @@ class TestLoginBase(TestCase):
 
     def test_save_profile_ensures_valid_apikey(self):
         options = make_options()
-        check_key = self.patch(subcmd_profiles, "check_valid_apikey")
+        check_key = self.patch(profiles, "check_valid_apikey")
         check_key.return_value = False
         error = self.assertRaises(
-            SystemExit, subcmd_profiles.cmd_login_base.save_profile, options,
+            SystemExit, profiles.cmd_login_base.save_profile, options,
             auth.Credentials.parse(options.credentials))
         self.assertEqual(
             "The MAAS server rejected your API key.",

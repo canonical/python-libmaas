@@ -282,12 +282,12 @@ def prepare_parser(argv):
 
     # Register sub-commands.
     from . import (
-        subcmd_profiles,
+        profiles,
         subcmd_list,
         nodes,
     )
 
-    subcmd_profiles.register(parser)
+    profiles.register(parser)
     subcmd_list.register(parser)
     nodes.register(parser)
 
