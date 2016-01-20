@@ -17,6 +17,7 @@ from abc import (
 )
 import argparse
 import code
+from importlib import import_module
 import sys
 from typing import (
     Optional,
@@ -281,16 +282,12 @@ def prepare_parser(argv):
         "list", help="List nodes, files, tags, and other resources.")
 
     # Register sub-commands.
-    from . import (
-        profiles,
-        subcmd_list,
-        nodes,
-    )
+    submodules = "profiles", "files", "nodes", "tags", "users"
+    for submodule in submodules:
+        module = import_module("." + submodule, __name__)
+        module.register(parser)
 
-    profiles.register(parser)
-    subcmd_list.register(parser)
-    nodes.register(parser)
-
+    # Register global options.
     parser.add_argument(
         '--debug', action='store_true', default=False,
         help=argparse.SUPPRESS)
@@ -313,7 +310,7 @@ def post_mortem(traceback):
 
 def main(argv=sys.argv):
     parser = prepare_parser(argv)
-    argcomplete.autocomplete(parser)
+    argcomplete.autocomplete(parser, exclude=("-h", "--help"))
 
     options = None
     try:
