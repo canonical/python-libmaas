@@ -65,6 +65,14 @@ class DescriptionHandler(http.server.BaseHTTPRequestHandler):
             {"description": description},
         )
 
+    def setup(self):
+        super(DescriptionHandler, self).setup()
+        self.logs = []
+
+    def log_message(self, *args):
+        """By default logs go to stdout/stderr. Instead, capture them."""
+        self.logs.append(args)
+
     def do_GET(self):
         if self.path == "/MAAS/api/1.0/describe/":
             self.send_response(http.HTTPStatus.OK)
