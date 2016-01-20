@@ -114,12 +114,19 @@ class TestMultiPart(TestCase):
             ("one", "ABC"),
             ("one", "XYZ"),
             ("two", ["DEF", "UVW"]),
-            ]
+        ]
+        files = [
+            BytesIO(b"f1"),
+            open(self.make_file(contents=b"f2"), "rb"),
+            open(self.make_file(contents=b"f3"), "rb"),
+        ]
+        for fd in files:
+            self.addCleanup(fd.close)
         files_in = [
-            ("f-one", BytesIO(b"f1")),
-            ("f-two", open(self.make_file(contents=b"f2"), "rb")),
-            ("f-three", lambda: open(self.make_file(contents=b"f3"), "rb")),
-            ]
+            ("f-one", files[0]),
+            ("f-two", files[1]),
+            ("f-three", lambda: files[2]),
+        ]
         body, headers = encode_multipart_data(params_in, files_in)
         self.assertEqual("%s" % len(body), headers["Content-Length"])
         self.assertThat(
