@@ -18,7 +18,6 @@ from abc import (
 import argparse
 import code
 import sys
-from time import sleep
 from typing import (
     Optional,
     Sequence,
@@ -28,10 +27,7 @@ from typing import (
 import argcomplete
 import colorclass
 
-from . import (
-    tables,
-    tabular,
-)
+from . import tabular
 from .. import (
     bones,
     utils,
@@ -78,6 +74,7 @@ class ArgumentParser(argparse.ArgumentParser):
 
     @property
     def subparsers(self):
+        """Obtain the subparser's object."""
         try:
             return self.__subparsers
         except AttributeError:
@@ -85,6 +82,10 @@ class ArgumentParser(argparse.ArgumentParser):
             self.__subparsers = parent.add_subparsers(title="sub-commands")
             self.__subparsers.metavar = "COMMAND"
             return self.__subparsers
+
+    def __getitem__(self, name):
+        """Return the named subparser."""
+        return self.subparsers.choices[name]
 
     def error(self, message):
         """Make the default error messages more helpful
@@ -191,92 +192,6 @@ class OriginTableCommand(OriginCommandBase, TableCommand):
             "Implement execute() in subclasses.")
 
 
-class cmd_acquire_node(OriginTableCommand):
-    """Acquire a node."""
-
-    def __init__(self, parser):
-        super(cmd_acquire_node, self).__init__(parser)
-        parser.add_argument("--hostname")
-        parser.add_argument("--architecture")
-        parser.add_argument("--cpus", type=int)
-        parser.add_argument("--memory", type=float)
-        parser.add_argument("--tags", default="")
-
-    def acquire(self, origin, options):
-        return origin.Nodes.acquire(
-            hostname=options.hostname, architecture=options.architecture,
-            cpus=options.cpus, memory=options.memory,
-            tags=options.tags.split())
-
-    def execute(self, origin, options, target):
-        node = self.acquire(origin, options)
-        table = tables.NodesTable()
-        print(table.render(target, [node]))
-
-
-class cmd_launch_node(cmd_acquire_node):
-    """Acquire and deploy a node."""
-
-    def __init__(self, parser):
-        super(cmd_launch_node, self).__init__(parser)
-        parser.add_argument(
-            "--wait", type=int, default=0, help=(
-                "Number of seconds to wait for deploy to complete."))
-
-    def execute(self, origin, options, target):
-        node = self.acquire(origin, options)
-        table = tables.NodesTable()
-
-        print(colorized("{automagenta}DEPLOYING:{/automagenta}"))
-        print(table.render(target, [node]))
-
-        with utils.Spinner():
-            node = node.start()
-            for elapsed, remaining, wait in utils.retries(options.wait, 1.0):
-                if node.substatus_name == "Deploying":
-                    sleep(wait)
-                    node = origin.Node.read(system_id=node.system_id)
-                else:
-                    break
-
-        if node.substatus_name == "Deployed":
-            print(colorized("{autogreen}DEPLOYED:{/autogreen}"))
-            print(table.render(target, [node]))
-        else:
-            print(colorized("{autored}FAILED TO DEPLOY:{/autored}"))
-            print(table.render(target, [node]))
-            raise CommandError("Node was not deployed.")
-
-
-class cmd_release_node(OriginTableCommand):
-    """Release a node."""
-
-    def __init__(self, parser):
-        super(cmd_release_node, self).__init__(parser)
-        parser.add_argument("--system-id", required=True)
-        parser.add_argument(
-            "--wait", type=int, default=0, help=(
-                "Number of seconds to wait for release to complete."))
-
-    def execute(self, origin, options, target):
-        node = origin.Node.read(system_id=options.system_id)
-        node = node.release()
-
-        with utils.Spinner():
-            for elapsed, remaining, wait in utils.retries(options.wait, 1.0):
-                if node.substatus_name == "Releasing":
-                    sleep(wait)
-                    node = origin.Node.read(system_id=node.system_id)
-                else:
-                    break
-
-        table = tables.NodesTable()
-        print(table.render(target, [node]))
-
-        if node.substatus_name != "Ready":
-            raise CommandError("Node was not released.")
-
-
 class cmd_shell(Command):
     """Start an interactive shell with some convenient local variables.
 
@@ -355,19 +270,26 @@ def prepare_parser(argv):
     # Top-level commands.
     cmd_shell.register(parser)
 
-    # Sub-commands.
+    # Create sub-parsers for various command groups. These are all verbs.
+    parser.subparsers.add_parser(
+        "acquire", help="Acquire nodes or other resources.")
+    parser.subparsers.add_parser(
+        "launch", help="Launch nodes or other resources.")
+    parser.subparsers.add_parser(
+        "release", help="Release nodes or other resources.")
+    parser.subparsers.add_parser(
+        "list", help="List nodes, files, tags, and other resources.")
+
+    # Register sub-commands.
     from . import (
         subcmd_profiles,
         subcmd_list,
+        nodes,
     )
 
-    subcmd_profiles.register_as("profiles", parser)
-    subcmd_list.register_as("list", parser)
-
-    # Node lifecycle.
-    cmd_acquire_node.register(parser)
-    cmd_launch_node.register(parser)
-    cmd_release_node.register(parser)
+    subcmd_profiles.register(parser)
+    subcmd_list.register(parser)
+    nodes.register(parser)
 
     parser.add_argument(
         '--debug', action='store_true', default=False,

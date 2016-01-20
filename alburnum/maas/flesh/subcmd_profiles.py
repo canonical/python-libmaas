@@ -1,7 +1,7 @@
 """Commands for working with local profiles."""
 
 __all__ = [
-    "register_as",
+    "register",
 ]
 
 from textwrap import fill
@@ -263,10 +263,10 @@ class cmd_refresh(Command):
                 config.save(profile)
 
 
-def register_as(name, parser):
+def register(parser):
     """Register profile commands with the given parser."""
     parser = parser.subparsers.add_parser(
-        name, help="Manage profiles, e.g. adding, removing, logging-in.",
+        "profiles", help="Manage profiles, e.g. adding, removing, logging-in.",
         description=(
             "A profile is a convenient way to refer to a remote MAAS "
             "installation. It encompasses the URL, the credentials, and "

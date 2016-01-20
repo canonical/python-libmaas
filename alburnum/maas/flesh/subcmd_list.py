@@ -1,21 +1,13 @@
 """Commands for listing things."""
 
 __all__ = [
-    "register_as",
+    "register",
 ]
 
 from . import (
     OriginTableCommand,
     tables,
 )
-
-
-class cmd_nodes(OriginTableCommand):
-    """List nodes."""
-
-    def execute(self, origin, options, target):
-        table = tables.NodesTable()
-        print(table.render(target, origin.Nodes))
 
 
 class cmd_tags(OriginTableCommand):
@@ -42,13 +34,8 @@ class cmd_users(OriginTableCommand):
         print(table.render(target, origin.Users))
 
 
-def register_as(name, parser):
+def register(parser):
     """Register profile commands with the given parser."""
-    parser = parser.subparsers.add_parser(
-        name, help="List files, tags, nodes, etc.",
-        description="List.", epilog="")
-
-    cmd_nodes.register(parser)
-    cmd_tags.register(parser)
-    cmd_files.register(parser)
-    cmd_users.register(parser)
+    cmd_files.register(parser["list"], "files")
+    cmd_tags.register(parser["list"], "tags")
+    cmd_users.register(parser["list"], "users")
