@@ -48,7 +48,6 @@ setup(
     entry_points={
         "console_scripts": {
             "maas = alburnum.maas.flesh:main",
-            "maas-shell = alburnum.maas.skin:main",
         },
     },
 )
