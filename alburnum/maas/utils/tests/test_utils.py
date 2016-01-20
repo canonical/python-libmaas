@@ -239,14 +239,10 @@ class TestPayloadPreparationWithFiles(TestCase):
 
 
 class TestDocstringParsing(TestCase):
-    """Tests for docstring parsing with `parse_docstring`.
-
-    This also runs the same tests against `parse_docstring_lazily`.
-    """
+    """Tests for docstring parsing with `parse_docstring`."""
 
     scenarios = (
         ("normal", dict(parse=utils.parse_docstring)),
-        ("lazily", dict(parse=utils.parse_docstring_lazily)),
     )
 
     def test_basic(self):

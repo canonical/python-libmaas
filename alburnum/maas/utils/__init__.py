@@ -5,7 +5,6 @@ __all__ = [
     "get_all_subclasses",
     "get_response_content_type",
     "parse_docstring",
-    "parse_docstring_lazily",
     "prepare_payload",
     "retries",
     "sign",
@@ -28,7 +27,6 @@ from itertools import (
     cycle,
     repeat,
 )
-from operator import attrgetter
 import re
 import sys
 import threading
@@ -215,84 +213,6 @@ def parse_docstring(thing):
     # Normalise line-breaks on newline.
     body = body.replace("\r\n", newline).replace("\r", newline)
     return title, body
-
-
-def parse_docstring_lazily(thing):
-    """Lazily parse a Python docstring, or the docstring found on `thing`.
-
-    :return: a ``(title, body)`` tuple, where ``title`` and ``body`` are
-        instances of :class:`LazyHelpString`. The docstring will not be parsed
-        until one of these strings is used.
-    """
-    title = LazyHelpString(lambda: parse_docstring(thing)[0])
-    body = LazyHelpString(lambda: parse_docstring(thing)[1])
-    return title, body
-
-
-class LazyHelpStringType(type):
-    """The type of a lazily evalulated help string.
-
-    Python bypasses ``__getattribute__`` for some special methods (see
-    https://docs.python.org/3/reference/datamodel.html#special-lookup) so this
-    populates the initial class dictionary with properties that force the use
-    of ``__getattribute__``.
-    """
-
-    def __prepare__(name, bases):
-        but_not = {
-            "__class__",
-            "__getnewargs__",
-            "__init__",
-            "__new__",
-        }
-        return {
-            name: property(attrgetter(name))
-            for name, value in vars(str).items()
-            if name.startswith("_") and
-            name not in but_not and
-            callable(value)
-        }
-
-
-class LazyHelpString(metaclass=LazyHelpStringType):
-    """A help string that is lazily populated.
-
-    The first time an attribute on an instance of this class is used, this
-    calls a given vivification function. That function must return a string,
-    which is then stored and used subsequently. All attribute access is
-    forwarded to the vivified string.
-    """
-
-    def __init__(self, vivify):
-        super(LazyHelpString, self).__init__()
-        super(LazyHelpString, self).__setattr__("_vivify", vivify)
-
-    def __getattribute__(self, name):
-        try:
-            string = super(LazyHelpString, self).__getattribute__("_string")
-        except AttributeError:
-            string = super(LazyHelpString, self).__getattribute__("_vivify")()
-            super(LazyHelpString, self).__setattr__("_string", string)
-
-        return getattr(string, name)
-
-    def __setattr__(self, name, value):
-        try:
-            string = super(LazyHelpString, self).__getattribute__("_string")
-        except AttributeError:
-            string = super(LazyHelpString, self).__getattribute__("_vivify")()
-            super(LazyHelpString, self).__setattr__("_string", string)
-
-        return setattr(string, name, value)
-
-    def __delattr__(self, name):
-        try:
-            string = super(LazyHelpString, self).__getattribute__("_string")
-        except AttributeError:
-            string = super(LazyHelpString, self).__getattribute__("_vivify")()
-            super(LazyHelpString, self).__setattr__("_string", string)
-
-        return delattr(string, name)
 
 
 def ensure_trailing_slash(string):
