@@ -17,6 +17,11 @@ import argparse
 import code
 import sys
 from time import sleep
+from typing import (
+    Optional,
+    Sequence,
+    Tuple,
+)
 
 import argcomplete
 import colorclass
@@ -42,7 +47,12 @@ def colorized(text):
         return colorclass.Color(text).value_no_colors
 
 
-def get_profile_names():
+def get_profile_names_and_default() -> Tuple[
+        Sequence[str], Optional[profiles.Profile]]:
+    """Return the list of profile names and the default profile object.
+
+    The list of names is sorted.
+    """
     with profiles.ProfileManager.open() as config:
         return sorted(config), config.default
 
@@ -50,7 +60,7 @@ def get_profile_names():
 # Get profile names and the default profile now to avoid repetition when
 # defining arguments (e.g. default and choices). Doing this as module-import
 # time is imperfect but good enough for now.
-PROFILE_NAMES, PROFILE_DEFAULT = get_profile_names()
+PROFILE_NAMES, PROFILE_DEFAULT = get_profile_names_and_default()
 
 
 class ArgumentParser(argparse.ArgumentParser):
