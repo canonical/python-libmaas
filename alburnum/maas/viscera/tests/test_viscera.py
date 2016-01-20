@@ -277,6 +277,10 @@ class TestObject(TestCase):
         data = {"alice": make_name_without_spaces("alice")}
         self.assertThat(Object(data)._data, Equals(data))
 
+    def test__init_insists_on_mapping(self):
+        error = self.assertRaises(TypeError, Object, ["some", "items"])
+        self.assertThat(str(error), Equals("data must be a mapping, not list"))
+
 
 class TestObjectSet(TestCase):
     """Tests for `ObjectSet`."""
@@ -289,9 +293,33 @@ class TestObjectSet(TestCase):
     def test__inherits_ObjectBasics(self):
         self.assertThat(ObjectSet.__mro__, Contains(ObjectBasics))
 
-    def test__init_sets__items(self):
+    def test__init_sets__items_from_sequence(self):
         items = [{"alice": make_name_without_spaces("alice")}]
         self.assertThat(ObjectSet(items)._items, Equals(items))
+
+    def test__init_sets__items_from_iterable(self):
+        items = [{"alice": make_name_without_spaces("alice")}]
+        self.assertThat(ObjectSet(iter(items))._items, Equals(items))
+
+    def test__init_rejects_mapping(self):
+        error = self.assertRaises(TypeError, ObjectSet, {})
+        self.assertThat(str(error), Equals(
+            "data must be sequence-like, not dict"))
+
+    def test__init_rejects_str(self):
+        error = self.assertRaises(TypeError, ObjectSet, "")
+        self.assertThat(str(error), Equals(
+            "data must be sequence-like, not str"))
+
+    def test__init_rejects_bytes(self):
+        error = self.assertRaises(TypeError, ObjectSet, b"")
+        self.assertThat(str(error), Equals(
+            "data must be sequence-like, not bytes"))
+
+    def test__init_rejects_non_iterable(self):
+        error = self.assertRaises(TypeError, ObjectSet, 123)
+        self.assertThat(str(error), Equals(
+            "data must be sequence-like, not int"))
 
     def test__length_is_number_of_items(self):
         items = [0] * randrange(0, 100)

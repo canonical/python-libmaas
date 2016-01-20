@@ -26,7 +26,7 @@ class Users(ObjectSet, metaclass=UsersType):
 
     @classmethod
     def read(cls):
-        return list(cls)
+        return cls(cls)
 
 
 class User(Object):

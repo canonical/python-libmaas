@@ -33,7 +33,7 @@ class NodesType(ObjectType):
         return map(cls._object, cls._handler.list())
 
     def read(cls):
-        return list(cls)
+        return cls(cls)
 
     list = Disabled("list", "read")  # API is malformed in MAAS server.
 

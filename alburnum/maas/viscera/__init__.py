@@ -19,7 +19,11 @@ __all__ = [
     "OriginBase",
 ]
 
-from collections import Sequence
+from collections import (
+    Iterable,
+    Mapping,
+    Sequence,
+)
 from functools import wraps
 from importlib import import_module
 from itertools import (
@@ -170,8 +174,12 @@ class Object(ObjectBasics, metaclass=ObjectType):
 
     def __init__(self, data):
         super(Object, self).__init__()
-        assert isinstance(data, dict)
-        self._data = data
+        if isinstance(data, Mapping):
+            self._data = data
+        else:
+            raise TypeError(
+                "data must be a mapping, not %s"
+                % type(data).__name__)
 
 
 class ObjectSet(ObjectBasics, metaclass=ObjectType):
@@ -183,8 +191,18 @@ class ObjectSet(ObjectBasics, metaclass=ObjectType):
 
     def __init__(self, items):
         super(ObjectSet, self).__init__()
-        assert isinstance(items, Sequence)
-        self._items = items
+        if isinstance(items, (Mapping, str, bytes)):
+            raise TypeError(
+                "data must be sequence-like, not %s"
+                % type(items).__name__)
+        elif isinstance(items, Sequence):
+            self._items = items
+        elif isinstance(items, Iterable):
+            self._items = list(items)
+        else:
+            raise TypeError(
+                "data must be sequence-like, not %s"
+                % type(items).__name__)
 
     def __len__(self):
         return len(self._items)
