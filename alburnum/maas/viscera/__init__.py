@@ -9,30 +9,30 @@ and functions here are the meat and organs around the "bones", but not the
 """
 
 __all__ = [
+    "check",
+    "check_optional",
     "Object",
     "ObjectField",
     "ObjectMethod",
     "ObjectType",
-    "ObjectTypedField",
     "Origin",
     "OriginBase",
 ]
 
-import base64
-from http import HTTPStatus
+from collections import (
+    Iterable,
+    Mapping,
+    Sequence,
+)
+from functools import wraps
+from importlib import import_module
 from itertools import (
     chain,
     starmap,
 )
 from types import MethodType
-from typing import (
-    List,
-    Optional,
-    Sequence,
-    Union,
-)
+from typing import Optional
 
-from alburnum.maas.bones import CallError
 from alburnum.maas.utils import (
     get_all_subclasses,
     vars_class,
@@ -89,15 +89,17 @@ def dir_instance(inst):
     Eliminates names that bind to an `ObjectMethod` without a corresponding
     instance method; see `ObjectMethod`.
     """
-    # Instance attributes.
-    yield from vars(inst)
-    # Class attributes (including methods).
+    # Skip instance attributes; __slots__ is automatically defined, and
+    # descriptors are used to define attributes. Instead, go straight to class
+    # attributes (including methods).
     for name, value in vars_class(type(inst)).items():
         if isinstance(value, ObjectMethod):
             if value.has_instancemethod:
                 yield name
         elif isinstance(value, Disabled):
             pass  # Hide this; disabled.
+        elif isinstance(value, (classmethod, staticmethod)):
+            pass  # Hide this; not interesting here.
         else:
             yield name
 
@@ -135,7 +137,7 @@ class OriginObjectRef:
 class ObjectType(type):
 
     def __dir__(cls):
-        return list(dir_class(cls))
+        return dir_class(cls)
 
     def __new__(cls, name, bases, attrs):
         attrs.setdefault("__slots__", ())
@@ -147,7 +149,7 @@ class ObjectBasics:
     __slots__ = ()
 
     def __dir__(self):
-        return list(dir_instance(self))
+        return dir_instance(self)
 
     def __str__(self):
         return self.__class__.__qualname__
@@ -172,85 +174,174 @@ class Object(ObjectBasics, metaclass=ObjectType):
 
     def __init__(self, data):
         super(Object, self).__init__()
-        assert isinstance(data, dict)
-        self._data = data
+        if isinstance(data, Mapping):
+            self._data = data
+        else:
+            raise TypeError(
+                "data must be a mapping, not %s"
+                % type(data).__name__)
 
 
-class ObjectSet(ObjectBasics, list, metaclass=ObjectType):
+class ObjectSet(ObjectBasics, metaclass=ObjectType):
     """A set of objects in a MAAS installation."""
 
-    __slots__ = "__weakref__",
+    __slots__ = "__weakref__", "_items"
 
     _object = OriginObjectRef()
 
     def __init__(self, items):
-        super(ObjectSet, self).__init__(items)
+        super(ObjectSet, self).__init__()
+        if isinstance(items, (Mapping, str, bytes)):
+            raise TypeError(
+                "data must be sequence-like, not %s"
+                % type(items).__name__)
+        elif isinstance(items, Sequence):
+            self._items = items
+        elif isinstance(items, Iterable):
+            self._items = list(items)
+        else:
+            raise TypeError(
+                "data must be sequence-like, not %s"
+                % type(items).__name__)
+
+    def __len__(self):
+        return len(self._items)
+
+    def __getitem__(self, spec):
+        return self._items[spec]
+
+    def __iter__(self):
+        return iter(self._items)
 
 
 class ObjectField:
+    """A field on an `Object`.
+
+    By default, no conversion and/or validation is performed; the value
+    retrieved from MAAS's Web API (tranmitted as JSON) is returned when
+    accessing this field, and is set or deleted when setting or deleting this
+    field.
+
+    It is possible to declare this field as read-only and to specify a default
+    value when the corresponding datum is not found.
+
+    A word on the "value" and "datum" nomenclature used here:
+
+    * A "value" is a Python-side value, i.e. the one you'll work with in a
+      program that uses this API.
+
+    * A "datum" is an item of data obtained from MAAS's Web API, or ready to
+      be sent back to MAAS's Web API. It is almost always something that can
+      be dumped as JSON.
+
+    A value passed into a field must be converted to a datum and vice-versa.
+    To support this, two methods can be customised in `ObjectField`
+    subclasses: ``value_to_datum`` and ``datum_to_value``.
+
+    These methods serve to both convert and validate, but the default
+    implementions do nothing.
+
+    Alternatively, simple conversion functions can be passed to the `Checked`
+    constructor.
+
+    """
+
+    @classmethod
+    def Checked(cls, name, datum_to_value=None, value_to_datum=None, **other):
+        """Create a custom `ObjectField` that validates values and datums.
+
+        :param name: The name of the field. This is the name that's used to
+            store the datum in the MAAS-side data dictionary.
+        :param datum_to_value: A callable taking a single ``datum`` argument,
+            passed positionally. This callable should convert the datum to a
+            Python-side value, and/or raise an exception for invalid datums.
+        :param value_to_datum: A callable taking a single ``value`` argument,
+            passed positionally. This callable should convert the value to a
+            MAAS-side datum, and/or raise an exception for invalid values.
+        :param other: Additional arguments to pass to the default
+            `ObjectField` constructor.
+        """
+        attrs = {}
+        if datum_to_value is not None:
+            @wraps(datum_to_value)
+            def datum_to_value_method(instance, datum):
+                return datum_to_value(datum)
+            attrs["datum_to_value"] = staticmethod(datum_to_value_method)
+        if value_to_datum is not None:
+            @wraps(value_to_datum)
+            def value_to_datum_method(instance, value):
+                return value_to_datum(value)
+            attrs["value_to_datum"] = staticmethod(value_to_datum_method)
+        cls = type("%s.Checked#%s" % (cls.__name__, name), (cls,), attrs)
+        return cls(name, **other)
 
     def __init__(self, name, *, default=undefined, readonly=False):
+        """Create a `ObjectField` with an optional default.
+
+        :param name: The name of the field. This is the name that's used to
+            store the datum in the MAAS-side data dictionary.
+        :param default: A default value to return when `name` is not found in
+            the MAAS-side data dictionary.
+        :param readonly: If true, prevent setting or deleting of this field.
+        """
         super(ObjectField, self).__init__()
         self.name = name
         self.default = default
         self.readonly = readonly
 
+    def datum_to_value(self, instance, datum):
+        """Convert a given MAAS-side datum to a Python-side value.
+
+        :param instance: The `Object` instance on which this field is
+            currently operating. This method should treat it as read-only, for
+            example to perform validation with regards to other fields.
+        :param datum: The MAAS-side datum to validate and convert into a
+            Python-side value.
+        :return: A value derived from the given datum.
+        """
+        return datum
+
+    def value_to_datum(self, instance, value):
+        """Convert a given Python-side value to a MAAS-side datum.
+
+        :param instance: The `Object` instance on which this field is
+            currently operating. This method should treat it as read-only, for
+            example to perform validation with regards to other fields.
+        :param datum: The Python-side value to validate and convert into a
+            MAAS-side datum.
+        :return: A datum derived from the given value.
+        """
+        return value
+
     def __get__(self, instance, owner):
+        """Standard Python descriptor method."""
         if instance is None:
             return self
         else:
             if self.name in instance._data:
-                return instance._data[self.name]
+                datum = instance._data[self.name]
+                return self.datum_to_value(instance, datum)
             elif self.default is undefined:
-                raise AttributeError()
+                raise AttributeError(self.name)
             else:
                 return self.default
 
     def __set__(self, instance, value):
+        """Standard Python descriptor method."""
         if self.readonly:
             raise AttributeError("%s is read-only" % self.name)
         else:
-            instance._data[self.name] = value
+            datum = self.value_to_datum(instance, value)
+            instance._data[self.name] = datum
 
     def __delete__(self, instance):
+        """Standard Python descriptor method."""
         if self.readonly:
             raise AttributeError("%s is read-only" % self.name)
         elif self.name in instance._data:
             del instance._data[self.name]
         else:
             pass  # Nothing to do.
-
-
-class ObjectTypedField(ObjectField):
-
-    def __init__(
-            self, name, datum_to_value=None, value_to_datum=None, *,
-            default=undefined, readonly=False):
-        super(ObjectTypedField, self).__init__(
-            name, default=default, readonly=readonly)
-        self.datum_to_value = (
-            (lambda d: d) if datum_to_value is None else datum_to_value)
-        self.value_to_datum = (
-            (lambda v: v) if value_to_datum is None else value_to_datum)
-        if default is not undefined:
-            if self.datum_to_value(self.value_to_datum(default)) != default:
-                raise TypeError(
-                    "The default of %r cannot be round-tripped through the "
-                    "conversion/validation functions given." % (default, ))
-
-    def __get__(self, instance, owner):
-        if instance is None:
-            return self
-        else:
-            datum = super(ObjectTypedField, self).__get__(instance, owner)
-            if datum is self.default:
-                return datum
-            else:
-                return self.datum_to_value(datum)
-
-    def __set__(self, instance, value):
-        datum = self.value_to_datum(value)
-        super(ObjectTypedField, self).__set__(instance, datum)
 
 
 class ObjectMethod:
@@ -428,293 +519,42 @@ def check_optional(expected):
 
 
 #
-# Specialised objects.
+# Now it's possible to define the default Origin, which uses a predefined set
+# of specialised objects. Most people should use this.
 #
 
 
-class TagsType(ObjectType):
-    """Metaclass for `Tags`."""
+def find_objects(modules):
+    """Find subclasses of `Object` and `ObjectSet` in the given modules.
 
-    def __iter__(cls):
-        return map(cls._object, cls._handler.list())
-
-    def create(cls, name, *, comment="", definition="", kernel_opts=""):
-        data = cls._handler.new(
-            name=name, comment=comment, definition=definition,
-            kernel_opts=kernel_opts)
-        return cls._object(data)
-
-    new = Disabled("new", "create")  # API is malformed in MAAS server.
-
-    def read(cls):
-        return cls(cls)
-
-    list = Disabled("list", "read")  # API is malformed in MAAS server.
-
-
-class Tags(ObjectSet, metaclass=TagsType):
-    """The set of tags."""
-
-
-class Tag(Object):
-    """A tag."""
-
-    name = ObjectTypedField(
-        "name", check(str), readonly=True)
-    comment = ObjectTypedField(
-        "comment", check(str), check(str), default="")
-    definition = ObjectTypedField(
-        "definition", check(str), check(str), default="")
-    kernel_opts = ObjectTypedField(
-        "kernel_opts", check_optional(str), check_optional(str),
-        default=None)
-
-
-class FilesType(ObjectType):
-    """Metaclass for `Files`."""
-
-    def __iter__(cls):
-        return map(cls._object, cls._handler.list())
-
-    def read(cls):
-        return list(cls)
-
-    list = Disabled("list", "read")  # API is malformed in MAAS server.
-
-
-class Files(ObjectSet, metaclass=FilesType):
-    """The set of files stored in MAAS."""
-
-
-class File(Object):
-    """A file stored in MAAS."""
-
-    filename = ObjectTypedField(
-        "filename", check(str), readonly=True)
-
-
-class NodesType(ObjectType):
-    """Metaclass for `Nodes`."""
-
-    def __iter__(cls):
-        return map(cls._object, cls._handler.list())
-
-    def read(cls):
-        return list(cls)
-
-    list = Disabled("list", "read")  # API is malformed in MAAS server.
-
-    def acquire(
-            cls, *, hostname: str=None, architecture: str=None,
-            cpus: int=None, memory: float=None, tags: Sequence[str]=None):
-        """
-        :param hostname: The hostname to match.
-        :param architecture: The architecture to match, e.g. "amd64".
-        :param cpus: The minimum number of CPUs to match.
-        :param memory: The minimum amount of RAM to match.
-        :param tags: The tags to match, as a sequence. Each tag may be
-            prefixed with a hyphen to denote that the given tag should NOT be
-            associated with a matched node.
-        """
-        params = {}
-        if hostname is not None:
-            params["hostname"] = hostname
-        if architecture is not None:
-            params["architecture"] = architecture
-        if cpus is not None:
-            params["cpu_count"] = str(cpus)
-        if memory is not None:
-            params["mem"] = str(memory)
-        if tags is not None:
-            params["tags"] = [
-                tag for tag in tags if not tag.startswith("-")]
-            params["not_tags"] = [
-                tag[1:] for tag in tags if tag.startswith("-")]
-
-        try:
-            data = cls._handler.acquire(**params)
-        except CallError as error:
-            if error.status == HTTPStatus.CONFLICT:
-                message = "No node matching the given criteria was found."
-                raise NodeNotFound(message) from error
-            else:
-                raise
-        else:
-            return cls._object(data)
-
-
-class NodeNotFound(Exception):
-    """Node was not found."""
-
-
-class Nodes(ObjectSet, metaclass=NodesType):
-    """The set of nodes stored in MAAS."""
-
-
-class NodeType(ObjectType):
-
-    def read(cls, system_id):
-        data = cls._handler.read(system_id=system_id)
-        return cls(data)
-
-
-class Node(Object, metaclass=NodeType):
-    """A node stored in MAAS."""
-
-    architecture = ObjectTypedField(
-        "architecture", check_optional(str), check_optional(str))
-    boot_disk = ObjectTypedField(
-        "boot_disk", check_optional(str), check_optional(str))
-
-    # boot_type
-
-    cpus = ObjectTypedField(
-        "cpu_count", check(int), check(int))
-    disable_ipv4 = ObjectTypedField(
-        "disable_ipv4", check(bool), check(bool))
-    distro_series = ObjectTypedField(
-        "distro_series", check(str), check(str))
-    hostname = ObjectTypedField(
-        "hostname", check(str), check(str))
-    hwe_kernel = ObjectTypedField(
-        "hwe_kernel", check_optional(str), check_optional(str))
-    ip_addresses = ObjectTypedField(
-        "ip_addresses", check(List[str]), readonly=True)
-    memory = ObjectTypedField(
-        "memory", check(int), check(int))
-    min_hwe_kernel = ObjectTypedField(
-        "min_hwe_kernel", check_optional(str), check_optional(str))
-
-    # blockdevice_set
-    # interface_set
-    # macaddress_set
-    # netboot
-    # osystem
-    # owner
-    # physicalblockdevice_set
-
-    # TODO: Use an enum here.
-    power_state = ObjectTypedField(
-        "power_state", check(str), readonly=True)
-
-    # power_state
-    # power_type
-    # pxe_mac
-    # resource_uri
-    # routers
-    # status
-    # storage
-
-    substatus = ObjectTypedField(
-        "substatus", check(int), readonly=True)
-    substatus_action = ObjectTypedField(
-        "substatus_action", check_optional(str), readonly=True)
-    substatus_message = ObjectTypedField(
-        "substatus_message", check_optional(str), readonly=True)
-    substatus_name = ObjectTypedField(
-        "substatus_name", check(str), readonly=True)
-
-    # swap_size
-
-    system_id = ObjectTypedField(
-        "system_id", check(str), readonly=True)
-
-    # system_id
-    # tag_names
-    # virtualblockdevice_set
-    # zone
-
-    def start(
-            self, user_data: Union[bytes, str]=None, distro_series: str=None,
-            hwe_kernel: str=None, comment: str=None):
-        """Start this node.
-
-        :param user_data: User-data to provide to the node when booting. If
-            provided as a byte string, it will be base-64 encoded prior to
-            transmission. If provided as a Unicode string it will be assumed
-            to be already base-64 encoded.
-        :param distro_series: The OS to deploy.
-        :param hwe_kernel: The HWE kernel to deploy. Probably only relevant
-            when deploying Ubuntu.
-        :param comment: A comment for the event log.
-        """
-        params = {"system_id": self.system_id}
-        if user_data is not None:
-            if isinstance(user_data, bytes):
-                params["user_data"] = base64.encodebytes(user_data)
-            else:
-                # Already base-64 encoded. Convert to a byte string in
-                # preparation for multipart assembly.
-                params["user_data"] = user_data.encode("ascii")
-        if distro_series is not None:
-            params["distro_series"] = distro_series
-        if hwe_kernel is not None:
-            params["hwe_kernel"] = hwe_kernel
-        if comment is not None:
-            params["comment"] = comment
-        data = self._handler.start(**params)
-        return type(self)(data)
-
-    def release(self, comment: str=None):
-        params = {"system_id": self.system_id}
-        if comment is not None:
-            params["comment"] = comment
-        data = self._handler.release(**params)
-        return type(self)(data)
-
-
-class UsersType(ObjectType):
-    """Metaclass for `Users`."""
-
-    def __iter__(cls):
-        return map(cls._object, cls._handler.read())
-
-
-class Users(ObjectSet, metaclass=UsersType):
-    """The set of users."""
-
-    @classmethod
-    def read(cls):
-        return list(cls)
-
-
-class User(Object):
-    """A user."""
-
-    username = ObjectTypedField(
-        "username", check(str), check(str))
-    email = ObjectTypedField(
-        "email", check(str), check(str))
-    is_admin = ObjectTypedField(
-        "is_superuser", check(bool), check(bool))
-
-
-#
-# Now it's possible to define the default Origin, which uses the specialised
-# objects created in this module. Most people should use this.
-#
-
-
-# Specialised objects defined in this module.
-objects = {
-    subclass.__name__: subclass
-    for subclass in chain(
-        get_all_subclasses(Object),
-        get_all_subclasses(ObjectSet),
-    )
-    if subclass.__module__ == __name__
-}
+    :param modules: The full *names* of modules to include. These modules MUST
+        have been imported in advance.
+    """
+    return {
+        subclass.__name__: subclass
+        for subclass in chain(
+            get_all_subclasses(Object),
+            get_all_subclasses(ObjectSet),
+        )
+        if subclass.__module__ in modules
+    }
 
 
 class Origin(OriginBase):
     """Represents a remote MAAS installation.
 
-    Uses specialised objects defined in its originating module. This is
-    probably the best choice for most people.
+    Uses specialised objects defined in its originating module and specific
+    submodules. This is probably the best choice for most people.
     """
 
     def __init__(self, session):
         """
         :param session: A `bones.SessionAPI` instance.
+
         """
-        super(Origin, self).__init__(session, objects=objects)
+        super(Origin, self).__init__(
+            session, objects=find_objects({
+                import_module(name, __name__).__name__
+                for name in {".", ".files", ".nodes", ".tags", ".users"}
+            }),
+        )

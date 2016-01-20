@@ -1,4 +1,4 @@
-"""Tests for `alburnum.maas.client`."""
+"""Tests for `alburnum.maas.bones`."""
 
 __all__ = []
 
