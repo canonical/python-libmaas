@@ -589,11 +589,12 @@ class Origin(OriginBase):
         :param session: A `bones.SessionAPI` instance.
 
         """
+        modules = {
+            ".", ".events", ".files", ".nodes", ".tags", ".users", ".version",
+        }
         super(Origin, self).__init__(
             session, objects=find_objects({
                 import_module(name, __name__).__name__
-                for name in {
-                    ".", ".files", ".nodes", ".tags", ".users", ".version",
-                }
+                for name in modules
             }),
         )
