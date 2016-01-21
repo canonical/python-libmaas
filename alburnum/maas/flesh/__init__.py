@@ -16,7 +16,6 @@ from abc import (
     abstractmethod,
 )
 import argparse
-import code
 from importlib import import_module
 import sys
 from typing import (
@@ -34,7 +33,10 @@ from .. import (
     utils,
     viscera,
 )
-from ..utils import profiles
+from ..utils.profiles import (
+    Profile,
+    ProfileManager,
+)
 
 
 def colorized(text):
@@ -46,13 +48,12 @@ def colorized(text):
         return colorclass.Color(text).value_no_colors
 
 
-def get_profile_names_and_default() -> Tuple[
-        Sequence[str], Optional[profiles.Profile]]:
+def get_profile_names_and_default() -> Tuple[Sequence[str], Optional[Profile]]:
     """Return the list of profile names and the default profile object.
 
     The list of names is sorted.
     """
-    with profiles.ProfileManager.open() as config:
+    with ProfileManager.open() as config:
         return sorted(config), config.default
 
 
@@ -80,7 +81,7 @@ class ArgumentParser(argparse.ArgumentParser):
             return self.__subparsers
         except AttributeError:
             parent = super(ArgumentParser, self)
-            self.__subparsers = parent.add_subparsers(title="sub-commands")
+            self.__subparsers = parent.add_subparsers(title="drill down")
             self.__subparsers.metavar = "COMMAND"
             return self.__subparsers
 
@@ -193,83 +194,11 @@ class OriginTableCommand(OriginCommandBase, TableCommand):
             "Implement execute() in subclasses.")
 
 
-class cmd_shell(Command):
-    """Start an interactive shell with some convenient local variables.
-
-    If IPython is available it will be used, otherwise the familiar Python
-    REPL will be started. If a script is piped in, it is read in its entirety
-    then executed with the same namespace as the interactive shell.
-    """
-
-    def __init__(self, parser):
-        super(cmd_shell, self).__init__(parser)
-        parser.add_argument(
-            "--profile-name", metavar="NAME", choices=PROFILE_NAMES,
-            required=False, help=(
-                "The name of the remote MAAS instance to use. Use "
-                "`list-profiles` to obtain a list of valid profiles." +
-                ("" if PROFILE_DEFAULT is None else " [default: %(default)s]")
-            ))
-        if PROFILE_DEFAULT is None:
-            parser.set_defaults(profile_name=None)
-        else:
-            parser.set_defaults(profile_name=PROFILE_DEFAULT.name)
-
-    def __call__(self, options):
-        """Execute this command."""
-
-        namespace = {}  # The namespace that code will run in.
-        variables = {}  # Descriptions of the namespace variables.
-
-        # If a profile has been selected, set up a `bones` session and a
-        # `viscera` origin in the default namespace.
-        if options.profile_name is not None:
-            session = bones.SessionAPI.fromProfileName(options.profile_name)
-            namespace["session"] = session
-            variables["session"] = (
-                "A `bones` session, configured for %s."
-                % options.profile_name)
-            origin = viscera.Origin(session)
-            namespace["origin"] = origin
-            variables["origin"] = (
-                "A `viscera` origin, configured for %s."
-                % options.profile_name)
-
-        # Display some introductory text if this is fully interactive.
-        if sys.stdin.isatty() and sys.stdout.isatty():
-            banner = ["{automagenta}Welcome to the MAAS shell.{/automagenta}"]
-            if len(variables) > 0:
-                banner += ["", "Predefined variables:", ""]
-                banner += [
-                    "{autoyellow}%10s{/autoyellow}: %s" % variable
-                    for variable in sorted(variables.items())
-                ]
-            for line in banner:
-                print(colorized(line))
-
-        # Start IPython or the REPL if stdin is from a terminal, otherwise
-        # slurp everything and exec it within `namespace`.
-        if sys.stdin.isatty():
-            try:
-                import IPython
-            except ImportError:
-                code.InteractiveConsole(namespace).interact(" ")
-            else:
-                IPython.start_ipython(
-                    argv=[], display_banner=False, user_ns=namespace)
-        else:
-            source = sys.stdin.read()
-            exec(source, namespace, namespace)
-
-
-def prepare_parser(argv):
+def prepare_parser(program):
     """Create and populate an argument parser."""
     parser = ArgumentParser(
-        description="Interact with a remote MAAS server.", prog=argv[0],
+        description="Interact with a remote MAAS server.", prog=program,
         epilog="http://maas.ubuntu.com/")
-
-    # Top-level commands.
-    cmd_shell.register(parser)
 
     # Create sub-parsers for various command groups. These are all verbs.
     parser.subparsers.add_parser(
@@ -277,12 +206,19 @@ def prepare_parser(argv):
     parser.subparsers.add_parser(
         "launch", help="Launch nodes or other resources.")
     parser.subparsers.add_parser(
-        "release", help="Release nodes or other resources.")
-    parser.subparsers.add_parser(
         "list", help="List nodes, files, tags, and other resources.")
+    parser.subparsers.add_parser(
+        "release", help="Release nodes or other resources.")
 
     # Register sub-commands.
-    submodules = "profiles", "files", "nodes", "tags", "users"
+    submodules = (
+        # These modules are expected to register verb-like commands into the
+        # sub-parsers created above, e.g. for "list files", "launch node".
+        "files", "nodes", "tags", "users",
+        # These modules are different: they are collections of commands around
+        # a topic, or miscellaneous conveniences.
+        "profiles", "shell",
+    )
     for submodule in submodules:
         module = import_module("." + submodule, __name__)
         module.register(parser)
@@ -305,29 +241,53 @@ def post_mortem(traceback):
     except ImportError:
         from pdb import post_mortem
 
+    message = "Entering post-mortem debugger. Type `help` for help."
+    redline = colorized("{autored}%s{/autored}") % "{0:=^{1}}"
+
+    print()
+    print(redline.format(" CRASH! ", len(message)))
+    print(message)
+    print(redline.format("", len(message)))
+    print()
+
     post_mortem(traceback)
 
 
 def main(argv=sys.argv):
-    parser = prepare_parser(argv)
-    argcomplete.autocomplete(parser, exclude=("-h", "--help"))
+    program, *arguments = argv
+    parser, options = None, None
 
-    options = None
     try:
-        options = parser.parse_args(argv[1:])
+        parser = prepare_parser(program)
+        argcomplete.autocomplete(parser, exclude=("-h", "--help"))
+        options = parser.parse_args(arguments)
         try:
             execute = options.execute
         except AttributeError:
-            parser.error("No arguments given.")
+            parser.error("Argument missing.")
         else:
             execute(options)
     except KeyboardInterrupt:
         raise SystemExit(1)
     except Exception as error:
-        if options is None or options.debug:
-            *_, exc_traceback = sys.exc_info()
-            post_mortem(exc_traceback)
-            raise
+        # This is unexpected. Why? Because the CLI code raises SystemExit or
+        # invokes something that raises SystemExit when it chooses to exit.
+        # SystemExit does not subclass Exception, and so it would not be
+        # handled here, hence this is not a deliberate exit.
+        if parser is None or options is None or options.debug:
+            # The user has either chosen to debug OR we crashed before/while
+            # parsing arguments. Either way, let's not be terse.
+            if sys.stdin.isatty() and sys.stdout.isatty():
+                # We're at a fully interactive terminal so let's post-mortem.
+                *_, exc_traceback = sys.exc_info()
+                post_mortem(exc_traceback)
+                # Exit non-zero, but quietly; dumping the traceback again on
+                # the way out is confusing after doing a post-mortem.
+                raise SystemExit(1)
+            else:
+                # Re-raise so the traceback is dumped and we exit non-zero.
+                raise
         else:
-            # Note: this will call sys.exit() when finished.
+            # Display a terse error message. Note that parser.error() will
+            # raise SystemExit(>0) after printing its message.
             parser.error("%s" % error)
