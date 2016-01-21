@@ -280,6 +280,27 @@ class TestObject(TestCase):
         self.assertThat(repr(example), Equals(
             "<Example alice=%(alice)r bob=%(bob)r>" % example._data))
 
+    def test__string_representation_can_be_limited_to_selected_fields(self):
+
+        class Example(Object):
+            alice = ObjectField("alice")
+            bob = ObjectField("bob")
+
+        example = Example({
+            "alice": make_name_without_spaces("alice"),
+            "bob": make_name_without_spaces("bob"),
+        })
+
+        # A string repr can be prepared using only the "alice" field.
+        self.assertThat(
+            example.__repr__(fields={"alice"}), Equals(
+                "<Example alice=%(alice)r>" % example._data))
+
+        # Fields are always displayed in a stable order though.
+        self.assertThat(
+            example.__repr__(fields=["bob", "alice"]), Equals(
+                "<Example alice=%(alice)r bob=%(bob)r>" % example._data))
+
 
 class TestObjectSet(TestCase):
     """Tests for `ObjectSet`."""
