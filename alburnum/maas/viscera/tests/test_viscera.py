@@ -246,21 +246,6 @@ class TestObjectBasics(TestCase):
     def test__stringification_returns_qualified_class_name(self):
         self.assertThat(str(ObjectBasics()), Equals(ObjectBasics.__qualname__))
 
-    def test__string_representation_includes_ObjectField_values(self):
-
-        class Example(ObjectBasics):
-            alice = ObjectField("alice")
-            bob = ObjectField("bob")
-
-        example = Example()
-        example._data = {
-            "alice": make_name_without_spaces("alice"),
-            "bob": make_name_without_spaces("bob"),
-        }
-
-        self.assertThat(repr(example), Equals(
-            "<Example alice=%(alice)r bob=%(bob)r>" % example._data))
-
 
 class TestObject(TestCase):
     """Tests for `Object`."""
@@ -280,6 +265,20 @@ class TestObject(TestCase):
     def test__init_insists_on_mapping(self):
         error = self.assertRaises(TypeError, Object, ["some", "items"])
         self.assertThat(str(error), Equals("data must be a mapping, not list"))
+
+    def test__string_representation_includes_field_values(self):
+
+        class Example(Object):
+            alice = ObjectField("alice")
+            bob = ObjectField("bob")
+
+        example = Example({
+            "alice": make_name_without_spaces("alice"),
+            "bob": make_name_without_spaces("bob"),
+        })
+
+        self.assertThat(repr(example), Equals(
+            "<Example alice=%(alice)r bob=%(bob)r>" % example._data))
 
 
 class TestObjectSet(TestCase):
@@ -336,6 +335,24 @@ class TestObjectSet(TestCase):
         items = [make_name_without_spaces(str(index)) for index in range(5)]
         objectset = ObjectSet(items)
         self.assertThat(list(objectset), Equals(items))
+
+    def test__string_representation_includes_length_and_items(self):
+
+        class Example(Object):
+            alice = ObjectField("alice")
+
+        class ExampleSet(ObjectSet):
+            pass
+
+        example = ExampleSet([
+            Example({"alice": "wonderland"}),
+            Example({"alice": "cooper"}),
+        ])
+
+        self.assertThat(repr(example), Equals(
+            "<ExampleSet length=2 items=["
+            "<Example alice='wonderland'>, <Example alice='cooper'>"
+            "]>"))
 
 
 class TestObjectField(TestCase):

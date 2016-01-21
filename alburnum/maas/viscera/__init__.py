@@ -154,18 +154,6 @@ class ObjectBasics:
     def __str__(self):
         return self.__class__.__qualname__
 
-    def __repr__(self):
-        fields = sorted(
-            name for name, value in vars_class(type(self)).items()
-            if isinstance(value, ObjectField))
-        values = (getattr(self, name) for name in fields)
-        pairs = starmap("{0}={1!r}".format, zip(fields, values))
-        desc = " ".join(pairs)
-        if len(desc) == 0:
-            return "<%s>" % (self.__class__.__name__, )
-        else:
-            return "<%s %s>" % (self.__class__.__name__, desc)
-
 
 class Object(ObjectBasics, metaclass=ObjectType):
     """An object in a MAAS installation."""
@@ -180,6 +168,18 @@ class Object(ObjectBasics, metaclass=ObjectType):
             raise TypeError(
                 "data must be a mapping, not %s"
                 % type(data).__name__)
+
+    def __repr__(self):
+        fields = sorted(
+            name for name, value in vars_class(type(self)).items()
+            if isinstance(value, ObjectField))
+        values = (getattr(self, name) for name in fields)
+        pairs = starmap("{0}={1!r}".format, zip(fields, values))
+        desc = " ".join(pairs)
+        if len(desc) == 0:
+            return "<%s>" % (self.__class__.__name__, )
+        else:
+            return "<%s %s>" % (self.__class__.__name__, desc)
 
 
 class ObjectSet(ObjectBasics, metaclass=ObjectType):
@@ -212,6 +212,10 @@ class ObjectSet(ObjectBasics, metaclass=ObjectType):
 
     def __iter__(self):
         return iter(self._items)
+
+    def __repr__(self):
+        return "<%s length=%d items=%r>" % (
+            self.__class__.__name__, len(self._items), self._items)
 
 
 class ObjectField:
