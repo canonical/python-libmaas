@@ -194,3 +194,7 @@ class Node(Object, metaclass=NodeType):
             params["comment"] = comment
         data = self._handler.release(**params)
         return type(self)(data)
+
+    def __repr__(self):
+        return super(Node, self).__repr__(
+            fields={"system_id", "hostname"})
