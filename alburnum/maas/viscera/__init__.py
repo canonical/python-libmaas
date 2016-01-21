@@ -562,6 +562,8 @@ class Origin(OriginBase):
         super(Origin, self).__init__(
             session, objects=find_objects({
                 import_module(name, __name__).__name__
-                for name in {".", ".files", ".nodes", ".tags", ".users"}
+                for name in {
+                    ".", ".files", ".nodes", ".tags", ".users", ".version",
+                }
             }),
         )
