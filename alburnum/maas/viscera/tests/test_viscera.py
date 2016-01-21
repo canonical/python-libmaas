@@ -15,6 +15,7 @@ from testtools.matchers import (
     Equals,
     HasLength,
     Is,
+    IsInstance,
     MatchesStructure,
     Not,
 )
@@ -346,16 +347,35 @@ class TestObjectSet(TestCase):
         objectset = ObjectSet(items)
         self.assertThat(objectset, HasLength(len(items)))
 
-    def test__items_can_be_indexed(self):
+    def test__can_be_indexed(self):
         items = [make_name_without_spaces(str(index)) for index in range(5)]
         objectset = ObjectSet(items)
         for index, item in enumerate(items):
             self.assertThat(objectset[index], Equals(item))
 
+    def test__can_be_sliced(self):
+        items = [make_name_without_spaces(str(index)) for index in range(5)]
+        objectset1 = ObjectSet(items)
+        objectset2 = objectset1[1:3]
+        self.assertThat(objectset2, IsInstance(ObjectSet))
+        self.assertThat(list(objectset2), Equals(items[1:3]))
+
     def test__iteration_yield_items(self):
         items = [make_name_without_spaces(str(index)) for index in range(5)]
         objectset = ObjectSet(items)
         self.assertThat(list(objectset), Equals(items))
+
+    def test__reversed_yields_items_in_reverse(self):
+        items = [make_name_without_spaces(str(index)) for index in range(5)]
+        objectset = ObjectSet(items)
+        self.assertThat(list(reversed(objectset)), Equals(items[::-1]))
+
+    def test__membership_can_be_tested(self):
+        item1 = make_name_without_spaces("item")
+        item2 = make_name_without_spaces("item")
+        objectset = ObjectSet([item1])
+        self.assertThat(objectset, Contains(item1))
+        self.assertThat(objectset, Not(Contains(item2)))
 
     def test__string_representation_includes_length_and_items(self):
 

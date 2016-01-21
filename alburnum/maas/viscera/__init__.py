@@ -24,6 +24,7 @@ from collections import (
     Mapping,
     Sequence,
 )
+from copy import copy
 from functools import wraps
 from importlib import import_module
 from itertools import (
@@ -208,13 +209,42 @@ class ObjectSet(ObjectBasics, metaclass=ObjectType):
                 % type(items).__name__)
 
     def __len__(self):
+        """Return the count of items contained herein."""
         return len(self._items)
 
     def __getitem__(self, spec):
-        return self._items[spec]
+        """Get a contained item or slice of contained items.
+
+        Fetching a slice returns a new instance of this class containing the
+        subset of items defined by the slice.
+        """
+        if isinstance(spec, slice):
+            self = copy(self)
+            self._items = self._items[spec]
+            return self
+        else:
+            return self._items[spec]
 
     def __iter__(self):
+        """Return an iterator for the contained items."""
         return iter(self._items)
+
+    def __reversed__(self):
+        """Efficiently provide the contained items in reversed order.
+
+        This is more efficient than relying on the default behaviour of
+        ``reversed``, which is to use ``__len__`` and ``__getitem__``.
+        """
+        return reversed(self._items)
+
+    def __contains__(self, item):
+        """Efficiently test if a given item is among the contained items.
+
+        This is more efficient than relying on the default behaviour of
+        ``in``, which is to use ``__iter__`` then the old sequence iteration
+        protocol using ``__len__`` and ``__getitem__``.
+        """
+        return item in self._items
 
     def __repr__(self):
         return "<%s length=%d items=%r>" % (
