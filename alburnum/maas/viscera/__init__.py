@@ -169,10 +169,13 @@ class Object(ObjectBasics, metaclass=ObjectType):
                 "data must be a mapping, not %s"
                 % type(data).__name__)
 
-    def __repr__(self):
-        fields = sorted(
-            name for name, value in vars_class(type(self)).items()
-            if isinstance(value, ObjectField))
+    def __repr__(self, *, fields=None):
+        if fields is None:
+            fields = sorted(
+                name for name, value in vars_class(type(self)).items()
+                if isinstance(value, ObjectField))
+        else:
+            fields = sorted(fields)
         values = (getattr(self, name) for name in fields)
         pairs = starmap("{0}={1!r}".format, zip(fields, values))
         desc = " ".join(pairs)
