@@ -3,6 +3,8 @@
 from argparse import ArgumentParser
 from http import HTTPStatus
 from pprint import pprint
+import subprocess
+import sys
 
 from alburnum.maas import (
     bones,
@@ -12,7 +14,7 @@ from alburnum.maas import (
 
 parser = ArgumentParser()
 parser.add_argument(
-    "profile", nargs="?", default="madagascar", help=(
+    "profile", nargs="?", default=None, help=(
         "Name of MAAS CLI profile to use. This should be the name of a "
         "profile created when using `maas login` at the command-line. "
         "(default: %(default)s)"
@@ -44,6 +46,20 @@ if __name__ == "__main__":
     title("Working with `bones`, the low-level API.")
 
     # Load a MAAS CLI profile.
+    if options.profile is None:
+        result = subprocess.run(
+            "/usr/bin/maas list | /usr/bin/awk '{ print $1 }'", shell=True,
+            check=True, stdout=subprocess.PIPE)
+        profiles = str(result.stdout, "utf-8").strip().split('\n')
+        if len(profiles) == 0:
+            sys.stderr.write(
+                "No profiles found. Use the 'maas login' command to log in.\n")
+        else:
+            sys.stderr.write("Must specify one of the following profiles:\n")
+            for profile in profiles:
+                sys.stderr.write("    %s\n" % profile)
+            sys.stderr.write("See 'maas list' for more information.\n")
+        sys.exit(1)
     session = bones.SessionAPI.fromProfileName(options.profile)
 
     # Create a tag if it doesn't exist.
