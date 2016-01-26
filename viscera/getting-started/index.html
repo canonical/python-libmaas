@@ -3,7 +3,10 @@
 <!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
 <head>
   <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
   
   <title>Getting started - MAAS Client Library & CLI</title>
   
@@ -21,6 +24,8 @@
   <script>
     // Current page data
     var mkdocs_page_name = "Getting started";
+    var mkdocs_page_input_path = "viscera/getting-started.md";
+    var mkdocs_page_url = "/viscera/getting-started/index.html";
   </script>
   
   <script src="../../js/jquery-2.1.1.min.js"></script>
@@ -92,6 +97,10 @@
                 
                     <li><a class="toctree-l4" href="#nodes">Nodes</a></li>
                 
+                    <li><a class="toctree-l4" href="#files-users-tags">Files, Users, Tags</a></li>
+                
+                    <li><a class="toctree-l4" href="#events">Events</a></li>
+                
             
             </ul>
         
@@ -151,68 +160,143 @@
                 <h1 id="getting-started-with-viscera">Getting started with <em>viscera</em></h1>
 <h2 id="installation">Installation</h2>
 <p>Either work from a branch:</p>
-<div class="codehilite"><pre><span class="gp">$</span> git clone https://github.com/alburnum/alburnum-maas-client.git
-<span class="gp">$</span> <span class="nb">cd </span>alburnum-maas-client
-<span class="gp">$</span> make
-</pre></div>
+<pre class="codehilite"><code class="language-console">$ git clone https://github.com/alburnum/alburnum-maas-client.git
+$ cd alburnum-maas-client
+$ make</code></pre>
 
 
 <p>Or install from <a href="https://pypi.python.org/">PyPI</a>:</p>
-<div class="codehilite"><pre><span class="gp">$</span> virtualenv --python<span class="o">=</span>python3.5 maas
-<span class="gp">$</span> <span class="nb">cd </span>maas
-<span class="gp">$</span> bin/pip install alburnum-maas-client
-</pre></div>
+<pre class="codehilite"><code class="language-console">$ virtualenv --python=python3.5 maas
+$ cd maas
+$ bin/pip install alburnum-maas-client</code></pre>
 
 
 <h2 id="logging-in">Logging-in</h2>
 <p>Log-in using the command-line tool:</p>
-<div class="codehilite"><pre><span class="gp">$</span> bin/maas login foo http://example.com:5240/MAAS/ admin
-<span class="go">Password: …</span>
-</pre></div>
+<pre class="codehilite"><code class="language-console">$ bin/maas login foo http://example.com:5240/MAAS/ admin
+Password: …</code></pre>
 
 
 <p><strong>TODO</strong>: Log-in programmatically.</p>
-<p>Then start an interactive Python shell (e.g. <code>bin/python</code>):</p>
-<div class="codehilite"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">alburnum.maas</span> <span class="kn">import</span> <span class="n">bones</span><span class="p">,</span> <span class="n">viscera</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">session</span> <span class="o">=</span> <span class="n">bones</span><span class="o">.</span><span class="n">SessionAPI</span><span class="o">.</span><span class="n">fromProfileName</span><span class="p">(</span><span class="s">&quot;foo&quot;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">origin</span> <span class="o">=</span> <span class="n">viscera</span><span class="o">.</span><span class="n">Origin</span><span class="p">(</span><span class="n">session</span><span class="p">)</span>
-</pre></div>
+<p>Then start an interactive Python shell, like <code>bin/python</code>:</p>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; from alburnum.maas import bones, viscera
+&gt;&gt;&gt; session = bones.SessionAPI.fromProfileName(&quot;foo&quot;)
+&gt;&gt;&gt; origin = viscera.Origin(session)</code></pre>
 
 
 <p>The <code>origin</code> instance is the root object of the API.</p>
+<p>But there&rsquo;s no need! There&rsquo;s a command built in to do it for you:</p>
+<pre class="codehilite"><code class="language-console">$ bin/maas shell
+Welcome to the MAAS shell.
+
+Predefined variables:
+
+    origin: A `viscera` origin, configured for foo.
+   session: A `bones` session, configured for foo.
+
+&gt;&gt;&gt;</code></pre>
+
+
 <h2 id="logging-out">Logging out</h2>
 <p>Log-out using the command-line tool:</p>
-<div class="codehilite"><pre><span class="gp">$</span> bin/maas <span class="nb">logout </span>foo
-</pre></div>
+<pre class="codehilite"><code class="language-console">$ bin/maas logout foo</code></pre>
 
 
 <p><strong>TODO</strong>: Log-out programmatically.</p>
 <h2 id="nodes">Nodes</h2>
 <p>Listing nodes:</p>
-<div class="codehilite"><pre><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">origin</span><span class="o">.</span><span class="n">Nodes</span><span class="p">:</span>
-<span class="gp">... </span>    <span class="k">print</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
-</pre></div>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; for node in origin.Nodes:
+...     print(repr(node))
+&lt;Node hostname='namibia.maas' system_id='433333'&gt;
+&lt;Node hostname='botswana.maas' system_id='433334'&gt;</code></pre>
 
 
 <p>Acquiring and starting nodes:</p>
-<div class="codehilite"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">help</span><span class="p">(</span><span class="n">origin</span><span class="o">.</span><span class="n">Nodes</span><span class="o">.</span><span class="n">acquire</span><span class="p">)</span>
-<span class="go">acquire(*, hostname:str=None, architecture:str=None, cpus:int=None,</span>
-<span class="go">        memory:float=None, tags:typing.Sequence=None) method of</span>
-<span class="go">            alburnum.maas.viscera.NodesType instance</span>
-<span class="go">    :param hostname: The hostname to match.</span>
-<span class="go">    :param architecture: The architecture to match, e.g. &quot;amd64&quot;.</span>
-<span class="go">    :param cpus: The minimum number of CPUs to match.</span>
-<span class="go">    :param memory: The minimum amount of RAM to match.</span>
-<span class="go">    :param tags: The tags to match, as a sequence. Each tag may be</span>
-<span class="go">        prefixed with a hyphen to denote that the given tag should NOT be</span>
-<span class="go">        associated with a matched node.</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Nodes</span><span class="o">.</span><span class="n">acquire</span><span class="p">(</span><span class="n">tags</span><span class="o">=</span><span class="p">(</span><span class="s">&quot;foo&quot;</span><span class="p">,</span> <span class="s">&quot;-bar&quot;</span><span class="p">))</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">substatus_name</span><span class="p">)</span>
-<span class="go">Acquired</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">substatus_name</span><span class="p">)</span>
-<span class="go">Deploying</span>
-</pre></div>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; help(origin.Nodes.acquire)
+acquire(*, hostname:str=None, architecture:str=None, cpus:int=None,
+        memory:float=None, tags:typing.Sequence=None) method of
+            alburnum.maas.viscera.NodesType instance
+    :param hostname: The hostname to match.
+    :param architecture: The architecture to match, e.g. &quot;amd64&quot;.
+    :param cpus: The minimum number of CPUs to match.
+    :param memory: The minimum amount of RAM to match.
+    :param tags: The tags to match, as a sequence. Each tag may be
+        prefixed with a hyphen to denote that the given tag should NOT be
+        associated with a matched node.
+&gt;&gt;&gt; node = origin.Nodes.acquire(tags=(&quot;foo&quot;, &quot;-bar&quot;))
+&gt;&gt;&gt; print(node.substatus_name)
+Acquired
+&gt;&gt;&gt; node.start()
+&gt;&gt;&gt; print(node.substatus_name)
+Deploying</code></pre>
+
+
+<p>Individual nodes can be read from the Web API.</p>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; node = origin.Node.read(system_id=&quot;433333&quot;)</code></pre>
+
+
+<p>Nodes have many useful attributes:</p>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; node.architecture
+'amd64/generic'
+&gt;&gt;&gt; node.cpus
+4</code></pre>
+
+
+<p>Trying using tab-completion — the objects have been designed to be
+particularly friendly for interactive use — or <code>dir(node)</code> to find out
+what other fields and methods are available.</p>
+<p><strong>TODO</strong>: Updating nodes.</p>
+<h2 id="files-users-tags">Files, Users, Tags</h2>
+<p>Similarly to nodes, these sets of objects can be fetched:</p>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; tags = origin.Tags.read()
+&gt;&gt;&gt; files = origin.Files.read()
+&gt;&gt;&gt; users = origin.Users.read()</code></pre>
+
+
+<p>When reading from collections, as above, the returned object is
+list-like:</p>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; len(tags)
+5
+&gt;&gt;&gt; tags[3]
+&lt;Tag comment=&quot;Foo's stuff&quot; definition='' kernel_opts='' name='foo'&gt;
+&gt;&gt;&gt; tags[3] in tags
+True
+&gt;&gt;&gt; not_foo = [tag for tag in tags if tag.name != 'foo']
+&gt;&gt;&gt; len(not_foo)
+4</code></pre>
+
+
+<p>However, it&rsquo;s read-only:</p>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; tags[0] = &quot;bob&quot;
+…
+TypeError: 'Tags' object does not support item assignment</code></pre>
+
+
+<h2 id="events">Events</h2>
+<p>Events are similar&hellip; but different. The only way to get events is by
+the <code>query</code> method:</p>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; events = origin.Events.query()</code></pre>
+
+
+<p>This accepts a plethora of optional arguments to narrow down the results:</p>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; events = origin.Events.query(hostnames={&quot;foo&quot;, &quot;bar&quot;})
+&gt;&gt;&gt; events = origin.Events.query(domains={&quot;example.com&quot;, &quot;maas.io&quot;})
+&gt;&gt;&gt; events = origin.Events.query(zones=[&quot;red&quot;, &quot;blue&quot;])
+&gt;&gt;&gt; events = origin.Events.query(macs=(&quot;12:34:56:78:90:ab&quot;, ))
+&gt;&gt;&gt; events = origin.Events.query(system_ids=…)
+&gt;&gt;&gt; events = origin.Events.query(agent_name=…)
+&gt;&gt;&gt; events = origin.Events.query(level=…)
+&gt;&gt;&gt; events = origin.Events.query(after=…, limit=…)</code></pre>
+
+
+<p>These arguments can be combined to narrow the results even further.</p>
+<p>The <code>level</code> argument is a little special. It&rsquo;s a choice from a
+predefined set. For convenience, those choices are defined in the
+<code>Level</code> enum:</p>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; events = origin.Events.query(level=origin.Events.Level.ERROR)</code></pre>
+
+
+<p>but you can also pass in the string &ldquo;ERROR&rdquo; or the number 40.</p>
               
             </div>
           </div>
@@ -220,7 +304,7 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../index.html" class="btn btn-neutral float-right" title="Home"/>Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../index.html" class="btn btn-neutral float-right" title="Home">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
         <a href="../../bones/index.html" class="btn btn-neutral" title="Home"><span class="icon icon-circle-arrow-left"></span> Previous</a>
@@ -248,7 +332,7 @@
 <div class="rst-versions" role="note" style="cursor: pointer">
     <span class="rst-current-version" data-toggle="rst-current-version">
       
-          <a class="icon icon-github" style="float: left; color: #fcfcfc"> GitHub</a>
+          <a href="https://github.com/alburnum/alburnum-maas-client" class="icon icon-github" style="float: left; color: #fcfcfc"> GitHub</a>
       
       
         <span><a href="../../bones/index.html" style="color: #fcfcfc;">&laquo; Previous</a></span>
