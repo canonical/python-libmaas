@@ -10,11 +10,9 @@ GPLv3, the same as MAAS itself.
 [![Build Status](https://travis-ci.org/alburnum/alburnum-maas-client.svg?branch=master)](https://travis-ci.org/alburnum/alburnum-maas-client)
 [![codecov.io](https://codecov.io/github/alburnum/alburnum-maas-client/coverage.svg?branch=master)](https://codecov.io/github/alburnum/alburnum-maas-client?branch=master)
 
-Some of the code in here has come from
-[MAAS itself](https://code.launchpad.net/~maas-committers/maas/trunk)
-upon which Canonical Ltd have the copyright. Alburnum Ltd licenses its
-parts under the AGPLv3, and MAAS is also under the AGPLv3, so everything
-should be good.
+Some of the code in here has come from MAAS, upon which Canonical Ltd
+have the copyright. Alburnum Ltd licenses its parts under the AGPLv3,
+and MAAS is also under the AGPLv3, so everything should be good.
 
 
 ## Installation

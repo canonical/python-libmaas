@@ -11,11 +11,9 @@ as MAAS itself.
 
 |Build Status| |codecov.io|
 
-Some of the code in here has come from `MAAS
-itself <https://code.launchpad.net/~maas-committers/maas/trunk>`__ upon
-which Canonical Ltd have the copyright. Alburnum Ltd licenses its parts
-under the AGPLv3, and MAAS is also under the AGPLv3, so everything
-should be good.
+Some of the code in here has come from MAAS, upon which Canonical Ltd
+have the copyright. Alburnum Ltd licenses its parts under the AGPLv3,
+and MAAS is also under the AGPLv3, so everything should be good.
 
 Installation
 ------------
