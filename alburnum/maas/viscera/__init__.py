@@ -39,6 +39,8 @@ from alburnum.maas.utils import (
     vars_class,
 )
 
+from .. import bones
+
 
 undefined = object()
 
@@ -577,7 +579,48 @@ def find_objects(modules):
     }
 
 
-class Origin(OriginBase):
+class OriginType(type):
+    """Metaclass for `Origin`."""
+
+    def fromURL(cls, url, *, credentials=None, insecure=False):
+        """Return an `Origin` for a given MAAS instance."""
+        session = bones.SessionAPI.fromURL(
+            url, credentials=credentials, insecure=insecure)
+        return cls(session)
+
+    def fromProfile(cls, profile):
+        """Return an `Origin` from a given configuration profile.
+
+        :see: `ProfileConfig`.
+        """
+        session = bones.SessionAPI.fromProfile(profile)
+        return cls(session)
+
+    def fromProfileName(cls, name):
+        """Return an `Origin` from a given configuration profile name.
+
+        :see: `ProfileConfig`.
+        """
+        session = bones.SessionAPI.fromProfileName(name)
+        return cls(session)
+
+    def login(cls, url, *, username=None, password=None, insecure=False):
+        """Make an `Origin` by logging-in with a username and password.
+
+        :return: A tuple of ``profile`` and ``origin``, where the former is an
+            unsaved `Profile` instance, and the latter is an `Origin` instance
+            made using the profile.
+        """
+        profile, session = bones.SessionAPI.login(
+            url=url, username=username, password=password,
+            insecure=insecure)
+        return profile, cls(session)
+
+    def __dir__(cls):
+        return dir_class(cls)
+
+
+class Origin(OriginBase, metaclass=OriginType):
     """Represents a remote MAAS installation.
 
     Uses specialised objects defined in its originating module and specific
