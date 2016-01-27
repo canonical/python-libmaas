@@ -129,12 +129,14 @@ class Command(metaclass=ABCMeta):
         """Register this command as a sub-parser of `parser`.
 
         :type parser: An instance of `ArgumentParser`.
+        :return: The sub-parser created.
         """
         help_title, help_body = utils.parse_docstring(cls)
         command_parser = parser.subparsers.add_parser(
             cls.name() if name is None else name, help=help_title,
             description=help_title, epilog=help_body)
         command_parser.set_defaults(execute=cls(command_parser))
+        return command_parser
 
 
 class TableCommand(Command):

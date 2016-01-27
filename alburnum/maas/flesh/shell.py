@@ -27,19 +27,34 @@ class cmd_shell(Command):
     then executed with the same namespace as the interactive shell.
     """
 
+    profile_name_choices = PROFILE_NAMES
+    profile_name_default = (
+        None if PROFILE_DEFAULT is None else PROFILE_DEFAULT.name)
+
     def __init__(self, parser):
         super(cmd_shell, self).__init__(parser)
-        parser.add_argument(
-            "--profile-name", metavar="NAME", choices=PROFILE_NAMES,
-            required=False, help=(
-                "The name of the remote MAAS instance to use. Use "
-                "`list-profiles` to obtain a list of valid profiles." +
-                ("" if PROFILE_DEFAULT is None else " [default: %(default)s]")
-            ))
-        if PROFILE_DEFAULT is None:
-            parser.set_defaults(profile_name=None)
+        if len(self.profile_name_choices) == 0:
+            # There are no profiles, but we still offer the --profile-name
+            # option so that users get a useful "profile not found" error
+            # message instead of something more cryptic. Note that the help
+            # string differs too.
+            parser.add_argument(
+                "--profile-name", metavar="NAME", required=False,
+                default=None, help=(
+                    "The name of the remote MAAS instance to use. "
+                    "No profiles are currently defined; use the `profiles` "
+                    "command to create one."
+                ))
         else:
-            parser.set_defaults(profile_name=PROFILE_DEFAULT.name)
+            parser.add_argument(
+                "--profile-name", metavar="NAME", required=False,
+                choices=self.profile_name_choices,
+                default=self.profile_name_default, help=(
+                    "The name of the remote MAAS instance to use." + (
+                        "" if self.profile_name_default is None
+                        else " [default: %(default)s]"
+                    )
+                ))
 
     def __call__(self, options):
         """Execute this command."""
