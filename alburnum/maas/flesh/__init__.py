@@ -35,7 +35,7 @@ from .. import (
 )
 from ..utils.profiles import (
     Profile,
-    ProfileManager,
+    ProfileStore,
 )
 
 
@@ -53,7 +53,7 @@ def get_profile_names_and_default() -> Tuple[Sequence[str], Optional[Profile]]:
 
     The list of names is sorted.
     """
-    with ProfileManager.open() as config:
+    with ProfileStore.open() as config:
         return sorted(config), config.default
 
 

@@ -62,7 +62,7 @@ class SessionAPI:
     def fromProfile(cls, profile):
         """Return a `SessionAPI` from a given configuration profile.
 
-        :see: `ProfileConfig`.
+        :see: `ProfileStore`.
         """
         return cls(profile.description, profile.credentials)
 
@@ -70,9 +70,9 @@ class SessionAPI:
     def fromProfileName(cls, name):
         """Return a `SessionAPI` from a given configuration profile name.
 
-        :see: `ProfileConfig`.
+        :see: `ProfileStore`.
         """
-        with profiles.ProfileManager.open() as config:
+        with profiles.ProfileStore.open() as config:
             return cls.fromProfile(config.load(name))
 
     @classmethod

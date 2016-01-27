@@ -106,7 +106,7 @@ class cmd_login(cmd_login_base):
         profile = profile.replace(name=options.profile_name)
 
         # Save a new profile.
-        with profiles.ProfileManager.open() as config:
+        with profiles.ProfileStore.open() as config:
             config.save(profile)
             config.default = profile
 
@@ -145,7 +145,7 @@ class cmd_add(cmd_login_base):
         profile = profiles.Profile(
             options.profile_name, options.url, credentials=credentials,
             description=session.description)
-        with profiles.ProfileManager.open() as config:
+        with profiles.ProfileStore.open() as config:
             config.save(profile)
             config.default = profile.name
 
@@ -173,7 +173,7 @@ class cmd_remove(Command):
             parser.set_defaults(profile_name=PROFILE_DEFAULT.name)
 
     def __call__(self, options):
-        with profiles.ProfileManager.open() as config:
+        with profiles.ProfileStore.open() as config:
             config.delete(options.profile_name)
 
 
@@ -191,7 +191,7 @@ class cmd_switch(Command):
         )
 
     def __call__(self, options):
-        with profiles.ProfileManager.open() as config:
+        with profiles.ProfileStore.open() as config:
             profile = config.load(options.profile_name)
             config.default = profile
 
@@ -201,7 +201,7 @@ class cmd_list(TableCommand):
 
     def __call__(self, options):
         table = tables.ProfilesTable()
-        with profiles.ProfileManager.open() as config:
+        with profiles.ProfileStore.open() as config:
             print(table.render(options.output_format, config))
 
 
@@ -214,7 +214,7 @@ class cmd_refresh(Command):
     """
 
     def __call__(self, options):
-        with profiles.ProfileManager.open() as config:
+        with profiles.ProfileStore.open() as config:
             for profile_name in config:
                 profile = config.load(profile_name)
                 session = bones.SessionAPI.fromProfile(profile)

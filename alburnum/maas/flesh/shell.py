@@ -65,7 +65,7 @@ class cmd_shell(Command):
         namespace = {
             "Origin": viscera.Origin,
             "Session": bones.SessionAPI,
-            "ProfileManager": profiles.ProfileManager,
+            "ProfileStore": profiles.ProfileStore,
         }
         # Descriptions of the namespace variables.
         descriptions = {
@@ -77,9 +77,9 @@ class cmd_shell(Command):
                 "The entry-point into the `bones` lower-level API. "
                 "Get started with `SessionAPI.login`."
             ),
-            "ProfileManager": (
-                "Use `ProfileManager.open()` as a context-manager to "
-                "work with your profile database."
+            "ProfileStore": (
+                "Use `ProfileStore.open()` as a context-manager to "
+                "work with your profile store."
             ),
         }
 

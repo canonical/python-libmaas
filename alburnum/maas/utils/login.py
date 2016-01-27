@@ -12,6 +12,7 @@ __all__ = [
     "UsernameWithoutPassword",
 ]
 
+from typing import Optional
 from urllib.parse import (
     ParseResult,
     urlparse,
@@ -23,7 +24,6 @@ from .auth import obtain_token
 from .creds import Credentials
 from .profiles import Profile
 from .typecheck import typed
-from typing import Optional
 
 
 class LoginError(Exception):
@@ -47,7 +47,7 @@ def login(url, *, username=None, password=None, insecure=False):
         profile = login(url, username="alice", password="wonderland")
         profile = profile.replace(name="mad-hatter")
 
-        with profiles.ProfileManager.open() as config:
+        with profiles.ProfileStore.open() as config:
             config.save(profile)
             # Optionally, set it as the default.
             config.default = profile.name

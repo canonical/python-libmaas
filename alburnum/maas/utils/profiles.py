@@ -2,7 +2,7 @@
 
 __all__ = [
     "Profile",
-    "ProfileManager",
+    "ProfileStore",
     "ProfileNotFound",
 ]
 
@@ -170,7 +170,7 @@ def schema_import(conn, dbpath):
         "DETACH DATABASE source")
 
 
-class ProfileManager:
+class ProfileStore:
     """Store profile configurations in an sqlite3 database."""
 
     def __init__(self, database):
@@ -265,12 +265,12 @@ class ProfileManager:
         # before opening it with sqlite.
         database = sqlite3.connect(dbpath)
         try:
-            manager = cls(database)
+            store = cls(database)
             if migrate:
                 schema_import(database, migrate_from)
-                yield manager
+                yield store
             else:
-                yield manager
+                yield store
         except:
             raise
         else:

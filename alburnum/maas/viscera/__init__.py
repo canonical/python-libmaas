@@ -591,7 +591,7 @@ class OriginType(type):
     def fromProfile(cls, profile):
         """Return an `Origin` from a given configuration profile.
 
-        :see: `ProfileConfig`.
+        :see: `ProfileStore`.
         """
         session = bones.SessionAPI.fromProfile(profile)
         return cls(session)
@@ -599,7 +599,7 @@ class OriginType(type):
     def fromProfileName(cls, name):
         """Return an `Origin` from a given configuration profile name.
 
-        :see: `ProfileConfig`.
+        :see: `ProfileStore`.
         """
         session = bones.SessionAPI.fromProfileName(name)
         return cls(session)
