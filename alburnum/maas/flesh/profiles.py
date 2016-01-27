@@ -6,12 +6,10 @@ __all__ = [
 
 import sys
 from textwrap import fill
-from urllib.parse import urlparse
 
 from . import (
     colorized,
     Command,
-    CommandError,
     PROFILE_DEFAULT,
     PROFILE_NAMES,
     TableCommand,
@@ -27,10 +25,6 @@ from ..utils import (
     login,
     profiles,
 )
-
-
-def check_valid_apikey(_1, _2, _3):  # TODO
-    return True
 
 
 class cmd_login_base(Command):
@@ -53,18 +47,6 @@ class cmd_login_base(Command):
 
     @staticmethod
     def save_profile(options, credentials: creds.Credentials):
-        # Check for bogus credentials. Do this early so that the user is not
-        # surprised when next invoking the MAAS CLI.
-        if credentials is not None:
-            try:
-                valid_apikey = check_valid_apikey(
-                    options.url, credentials, options.insecure)
-            except bones.CallError as e:
-                raise SystemExit("%s" % e)
-            else:
-                if not valid_apikey:
-                    raise SystemExit("The MAAS server rejected your API key.")
-
         # Establish a session with the remote API.
         session = bones.SessionAPI.fromURL(
             options.url, credentials=credentials, insecure=options.insecure)
