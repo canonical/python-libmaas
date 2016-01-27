@@ -444,6 +444,11 @@ class OriginBase:
         self.__objects = {} if objects is None else objects
         self.__populate()
 
+    @property
+    def session(self):
+        """The underlying `bones` session."""
+        return self.__session
+
     def __populate(self):
         # Some objects will not have handlers in the underlying session, but
         # we want to bind them anyway, hence we iterate through all names.
