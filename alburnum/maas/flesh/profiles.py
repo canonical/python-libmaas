@@ -21,7 +21,6 @@ from .. import (
 )
 from ..utils import (
     auth,
-    creds,
     login,
     profiles,
 )
@@ -44,22 +43,6 @@ class cmd_login_base(Command):
         parser.add_argument(
             '-k', '--insecure', action='store_true', help=(
                 "Disable SSL certificate check"), default=False)
-
-    @staticmethod
-    def save_profile(options, credentials: creds.Credentials):
-        # Establish a session with the remote API.
-        session = bones.SessionAPI.fromURL(
-            options.url, credentials=credentials, insecure=options.insecure)
-
-        # Make a new profile and save it as the default.
-        profile = profiles.Profile(
-            options.profile_name, options.url, credentials=credentials,
-            description=session.description)
-        with profiles.ProfileManager.open() as config:
-            config.save(profile)
-            config.default = profile.name
-
-        return profile
 
     @staticmethod
     def print_whats_next(profile):
@@ -155,8 +138,17 @@ class cmd_add(cmd_login_base):
         # Try and obtain credentials interactively if they're not given, or
         # read them from stdin if they're specified as "-".
         credentials = auth.obtain_credentials(options.credentials)
-        # Save a new profile, and print something useful.
-        profile = self.save_profile(options, credentials)
+        # Establish a session with the remote API.
+        session = bones.SessionAPI.fromURL(
+            options.url, credentials=credentials, insecure=options.insecure)
+        # Make a new profile and save it as the default.
+        profile = profiles.Profile(
+            options.profile_name, options.url, credentials=credentials,
+            description=session.description)
+        with profiles.ProfileManager.open() as config:
+            config.save(profile)
+            config.default = profile.name
+
         self.print_whats_next(profile)
 
 
