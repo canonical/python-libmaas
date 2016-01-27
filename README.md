@@ -2,71 +2,42 @@
 
 Python client API library made especially for [MAAS][1].
 
-This was created by a core MAAS developer (Gavin Panella) so ought to
-just about work. It was written in his own time, and it's licensed under
-the GNU Affero GPLv3 too, the same as MAAS itself.
+This was begun by a core MAAS developer (Gavin Panella, as
+[Alburnum Ltd](http://alburnum.io/)) on his own time, but is now
+maintained by the core MAAS team. It is licensed under the GNU Affero
+GPLv3, the same as MAAS itself.
 
 [![Build Status](https://travis-ci.org/alburnum/alburnum-maas-client.svg?branch=master)](https://travis-ci.org/alburnum/alburnum-maas-client)
 [![codecov.io](https://codecov.io/github/alburnum/alburnum-maas-client/coverage.svg?branch=master)](https://codecov.io/github/alburnum/alburnum-maas-client?branch=master)
 
-This package was begun by Alburnum Ltd, and some of it has come from
+Some of the code in here has come from
 [MAAS itself](https://code.launchpad.net/~maas-committers/maas/trunk)
-upon which Canonical Ltd have the copyright. However, Alburnum Ltd
-licenses its parts under the AGPLv3, and MAAS is also under the AGPLv3,
-so everything should be good.
+upon which Canonical Ltd have the copyright. Alburnum Ltd licenses its
+parts under the AGPLv3, and MAAS is also under the AGPLv3, so everything
+should be good.
 
 
-## Dependencies
+## Installation
 
-You'll need the `maascli` package. It's not on PyPI unfortunately. On
-Ubuntu, install the `maas-cli` system package:
+All the dependencies are declared in `setup.py` so this can be installed
+with [pip](https://pip.pypa.io/en/stable/). Python 3.5 is required.
 
-    $ sudo apt-get install maas-cli
+When working from trunk it can be helpful to use `virtualenv`:
 
-All the other dependencies are declared already in `setup.py`.
+    $ virtualenv amc --python=python3.5 && source amc/bin/activate
+    $ pip install git+https://github.com/alburnum/alburnum-maas-client.git
+    $ maas --help
+
+Releases are periodically made to [PyPI](https://pypi.python.org/) but,
+at least for now, it makes more sense to work directly from trunk.
 
 
-## Example code
+## Documentation
 
-First you need to create a *profile* with the `maas` command-line tool.
-There is [documentation for that][2] on the MAAS website.
-
-Here's a snippet that creates a tag and associates it with every node in
-the MAAS:
-
-```python
-import httplib
-from pprint import pprint
-
-from alburnum.maas import bones
-
-# Load a MAAS CLI profile. The name below (here "madagascar") should be the
-# name of a profile created when using `maas login` at the command-line.
-session = bones.SessionAPI.fromProfileName(options.profile)
-
-# Create a tag if it doesn't exist.
-tag_name = "foo"
-try:
-    tag = session.Tag.read(name=tag_name)
-except bones.CallError as error:
-    if error.status == HTTPStatus.NOT_FOUND:
-        tag = session.Tags.new(
-            name=tag_name, comment="%s's Stuff" % tag_name.capitalize())
-    else:
-        raise
-
-# List all the MAAS's tags.
-print(" Tags.list() ".center(50, "="))
-pprint(session.Tags.list())
-
-# Associate the tag with all nodes.
-print(" Tag.update_nodes() ".center(50, "="))
-pprint(session.Tag.update_nodes(
-    name=tag["name"], add=[
-        node["system_id"] for node in session.Nodes.list()
-    ]))
-```
+Documentation can be generated with `make doc` which publishes into the
+`site` directory. Recent documentation is also published to the
+[MAAS Client Library & CLI documentation][2] site.
 
 
 [1]: https://maas.ubuntu.com/
-[2]: https://maas.ubuntu.com/docs1.8/maascli.html#logging-in
+[2]: http://alburnum.github.io/alburnum-maas-client/
