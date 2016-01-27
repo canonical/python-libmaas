@@ -2,8 +2,8 @@
 
 __all__ = [
     "obtain_credentials",
-    "obtain_password",
     "obtain_token",
+    "try_getpass",
     ]
 
 from getpass import (
@@ -43,19 +43,6 @@ def obtain_credentials(credentials):
         return Credentials.parse(credentials)
     else:
         return None
-
-
-def obtain_password(password):
-    """Prompt for password if possible.
-
-    If the password is "-" then read from stdin without interactive prompting.
-    """
-    if password == "-":
-        return sys.stdin.readline().strip()
-    elif password is None:
-        return try_getpass("Password: ")
-    else:
-        return password
 
 
 def obtain_token(url, username, password):

@@ -4,6 +4,7 @@ __all__ = [
     "register",
 ]
 
+import sys
 from textwrap import fill
 from urllib.parse import urlparse
 
@@ -21,13 +22,10 @@ from .. import (
     utils,
 )
 from ..utils import (
+    auth,
     creds,
+    login,
     profiles,
-)
-from ..utils.auth import (
-    obtain_credentials,
-    obtain_password,
-    obtain_token,
 )
 
 
@@ -122,44 +120,31 @@ class cmd_login(cmd_login_base):
         )
 
     def __call__(self, options):
-        url = urlparse(options.url)
+        # Special-case when password is "-", meaning read from stdin.
+        if options.password == "-":
+            options.password = sys.stdin.readline().strip()
 
-        if options.username is None:
-            username = url.username
-        else:
-            if url.username is None or len(url.username) == 0:
-                username = options.username
+        while True:
+            try:
+                profile = login.login(
+                    options.url, username=options.username,
+                    password=options.password, insecure=options.insecure)
+            except login.UsernameWithoutPassword:
+                # Try to obtain the password interactively.
+                options.password = auth.try_getpass("Password: ")
+                if options.password is None:
+                    raise
             else:
-                raise CommandError(
-                    "Username provided on command-line (%r) and in URL (%r); "
-                    "provide only one." % (options.username, url.username))
+                break
 
-        if options.password is None:
-            password = url.password
-        else:
-            if url.password is None or len(url.password) == 0:
-                password = options.password
-            else:
-                raise CommandError(
-                    "Password provided on command-line (%r) and in URL (%r); "
-                    "provide only one." % (options.password, url.password))
+        # Give it the name the user wanted.
+        profile = profile.replace(name=options.profile_name)
 
-        if username is None:
-            if password is None or len(password) == 0:
-                credentials = None  # Anonymous.
-            else:
-                raise CommandError(
-                    "Password provided without username; specify username.")
-        else:
-            password = obtain_password(password)
-            if password is None:
-                raise CommandError("No password supplied.")
-            else:
-                credentials = obtain_token(
-                    options.url, username, password)
+        # Save a new profile.
+        with profiles.ProfileManager.open() as config:
+            config.save(profile)
+            config.default = profile
 
-        # Save a new profile, and print something useful.
-        profile = self.save_profile(options, credentials)
         self.print_whats_next(profile)
 
 
@@ -187,7 +172,7 @@ class cmd_add(cmd_login_base):
     def __call__(self, options):
         # Try and obtain credentials interactively if they're not given, or
         # read them from stdin if they're specified as "-".
-        credentials = obtain_credentials(options.credentials)
+        credentials = auth.obtain_credentials(options.credentials)
         # Save a new profile, and print something useful.
         profile = self.save_profile(options, credentials)
         self.print_whats_next(profile)
