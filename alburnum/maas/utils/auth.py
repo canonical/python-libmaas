@@ -45,15 +45,17 @@ def obtain_credentials(credentials):
         return None
 
 
-def obtain_token(url, username, password):
+def obtain_token(url, username, password, *, insecure=False):
     """Obtain a new API key by logging into MAAS.
 
+    :param url: URL for the MAAS API (i.e. ends with ``/api/x.y/``).
+    :param insecure: If true, don't verify SSL/TLS certificates.
     :return: A `Credentials` instance.
     """
     url_login = urljoin(url, "../../accounts/login/")
     url_token = urljoin(url, "account/")
 
-    with requests.Session() as session:
+    with requests.Session(verify=(not insecure)) as session:
 
         # Fetch the log-in page.
         response = session.get(url_login)

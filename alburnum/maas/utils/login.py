@@ -91,9 +91,8 @@ def login(url, *, username=None, password=None, insecure=False):
             raise UsernameWithoutPassword(
                 "User-name provided without password; specify password.")
         else:
-            # XXX: obtain_token() does not take an insecure argument, so there
-            # is no way right now to work around home-made SSL/TLS certs.
-            credentials = obtain_token(url.geturl(), username, password)
+            credentials = obtain_token(
+                url.geturl(), username, password, insecure=insecure)
 
     # Return a new (unsaved) profile.
     return Profile(
