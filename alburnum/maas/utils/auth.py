@@ -55,7 +55,10 @@ def obtain_token(url, username, password, *, insecure=False):
     url_login = urljoin(url, "../../accounts/login/")
     url_token = urljoin(url, "account/")
 
-    with requests.Session(verify=(not insecure)) as session:
+    with requests.Session() as session:
+
+        # Don't verify SSL/TLS certificates by default, if requested.
+        session.verify = not insecure
 
         # Fetch the log-in page.
         response = session.get(url_login)
