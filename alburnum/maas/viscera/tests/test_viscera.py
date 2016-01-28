@@ -30,8 +30,13 @@ from .. import (
     ObjectMethod,
     ObjectSet,
     ObjectType,
+    OriginBase,
 )
-from ... import viscera
+from ... import (
+    bones,
+    viscera,
+)
+from ...utils.tests.test_profiles import make_profile
 
 
 class TestDirClass(TestCase):
@@ -548,3 +553,19 @@ class TestObjectFieldChecked(TestCase):
         # datum_to_value_delta is added to the datum in the object's _data
         # dict before being returned to us.
         self.assertThat(example.alice, Equals(5))
+
+
+class TestOriginBase(TestCase):
+    """Tests for `OriginBase`."""
+
+    def test__session_is_underlying_session(self):
+        profile = make_profile()
+        session = bones.SessionAPI.fromProfile(profile)
+        origin = OriginBase(session)
+        self.assertThat(origin.session, Is(session))
+
+    def test__session_is_read_only(self):
+        profile = make_profile()
+        session = bones.SessionAPI.fromProfile(profile)
+        origin = OriginBase(session)
+        self.assertRaises(AttributeError, setattr, origin, "session", None)

@@ -9,8 +9,6 @@ from textwrap import dedent
 from alburnum.maas.testing import TestCase
 
 from .. import profiles
-from ...utils import auth
-from ...utils.tests.test_auth import make_options
 from ...utils.tests.test_profiles import make_profile
 
 
@@ -33,17 +31,3 @@ class TestLoginBase(TestCase):
             """).format(profile=profile)
         observed = stdout.getvalue()
         self.assertDocTestMatches(expected, observed)
-
-    def test_save_profile_ensures_valid_apikey(self):
-        options = make_options()
-        check_key = self.patch(profiles, "check_valid_apikey")
-        check_key.return_value = False
-        error = self.assertRaises(
-            SystemExit, profiles.cmd_login_base.save_profile, options,
-            auth.Credentials.parse(options.credentials))
-        self.assertEqual(
-            "The MAAS server rejected your API key.",
-            str(error))
-        check_key.assert_called_once_with(
-            options.url, auth.Credentials.parse(options.credentials),
-            options.insecure)

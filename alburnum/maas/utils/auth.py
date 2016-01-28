@@ -2,8 +2,8 @@
 
 __all__ = [
     "obtain_credentials",
-    "obtain_password",
     "obtain_token",
+    "try_getpass",
     ]
 
 from getpass import (
@@ -45,28 +45,20 @@ def obtain_credentials(credentials):
         return None
 
 
-def obtain_password(password):
-    """Prompt for password if possible.
-
-    If the password is "-" then read from stdin without interactive prompting.
-    """
-    if password == "-":
-        return sys.stdin.readline().strip()
-    elif password is None:
-        return try_getpass("Password: ")
-    else:
-        return password
-
-
-def obtain_token(url, username, password):
+def obtain_token(url, username, password, *, insecure=False):
     """Obtain a new API key by logging into MAAS.
 
+    :param url: URL for the MAAS API (i.e. ends with ``/api/x.y/``).
+    :param insecure: If true, don't verify SSL/TLS certificates.
     :return: A `Credentials` instance.
     """
     url_login = urljoin(url, "../../accounts/login/")
     url_token = urljoin(url, "account/")
 
     with requests.Session() as session:
+
+        # Don't verify SSL/TLS certificates by default, if requested.
+        session.verify = not insecure
 
         # Fetch the log-in page.
         response = session.get(url_login)

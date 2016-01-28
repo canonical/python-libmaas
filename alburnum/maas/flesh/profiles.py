@@ -4,13 +4,12 @@ __all__ = [
     "register",
 ]
 
+import sys
 from textwrap import fill
-from urllib.parse import urlparse
 
 from . import (
     colorized,
     Command,
-    CommandError,
     PROFILE_DEFAULT,
     PROFILE_NAMES,
     TableCommand,
@@ -21,18 +20,10 @@ from .. import (
     utils,
 )
 from ..utils import (
-    creds,
+    auth,
+    login,
     profiles,
 )
-from ..utils.auth import (
-    obtain_credentials,
-    obtain_password,
-    obtain_token,
-)
-
-
-def check_valid_apikey(_1, _2, _3):  # TODO
-    return True
 
 
 class cmd_login_base(Command):
@@ -52,34 +43,6 @@ class cmd_login_base(Command):
         parser.add_argument(
             '-k', '--insecure', action='store_true', help=(
                 "Disable SSL certificate check"), default=False)
-
-    @staticmethod
-    def save_profile(options, credentials: creds.Credentials):
-        # Check for bogus credentials. Do this early so that the user is not
-        # surprised when next invoking the MAAS CLI.
-        if credentials is not None:
-            try:
-                valid_apikey = check_valid_apikey(
-                    options.url, credentials, options.insecure)
-            except bones.CallError as e:
-                raise SystemExit("%s" % e)
-            else:
-                if not valid_apikey:
-                    raise SystemExit("The MAAS server rejected your API key.")
-
-        # Establish a session with the remote API.
-        session = bones.SessionAPI.fromURL(
-            options.url, credentials=credentials, insecure=options.insecure)
-
-        # Make a new profile and save it as the default.
-        profile = profiles.Profile(
-            options.profile_name, options.url, credentials=credentials,
-            description=session.description)
-        with profiles.ProfileManager.open() as config:
-            config.save(profile)
-            config.default = profile.name
-
-        return profile
 
     @staticmethod
     def print_whats_next(profile):
@@ -122,44 +85,31 @@ class cmd_login(cmd_login_base):
         )
 
     def __call__(self, options):
-        url = urlparse(options.url)
+        # Special-case when password is "-", meaning read from stdin.
+        if options.password == "-":
+            options.password = sys.stdin.readline().strip()
 
-        if options.username is None:
-            username = url.username
-        else:
-            if url.username is None or len(url.username) == 0:
-                username = options.username
+        while True:
+            try:
+                profile = login.login(
+                    options.url, username=options.username,
+                    password=options.password, insecure=options.insecure)
+            except login.UsernameWithoutPassword:
+                # Try to obtain the password interactively.
+                options.password = auth.try_getpass("Password: ")
+                if options.password is None:
+                    raise
             else:
-                raise CommandError(
-                    "Username provided on command-line (%r) and in URL (%r); "
-                    "provide only one." % (options.username, url.username))
+                break
 
-        if options.password is None:
-            password = url.password
-        else:
-            if url.password is None or len(url.password) == 0:
-                password = options.password
-            else:
-                raise CommandError(
-                    "Password provided on command-line (%r) and in URL (%r); "
-                    "provide only one." % (options.password, url.password))
+        # Give it the name the user wanted.
+        profile = profile.replace(name=options.profile_name)
 
-        if username is None:
-            if password is None or len(password) == 0:
-                credentials = None  # Anonymous.
-            else:
-                raise CommandError(
-                    "Password provided without username; specify username.")
-        else:
-            password = obtain_password(password)
-            if password is None:
-                raise CommandError("No password supplied.")
-            else:
-                credentials = obtain_token(
-                    options.url, username, password)
+        # Save a new profile.
+        with profiles.ProfileStore.open() as config:
+            config.save(profile)
+            config.default = profile
 
-        # Save a new profile, and print something useful.
-        profile = self.save_profile(options, credentials)
         self.print_whats_next(profile)
 
 
@@ -187,9 +137,18 @@ class cmd_add(cmd_login_base):
     def __call__(self, options):
         # Try and obtain credentials interactively if they're not given, or
         # read them from stdin if they're specified as "-".
-        credentials = obtain_credentials(options.credentials)
-        # Save a new profile, and print something useful.
-        profile = self.save_profile(options, credentials)
+        credentials = auth.obtain_credentials(options.credentials)
+        # Establish a session with the remote API.
+        session = bones.SessionAPI.fromURL(
+            options.url, credentials=credentials, insecure=options.insecure)
+        # Make a new profile and save it as the default.
+        profile = profiles.Profile(
+            options.profile_name, options.url, credentials=credentials,
+            description=session.description)
+        with profiles.ProfileStore.open() as config:
+            config.save(profile)
+            config.default = profile.name
+
         self.print_whats_next(profile)
 
 
@@ -214,7 +173,7 @@ class cmd_remove(Command):
             parser.set_defaults(profile_name=PROFILE_DEFAULT.name)
 
     def __call__(self, options):
-        with profiles.ProfileManager.open() as config:
+        with profiles.ProfileStore.open() as config:
             config.delete(options.profile_name)
 
 
@@ -232,7 +191,7 @@ class cmd_switch(Command):
         )
 
     def __call__(self, options):
-        with profiles.ProfileManager.open() as config:
+        with profiles.ProfileStore.open() as config:
             profile = config.load(options.profile_name)
             config.default = profile
 
@@ -242,7 +201,7 @@ class cmd_list(TableCommand):
 
     def __call__(self, options):
         table = tables.ProfilesTable()
-        with profiles.ProfileManager.open() as config:
+        with profiles.ProfileStore.open() as config:
             print(table.render(options.output_format, config))
 
 
@@ -255,7 +214,7 @@ class cmd_refresh(Command):
     """
 
     def __call__(self, options):
-        with profiles.ProfileManager.open() as config:
+        with profiles.ProfileStore.open() as config:
             for profile_name in config:
                 profile = config.load(profile_name)
                 session = bones.SessionAPI.fromProfile(profile)
