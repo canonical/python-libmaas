@@ -5,8 +5,31 @@
 
 ```pycon
 >>> for node in origin.Nodes:
-...     print(node)
+...     print(repr(node))
+<Node hostname='namibia.maas' system_id='433333'>
+<Node hostname='botswana.maas' system_id='433334'>
 ```
+
+Individual nodes can be read from the Web API.
+
+```pycon
+>>> node = origin.Node.read(system_id="433333")
+```
+
+Nodes have many useful attributes:
+
+```pycon
+>>> node.architecture
+'amd64/generic'
+>>> node.cpus
+4
+```
+
+Don't forget to try using tab-completion — the objects have been
+designed to be particularly friendly for interactive use — or
+``dir(node)`` to find out what other fields and methods are available.
+
+__TODO__: Updating nodes.
 
 
 ## Acquiring and starting

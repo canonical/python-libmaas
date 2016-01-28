@@ -62,6 +62,20 @@ The `profile` has not been saved, but it's easy to do so:
 
 This does the same as the `maas profiles login` command.
 
+But there's no need! There's a command built in to do it for you:
+
+```console
+$ bin/maas shell
+Welcome to the MAAS shell.
+
+Predefined variables:
+
+    origin: A `viscera` origin, configured for foo.
+   session: A `bones` session, configured for foo.
+
+>>>
+```
+
 
 ## Logging-out
 

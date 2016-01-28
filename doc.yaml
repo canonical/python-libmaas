@@ -16,3 +16,5 @@ pages:
       - Home: viscera/index.md
       - Getting started: viscera/getting-started.md
       - Nodes: viscera/nodes.md
+      - Events: viscera/events.md
+      - Other objects: viscera/other.md
