@@ -19,14 +19,13 @@ Installation
 ------------
 
 All the dependencies are declared in ``setup.py`` so this can be
-installed with `pip <https://pip.pypa.io/en/stable/>`__. Python 3.5 is
-required.
+installed with `pip <https://pip.pypa.io/>`__. Python 3.5 is required.
 
 When working from trunk it can be helpful to use ``virtualenv``:
 
 ::
 
-    $ virtualenv amc --python=python3.5 && source amc/bin/activate
+    $ virtualenv --python=python3.5 amc && source amc/bin/activate
     $ pip install git+https://github.com/alburnum/alburnum-maas-client.git
     $ maas --help
 

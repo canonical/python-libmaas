@@ -18,11 +18,11 @@ and MAAS is also under the AGPLv3, so everything should be good.
 ## Installation
 
 All the dependencies are declared in `setup.py` so this can be installed
-with [pip](https://pip.pypa.io/en/stable/). Python 3.5 is required.
+with [pip](https://pip.pypa.io/). Python 3.5 is required.
 
 When working from trunk it can be helpful to use `virtualenv`:
 
-    $ virtualenv amc --python=python3.5 && source amc/bin/activate
+    $ virtualenv --python=python3.5 amc && source amc/bin/activate
     $ pip install git+https://github.com/alburnum/alburnum-maas-client.git
     $ maas --help
 
