@@ -32,7 +32,7 @@ at least for now, it makes more sense to work directly from trunk.
 
 ## Documentation
 
-Documentation can be generated with `make doc` which publishes into the
+Documentation can be generated with `make docs` which publishes into the
 `site` directory. Recent documentation is also published to the
 [MAAS Client Library & CLI documentation][2] site.
 
