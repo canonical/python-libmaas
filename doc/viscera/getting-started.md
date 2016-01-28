@@ -11,74 +11,83 @@ $ cd alburnum-maas-client
 $ make
 ```
 
+Or install with [pip](https://pip.pypa.io/) into a
+[virtualenv](https://virtualenv.readthedocs.org/):
+
+```console
+$ virtualenv --python=python3.5 amc && source amc/bin/activate
+$ pip install git+https://github.com/alburnum/alburnum-maas-client.git
+```
+
 Or install from [PyPI](https://pypi.python.org/):
 
 ```console
-$ virtualenv --python=python3.5 maas
-$ cd maas
-$ bin/pip install alburnum-maas-client
+$ virtualenv --python=python3.5 amc && source amc/bin/activate
+$ pip install alburnum-maas-client
 ```
+
+*Note* that PyPI may lag the others.
+
 
 ## Logging-in
 
-Log-in using the command-line tool:
+Log-in using the command-line tool and start an interactive Python
+shell:
 
 ```console
-$ bin/maas login foo http://example.com:5240/MAAS/ admin
+$ maas profiles login foo http://example.com:5240/MAAS/ admin
 Password: …
+$ maas shell
 ```
 
-__TODO__: Log-in programmatically.
+This will provide you with a pre-prepared `origin` object that points to
+`foo` from above. This is the root object of the API.
 
-Then start an interactive Python shell (e.g. `bin/python`):
+You can also log-in programmatically:
 
 ```pycon
->>> from alburnum.maas import bones, viscera
->>> session = bones.SessionAPI.fromProfileName("foo")
->>> origin = viscera.Origin(session)
+>>> profile, origin = Origin.login(
+...     "http://example.com:5240/MAAS/", username="admin",
+...     password="…")
 ```
 
-The `origin` instance is the root object of the API.
+The `profile` has not been saved, but it's easy to do so:
+
+```pycon
+>>> profile = profile.replace(name="foo")
+>>> with ProfileStore.open() as store:
+...     store.save(profile)
+...     store.default = profile
+```
+
+This does the same as the `maas profiles login` command.
 
 
-## Logging out
+## Logging-out
 
 Log-out using the command-line tool:
 
 ```console
-$ bin/maas logout foo
+$ bin/maas profiles remove foo
 ```
 
-__TODO__: Log-out programmatically.
-
-
-## Nodes
-
-Listing nodes:
+or, programmatically:
 
 ```pycon
->>> for node in origin.Nodes:
-...     print(node)
+>>> with ProfileStore.open() as store:
+...     store.delete("foo")
 ```
 
-Acquiring and starting nodes:
+
+## `dir()`, `help()`, and tab-completion
+
+The _viscera_ API has been designed to be very discoverable using
+tab-completion, `dir()`, `help()`, and so on. Start with that:
 
 ```pycon
->>> help(origin.Nodes.acquire)
-acquire(*, hostname:str=None, architecture:str=None, cpus:int=None,
-        memory:float=None, tags:typing.Sequence=None) method of
-            alburnum.maas.viscera.NodesType instance
-    :param hostname: The hostname to match.
-    :param architecture: The architecture to match, e.g. "amd64".
-    :param cpus: The minimum number of CPUs to match.
-    :param memory: The minimum amount of RAM to match.
-    :param tags: The tags to match, as a sequence. Each tag may be
-        prefixed with a hyphen to denote that the given tag should NOT be
-        associated with a matched node.
->>> node = origin.Nodes.acquire(tags=("foo", "-bar"))
->>> print(node.substatus_name)
-Acquired
->>> node.start()
->>> print(node.substatus_name)
-Deploying
+>>> origin.<tab>
+…
 ```
+
+This works best when you've got [IPython](https://ipython.org/)
+installed.

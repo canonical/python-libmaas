@@ -1,4 +1,4 @@
-## Welcome to MAAS's new command-line tool & Python client libraries. ##
+# Welcome to MAAS's new command-line tool & Python client libraries.
 
 For documentation on the MAAS server components, visit
 [maas.ubuntu.com](https://maas.ubuntu.com/docs/).
@@ -7,10 +7,10 @@ For documentation on the MAAS server components, visit
 ## Command-line
 
 ```console
-$ bin/maas login --help
-$ bin/maas login exmpl http://example.com:5240/MAAS/ my_username
+$ bin/maas profiles login --help
+$ bin/maas profiles login exmpl http://example.com:5240/MAAS/ my_username
 Password: …
-$ bin/maas list-nodes --profile-name exmpl
+$ bin/maas list nodes
 ┌───────────────┬───────────┬───────────────┬───────┬────────┬───────────┬───────┐
 │ Hostname      │ System ID │ Architecture  │ #CPUs │ RAM    │ Status    │ Power │
 ├───────────────┼───────────┼───────────────┼───────┼────────┼───────────┼───────┤
@@ -37,4 +37,5 @@ The implementation of [_viscera_](viscera/index.md) makes use of
 [_bones_](bones/index.md). _Viscera_ is the API that should be preferred
 for application development.
 
-Next: [Get started with _viscera_](viscera/getting-started.md)
+
+Try this next: [Get started with _viscera_](viscera/getting-started.md)
