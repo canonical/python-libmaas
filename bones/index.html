@@ -74,6 +74,8 @@
             
                 <li class="toctree-l3"><a href="#bones-low-level-python-client-api">Bones: Low-level Python client API</a></li>
                 
+                    <li><a class="toctree-l4" href="#some-example-code">Some example code</a></li>
+                
             
             </ul>
         
@@ -90,6 +92,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../viscera/index.html">Home</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../viscera/getting-started/index.html">Getting started</a>
         
     </li>
@@ -97,7 +106,21 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../viscera/index.html">Home</a>
+        <a class="" href="../viscera/nodes/index.html">Nodes</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../viscera/events/index.html">Events</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../viscera/other/index.html">Other objects</a>
         
     </li>
 
@@ -146,6 +169,50 @@
             <div class="section">
               
                 <h1 id="bones-low-level-python-client-api"><em>Bones</em>: Low-level Python client API</h1>
+<p>You may prefer the <a href="../viscera/index.html">higher-level API <em>viscera</em></a>,
+but maybe you need to do something that you can&rsquo;t do in <em>viscera</em> yet
+(please file a bug!), or you&rsquo;re developing <em>viscera</em> itself (which uses
+<em>bones</em> behind the scenes).</p>
+<h2 id="some-example-code">Some example code</h2>
+<pre class="codehilite"><code class="language-python">#!/usr/bin/env python3.5
+
+from http import HTTPStatus
+from pprint import pprint
+
+from alburnum.maas import bones
+
+
+profile, session = bones.SessionAPI.login(
+    &quot;http://localhost:5240/MAAS/&quot;, username=&quot;alice&quot;,
+    password=&quot;wonderland&quot;)
+
+# Create a tag if it doesn't exist.
+tag_name = &quot;gryphon&quot;
+tag_comment = &quot;Gryphon's Stuff&quot;
+try:
+    tag = session.Tag.read(name=tag_name)
+except bones.CallError as error:
+    if error.status == HTTPStatus.NOT_FOUND:
+        tag = session.Tags.new(
+            name=tag_name, comment=tag_comment)
+    else:
+        raise
+
+# List all the tags.
+print(&quot;&gt;&gt;&gt; Tags.list()&quot;)
+pprint(session.Tags.list())
+
+# Get the system IDs for all nodes.
+print(&quot;&gt;&gt;&gt; Nodes.list()&quot;)
+all_nodes_system_ids = [
+    node[&quot;system_id&quot;] for node in session.Nodes.list()
+]
+pprint(all_nodes_system_ids)
+
+# Associate the tag with all nodes.
+print(&quot;&gt;&gt;&gt; Tag.update_nodes()&quot;)
+pprint(session.Tag.update_nodes(
+    name=tag[&quot;name&quot;], add=all_nodes_system_ids))</code></pre>
               
             </div>
           </div>
@@ -153,7 +220,7 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../viscera/getting-started/index.html" class="btn btn-neutral float-right" title="Getting started">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../viscera/index.html" class="btn btn-neutral float-right" title="Home">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
         <a href="../index.html" class="btn btn-neutral" title="Home"><span class="icon icon-circle-arrow-left"></span> Previous</a>
@@ -187,7 +254,7 @@
         <span><a href="../index.html" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../viscera/getting-started/index.html" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../viscera/index.html" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

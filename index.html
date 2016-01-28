@@ -62,11 +62,9 @@
             
                 <li class="toctree-l3"><a href="#welcome-to-maass-new-command-line-tool-python-client-libraries">Welcome to MAAS's new command-line tool &amp; Python client libraries.</a></li>
                 
-            
-                <li class="toctree-l3"><a href="#command-line">Command-line</a></li>
+                    <li><a class="toctree-l4" href="#command-line">Command-line</a></li>
                 
-            
-                <li class="toctree-l3"><a href="#client-libraries">Client libraries</a></li>
+                    <li><a class="toctree-l4" href="#client-libraries">Client libraries</a></li>
                 
             
             </ul>
@@ -96,6 +94,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="viscera/index.html">Home</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="viscera/getting-started/index.html">Getting started</a>
         
     </li>
@@ -103,7 +108,21 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="viscera/index.html">Home</a>
+        <a class="" href="viscera/nodes/index.html">Nodes</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="viscera/events/index.html">Events</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="viscera/other/index.html">Other objects</a>
         
     </li>
 
@@ -147,14 +166,14 @@
           <div role="main">
             <div class="section">
               
-                <h2 id="welcome-to-maass-new-command-line-tool-python-client-libraries">Welcome to MAAS&rsquo;s new command-line tool &amp; Python client libraries.</h2>
+                <h1 id="welcome-to-maass-new-command-line-tool-python-client-libraries">Welcome to MAAS&rsquo;s new command-line tool &amp; Python client libraries.</h1>
 <p>For documentation on the MAAS server components, visit
 <a href="https://maas.ubuntu.com/docs/">maas.ubuntu.com</a>.</p>
 <h2 id="command-line">Command-line</h2>
-<pre class="codehilite"><code class="language-console">$ bin/maas login --help
-$ bin/maas login exmpl http://example.com:5240/MAAS/ my_username
+<pre class="codehilite"><code class="language-console">$ bin/maas profiles login --help
+$ bin/maas profiles login exmpl http://example.com:5240/MAAS/ my_username
 Password: …
-$ bin/maas list-nodes --profile-name exmpl
+$ bin/maas list nodes
 ┌───────────────┬───────────┬───────────────┬───────┬────────┬───────────┬───────┐
 │ Hostname      │ System ID │ Architecture  │ #CPUs │ RAM    │ Status    │ Power │
 ├───────────────┼───────────┼───────────────┼───────┼────────┼───────────┼───────┤
@@ -181,7 +200,7 @@ $ bin/maas list-nodes --profile-name exmpl
 <p>The implementation of <a href="viscera/index.html"><em>viscera</em></a> makes use of
 <a href="bones/index.html"><em>bones</em></a>. <em>Viscera</em> is the API that should be preferred
 for application development.</p>
-<p>Next: <a href="viscera/getting-started/index.html">Get started with <em>viscera</em></a></p>
+<p>Try this next: <a href="viscera/getting-started/index.html">Get started with <em>viscera</em></a></p>
               
             </div>
           </div>
@@ -229,5 +248,5 @@ for application development.</p>
 
 <!--
 MkDocs version : 0.15.0
-Build Date UTC : 2016-01-26 15:31:15.342568
+Build Date UTC : 2016-01-28 12:35:14.790444
 -->
