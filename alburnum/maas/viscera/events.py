@@ -95,9 +95,13 @@ class EventsType(ObjectType):
             system_ids: Iterable[str]=None,
             agent_name: str=None,
             level: Union[Level, int, str]=None,
+            before: int=None,
             after: int=None,
             limit: int=None):
         """Query MAAS for matching events."""
+
+        if before is not None and after is not None:
+            raise ValueError("Specify either `before` or `after`, not both.")
 
         params = {}
 
@@ -116,6 +120,8 @@ class EventsType(ObjectType):
         if level is not None:
             level = Level.normalise(level)
             params["level"] = [level.name]
+        if before is not None:
+            params["before"] = ["{:d}".format(before)]
         if after is not None:
             params["after"] = ["{:d}".format(after)]
         if limit is not None:
@@ -141,26 +147,56 @@ class Events(ObjectSet, metaclass=EventsType):
         self._prev_uri = eventmap["prev_uri"]
         self._next_uri = eventmap["next_uri"]
 
-    def _fetch(self, uri, count):
+    @classmethod
+    def _fetch(cls, uri, count):
         query = urlparse(uri).query
         params = parse_qs(query, errors="strict")
-
-        if count is None:
-            if "limit" in params:
-                pass  # Stick to the current limit.
-            else:
-                params["limit"] = ["{:d}".format(min(1, len(self)))]
-        else:
+        if count is not None:
             params["limit"] = ["{:d}".format(count)]
-
-        data = self._handler.query(**params)
-        return self.__class__(data)
+        data = cls._handler.query(**params)
+        return cls(data)
 
     def prev(self, count=None):
-        return self._fetch(self._prev_uri, count)
+        """Load the previous (older) page/batch of events.
+
+        :param count: A limit on the number of events to fetch. By default the
+            limit is the same as that specified for this set of events.
+        """
+        if self._prev_uri is None:
+            return self[:0]  # An empty slice of `self`.
+        else:
+            return self._fetch(self._prev_uri, count)
 
     def next(self, count=None):
-        return self._fetch(self._next_uri, count)
+        """Load the next (newer) page/batch of events.
+
+        :param count: A limit on the number of events to fetch. By default the
+            limit is the same as that specified for this set of events.
+        """
+        if self._next_uri is None:
+            return self[:0]  # An empty slice of `self`.
+        else:
+            return self._fetch(self._next_uri, count)
+
+    def backwards(self):
+        """Iterate continuously through events, backwards.
+
+        This will load new pages/batches of events on demand.
+        """
+        current = self
+        while len(current) != 0:
+            yield from current
+            current = current.prev()
+
+    def forwards(self):
+        """Iterate continuously through events, forwards.
+
+        This will load new pages/batches of events on demand.
+        """
+        current = self
+        while len(current) != 0:
+            yield from reversed(current)
+            current = current.next()
 
 
 def truncate(length, text):  # TODO: Move into utils.
