@@ -7,6 +7,7 @@ __all__ = [
     "make_name_without_spaces",
     "make_string",
     "make_string_without_spaces",
+    "randrange",
     "TestCase",
 ]
 
@@ -102,6 +103,11 @@ def make_mac_address(delimiter=":"):
     """Make a MAC address string with the given delimiter."""
     octets = islice(random_octets, 6)
     return delimiter.join(format(octet, "02x") for octet in octets)
+
+
+def randrange(cmin=1, cmax=9):
+    """Yield a random number of times between `cmin` and `cmax`."""
+    return range(random.randint(cmin, cmax))
 
 
 class WithScenarios(testscenarios.WithScenarios):

@@ -2,15 +2,27 @@
 
 __all__ = []
 
+from datetime import datetime
+from itertools import (
+    chain,
+    count,
+)
 import random
-from unittest.mock import MagicMock
+from unittest.mock import (
+    MagicMock,
+    Mock,
+)
 
 from alburnum.maas.testing import (
     make_mac_address,
     make_name_without_spaces,
+    randrange,
     TestCase,
 )
-from testtools.matchers import IsInstance
+from testtools.matchers import (
+    Equals,
+    IsInstance,
+)
 
 from .. import events
 
@@ -19,8 +31,26 @@ def bind(cls, origin=None, handler=None):
     return cls.bind(
         (MagicMock() if origin is None else origin),
         (MagicMock() if handler is None else handler),
-        name=(cls.__name__ + "#Test"),
     )
+
+
+event_ids = count(1)
+
+
+def make_Event_dict():
+    return {
+        "id": next(event_ids),
+        "type": make_name_without_spaces("event-type"),
+        "node": random.randint(1, 99),
+        "hostname": make_name_without_spaces("host"),
+        "level": random.choice(list(events.Level)),
+        "created": datetime.utcnow().strftime("%a, %d %b. %Y %H:%M:%S"),
+        "description": make_name_without_spaces("description"),
+    }
+
+
+def make_Event():
+    return events.Event(make_Event_dict())
 
 
 class TestEventsQuery(TestCase):
@@ -120,3 +150,61 @@ class TestEvents(TestCase):
         evts._handler.query.assert_called_once_with(
             after=["119"], limit=["20"], foo=["123"],
         )
+
+    def test__forwards_returns_a_continuous_iterator(self):
+        pages = [
+            {
+                "events": [make_Event_dict() for _ in randrange()],
+                "prev_uri": "?going=backwards",
+                "next_uri": "?going=forwards",
+            },
+            {
+                "events": [make_Event_dict() for _ in randrange()],
+                "prev_uri": "?going=backwards",
+                "next_uri": "?going=forwards",
+            },
+            # An empty page is taken to mean "stop".
+            {
+                "events": [],
+                "prev_uri": "?going=backwards",
+                "next_uri": "?going=forwards",
+            },
+        ]
+        origin = Mock(Event=events.Event)
+        obj = bind(events.Events, origin=origin)
+        obj._handler.query.side_effect = pages
+        self.assertThat(
+            [evt._data for evt in obj.query().forwards()],
+            Equals(list(chain.from_iterable(
+                reversed(page["events"]) for page in pages))))
+        # The query parameters in next_uri get passed through to bones.
+        obj._handler.query.assert_called_with(going=["forwards"])
+
+    def test__backwards_returns_a_continuous_iterator(self):
+        pages = [
+            {
+                "events": [make_Event_dict() for _ in randrange()],
+                "prev_uri": "?going=backwards",
+                "next_uri": "?going=forwards",
+            },
+            {
+                "events": [make_Event_dict() for _ in randrange()],
+                "prev_uri": "?going=backwards",
+                "next_uri": "?going=forwards",
+            },
+            # An empty page is taken to mean "stop".
+            {
+                "events": [],
+                "prev_uri": "?going=backwards",
+                "next_uri": "?going=forwards",
+            },
+        ]
+        origin = Mock(Event=events.Event)
+        obj = bind(events.Events, origin=origin)
+        obj._handler.query.side_effect = pages
+        self.assertThat(
+            [evt._data for evt in obj.query().backwards()],
+            Equals(list(chain.from_iterable(
+                page["events"] for page in pages))))
+        # The query parameters in prev_uri get passed through to bones.
+        obj._handler.query.assert_called_with(going=["backwards"])
