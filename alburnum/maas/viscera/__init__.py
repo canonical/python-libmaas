@@ -146,6 +146,20 @@ class ObjectType(type):
         attrs.setdefault("__slots__", ())
         return super(ObjectType, cls).__new__(cls, name, bases, attrs)
 
+    def bind(cls, origin, handler, *, name=None):
+        """Bind this object to the given origin and handler.
+
+        :param origin: An instance of `Origin`.
+        :param handler: An instance of `bones.HandlerAPI`.
+        :return: A subclass of this class.
+        """
+        name = cls.__name__ if name is None else name
+        attrs = {
+            "_origin": origin, "_handler": handler,
+            "__module__": "origin",  # Could do better?
+        }
+        return type(name, (cls,), attrs)
+
 
 class ObjectBasics:
 
@@ -458,89 +472,11 @@ class OriginBase:
             handler = handlers.get(name, None)
             base = self.__objects.get(name, Object)
             assert issubclass(type(base), ObjectType)
-            # Put the _origin and _handler in the class's attributes, and set
-            # the module to something informative.
-            attrs = {"_origin": self, "_handler": handler}
-            attrs["__module__"] = "origin"  # Could do better?
-            # Make default methods for actions that are not handled.
-            if handler is not None:
-                if issubclass(base, Object):
-                    methods = {
-                        "_%s" % name: self.__method(action)
-                        for name, action in handler.actions
-                        if not hasattr(base, name)
-                    }
-                    attrs.update(methods)
-                elif issubclass(base, ObjectSet):
-                    pass  # TODO?
-            # Construct a new class derived from base, in effect "binding" it
-            # to this origin.
-            obj = type(name, (base,), attrs)
+            obj = base.bind(self, handler, name=name)
             # Those objects without a custom class are "hidden" by prefixing
             # their name with an underscore.
             objname = "_%s" % name if base is Object else name
             setattr(self, objname, obj)
-
-    def __method(self, action):
-        """Construct a method for a given action.
-
-        :param action: An instance of `ActionAPI`.
-        """
-        def pretty(func):
-            func.__module__ = action.handler.uri
-            func.__name__ = action.name
-            func.__qualname__ = action.name
-            func.__doc__ = action.__doc__
-            return func
-
-        if action.name in ("create", "read"):
-
-            def for_class(cls, **params):
-                data = action(**params)
-                return cls._object(data)
-
-            method = ObjectMethod(pretty(for_class), None)
-
-        elif action.name == "update":
-
-            def for_instance(self):
-                self._data = action(**self._data)
-
-            method = ObjectMethod(None, pretty(for_instance))
-
-        elif action.name == "delete":
-
-            def for_class(cls, **params):
-                action(**params)
-                return None
-
-            def for_instance(self):
-                action(**{
-                    name: self._data[name]
-                    for name in action.handler.params
-                })
-                return None
-
-            method = ObjectMethod(
-                pretty(for_class), pretty(for_instance))
-
-        else:
-
-            def for_class(cls, **params):
-                data = action(**params)
-                return data
-
-            def for_instance(self):
-                data = action(**{
-                    name: self._data[name]
-                    for name in action.handler.params
-                })
-                return data
-
-            method = ObjectMethod(
-                pretty(for_class), pretty(for_instance))
-
-        return method
 
 
 #

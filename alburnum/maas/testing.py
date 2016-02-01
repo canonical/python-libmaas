@@ -2,14 +2,17 @@
 
 __all__ = [
     "make_file",
+    "make_mac_address",
     "make_name",
     "make_name_without_spaces",
     "make_string",
     "make_string_without_spaces",
+    "randrange",
     "TestCase",
 ]
 
 import doctest
+from functools import partial
 from itertools import (
     islice,
     repeat,
@@ -30,6 +33,10 @@ random_letters = map(
 
 random_letters_with_spaces = map(
     random.choice, repeat(string.ascii_letters + string.digits + ' '))
+
+random_octet = partial(random.randint, 0, 255)
+
+random_octets = iter(random_octet, None)
 
 
 def make_string(size=10):
@@ -90,6 +97,17 @@ def make_file(location, name=None, contents=None):
     with open(filename, 'wb') as f:
         f.write(contents)
     return filename
+
+
+def make_mac_address(delimiter=":"):
+    """Make a MAC address string with the given delimiter."""
+    octets = islice(random_octets, 6)
+    return delimiter.join(format(octet, "02x") for octet in octets)
+
+
+def randrange(cmin=1, cmax=9):
+    """Yield a random number of times between `cmin` and `cmax`."""
+    return range(random.randint(cmin, cmax))
 
 
 class WithScenarios(testscenarios.WithScenarios):
