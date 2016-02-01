@@ -224,6 +224,13 @@ class cmd_refresh(Command):
 
 def register(parser):
     """Register profile commands with the given parser."""
+
+    # Register `login`, `logout`, and `switch` as top-level commands.
+    cmd_login.register(parser)
+    cmd_remove.register(parser, "logout")
+    cmd_switch.register(parser)
+
+    # Register the complete set of commands with the `profiles` sub-parser.
     parser = parser.subparsers.add_parser(
         "profiles", help="Manage profiles, e.g. adding, removing, logging-in.",
         description=(
@@ -232,9 +239,6 @@ def register(parser):
             "the retrieved API description. Each profile has a unique name "
             "which can be provided to commands that work with remote MAAS "
             "installations, or a default profile can be chosen."
-        ),
-        epilog=colorized(
-            "If in doubt, try {autogreen}login{/autogreen}."
         ),
     )
 

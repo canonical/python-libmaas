@@ -200,7 +200,8 @@ def prepare_parser(program):
     """Create and populate an argument parser."""
     parser = ArgumentParser(
         description="Interact with a remote MAAS server.", prog=program,
-        epilog="http://maas.ubuntu.com/")
+        epilog=colorized("If in doubt, try {autogreen}login{/autogreen}."),
+    )
 
     # Create sub-parsers for various command groups. These are all verbs.
     parser.subparsers.add_parser(
