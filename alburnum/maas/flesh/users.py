@@ -20,4 +20,4 @@ class cmd_list_users(OriginTableCommand):
 
 def register(parser):
     """Register profile commands with the given parser."""
-    cmd_list_users.register(parser["list"], "users")
+    cmd_list_users.register(parser)

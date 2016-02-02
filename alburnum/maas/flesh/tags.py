@@ -20,4 +20,4 @@ class cmd_list_tags(OriginTableCommand):
 
 def register(parser):
     """Register profile commands with the given parser."""
-    cmd_list_tags.register(parser["list"], "tags")
+    cmd_list_tags.register(parser)

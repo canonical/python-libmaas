@@ -33,7 +33,7 @@ class NodeMemoryColumn(Column):
         return super().render(target, memory)
 
 
-class NodeSubStatusNameColumn(Column):
+class NodeStatusNameColumn(Column):
 
     colours = {
         # "New": "",  # White.
@@ -97,14 +97,14 @@ class NodesTable(Table):
             Column("architecture", "Architecture"),
             Column("cpus", "#CPUs"),
             NodeMemoryColumn("memory", "RAM"),
-            NodeSubStatusNameColumn("status", "Status"),
+            NodeStatusNameColumn("status", "Status"),
             NodePowerColumn("power", "Power"),
         )
 
     def render(self, target, nodes):
         data = (
             (node.hostname, node.system_id, node.architecture, node.cpus,
-             node.memory, node.substatus_name, node.power_state)
+             node.memory, node.status_name, node.power_state)
             for node in nodes
         )
         data = sorted(data, key=itemgetter(0))

@@ -47,9 +47,9 @@ acquire(*, hostname:str=None, architecture:str=None, cpus:int=None,
         prefixed with a hyphen to denote that the given tag should NOT be
         associated with a matched node.
 >>> node = origin.Nodes.acquire(tags=("foo", "-bar"))
->>> print(node.substatus_name)
+>>> print(node.status_name)
 Acquired
 >>> node.start()
->>> print(node.substatus_name)
+>>> print(node.status_name)
 Deploying
 ```

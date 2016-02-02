@@ -203,16 +203,6 @@ def prepare_parser(program):
         epilog=colorized("If in doubt, try {autogreen}login{/autogreen}."),
     )
 
-    # Create sub-parsers for various command groups. These are all verbs.
-    parser.subparsers.add_parser(
-        "acquire", help="Acquire nodes or other resources.")
-    parser.subparsers.add_parser(
-        "launch", help="Launch nodes or other resources.")
-    parser.subparsers.add_parser(
-        "list", help="List nodes, files, tags, and other resources.")
-    parser.subparsers.add_parser(
-        "release", help="Release nodes or other resources.")
-
     # Register sub-commands.
     submodules = (
         # These modules are expected to register verb-like commands into the

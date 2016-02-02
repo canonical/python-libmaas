@@ -20,4 +20,4 @@ class cmd_list_files(OriginTableCommand):
 
 def register(parser):
     """Register profile commands with the given parser."""
-    cmd_list_files.register(parser["list"], "files")
+    cmd_list_files.register(parser)
