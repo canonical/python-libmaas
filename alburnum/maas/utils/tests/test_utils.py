@@ -68,7 +68,7 @@ class TestMAASOAuth(TestCase):
 class TestPayloadPreparation(TestCase):
     """Tests for `prepare_payload`."""
 
-    uri_base = "http://example.com/MAAS/api/1.0/"
+    uri_base = "http://example.com/MAAS/api/2.0/"
 
     # Scenarios for ReSTful operations; i.e. without an "op" parameter.
     scenarios_without_op = (
@@ -308,9 +308,9 @@ class TestFunctions(TestCase):
 
     def test_api_url(self):
         transformations = list({
-            "http://example.com/": "http://example.com/api/1.0/",
-            "http://example.com/foo": "http://example.com/foo/api/1.0/",
-            "http://example.com/foo/": "http://example.com/foo/api/1.0/",
+            "http://example.com/": "http://example.com/api/2.0/",
+            "http://example.com/foo": "http://example.com/foo/api/2.0/",
+            "http://example.com/foo/": "http://example.com/foo/api/2.0/",
             "http://example.com/api/7.9": "http://example.com/api/7.9/",
             "http://example.com/api/7.9/": "http://example.com/api/7.9/",
             }.items())

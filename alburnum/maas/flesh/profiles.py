@@ -38,7 +38,7 @@ class cmd_login_base(Command):
         parser.add_argument(
             "url", type=utils.api_url, help=(
                 "The URL of the remote API, e.g. http://example.com/MAAS/ "
-                "or http://example.com/MAAS/api/1.0/ if you wish to specify "
+                "or http://example.com/MAAS/api/2.0/ if you wish to specify "
                 "the API version."))
         parser.add_argument(
             '-k', '--insecure', action='store_true', help=(

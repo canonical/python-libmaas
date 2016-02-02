@@ -36,7 +36,7 @@ class TestLogin(TestCase):
         # No token was obtained, but the description was fetched.
         login.obtain_token.assert_not_called()
         login.fetch_api_description.assert_called_once_with(
-            urlparse("http://example.org:5240/MAAS/api/1.0/"),
+            urlparse("http://example.org:5240/MAAS/api/2.0/"),
             None, False)
         # A Profile instance was returned with no credentials.
         self.assertThat(profile, IsInstance(profiles.Profile))
@@ -48,10 +48,10 @@ class TestLogin(TestCase):
         profile = login.login("http://foo:bar@example.org:5240/MAAS/")
         # A token was obtained, and the description was fetched.
         login.obtain_token.assert_called_once_with(
-            "http://example.org:5240/MAAS/api/1.0/",
+            "http://example.org:5240/MAAS/api/2.0/",
             "foo", "bar", insecure=False)
         login.fetch_api_description.assert_called_once_with(
-            urlparse("http://example.org:5240/MAAS/api/1.0/"),
+            urlparse("http://example.org:5240/MAAS/api/2.0/"),
             credentials, False)
         # A Profile instance was returned with the expected credentials.
         self.assertThat(profile, IsInstance(profiles.Profile))
@@ -105,26 +105,26 @@ class TestLogin(TestCase):
     def test__API_token_is_fetched_insecurely_if_requested(self):
         login.login("http://foo:bar@example.org:5240/MAAS/", insecure=True)
         login.obtain_token.assert_called_once_with(
-            "http://example.org:5240/MAAS/api/1.0/",
+            "http://example.org:5240/MAAS/api/2.0/",
             "foo", "bar", insecure=True)
 
     def test__API_description_is_fetched_insecurely_if_requested(self):
         login.login("http://example.org:5240/MAAS/", insecure=True)
         login.fetch_api_description.assert_called_once_with(
-            urlparse("http://example.org:5240/MAAS/api/1.0/"),
+            urlparse("http://example.org:5240/MAAS/api/2.0/"),
             None, True)
 
     def test__uses_username_from_URL_if_set(self):
         login.login("http://foo@maas.io/", password="bar")
         login.obtain_token.assert_called_once_with(
-            "http://maas.io/api/1.0/", "foo", "bar", insecure=False)
+            "http://maas.io/api/2.0/", "foo", "bar", insecure=False)
 
     def test__uses_username_and_password_from_URL_if_set(self):
         login.login("http://foo:bar@maas.io/")
         login.obtain_token.assert_called_once_with(
-            "http://maas.io/api/1.0/", "foo", "bar", insecure=False)
+            "http://maas.io/api/2.0/", "foo", "bar", insecure=False)
 
     def test__uses_empty_username_and_password_in_URL_if_set(self):
         login.login("http://:@maas.io/")
         login.obtain_token.assert_called_once_with(
-            "http://maas.io/api/1.0/", "", "", insecure=False)
+            "http://maas.io/api/2.0/", "", "", insecure=False)

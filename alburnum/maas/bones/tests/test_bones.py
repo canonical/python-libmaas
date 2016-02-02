@@ -8,6 +8,7 @@ import http.server
 import json
 from os.path import splitext
 from pathlib import Path
+import re
 import ssl
 import threading
 from unittest.mock import (
@@ -74,14 +75,15 @@ class DescriptionHandler(http.server.BaseHTTPRequestHandler):
         self.logs.append(args)
 
     def do_GET(self):
-        if self.path == "/MAAS/api/1.0/describe/":
+        version_match = re.match(r"/MAAS/api/([0-9.]+)/describe/$", self.path)
+        if version_match is None:
+            self.send_error(http.HTTPStatus.NOT_FOUND)
+        else:
             self.send_response(http.HTTPStatus.OK)
             self.send_header("Content-Type", self.content_type)
             self.send_header("Content-Length", str(len(self.description)))
             self.end_headers()
             self.wfile.write(self.description)
-        else:
-            self.send_error(http.HTTPStatus.NOT_FOUND)
 
 
 class DescriptionServer(fixtures.Fixture):
@@ -99,7 +101,7 @@ class DescriptionServer(fixtures.Fixture):
     def _setUp(self):
         self.handler = DescriptionHandler.make(self.description)
         self.server = http.server.HTTPServer(("", 0), self.handler)
-        self.url = "http://%s:%d/MAAS/api/1.0/" % self.server.server_address
+        self.url = "http://%s:%d/MAAS/api/2.0/" % self.server.server_address
         threading.Thread(target=self.server.serve_forever).start()
         self.addCleanup(self.server.server_close)
         self.addCleanup(self.server.shutdown)
@@ -189,12 +191,12 @@ class TestActionAPI_APIVersions(TestCase):
             handler=session.Version, is_restful=True, op=None,
         ))
 
-    def test__Nodes_deployment_status(self):
+    def test__Machines_deployment_status(self):
         session = bones.SessionAPI(self.description, ("a", "b", "c"))
-        action = session.Nodes.deployment_status
+        action = session.Machines.deployment_status
         self.assertThat(action, MatchesStructure.byEquality(
-            name="deployment_status", fullname="Nodes.deployment_status",
-            method="GET", handler=session.Nodes, is_restful=False,
+            name="deployment_status", fullname="Machines.deployment_status",
+            method="GET", handler=session.Machines, is_restful=False,
             op="deployment_status",
         ))
 
@@ -210,7 +212,7 @@ class TestCallAPI_APIVersions(TestCase):
     def test__marshals_lists_into_query_as_repeat_parameters(self):
         system_ids = list(str(uuid1()) for _ in range(3))
         session = bones.SessionAPI(self.description, ("a", "b", "c"))
-        call = session.Nodes.deployment_status.bind()
+        call = session.Machines.deployment_status.bind()
         call.dispatch = Mock()
 
         call.call(nodes=system_ids)
@@ -218,7 +220,7 @@ class TestCallAPI_APIVersions(TestCase):
         call.dispatch.assert_called_once_with(ANY, ANY, ANY)
         uri, body, headers = call.dispatch.call_args[0]
         uri = urlparse(uri)
-        self.assertThat(uri.path, Equals("/MAAS/api/1.0/nodes/"))
+        self.assertThat(uri.path, Equals("/MAAS/api/2.0/machines/"))
         query_expected = [('op', 'deployment_status')]
         query_expected.extend(('nodes', system_id) for system_id in system_ids)
         query_observed = parse_qsl(uri.query)
