@@ -96,9 +96,6 @@ class Machine(Object, metaclass=MachineType):
         "architecture", check_optional(str), check_optional(str))
     boot_disk = ObjectField.Checked(
         "boot_disk", check_optional(str), check_optional(str))
-
-    # boot_type
-
     cpus = ObjectField.Checked(
         "cpu_count", check(int), check(int))
     disable_ipv4 = ObjectField.Checked(
@@ -128,7 +125,6 @@ class Machine(Object, metaclass=MachineType):
     power_state = ObjectField.Checked(
         "power_state", check(str), readonly=True)
 
-    # power_state
     # power_type
     # pxe_mac
     # resource_uri

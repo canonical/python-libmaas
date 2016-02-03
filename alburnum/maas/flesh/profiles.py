@@ -31,7 +31,7 @@ class cmd_login_base(Command):
     def __init__(self, parser):
         super(cmd_login_base, self).__init__(parser)
         parser.add_argument(
-            "profile_name", metavar="profile-name", help=(
+            "profile", metavar="profile-name", help=(
                 "The name with which you will later refer to this remote "
                 "server and credentials within this tool."
                 ))
@@ -202,7 +202,7 @@ class cmd_list(TableCommand):
     def __call__(self, options):
         table = tables.ProfilesTable()
         with profiles.ProfileStore.open() as config:
-            print(table.render(options.output_format, config))
+            print(table.render(options.format, config))
 
 
 class cmd_refresh(Command):

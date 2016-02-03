@@ -12,6 +12,9 @@ from operator import itemgetter
 
 from colorclass import Color
 
+from ..viscera.controllers import RackController
+from ..viscera.devices import Device
+from ..viscera.machines import Machine
 from .tabular import (
     Column,
     RenderTarget,
@@ -19,12 +22,63 @@ from .tabular import (
 )
 
 
+class NodeTypeColumn(Column):
+
+    DEVICE = 1
+    MACHINE = 2
+    RACK = 3
+    REGION = 4
+
+    GLYPHS = {
+        DEVICE: Color("."),
+        MACHINE: Color("{autoblue}m{/autoblue}"),
+        RACK: Color("{yellow}c{/yellow}"),
+        REGION: Color("{automagenta}C{/automagenta}"),
+    }
+
+    def render(self, target, num):
+        glyph = self.GLYPHS[num]
+        if target == RenderTarget.pretty:
+            return glyph
+        else:
+            return glyph.value_no_colors
+
+
+class NodeArchitectureColumn(Column):
+
+    def render(self, target, architecture):
+        if target in (RenderTarget.pretty, RenderTarget.plain):
+            if architecture is None:
+                architecture = "-"
+            elif len(architecture) == 0:
+                architecture = "-"
+            elif architecture.isspace():
+                architecture = "-"
+        return super().render(target, architecture)
+
+
+class NodeCPUsColumn(Column):
+
+    def render(self, target, cpus):
+        # `cpus` is a count of CPUs.
+        if target in (RenderTarget.pretty, RenderTarget.plain):
+            if cpus is None:
+                cpus = "-"
+            elif cpus == 0.0:
+                cpus = "-"
+        return super().render(target, cpus)
+
+
 class NodeMemoryColumn(Column):
 
     def render(self, target, memory):
         # `memory` is in MB.
         if target in (RenderTarget.pretty, RenderTarget.plain):
-            if memory < 1024.0:  # <1GB
+            if memory is None:
+                memory = "-"
+            elif memory == 0.0:
+                memory = "-"
+            elif memory < 1024.0:  # <1GB
                 memory = "%0.1f MB" % (memory)
             elif memory < 1048576.0:  # <1TB
                 memory = "%0.1f GB" % (memory / 1024.0)
@@ -92,22 +146,70 @@ class NodesTable(Table):
 
     def __init__(self):
         super().__init__(
+            NodeTypeColumn("type", ""),
             Column("hostname", "Hostname"),
             Column("system_id", "System ID"),
-            Column("architecture", "Architecture"),
-            Column("cpus", "#CPUs"),
+            NodeArchitectureColumn("architecture", "Architecture"),
+            NodeCPUsColumn("cpus", "#CPUs"),
             NodeMemoryColumn("memory", "RAM"),
             NodeStatusNameColumn("status", "Status"),
             NodePowerColumn("power", "Power"),
         )
 
+    @classmethod
+    def data_for(cls, node):
+        if isinstance(node, Device):
+            return (
+                NodeTypeColumn.DEVICE,
+                node.hostname,
+                node.system_id,
+                "-",
+                None,
+                None,
+                "-",
+                "-",
+            )
+        elif isinstance(node, Machine):
+            return (
+                NodeTypeColumn.MACHINE,
+                node.hostname,
+                node.system_id,
+                node.architecture,
+                node.cpus,
+                node.memory,
+                node.status_name,
+                node.power_state,
+            )
+        elif isinstance(node, RackController):
+            return (
+                NodeTypeColumn.RACK,
+                node.hostname,
+                node.system_id,
+                node.architecture,
+                node.cpus,
+                node.memory,
+                node.status_name,
+                node.power_state,
+            )
+        # elif isinstance(node, RegionController):
+        #     return (
+        #         "∷",
+        #         node.hostname,
+        #         node.system_id,
+        #         node.architecture,
+        #         node.cpus,
+        #         node.memory,
+        #         node.status_name,
+        #         node.power_state,
+        #     )
+        else:
+            raise TypeError(
+                "Cannot extract data from %r (%s)"
+                % (node, type(node).__name__))
+
     def render(self, target, nodes):
-        data = (
-            (node.hostname, node.system_id, node.architecture, node.cpus,
-             node.memory, node.status_name, node.power_state)
-            for node in nodes
-        )
-        data = sorted(data, key=itemgetter(0))
+        data = map(self.data_for, nodes)
+        data = sorted(data, key=itemgetter(0, 1))
         return super().render(target, data)
 
 
