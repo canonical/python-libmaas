@@ -85,6 +85,23 @@ class ArgumentParser(argparse.ArgumentParser):
             self.__subparsers.metavar = "COMMAND"
             return self.__subparsers
 
+    def add_argument_group(self, title, description=None):
+        """Add an argument group, or return a pre-existing one."""
+        try:
+            groups = self.__groups
+        except AttributeError:
+            groups = self.__groups = {}
+
+        if title not in groups:
+            groups[title] = super().add_argument_group(
+                title=title, description=description)
+
+        return groups[title]
+
+    @property
+    def other(self):
+        return self.add_argument_group("other arguments")
+
     def __getitem__(self, name):
         """Return the named subparser."""
         return self.subparsers.choices[name]
@@ -134,7 +151,9 @@ class Command(metaclass=ABCMeta):
         help_title, help_body = utils.parse_docstring(cls)
         command_parser = parser.subparsers.add_parser(
             cls.name() if name is None else name, help=help_title,
-            description=help_title, epilog=help_body)
+            description=help_title, epilog=help_body, add_help=False)
+        command_parser.add_argument(
+            "-h", "--help", action="help", help=argparse.SUPPRESS)
         command_parser.set_defaults(execute=cls(command_parser))
         return command_parser
 
@@ -147,8 +166,8 @@ class TableCommand(Command):
             default_target = tabular.RenderTarget.pretty
         else:
             default_target = tabular.RenderTarget.plain
-        parser.add_argument(
-            "--output-format", type=tabular.RenderTarget,
+        parser.other.add_argument(
+            "--format", type=tabular.RenderTarget,
             choices=tabular.RenderTarget, default=default_target, help=(
                 "Output tabular data as a formatted table (pretty), a "
                 "formatted table using only ASCII for borders (plain), or "
@@ -161,21 +180,21 @@ class OriginCommandBase(Command):
 
     def __init__(self, parser):
         super(OriginCommandBase, self).__init__(parser)
-        parser.add_argument(
-            "--profile-name", metavar="NAME", choices=PROFILE_NAMES,
+        parser.other.add_argument(
+            "--profile", metavar="NAME", choices=PROFILE_NAMES,
             required=(PROFILE_DEFAULT is None), help=(
                 "The name of the remote MAAS instance to use. Use "
-                "`list-profiles` to obtain a list of valid profiles." +
+                "`profiles list` to obtain a list of valid profiles." +
                 ("" if PROFILE_DEFAULT is None else " [default: %(default)s]")
             ))
         if PROFILE_DEFAULT is not None:
-            parser.set_defaults(profile_name=PROFILE_DEFAULT.name)
+            parser.set_defaults(profile=PROFILE_DEFAULT.name)
 
 
 class OriginCommand(OriginCommandBase):
 
     def __call__(self, options):
-        session = bones.SessionAPI.fromProfileName(options.profile_name)
+        session = bones.SessionAPI.fromProfileName(options.profile)
         origin = viscera.Origin(session)
         return self.execute(origin, options)
 
@@ -187,9 +206,9 @@ class OriginCommand(OriginCommandBase):
 class OriginTableCommand(OriginCommandBase, TableCommand):
 
     def __call__(self, options):
-        session = bones.SessionAPI.fromProfileName(options.profile_name)
+        session = bones.SessionAPI.fromProfileName(options.profile)
         origin = viscera.Origin(session)
-        return self.execute(origin, options, target=options.output_format)
+        return self.execute(origin, options, target=options.format)
 
     def execute(self, options, origin, *, target):
         raise NotImplementedError(
@@ -201,23 +220,15 @@ def prepare_parser(program):
     parser = ArgumentParser(
         description="Interact with a remote MAAS server.", prog=program,
         epilog=colorized("If in doubt, try {autogreen}login{/autogreen}."),
-    )
-
-    # Create sub-parsers for various command groups. These are all verbs.
-    parser.subparsers.add_parser(
-        "acquire", help="Acquire nodes or other resources.")
-    parser.subparsers.add_parser(
-        "launch", help="Launch nodes or other resources.")
-    parser.subparsers.add_parser(
-        "list", help="List nodes, files, tags, and other resources.")
-    parser.subparsers.add_parser(
-        "release", help="Release nodes or other resources.")
+        add_help=False)
+    parser.add_argument("-h", "--help", action="help", help=argparse.SUPPRESS)
 
     # Register sub-commands.
     submodules = (
         # These modules are expected to register verb-like commands into the
         # sub-parsers created above, e.g. for "list files", "launch node".
-        "files", "nodes", "tags", "users",
+        # Nodes always come first.
+        "nodes", "files", "tags", "users",
         # These modules are different: they are collections of commands around
         # a topic, or miscellaneous conveniences.
         "profiles", "shell",

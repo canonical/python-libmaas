@@ -574,7 +574,18 @@ class Origin(OriginBase, metaclass=OriginType):
 
         """
         modules = {
-            ".", ".events", ".files", ".nodes", ".tags", ".users", ".version",
+            ".",
+            ".account",
+            ".controllers",
+            ".devices",
+            ".events",
+            ".files",
+            ".maas",
+            ".machines",
+            ".tags",
+            ".users",
+            ".version",
+            ".zones",
         }
         super(Origin, self).__init__(
             session, objects=find_objects({

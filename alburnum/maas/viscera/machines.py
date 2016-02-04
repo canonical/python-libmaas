@@ -1,8 +1,8 @@
-"""Objects for nodes."""
+"""Objects for machines."""
 
 __all__ = [
-    "Node",
-    "Nodes",
+    "Machine",
+    "Machines",
 ]
 
 import base64
@@ -18,24 +18,22 @@ from alburnum.maas.bones import CallError
 from . import (
     check,
     check_optional,
-    Disabled,
     Object,
     ObjectField,
     ObjectSet,
     ObjectType,
+    zones,
 )
 
 
-class NodesType(ObjectType):
-    """Metaclass for `Nodes`."""
+class MachinesType(ObjectType):
+    """Metaclass for `Machines`."""
 
     def __iter__(cls):
-        return map(cls._object, cls._handler.list())
+        return map(cls._object, cls._handler.read())
 
     def read(cls):
         return cls(cls)
-
-    list = Disabled("list", "read")  # API is malformed in MAAS server.
 
     def acquire(
             cls, *, hostname: str=None, architecture: str=None,
@@ -47,7 +45,7 @@ class NodesType(ObjectType):
         :param memory: The minimum amount of RAM to match.
         :param tags: The tags to match, as a sequence. Each tag may be
             prefixed with a hyphen to denote that the given tag should NOT be
-            associated with a matched node.
+            associated with a matched machine.
         """
         params = {}
         if hostname is not None:
@@ -68,39 +66,36 @@ class NodesType(ObjectType):
             data = cls._handler.acquire(**params)
         except CallError as error:
             if error.status == HTTPStatus.CONFLICT:
-                message = "No node matching the given criteria was found."
-                raise NodeNotFound(message) from error
+                message = "No machine matching the given criteria was found."
+                raise MachineNotFound(message) from error
             else:
                 raise
         else:
             return cls._object(data)
 
 
-class NodeNotFound(Exception):
-    """Node was not found."""
+class MachineNotFound(Exception):
+    """Machine was not found."""
 
 
-class Nodes(ObjectSet, metaclass=NodesType):
-    """The set of nodes stored in MAAS."""
+class Machines(ObjectSet, metaclass=MachinesType):
+    """The set of machines stored in MAAS."""
 
 
-class NodeType(ObjectType):
+class MachineType(ObjectType):
 
     def read(cls, system_id):
         data = cls._handler.read(system_id=system_id)
         return cls(data)
 
 
-class Node(Object, metaclass=NodeType):
-    """A node stored in MAAS."""
+class Machine(Object, metaclass=MachineType):
+    """A machine stored in MAAS."""
 
     architecture = ObjectField.Checked(
         "architecture", check_optional(str), check_optional(str))
     boot_disk = ObjectField.Checked(
         "boot_disk", check_optional(str), check_optional(str))
-
-    # boot_type
-
     cpus = ObjectField.Checked(
         "cpu_count", check(int), check(int))
     disable_ipv4 = ObjectField.Checked(
@@ -130,7 +125,6 @@ class Node(Object, metaclass=NodeType):
     power_state = ObjectField.Checked(
         "power_state", check(str), readonly=True)
 
-    # power_state
     # power_type
     # pxe_mac
     # resource_uri
@@ -138,31 +132,33 @@ class Node(Object, metaclass=NodeType):
     # status
     # storage
 
-    substatus = ObjectField.Checked(
-        "substatus", check(int), readonly=True)
-    substatus_action = ObjectField.Checked(
+    status = ObjectField.Checked(
+        "status", check(int), readonly=True)
+    status_action = ObjectField.Checked(
         "substatus_action", check_optional(str), readonly=True)
-    substatus_message = ObjectField.Checked(
+    status_message = ObjectField.Checked(
         "substatus_message", check_optional(str), readonly=True)
-    substatus_name = ObjectField.Checked(
+    status_name = ObjectField.Checked(
         "substatus_name", check(str), readonly=True)
 
     # swap_size
 
     system_id = ObjectField.Checked(
         "system_id", check(str), readonly=True)
+    tags = ObjectField.Checked(
+        "tag_names", check(List[str]), readonly=True)
 
-    # system_id
-    # tag_names
     # virtualblockdevice_set
-    # zone
+
+    zone = zones.ZoneField(
+        "zone", readonly=True)
 
     def start(
             self, user_data: Union[bytes, str]=None, distro_series: str=None,
             hwe_kernel: str=None, comment: str=None):
-        """Start this node.
+        """Start this machine.
 
-        :param user_data: User-data to provide to the node when booting. If
+        :param user_data: User-data to provide to the machine when booting. If
             provided as a byte string, it will be base-64 encoded prior to
             transmission. If provided as a Unicode string it will be assumed
             to be already base-64 encoded.
@@ -196,5 +192,5 @@ class Node(Object, metaclass=NodeType):
         return type(self)(data)
 
     def __repr__(self):
-        return super(Node, self).__repr__(
+        return super(Machine, self).__repr__(
             fields={"system_id", "hostname"})

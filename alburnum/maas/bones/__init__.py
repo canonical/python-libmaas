@@ -208,9 +208,10 @@ class HandlerAPI:
 
     @property
     def actions(self):
-        for name, value in vars(self).items():
-            if not name.startswith("_") and isinstance(value, ActionAPI):
-                yield name, value
+        return [
+            (name, value) for name, value in vars(self).items()
+            if not name.startswith("_") and isinstance(value, ActionAPI)
+        ]
 
     def __repr__(self):
         return "<Handler %s %s>" % (self.name, self.uri)
