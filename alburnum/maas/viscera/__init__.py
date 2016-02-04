@@ -580,6 +580,7 @@ class Origin(OriginBase, metaclass=OriginType):
             ".devices",
             ".events",
             ".files",
+            ".maas",
             ".machines",
             ".tags",
             ".users",
