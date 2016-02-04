@@ -360,7 +360,13 @@ class MAASType(ObjectType):
                 setter(value)
             except CallError as error:
                 print(error)
-                print(error.content.decode("utf-8"))
+                print(error.content.decode("utf-8", "replace"))
+            else:
+                value2 = getter()
+                if value2 != value:
+                    print(
+                        "!!! Round-trip failed:", repr(value),
+                        "-->", repr(value2))
 
         getters_without_setters = set(getters).difference(setters)
         if getters_without_setters:
