@@ -54,9 +54,9 @@ def parse_headers_and_body_with_django(headers, body):
     """
     handler = MemoryFileUploadHandler()
     meta = {
-        "HTTP_CONTENT_TYPE": headers["Content-Type"],
-        "HTTP_CONTENT_LENGTH": headers["Content-Length"],
-        }
+        "CONTENT_TYPE": headers["Content-Type"],
+        "CONTENT_LENGTH": headers["Content-Length"],
+    }
     parser = MultiPartParser(
         META=meta, input_data=BytesIO(body),
         upload_handlers=[handler])
