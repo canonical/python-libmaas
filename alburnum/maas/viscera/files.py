@@ -7,7 +7,6 @@ __all__ = [
 
 from . import (
     check,
-    Disabled,
     Object,
     ObjectField,
     ObjectSet,
@@ -19,12 +18,10 @@ class FilesType(ObjectType):
     """Metaclass for `Files`."""
 
     def __iter__(cls):
-        return map(cls._object, cls._handler.list())
+        return map(cls._object, cls._handler.read())
 
     def read(cls):
         return cls(cls)
-
-    list = Disabled("list", "read")  # API is malformed in MAAS server.
 
 
 class Files(ObjectSet, metaclass=FilesType):

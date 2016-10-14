@@ -8,7 +8,6 @@ __all__ = [
 from . import (
     check,
     check_optional,
-    Disabled,
     Object,
     ObjectField,
     ObjectSet,
@@ -20,7 +19,7 @@ class TagsType(ObjectType):
     """Metaclass for `Tags`."""
 
     def __iter__(cls):
-        return map(cls._object, cls._handler.list())
+        return map(cls._object, cls._handler.read())
 
     def create(cls, name, *, comment="", definition="", kernel_opts=""):
         data = cls._handler.new(
@@ -28,12 +27,8 @@ class TagsType(ObjectType):
             kernel_opts=kernel_opts)
         return cls._object(data)
 
-    new = Disabled("new", "create")  # API is malformed in MAAS server.
-
     def read(cls):
         return cls(cls)
-
-    list = Disabled("list", "read")  # API is malformed in MAAS server.
 
 
 class Tags(ObjectSet, metaclass=TagsType):

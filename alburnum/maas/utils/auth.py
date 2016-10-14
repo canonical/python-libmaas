@@ -66,9 +66,10 @@ def obtain_token(url, username, password, *, insecure=False):
 
         # Extract the CSRF token.
         login_doc = bs4.BeautifulSoup(response.content, "html.parser")
-        login = login_doc.find('form', {"class": "login"})
+        login_button = login_doc.find('input', value="Login")
+        login_form = login_button.findParent("form")
         login_data = {
-            elem["name"]: elem["value"] for elem in login("input")
+            elem["name"]: elem["value"] for elem in login_form("input")
             if elem.has_attr("name") and elem.has_attr("value")
         }
         login_data["username"] = username

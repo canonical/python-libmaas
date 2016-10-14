@@ -31,7 +31,7 @@ class cmd_login_base(Command):
     def __init__(self, parser):
         super(cmd_login_base, self).__init__(parser)
         parser.add_argument(
-            "profile", metavar="profile-name", help=(
+            "profile_name", metavar="profile-name", help=(
                 "The name with which you will later refer to this remote "
                 "server and credentials within this tool."
                 ))
@@ -147,7 +147,7 @@ class cmd_add(cmd_login_base):
             description=session.description)
         with profiles.ProfileStore.open() as config:
             config.save(profile)
-            config.default = profile.name
+            config.default = profile
 
         self.print_whats_next(profile)
 
@@ -162,8 +162,8 @@ class cmd_remove(Command):
     def __init__(self, parser):
         super(cmd_remove, self).__init__(parser)
         parser.add_argument(
-            "profile_name", metavar="profile-name", nargs="?",
-            choices=PROFILE_NAMES, help=(
+            "profile_name", metavar="profile-name",
+            nargs="?", choices=PROFILE_NAMES, help=(
                 "The name with which a remote server and its "
                 "credentials are referred to within this tool." +
                 ("" if PROFILE_DEFAULT is None else " [default: %(default)s]")

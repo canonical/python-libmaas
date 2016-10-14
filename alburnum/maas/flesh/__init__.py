@@ -181,8 +181,9 @@ class OriginCommandBase(Command):
     def __init__(self, parser):
         super(OriginCommandBase, self).__init__(parser)
         parser.other.add_argument(
-            "--profile", metavar="NAME", choices=PROFILE_NAMES,
-            required=(PROFILE_DEFAULT is None), help=(
+            "--profile", dest="profile_name", metavar="NAME",
+            choices=PROFILE_NAMES, required=(PROFILE_DEFAULT is None),
+            help=(
                 "The name of the remote MAAS instance to use. Use "
                 "`profiles list` to obtain a list of valid profiles." +
                 ("" if PROFILE_DEFAULT is None else " [default: %(default)s]")
