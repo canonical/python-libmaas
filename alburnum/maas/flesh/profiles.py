@@ -5,7 +5,6 @@ __all__ = [
 ]
 
 import sys
-from textwrap import fill
 
 from . import (
     colorized,
@@ -56,7 +55,7 @@ class cmd_login_base(Command):
             ]
         for message in what_next:
             message = message.format(profile=profile)
-            print(colorized(fill(message)))
+            print(colorized(message))
             print()
 
 
