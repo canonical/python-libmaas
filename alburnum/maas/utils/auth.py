@@ -84,10 +84,14 @@ def obtain_token(url, username, password, *, insecure=False):
         response.raise_for_status()
 
         # Request a new API token.
-        response = session.post(
-            url_token, {"op": "create_authorisation_token"},
-            headers={"Accept": "application/json"},
-        )
+        create_data = {
+            "csrfmiddlewaretoken": session.cookies["csrftoken"],
+            "op": "create_authorisation_token",
+        }
+        create_headers = {
+            "Accept": "application/json",
+        }
+        response = session.post(url_token, create_data, create_headers)
         response.raise_for_status()
 
         # We have it!
