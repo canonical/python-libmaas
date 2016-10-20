@@ -20,6 +20,12 @@ class UsersType(ObjectType):
     def __iter__(cls):
         return map(cls._object, cls._handler.read())
 
+    def create(cls, username, email, password, *, is_superuser=False):
+        data = cls._handler.create(
+            username=username, email=email, password=password,
+            is_superuser='1' if is_superuser else '0')
+        return cls._object(data)
+
 
 class Users(ObjectSet, metaclass=UsersType):
     """The set of users."""
