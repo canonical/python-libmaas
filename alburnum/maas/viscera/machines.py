@@ -135,11 +135,11 @@ class Machine(Object, metaclass=MachineType):
     status = ObjectField.Checked(
         "status", check(int), readonly=True)
     status_action = ObjectField.Checked(
-        "substatus_action", check_optional(str), readonly=True)
+        "status_action", check_optional(str), readonly=True)
     status_message = ObjectField.Checked(
-        "substatus_message", check_optional(str), readonly=True)
+        "status_message", check_optional(str), readonly=True)
     status_name = ObjectField.Checked(
-        "substatus_name", check(str), readonly=True)
+        "status_name", check(str), readonly=True)
 
     # swap_size
 
