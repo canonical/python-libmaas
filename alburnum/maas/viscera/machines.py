@@ -35,7 +35,7 @@ class MachinesType(ObjectType):
     def read(cls):
         return cls(cls)
 
-    def acquire(
+    def allocate(
             cls, *, hostname: str=None, architecture: str=None,
             cpus: int=None, memory: float=None, tags: Sequence[str]=None):
         """
@@ -63,7 +63,7 @@ class MachinesType(ObjectType):
                 tag[1:] for tag in tags if tag.startswith("-")]
 
         try:
-            data = cls._handler.acquire(**params)
+            data = cls._handler.allocate(**params)
         except CallError as error:
             if error.status == HTTPStatus.CONFLICT:
                 message = "No machine matching the given criteria was found."
@@ -153,10 +153,10 @@ class Machine(Object, metaclass=MachineType):
     zone = zones.ZoneField(
         "zone", readonly=True)
 
-    def start(
+    def deploy(
             self, user_data: Union[bytes, str]=None, distro_series: str=None,
             hwe_kernel: str=None, comment: str=None):
-        """Start this machine.
+        """Deploy this machine.
 
         :param user_data: User-data to provide to the machine when booting. If
             provided as a byte string, it will be base-64 encoded prior to
@@ -181,7 +181,7 @@ class Machine(Object, metaclass=MachineType):
             params["hwe_kernel"] = hwe_kernel
         if comment is not None:
             params["comment"] = comment
-        data = self._handler.start(**params)
+        data = self._handler.deploy(**params)
         return type(self)(data)
 
     def release(self, comment: str=None):

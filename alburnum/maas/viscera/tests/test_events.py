@@ -19,19 +19,14 @@ from alburnum.maas.testing import (
     randrange,
     TestCase,
 )
+from alburnum.maas.viscera.testing import bind
+
 from testtools.matchers import (
     Equals,
     IsInstance,
 )
 
 from .. import events
-
-
-def bind(cls, origin=None, handler=None):
-    return cls.bind(
-        (MagicMock() if origin is None else origin),
-        (MagicMock() if handler is None else handler),
-    )
 
 
 event_ids = count(1)
