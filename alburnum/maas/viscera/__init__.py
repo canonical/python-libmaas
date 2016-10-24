@@ -25,12 +25,14 @@ from collections import (
     Sequence,
 )
 from copy import copy
+from datetime import datetime
 from functools import wraps
 from importlib import import_module
 from itertools import (
     chain,
     starmap,
 )
+import pytz
 from types import MethodType
 from typing import Optional
 
@@ -500,6 +502,11 @@ def check_optional(expected):
     return check(Optional[expected])
 
 
+def parse_timestamp(created):
+    created = datetime.strptime(created, "%Y-%m-%dT%H:%M:%S.%f")
+    return created.replace(tzinfo=pytz.UTC)
+
+
 #
 # Now it's possible to define the default Origin, which uses a predefined set
 # of specialised objects. Most people should use this.
@@ -578,6 +585,7 @@ class Origin(OriginBase, metaclass=OriginType):
         modules = {
             ".",
             ".account",
+            ".boot_sources",
             ".controllers",
             ".devices",
             ".events",
