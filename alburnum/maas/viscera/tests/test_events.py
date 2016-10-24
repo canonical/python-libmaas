@@ -48,16 +48,22 @@ def make_Event():
     return events.Event(make_Event_dict())
 
 
+def make_origin():
+    # Create a new origin with Events and Event. The former refers to the
+    # latter via the origin, hence why it must be bound.
+    return bind(events.Events, events.Event)
+
+
 class TestEventsQuery(TestCase):
     """Tests for `Events.query`."""
 
     def test__query_without_arguments_results_in_empty_bones_query(self):
-        obj = bind(events.Events)
+        obj = make_origin().Events
         obj.query()
         obj._handler.query.assert_called_once_with()
 
     def test__query_arguments_are_assembled_and_passed_to_bones_handler(self):
-        obj = bind(events.Events)
+        obj = make_origin().Events
         arguments = {
             "hostnames": (
                 make_name_without_spaces("hostname"),
@@ -97,20 +103,21 @@ class TestEventsQuery(TestCase):
         obj._handler.query.assert_called_once_with(**expected)
 
     def test__query_level_is_normalised(self):
+        obj = make_origin().Events
         for level in events.Level:
             for value in (level, level.name, level.value):
-                obj = bind(events.Events)
+                obj._handler.query.reset_mock()
                 obj.query(level=value)
                 obj._handler.query.assert_called_once_with(level=[level.name])
 
     def test__query_before_argument_is_passed_to_bones_handler(self):
-        obj = bind(events.Events)
+        obj = make_origin().Events
         before = random.randint(1, 1000)
         obj.query(before=before)
         obj._handler.query.assert_called_once_with(before=[str(before)])
 
     def test__query_after_argument_is_passed_to_bones_handler(self):
-        obj = bind(events.Events)
+        obj = make_origin().Events
         after = random.randint(1, 1000)
         obj.query(after=after)
         obj._handler.query.assert_called_once_with(after=[str(after)])
@@ -123,7 +130,7 @@ class TestEvents(TestCase):
     """Tests for `Events`."""
 
     def test__prev_requests_page_of_older_events(self):
-        obj = bind(events.Events)
+        obj = make_origin().Events
         evts = obj({
             "events": [],
             "prev_uri": "endpoint?before=100&limit=20&foo=abc",
@@ -135,7 +142,7 @@ class TestEvents(TestCase):
         )
 
     def test__next_requests_page_of_newer_events(self):
-        obj = bind(events.Events)
+        obj = make_origin().Events
         evts = obj({
             "events": [],
             "prev_uri": "endpoint?before=100&limit=20&foo=abc",
@@ -165,8 +172,7 @@ class TestEvents(TestCase):
                 "next_uri": "?going=forwards",
             },
         ]
-        origin = Mock(Event=events.Event)
-        obj = bind(events.Events, origin=origin)
+        obj = make_origin().Events
         obj._handler.query.side_effect = pages
         self.assertThat(
             [evt._data for evt in obj.query().forwards()],
@@ -194,8 +200,7 @@ class TestEvents(TestCase):
                 "next_uri": "?going=forwards",
             },
         ]
-        origin = Mock(Event=events.Event)
-        obj = bind(events.Events, origin=origin)
+        obj = make_origin().Events
         obj._handler.query.side_effect = pages
         self.assertThat(
             [evt._data for evt in obj.query().backwards()],
