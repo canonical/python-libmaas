@@ -57,3 +57,34 @@ class TestUsers(TestCase):
         user = Users.whoami()
         self.assertThat(user, MatchesStructure.byEquality(
             username=username, email=email, is_admin=is_admin))
+
+    def test__create_without_email(self):
+        username = make_name_without_spaces("username")
+        password = make_name_without_spaces("password")
+        email = "%s@null.maas.io" % username
+        is_admin = pick_bool()
+
+        Users = make_origin().Users
+        Users._handler.create.return_value = {
+            "username": username, "email": email, "is_superuser": is_admin}
+
+        user = Users.create(username, password, is_admin=is_admin)
+        Users._handler.create.assert_called_once_with(
+            username=username, password=password, email=email,
+            is_superuser='1' if is_admin else '0')
+
+    def test__create_with_email(self):
+        username = make_name_without_spaces("username")
+        password = make_name_without_spaces("password")
+        domain = "%s.com" % make_name_without_spaces("domain")
+        email = "%s@%s" % (username, domain)
+        is_admin = pick_bool()
+
+        Users = make_origin().Users
+        Users._handler.create.return_value = {
+            "username": username, "email": email, "is_superuser": is_admin}
+
+        user = Users.create(username, password, email=email, is_admin=is_admin)
+        Users._handler.create.assert_called_once_with(
+            username=username, password=password, email=email,
+            is_superuser='1' if is_admin else '0')

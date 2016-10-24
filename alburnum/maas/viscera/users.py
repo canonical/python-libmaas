@@ -25,6 +25,13 @@ class UsersType(ObjectType):
         data = cls._handler.whoami()
         return cls._object(data)
 
+    def create(cls, username, password, *, email=None, is_admin=False):
+        if email is None:
+            email = "%s@null.maas.io" % username
+        data = cls._handler.create(
+            username=username, email=email, password=password,
+            is_superuser='1' if is_admin else '0')
+
 
 class Users(ObjectSet, metaclass=UsersType):
     """The set of users."""
