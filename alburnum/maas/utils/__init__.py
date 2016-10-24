@@ -104,13 +104,14 @@ def prepare_payload(op, method, uri, data):
             return fd.read()
 
     if method == "GET":
+        headers, body = [], None
         query.extend(
             (name, slurp(value) if callable(value) else value)
             for name, value in data)
-        body, headers = None, []
     else:
-        if data is None or len(data) == 0:
-            body, headers = None, []
+        data = list(data)
+        if len(data) == 0:
+            headers, body = [], None
         else:
             message = build_multipart_message(data)
             headers, body = encode_multipart_message(message)

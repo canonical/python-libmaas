@@ -190,10 +190,11 @@ class TestPayloadPreparation(TestCase):
         build_multipart.return_value = sentinel.message
         encode_multipart = self.patch(utils, "encode_multipart_message")
         encode_multipart.return_value = sentinel.headers, sentinel.body
-        # The payload returned is a 3-tuple of (uri, body, headers).
+        # The payload returned is a 3-tuple of (uri, body, headers). Pass
+        # `data` as an iterator to ensure that it works with non-sized types.
         payload = utils.prepare_payload(
             op=self.op, method=self.method,
-            uri=self.uri_base, data=self.data)
+            uri=self.uri_base, data=iter(self.data))
         expected = (
             Equals(self.expected_uri),
             Equals(self.expected_body),
