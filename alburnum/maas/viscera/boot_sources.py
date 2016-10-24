@@ -24,9 +24,12 @@ class BootSourcesType(ObjectType):
 
     def create(cls, url, *, keyring_filename=None, keyring_data=None):
         """Create a new `BootSource`."""
-        if keyring_filename is None and keyring_data is None:
+        if (not url.endswith(".json") and
+                keyring_filename is None and
+                keyring_data is None):
             raise ValueError(
-                "Either keyring_filename and keyring_data must be set.")
+                "Either keyring_filename and keyring_data must be set when "
+                "providing a signed source.")
         data = cls._handler.create(
             url=url,
             keyring_filename=(
@@ -68,6 +71,10 @@ class BootSource(Object, metaclass=BootSourceType):
         "created", parse_timestamp, readonly=True)
     updated = ObjectField.Checked(
         "updated", parse_timestamp, readonly=True)
+
+    def __repr__(self):
+        return super(BootSource, self).__repr__(
+            fields={"url", "keyring_filename", "keyring_data"})
 
     def delete(self):
         """Delete boot source."""

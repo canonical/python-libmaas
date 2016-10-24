@@ -407,7 +407,7 @@ class CallAPI:
 
         # Bundle things up ready to throw over the wire.
         uri, body, headers = utils.prepare_payload(
-            self.action.op, self.action.method, self.uri, dict(data))
+            self.action.op, self.action.method, self.uri, data)
 
         # Headers are returned as a list, but they must be a dict for
         # the signing machinery.
