@@ -55,9 +55,6 @@ class TestBootSourceSelection(TestCase):
             "os=%(os)r release=%(release)r subarches=%(subarches)r>" % (
                 selection._data)))
 
-
-class TestBootSourceSelection(TestCase):
-
     def test__read_raises_TypeError_when_no_BootSource(self):
         BootSourceSelection = make_origin().BootSourceSelection
         self.assertRaises(
