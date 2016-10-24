@@ -2,16 +2,15 @@
 
 Python client API library made especially for [MAAS][1].
 
-This was begun by a core MAAS developer (Gavin Panella, as
-[Alburnum Ltd](http://alburnum.io/)) on his own time, but is now
-maintained by the core MAAS team. It is licensed under the GNU Affero
-GPLv3, the same as MAAS itself.
+This was begun by a core MAAS developer, Gavin Panella, on his own time,
+but is now maintained by the core MAAS team at Canonical. It is licensed
+under the GNU Affero GPLv3, the same as MAAS itself.
 
 [![Build Status](https://travis-ci.org/alburnum/alburnum-maas-client.svg?branch=master)](https://travis-ci.org/alburnum/alburnum-maas-client)
 [![codecov.io](https://codecov.io/github/alburnum/alburnum-maas-client/coverage.svg?branch=master)](https://codecov.io/github/alburnum/alburnum-maas-client?branch=master)
 
 Some of the code in here has come from MAAS, upon which Canonical Ltd
-have the copyright. Alburnum Ltd licenses its parts under the AGPLv3,
+has the copyright. Gavin Panella licenses his parts under the AGPLv3,
 and MAAS is also under the AGPLv3, so everything should be good.
 
 

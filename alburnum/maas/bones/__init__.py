@@ -309,7 +309,11 @@ class CallError(Exception):
     def __init__(self, request, response, content, call):
         desc_for_request = "%(method)s %(uri)s" % request
         desc_for_response = "HTTP %s %s" % (response.status, response.reason)
-        desc = "%s -> %s" % (desc_for_request, desc_for_response)
+        desc_for_content = content.decode("utf-8", "replace")
+        desc = "%s -> %s (%s)" % (
+            desc_for_request, desc_for_response,
+            desc_for_content if len(desc_for_content) <= 50 else (
+                desc_for_content[:49] + "…"))
         super(CallError, self).__init__(desc)
         self.request = request
         self.response = response

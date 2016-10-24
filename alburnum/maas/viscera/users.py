@@ -20,6 +20,11 @@ class UsersType(ObjectType):
     def __iter__(cls):
         return map(cls._object, cls._handler.read())
 
+    def whoami(cls):
+        """Get the logged-in user."""
+        data = cls._handler.whoami()
+        return cls._object(data)
+
 
 class Users(ObjectSet, metaclass=UsersType):
     """The set of users."""
@@ -38,3 +43,11 @@ class User(Object):
         "email", check(str), check(str))
     is_admin = ObjectField.Checked(
         "is_superuser", check(bool), check(bool))
+
+    def __repr__(self):
+        if self.is_admin:
+            return super(User, self).__repr__(
+                name="Admin", fields={"username"})
+        else:
+            return super(User, self).__repr__(
+                name="User", fields={"username"})
