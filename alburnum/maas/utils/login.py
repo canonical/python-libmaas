@@ -37,7 +37,7 @@ class UsernameWithoutPassword(LoginError):
     """A user-name was provided without a corresponding password."""
 
 
-def login(url, *, username=None, password=None, insecure=False):
+def login(url, *, apikey=None, username=None, password=None, insecure=False):
     """Log-in to a remote MAAS instance.
 
     Returns a new :class:`Profile` which has NOT been saved. To log-in AND
@@ -79,19 +79,22 @@ def login(url, *, username=None, password=None, insecure=False):
     userinfo, _, hostinfo = url.netloc.rpartition("@")
     url = url._replace(netloc=hostinfo)
 
-    if username is None:
-        if password is None or len(password) == 0:
-            credentials = None  # Anonymous.
+    if apikey is None:
+        if username is None:
+            if password is None or len(password) == 0:
+                credentials = None  # Anonymous.
+            else:
+                raise PasswordWithoutUsername(
+                    "Password provided without user-name; specify user-name.")
         else:
-            raise PasswordWithoutUsername(
-                "Password provided without user-name; specify user-name.")
+            if password is None:
+                raise UsernameWithoutPassword(
+                    "User-name provided without password; specify password.")
+            else:
+                credentials = obtain_token(
+                    url.geturl(), username, password, insecure=insecure)
     else:
-        if password is None:
-            raise UsernameWithoutPassword(
-                "User-name provided without password; specify password.")
-        else:
-            credentials = obtain_token(
-                url.geturl(), username, password, insecure=insecure)
+        credentials = Credentials.parse(apikey)
 
     # Return a new (unsaved) profile.
     return Profile(

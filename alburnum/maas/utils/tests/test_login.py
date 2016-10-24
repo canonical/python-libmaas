@@ -57,6 +57,19 @@ class TestLogin(TestCase):
         self.assertThat(profile, IsInstance(profiles.Profile))
         self.assertThat(profile.credentials, Is(credentials))
 
+    def test__authenticated_when_apikey_provided(self):
+        credentials = make_credentials()
+        # Log-in with an apikey.
+        profile = login.login(
+            "http://example.org:5240/MAAS/", apikey=str(credentials))
+        # The description was fetched.
+        login.fetch_api_description.assert_called_once_with(
+            urlparse("http://example.org:5240/MAAS/api/2.0/"),
+            credentials, False)
+        # A Profile instance was returned with the expected credentials.
+        self.assertThat(profile, IsInstance(profiles.Profile))
+        self.assertThat(profile.credentials, Equals(credentials))
+
     def test__complains_when_username_but_not_password(self):
         self.assertRaises(
             login.UsernameWithoutPassword, login.login,

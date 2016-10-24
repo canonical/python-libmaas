@@ -554,15 +554,18 @@ class OriginType(type):
         session = bones.SessionAPI.fromProfileName(name)
         return cls(session)
 
-    def login(cls, url, *, username=None, password=None, insecure=False):
-        """Make an `Origin` by logging-in with a username and password.
+    def login(
+            cls, url, *, apikey=None, username=None, password=None,
+            insecure=False):
+        """Make an `Origin` by logging-in with an apikey or username and
+        password.
 
         :return: A tuple of ``profile`` and ``origin``, where the former is an
             unsaved `Profile` instance, and the latter is an `Origin` instance
             made using the profile.
         """
         profile, session = bones.SessionAPI.login(
-            url=url, username=username, password=password,
+            url=url, apikey=apikey, username=username, password=password,
             insecure=insecure)
         return profile, cls(session)
 
