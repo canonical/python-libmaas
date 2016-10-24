@@ -19,7 +19,6 @@ from urllib.parse import (
 )
 
 from . import api_url
-from .. import bones
 from .auth import obtain_token
 from .creds import Credentials
 from .profiles import Profile
@@ -105,6 +104,8 @@ def fetch_api_description(
         url: ParseResult, credentials: Optional[Credentials],
         insecure: bool):
     """Fetch the API description from the remote MAAS instance."""
+    # Circular import.
+    from .. import bones
     session = bones.SessionAPI.fromURL(
         url.geturl(), credentials=credentials, insecure=insecure)
     return session.description
