@@ -16,6 +16,12 @@ from testtools.matchers import Equals
 from .. import machines
 
 
+def make_origin():
+    # Create a new origin with Machines and Machine. The former refers to the
+    # latter via the origin, hence why it must be bound.
+    return bind(machines.Machines, machines.Machine)
+
+
 class TestMachine(TestCase):
 
     def test__string_representation_includes_only_system_id_and_hostname(self):
@@ -28,7 +34,7 @@ class TestMachine(TestCase):
             % machine._data))
 
     def test__deploy(self):
-        Machine = bind(machines.Machine)
+        Machine = make_origin().Machine
         Machine._handler.deploy.return_value = {}
         machine = Machine({
             "system_id": make_name_without_spaces("system-id"),
@@ -48,7 +54,7 @@ class TestMachine(TestCase):
 class TestMachines(TestCase):
 
     def test__allocate(self):
-        Machines = bind(machines.Machines)
+        Machines = make_origin().Machines
         Machines._handler.allocate.return_value = {}
         hostname = make_name_without_spaces("hostname")
         Machines.allocate(
