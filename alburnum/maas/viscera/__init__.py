@@ -186,7 +186,9 @@ class Object(ObjectBasics, metaclass=ObjectType):
                 "data must be a mapping, not %s"
                 % type(data).__name__)
 
-    def __repr__(self, *, fields=None):
+    def __repr__(self, *, name=None, fields=None):
+        if name is None:
+            name = self.__class__.__name__
         if fields is None:
             fields = sorted(
                 name for name, value in vars_class(type(self)).items()
@@ -197,9 +199,9 @@ class Object(ObjectBasics, metaclass=ObjectType):
         pairs = starmap("{0}={1!r}".format, zip(fields, values))
         desc = " ".join(pairs)
         if len(desc) == 0:
-            return "<%s>" % (self.__class__.__name__, )
+            return "<%s>" % (name, )
         else:
-            return "<%s %s>" % (self.__class__.__name__, desc)
+            return "<%s %s>" % (name, desc)
 
 
 class ObjectSet(ObjectBasics, metaclass=ObjectType):
