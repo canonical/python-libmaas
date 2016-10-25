@@ -92,7 +92,7 @@ class SessionAPI:
 
     @classmethod
     def connect(
-            cls, url, apikey, *, insecure=False):
+            cls, url, *, apikey=None, insecure=False):
         """Make a `SessionAPI` by connecting with an apikey.
 
         :return: A tuple of ``profile`` and ``session``, where the former is

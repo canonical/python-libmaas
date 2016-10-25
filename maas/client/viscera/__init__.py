@@ -573,7 +573,7 @@ class OriginType(type):
         return profile, cls(session)
 
     def login(
-            cls, url, apikey, *, insecure=False):
+            cls, url, *, apikey=None, insecure=False):
         """Make an `Origin` by connecting with an apikey.
 
         :return: A tuple of ``profile`` and ``origin``, where the former is an
