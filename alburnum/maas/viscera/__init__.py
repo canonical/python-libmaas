@@ -585,6 +585,7 @@ class Origin(OriginBase, metaclass=OriginType):
         modules = {
             ".",
             ".account",
+            ".boot_resources",
             ".boot_sources",
             ".controllers",
             ".devices",
