@@ -1,9 +1,4 @@
-"""Logging-in to a remote MAAS instance with a user-name and password.
-
-Instead of copy-and-pasting API keys, this allows clients to log-in using
-their user-name and password, and automatically retrieve an API key. These
-credentials can then be saved with the profile manager.
-"""
+"""Connect to a remote MAAS instance with an apikey."""
 
 __all__ = [
     "connect",
