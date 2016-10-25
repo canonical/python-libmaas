@@ -74,9 +74,20 @@ class BootResources(ObjectSet, metaclass=BootResourcesType):
     """The set of boot resources."""
 
     @classmethod
-    def read(cls):
-        """Get list of `BootResource`'s."""
-        return cls(cls)
+    def read(cls, *, full=False):
+        """Get list of `BootResource`'s.
+
+        :param full: Load all content on the read. Default `sets` are not
+            loaded.
+        :type full: bool
+        """
+        if full:
+            return cls([
+                cls._object(cls._object._handler.read(id=data['id']))
+                for data in cls._handler.read()
+            ])
+        else:
+            return cls(cls)
 
 
 class BootResourceType(ObjectType):
