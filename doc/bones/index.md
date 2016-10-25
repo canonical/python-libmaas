@@ -14,7 +14,7 @@ _bones_ behind the scenes).
 from http import HTTPStatus
 from pprint import pprint
 
-from alburnum.maas import bones
+from maas.client import bones
 
 
 profile, session = bones.SessionAPI.login(

@@ -8,7 +8,7 @@
 
 from pprint import pprint
 
-from alburnum.maas import viscera
+from maas.client import viscera
 
 
 profile, origin = viscera.Origin.login(

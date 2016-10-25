@@ -21,9 +21,10 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Topic :: Software Development :: Libraries',
     ],
+    namespace_packages = ['maas'],
     packages=find_packages(),
     package_data={
-        'alburnum.maas.bones.tests': ['*.json'],
+        'maas.client.bones.tests': ['*.json'],
     },
     install_requires={
         "argcomplete >= 1.0",
@@ -36,7 +37,7 @@ setup(
         "requests >= 2.9.1",
         "terminaltables >= 2.1.0",
     },
-    test_suite="alburnum.maas",
+    test_suite="maas.client",
     tests_require={
         "django >= 1.6",
         "fixtures >= 1.0.0",
@@ -48,7 +49,7 @@ setup(
     description="A client API library specially for MAAS.",
     entry_points={
         "console_scripts": {
-            "maas = alburnum.maas.flesh:main",
+            "maas = maas.client.flesh:main",
         },
     },
 )
