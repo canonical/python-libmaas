@@ -76,7 +76,8 @@ class SessionAPI:
             return cls.fromProfile(config.load(name))
 
     @classmethod
-    def login(cls, url, *, username=None, password=None, insecure=False):
+    def login(
+            cls, url, *, username=None, password=None, insecure=False):
         """Make a `SessionAPI` by logging-in with a username and password.
 
         :return: A tuple of ``profile`` and ``session``, where the former is
@@ -84,8 +85,22 @@ class SessionAPI:
             instance made using the profile.
         """
         profile = login(
-            url=url, username=username, password=password,
-            insecure=insecure)
+            url=url, username=username, password=password, insecure=insecure)
+        session = cls(profile.description, profile.credentials)
+        session.insecure = insecure
+        return profile, session
+
+    @classmethod
+    def connect(
+            cls, url, *, apikey=None, insecure=False):
+        """Make a `SessionAPI` by connecting with an apikey.
+
+        :return: A tuple of ``profile`` and ``session``, where the former is
+            an unsaved `Profile` instance, and the latter is a `SessionAPI`
+            instance made using the profile.
+        """
+        profile = connect(
+            url=url, apikey=apikey, insecure=insecure)
         session = cls(profile.description, profile.credentials)
         session.insecure = insecure
         return profile, session
