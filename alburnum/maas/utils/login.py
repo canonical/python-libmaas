@@ -37,7 +37,7 @@ class UsernameWithoutPassword(LoginError):
     """A user-name was provided without a corresponding password."""
 
 
-def login(url, *, apikey=None, username=None, password=None, insecure=False):
+def login(url, *, username=None, password=None, insecure=False):
     """Log-in to a remote MAAS instance.
 
     Returns a new :class:`Profile` which has NOT been saved. To log-in AND
@@ -79,24 +79,55 @@ def login(url, *, apikey=None, username=None, password=None, insecure=False):
     userinfo, _, hostinfo = url.netloc.rpartition("@")
     url = url._replace(netloc=hostinfo)
 
-    if apikey is None:
-        if username is None:
-            if password is None or len(password) == 0:
-                credentials = None  # Anonymous.
-            else:
-                raise PasswordWithoutUsername(
-                    "Password provided without user-name; specify user-name.")
+    if username is None:
+        if password is None or len(password) == 0:
+            credentials = None  # Anonymous.
         else:
-            if password is None:
-                raise UsernameWithoutPassword(
-                    "User-name provided without password; specify password.")
-            else:
-                credentials = obtain_token(
-                    url.geturl(), username, password, insecure=insecure)
+            raise PasswordWithoutUsername(
+                "Password provided without user-name; specify user-name.")
     else:
-        credentials = Credentials.parse(apikey)
+        if password is None:
+            raise UsernameWithoutPassword(
+                "User-name provided without password; specify password.")
+        else:
+            credentials = obtain_token(
+                url.geturl(), username, password, insecure=insecure)
 
     # Return a new (unsaved) profile.
+    return Profile(
+        name=url.netloc, url=url.geturl(), credentials=credentials,
+        description=fetch_api_description(url, credentials, insecure))
+
+
+def connect(url, apikey, *, insecure=False):
+    """Connect to a remote MAAS instance with `apikey`.
+
+    Returns a new :class:`Profile` which has NOT been saved. To connect AND
+    save a new profile::
+
+        profile = connect(url, apikey)
+        profile = profile.replace(name="mad-hatter")
+
+        with profiles.ProfileStore.open() as config:
+            config.save(profile)
+            # Optionally, set it as the default.
+            config.default = profile.name
+
+    """
+    url = api_url(url)
+    url = urlparse(url)
+
+    if url.username is not None:
+        raise LoginError(
+            "Cannot provide user-name explicitly in URL (%r) when connecting "
+            "with APIKEY." % url.username)
+    if url.password is not None:
+        raise LoginError(
+            "Cannot provide password explicitly in URL (%r) when connecting "
+            "with APIKEY." % url.username)
+
+    # Return a new (unsaved) profile.
+    credentials = Credentials.parse(apikey)
     return Profile(
         name=url.netloc, url=url.geturl(), credentials=credentials,
         description=fetch_api_description(url, credentials, insecure))
