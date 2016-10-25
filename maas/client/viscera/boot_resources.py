@@ -181,12 +181,13 @@ class BootResources(ObjectSet, metaclass=BootResourcesType):
             return resource
         else:
             # Upload in chunks and reload boot resource.
-            cls._upload_chunk(rfile, content, chunk_size)
+            cls._upload_chunks(rfile, content, chunk_size)
             return cls._object.read(resource.id)
 
     @classmethod
-    def _upload_chunk(
+    def _upload_chunks(
             cls, rfile: BootResourceFile, content: io.IOBase, chunk_size: int):
+        """Upload the `content` to `rfile` in chunks using `chunk_size`."""
         content.seek(0, io.SEEK_SET)
         upload_uri = "%s%s" % (
             cls._handler.uri[:len(cls._handler.uri)-len(cls._handler.path)],
@@ -201,6 +202,7 @@ class BootResources(ObjectSet, metaclass=BootResourcesType):
 
     @classmethod
     def _put_chunk(cls, upload_uri: str, buf: bytes):
+        """Upload one chunk to `upload_uri`."""
         # Build the correct headers.
         headers = {
             'Content-Type': 'application/octet-stream',
