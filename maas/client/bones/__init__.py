@@ -23,6 +23,7 @@ import httplib2
 
 from .. import utils
 from ..utils import profiles
+from ..utils.connect import connect
 from ..utils.login import login
 
 
