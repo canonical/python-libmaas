@@ -494,12 +494,6 @@ class TestObjectField(TestCase):
         class AliceField(ObjectField):
             """Another most peculiar field."""
 
-            def datum_to_value(self, instance, datum):
-                raise AssertionError("datum_to_value")
-
-            def value_to_datum(self, instance, value):
-                raise AssertionError("value_to_datum")
-
         class Example(Object):
             alice = AliceField("alice", default=sentinel.alice_default)
 

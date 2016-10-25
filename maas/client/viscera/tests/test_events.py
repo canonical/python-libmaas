@@ -43,10 +43,6 @@ def make_Event_dict():
     }
 
 
-def make_Event():
-    return events.Event(make_Event_dict())
-
-
 def make_origin():
     # Create a new origin with Events and Event. The former refers to the
     # latter via the origin, hence why it must be bound.

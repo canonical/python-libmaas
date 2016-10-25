@@ -25,15 +25,6 @@ def make_credentials():
         )
 
 
-def make_options():
-    credentials = make_credentials()
-    url = 'http://example.com/api/2.0/'
-    options = Namespace(
-        credentials=str(credentials), execute=None, insecure=False,
-        profile_name='test', url=url)
-    return options
-
-
 class TestAuth(TestCase):
 
     def test_try_getpass(self):

@@ -38,9 +38,6 @@ class TestBootSource(TestCase):
             "keyring_filename=%(keyring_filename)r url=%(url)r>" % (
                 source._data)))
 
-
-class TestBootSource(TestCase):
-
     def test__read(self):
         source_id = random.randint(0, 100)
         url = "http://images.maas.io/ephemeral-v3/daily/"
