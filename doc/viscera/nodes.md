@@ -38,7 +38,7 @@ __TODO__: Updating nodes.
 >>> help(origin.Nodes.acquire)
 acquire(*, hostname:str=None, architecture:str=None, cpus:int=None,
         memory:float=None, tags:typing.Sequence=None) method of
-            alburnum.maas.viscera.NodesType instance
+            maas.client.viscera.NodesType instance
     :param hostname: The hostname to match.
     :param architecture: The architecture to match, e.g. "amd64".
     :param cpus: The minimum number of CPUs to match.
