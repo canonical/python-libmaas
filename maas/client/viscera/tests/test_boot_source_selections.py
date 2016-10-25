@@ -4,12 +4,6 @@ __all__ = []
 
 import random
 
-from alburnum.maas.testing import (
-    make_name_without_spaces,
-    pick_bool,
-    TestCase,
-)
-from alburnum.maas.viscera.testing import bind
 from testtools.matchers import (
     Equals,
     MatchesStructure,
@@ -17,6 +11,12 @@ from testtools.matchers import (
 
 from .. import boot_sources
 from .. import boot_source_selections
+from ..testing import bind
+from ...testing import (
+    make_name_without_spaces,
+    pick_bool,
+    TestCase,
+)
 
 
 def make_origin():
