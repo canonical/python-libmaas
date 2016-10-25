@@ -12,17 +12,14 @@ __all__ = [
     "UsernameWithoutPassword",
 ]
 
-from typing import Optional
-from urllib.parse import (
-    ParseResult,
-    urlparse,
-)
+from urllib.parse import urlparse
 
-from . import api_url
+from . import (
+    api_url,
+    fetch_api_description,
+)
 from .auth import obtain_token
-from .creds import Credentials
 from .profiles import Profile
-from .typecheck import typed
 
 
 class LoginError(Exception):
@@ -97,15 +94,3 @@ def login(url, *, username=None, password=None, insecure=False):
     return Profile(
         name=url.netloc, url=url.geturl(), credentials=credentials,
         description=fetch_api_description(url, credentials, insecure))
-
-
-@typed
-def fetch_api_description(
-        url: ParseResult, credentials: Optional[Credentials],
-        insecure: bool):
-    """Fetch the API description from the remote MAAS instance."""
-    # Circular import.
-    from .. import bones
-    session = bones.SessionAPI.fromURL(
-        url.geturl(), credentials=credentials, insecure=insecure)
-    return session.description

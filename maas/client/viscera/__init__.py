@@ -560,7 +560,8 @@ class OriginType(type):
         session = bones.SessionAPI.fromProfileName(name)
         return cls(session)
 
-    def login(cls, url, *, username=None, password=None, insecure=False):
+    def login(
+            cls, url, *, username=None, password=None, insecure=False):
         """Make an `Origin` by logging-in with a username and password.
 
         :return: A tuple of ``profile`` and ``origin``, where the former is an
@@ -568,8 +569,19 @@ class OriginType(type):
             made using the profile.
         """
         profile, session = bones.SessionAPI.login(
-            url=url, username=username, password=password,
-            insecure=insecure)
+            url=url, username=username, password=password, insecure=insecure)
+        return profile, cls(session)
+
+    def connect(
+            cls, url, *, apikey=None, insecure=False):
+        """Make an `Origin` by connecting with an apikey.
+
+        :return: A tuple of ``profile`` and ``origin``, where the former is an
+            unsaved `Profile` instance, and the latter is an `Origin` instance
+            made using the profile.
+        """
+        profile, session = bones.SessionAPI.connect(
+            url=url, apikey=apikey, insecure=insecure)
         return profile, cls(session)
 
     def __dir__(cls):
