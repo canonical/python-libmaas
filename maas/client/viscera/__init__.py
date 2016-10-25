@@ -513,6 +513,20 @@ def parse_timestamp(created):
     return created.replace(tzinfo=pytz.UTC)
 
 
+def mapping_of(cls):
+    """Expects a mapping from some key to data for `cls` instances."""
+    def mapper(data):
+        if not isinstance(data, Mapping):
+            raise TypeError(
+                "data must be a mapping, not %s"
+                % type(data).__name__)
+        return {
+            key: cls(value)
+            for key, value in data.items()
+        }
+    return mapper
+
+
 #
 # Now it's possible to define the default Origin, which uses a predefined set
 # of specialised objects. Most people should use this.
