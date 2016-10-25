@@ -103,6 +103,17 @@ class BootResources(ObjectSet, metaclass=BootResourcesType):
         return cls(cls)
 
     @classmethod
+    def start_import(cls):
+        """Start the import of `BootResource`'s."""
+        # Cannot use cls._handler.import() as import is a reserved statement.
+        return getattr(cls._handler, "import")()
+
+    @classmethod
+    def stop_import(cls):
+        """Stop the import of `BootResource`'s."""
+        return cls._handler.stop_import()
+
+    @classmethod
     def create(
             cls, name: str, architecture: str, content: io.IOBase, *,
             title: str=None,
