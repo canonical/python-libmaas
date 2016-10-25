@@ -9,7 +9,6 @@ import enum
 import hashlib
 import httplib2
 import io
-from typing import Mapping
 
 from . import (
     check,
