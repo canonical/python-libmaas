@@ -178,7 +178,7 @@ class Object(ObjectBasics, metaclass=ObjectType):
 
     __slots__ = "__weakref__", "_data"
 
-    def __init__(self, data):
+    def __init__(self, data, local_data=None):
         super(Object, self).__init__()
         if isinstance(data, Mapping):
             self._data = data
@@ -186,6 +186,13 @@ class Object(ObjectBasics, metaclass=ObjectType):
             raise TypeError(
                 "data must be a mapping, not %s"
                 % type(data).__name__)
+        if local_data is not None:
+            if isinstance(local_data, Mapping):
+                self._data.update(local_data)
+            else:
+                raise TypeError(
+                    "local_data must be a mapping, not %s"
+                    % type(data).__name__)
 
     def __repr__(self, *, name=None, fields=None):
         if name is None:
@@ -585,6 +592,7 @@ class Origin(OriginBase, metaclass=OriginType):
             ".",
             ".account",
             ".boot_sources",
+            ".boot_source_selections",
             ".controllers",
             ".devices",
             ".events",
