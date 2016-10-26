@@ -146,22 +146,22 @@ class BootResources(ObjectSet, metaclass=BootResourcesType):
             raise TypeError("name must be a str, not %s" % type(name).__name__)
         elif '/' not in name:
             raise ValueError(
-                "name must be in format os/release; missing '/'.")
+                "name must be in format os/release; missing '/'")
         if not isinstance(architecture, str):
             raise TypeError(
                 "architecture must be a str, not %s" % (
                     type(architecture).__name__))
         elif '/' not in architecture:
             raise ValueError(
-                "architecture must be in format arch/subarch; missing '/'.")
+                "architecture must be in format arch/subarch; missing '/'")
         if not isinstance(content, io.IOBase):
             raise TypeError(
-                "content must extend from io.IOBase; %s does not." % (
+                "content must extend from io.IOBase; %s does not" % (
                     type(content).__name__))
         elif not content.readable():
-            raise ValueError("content must be readable.")
+            raise ValueError("content must be readable")
         elif not content.seekable():
-            raise ValueError("content must be seekable.")
+            raise ValueError("content must be seekable")
         if title is None:
             title = ""
         if not isinstance(title, str):
