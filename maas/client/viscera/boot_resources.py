@@ -71,7 +71,7 @@ class BootResourceSet(Object):
     complete = ObjectField.Checked(
         "complete", check(bool), readonly=True)
     files = ObjectField.Checked(
-        "files", mapping_of(BootResourceFile), default=None, readonly={})
+        "files", mapping_of(BootResourceFile), default=None, readonly=True)
 
 
 class BootResourcesType(ObjectType):
