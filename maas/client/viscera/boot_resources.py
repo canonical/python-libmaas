@@ -9,6 +9,7 @@ import enum
 import hashlib
 import httplib2
 import io
+from typing import Callable
 
 from . import (
     check,
@@ -117,7 +118,7 @@ class BootResources(ObjectSet, metaclass=BootResourcesType):
             cls, name: str, architecture: str, content: io.IOBase, *,
             title: str=None,
             filetype: BootResourceFiletype=BootResourceFiletype.TGZ,
-            chunk_size=(1 << 22)):
+            chunk_size=(1 << 22), progress_callback: Callable=None):
         """Create a `BootResource`.
 
         Creates an uploaded boot resource with `content`. The `content` is
@@ -139,6 +140,11 @@ class BootResources(ObjectSet, metaclass=BootResourcesType):
         :param chunk_size: Size in bytes to upload to MAAS in chunks.
             (Default is 4 MiB).
         :type chunk_size: `int`
+        :param progress_callback: Called to inform the current progress of the
+            upload. One argument is passed with the progress as a precentage.
+            If the resource was already complete and no content
+            needed to be uploaded then this callback will never be called.
+        :type progress_callback: Callable
         :returns: Create boot resource.
         :rtype: `BootResource`.
         """
@@ -178,6 +184,11 @@ class BootResources(ObjectSet, metaclass=BootResourcesType):
         elif chunk_size <= 0:
             raise ValueError(
                 "chunk_size must be greater than 0, not %d" % chunk_size)
+        if (progress_callback is not None and
+                not isinstance(progress_callback, Callable)):
+            raise TypeError(
+                "progress_callback must be a Callable, not %s" % (
+                type(progress_callback).__name__))
 
         size, sha256 = calc_size_and_sha265(content, chunk_size)
         resource = cls._object(cls._handler.create(
@@ -191,12 +202,13 @@ class BootResources(ObjectSet, metaclass=BootResourcesType):
             return resource
         else:
             # Upload in chunks and reload boot resource.
-            cls._upload_chunks(rfile, content, chunk_size)
+            cls._upload_chunks(rfile, content, chunk_size, progress_callback)
             return cls._object.read(resource.id)
 
     @classmethod
     def _upload_chunks(
-            cls, rfile: BootResourceFile, content: io.IOBase, chunk_size: int):
+            cls, rfile: BootResourceFile, content: io.IOBase, chunk_size: int,
+            progress_callback: Callable=None):
         """Upload the `content` to `rfile` in chunks using `chunk_size`."""
         content.seek(0, io.SEEK_SET)
         upload_uri = "%s%s" % (
@@ -207,6 +219,8 @@ class BootResources(ObjectSet, metaclass=BootResourcesType):
             length = len(buf)
             if length > 0:
                 cls._put_chunk(upload_uri, buf)
+                if progress_callback is not None:
+                    progress_callback(length / rfile.size)
             if length != chunk_size:
                 break
 

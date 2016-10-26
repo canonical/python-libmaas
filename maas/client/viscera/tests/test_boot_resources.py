@@ -276,6 +276,16 @@ class TestBootResources(TestCase):
         self.assertEquals(
             "chunk_size must be greater than 0, not -1", str(error))
 
+    def test__create_raises_TypeError_when_progress_callback_no_callable(self):
+        BootResources = make_origin().BootResources
+
+        buf = io.BytesIO(b"")
+        error = self.assertRaises(
+            TypeError, BootResources.create,
+            "os/release", "arch/subarch", buf, progress_callback='')
+        self.assertEquals(
+            "progress_callback must be a Callable, not str", str(error))
+
     def test__create_calls_create_on_handler_does_nothing_if_complete(self):
         resource_id = random.randint(0, 100)
         name = "%s/%s" % (
@@ -418,9 +428,14 @@ class TestBootResources(TestCase):
             httplib2.Response({"status": 200}), b"")
         self.patch(boot_resources.httplib2, "Http", http)
 
+        # Progress handler called on each chunk.
+        progress_handler = MagicMock()
+
+        # Create and upload the resource.
         resource = BootResources.create(
             name, architecture, buf,
-            title=title, filetype=filetype, chunk_size=chunk_size)
+            title=title, filetype=filetype, chunk_size=chunk_size,
+            progress_callback=progress_handler)
 
         # Check that returned resource is correct and updated.
         self.assertThat(resource, MatchesStructure.byEquality(
@@ -444,6 +459,13 @@ class TestBootResources(TestCase):
             for i in range(0, len(data), chunk_size)
         ]
         self.assertEquals(calls, http.return_value.request.call_args_list)
+
+        # Check that progress handler was called on each chunk.
+        calls = [
+            call(len(data[0 + i:chunk_size + i]) / len(data))
+            for i in range(0, len(data), chunk_size)
+        ]
+        self.assertEquals(calls, progress_handler.call_args_list)
 
     def test__create_raises_CallError_on_chunk_upload_failure(self):
         resource_id = random.randint(0, 100)
