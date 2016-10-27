@@ -400,7 +400,7 @@ class TestBootResources(TestCase):
 
         # Check that progress handler was called on each chunk.
         calls = [
-            call(len(data[0 + i:chunk_size + i]) / len(data))
+            call(len(data[:chunk_size + i]) / len(data))
             for i in range(0, len(data), chunk_size)
         ]
         self.assertEquals(calls, progress_handler.call_args_list)

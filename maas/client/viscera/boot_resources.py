@@ -194,13 +194,15 @@ class BootResources(ObjectSet, metaclass=BootResourcesType):
         content.seek(0, io.SEEK_SET)
         upload_uri = urlparse(
             cls._handler.uri)._replace(path=rfile._data['upload_uri']).geturl()
+        uploaded_size = 0
         while True:
             buf = content.read(chunk_size)
             length = len(buf)
             if length > 0:
+                uploaded_size += length
                 cls._put_chunk(upload_uri, buf)
                 if progress_callback is not None:
-                    progress_callback(length / rfile.size)
+                    progress_callback(uploaded_size / rfile.size)
             if length != chunk_size:
                 break
 
