@@ -9,7 +9,11 @@ import enum
 import hashlib
 import httplib2
 import io
-from typing import Callable
+from typing import (
+    Any,
+    Callable,
+)
+from urllib.parse import urlparse
 
 from . import (
     check,
@@ -22,6 +26,7 @@ from . import (
 )
 from .. import utils
 from ..bones import CallError
+from ..utils.typecheck import typed
 
 
 def calc_size_and_sha265(content: io.IOBase, chunk_size: int):
@@ -39,7 +44,7 @@ def calc_size_and_sha265(content: io.IOBase, chunk_size: int):
     return size, sha256.hexdigest()
 
 
-class BootResourceFiletype(enum.Enum):
+class BootResourceFileType(enum.Enum):
 
     TGZ = "tgz"
     DDTGZ = "ddtgz"
@@ -114,11 +119,12 @@ class BootResources(ObjectSet, metaclass=BootResourcesType):
         return cls._handler.stop_import()
 
     @classmethod
+    @typed
     def create(
             cls, name: str, architecture: str, content: io.IOBase, *,
-            title: str=None,
-            filetype: BootResourceFiletype=BootResourceFiletype.TGZ,
-            chunk_size=(1 << 22), progress_callback: Callable=None):
+            title: str="",
+            filetype: BootResourceFileType=BootResourceFileType.TGZ,
+            chunk_size=(1 << 22), progress_callback=None):
         """Create a `BootResource`.
 
         Creates an uploaded boot resource with `content`. The `content` is
@@ -148,54 +154,28 @@ class BootResources(ObjectSet, metaclass=BootResourcesType):
         :returns: Create boot resource.
         :rtype: `BootResource`.
         """
-        if not isinstance(name, str):
-            raise TypeError("name must be a str, not %s" % type(name).__name__)
-        elif '/' not in name:
+        if '/' not in name:
             raise ValueError(
                 "name must be in format os/release; missing '/'")
-        if not isinstance(architecture, str):
-            raise TypeError(
-                "architecture must be a str, not %s" % (
-                    type(architecture).__name__))
-        elif '/' not in architecture:
+        if '/' not in architecture:
             raise ValueError(
                 "architecture must be in format arch/subarch; missing '/'")
-        if not isinstance(content, io.IOBase):
-            raise TypeError(
-                "content must extend from io.IOBase; %s does not" % (
-                    type(content).__name__))
-        elif not content.readable():
+        if not content.readable():
             raise ValueError("content must be readable")
         elif not content.seekable():
             raise ValueError("content must be seekable")
-        if title is None:
-            title = ""
-        if not isinstance(title, str):
-            raise TypeError(
-                "title must be a str, not %s" % type(title).__name__)
-        if not isinstance(filetype, BootResourceFiletype):
-            raise TypeError(
-                "filetype must be a BootResourceFiletype, not %s" % (
-                    type(filetype).__name__))
-        if not isinstance(chunk_size, int):
-            raise TypeError(
-                "chunk_size must be a int, not %s" % (
-                    type(chunk_size).__name__))
-        elif chunk_size <= 0:
+        if chunk_size <= 0:
             raise ValueError(
                 "chunk_size must be greater than 0, not %d" % chunk_size)
-        if (progress_callback is not None and
-                not isinstance(progress_callback, Callable)):
-            raise TypeError(
-                "progress_callback must be a Callable, not %s" % (
-                type(progress_callback).__name__))
 
         size, sha256 = calc_size_and_sha265(content, chunk_size)
         resource = cls._object(cls._handler.create(
             name=name, architecture=architecture, title=title,
             filetype=filetype.value, size=str(size), sha256=sha256))
-        newest_set = sorted(resource.sets.keys(), reverse=True)[0]
+        newest_set = max(resource.sets, default=None)
+        assert newest_set is not None
         resource_set = resource.sets[newest_set]
+        assert len(resource_set.files) == 1
         rfile = list(resource_set.files.values())[0]
         if rfile.complete:
             # Already created and fully up-to-date.
@@ -206,14 +186,14 @@ class BootResources(ObjectSet, metaclass=BootResourcesType):
             return cls._object.read(resource.id)
 
     @classmethod
+    @typed
     def _upload_chunks(
             cls, rfile: BootResourceFile, content: io.IOBase, chunk_size: int,
-            progress_callback: Callable=None):
+            progress_callback=None):
         """Upload the `content` to `rfile` in chunks using `chunk_size`."""
         content.seek(0, io.SEEK_SET)
-        upload_uri = "%s%s" % (
-            cls._handler.uri[:len(cls._handler.uri)-len(cls._handler.path)],
-            rfile._data['upload_uri'])
+        upload_uri = urlparse(
+            cls._handler.uri)._replace(path=rfile._data['upload_uri']).geturl()
         while True:
             buf = content.read(chunk_size)
             length = len(buf)
@@ -225,6 +205,7 @@ class BootResources(ObjectSet, metaclass=BootResourcesType):
                 break
 
     @classmethod
+    @typed
     def _put_chunk(cls, upload_uri: str, buf: bytes):
         """Upload one chunk to `upload_uri`."""
         # Build the correct headers.

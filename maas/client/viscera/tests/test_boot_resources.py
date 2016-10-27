@@ -58,10 +58,10 @@ class TestBootResource(TestCase):
         architecture = "%s/%s" % (
             make_name_without_spaces("arch"),
             make_name_without_spaces("subarch"))
-        subarches = ",".join([
+        subarches = ",".join(
             make_name_without_spaces("subarch")
             for _ in range(3)
-        ])
+        )
         sets = {}
         for _ in range(3):
             version = make_name_without_spaces("version")
@@ -164,45 +164,24 @@ class TestBootResources(TestCase):
         self.assertEquals(sentinel.result, BootResources.stop_import())
         BootResources._handler.stop_import.assert_called_once_with()
 
-    def test__create_raises_TypeError_when_name_not_str(self):
-        BootResources = make_origin().BootResources
-
-        error = self.assertRaises(TypeError, BootResources.create, 1, 1, 1)
-        self.assertEquals(
-            "name must be a str, not int", str(error))
-
     def test__create_raises_ValueError_when_name_missing_slash(self):
         BootResources = make_origin().BootResources
 
-        error = self.assertRaises(ValueError, BootResources.create, "", 1, 1)
+        buf = io.BytesIO(b"")
+        error = self.assertRaises(
+            ValueError, BootResources.create, "", "", buf)
         self.assertEquals(
             "name must be in format os/release; missing '/'", str(error))
-
-    def test__create_raises_TypeError_when_architecture_not_str(self):
-        BootResources = make_origin().BootResources
-
-        error = self.assertRaises(
-            TypeError, BootResources.create, "os/release", 1, 1)
-        self.assertEquals(
-            "architecture must be a str, not int", str(error))
 
     def test__create_raises_ValueError_when_architecture_missing_slash(self):
         BootResources = make_origin().BootResources
 
+        buf = io.BytesIO(b"")
         error = self.assertRaises(
-            ValueError, BootResources.create, "os/release", "", 1)
+            ValueError, BootResources.create, "os/release", "", buf)
         self.assertEquals(
             "architecture must be in format arch/subarch; missing '/'",
             str(error))
-
-    def test__create_raises_TypeError_when_content_not_from_IOBase(self):
-        BootResources = make_origin().BootResources
-
-        error = self.assertRaises(
-            TypeError, BootResources.create,
-            "os/release", "arch/subarch", "")
-        self.assertEquals(
-            "content must extend from io.IOBase; str does not", str(error))
 
     def test__create_raises_ValueError_when_content_cannot_be_read(self):
         BootResources = make_origin().BootResources
@@ -226,36 +205,6 @@ class TestBootResources(TestCase):
         self.assertEquals(
             "content must be seekable", str(error))
 
-    def test__create_raises_TypeError_when_title_not_str(self):
-        BootResources = make_origin().BootResources
-
-        buf = io.BytesIO(b"")
-        error = self.assertRaises(
-            TypeError, BootResources.create,
-            "os/release", "arch/subarch", buf, title=1)
-        self.assertEquals(
-            "title must be a str, not int", str(error))
-
-    def test__create_raises_TypeError_when_filetype_not_enum(self):
-        BootResources = make_origin().BootResources
-
-        buf = io.BytesIO(b"")
-        error = self.assertRaises(
-            TypeError, BootResources.create,
-            "os/release", "arch/subarch", buf, filetype="tgz")
-        self.assertEquals(
-            "filetype must be a BootResourceFiletype, not str", str(error))
-
-    def test__create_raises_TypeError_when_chunk_size_not_int(self):
-        BootResources = make_origin().BootResources
-
-        buf = io.BytesIO(b"")
-        error = self.assertRaises(
-            TypeError, BootResources.create,
-            "os/release", "arch/subarch", buf, chunk_size="")
-        self.assertEquals(
-            "chunk_size must be a int, not str", str(error))
-
     def test__create_raises_ValueError_when_chunk_size_is_zero(self):
         BootResources = make_origin().BootResources
 
@@ -276,16 +225,6 @@ class TestBootResources(TestCase):
         self.assertEquals(
             "chunk_size must be greater than 0, not -1", str(error))
 
-    def test__create_raises_TypeError_when_progress_callback_no_callable(self):
-        BootResources = make_origin().BootResources
-
-        buf = io.BytesIO(b"")
-        error = self.assertRaises(
-            TypeError, BootResources.create,
-            "os/release", "arch/subarch", buf, progress_callback='')
-        self.assertEquals(
-            "progress_callback must be a Callable, not str", str(error))
-
     def test__create_calls_create_on_handler_does_nothing_if_complete(self):
         resource_id = random.randint(0, 100)
         name = "%s/%s" % (
@@ -296,8 +235,8 @@ class TestBootResources(TestCase):
             make_name_without_spaces("subarch"))
         title = make_name_without_spaces("title")
         filetype = random.choice([
-            boot_resources.BootResourceFiletype.TGZ,
-            boot_resources.BootResourceFiletype.DDTGZ])
+            boot_resources.BootResourceFileType.TGZ,
+            boot_resources.BootResourceFileType.DDTGZ])
 
         data = make_string().encode("ascii")
         sha256 = hashlib.sha256()
@@ -349,8 +288,8 @@ class TestBootResources(TestCase):
             make_name_without_spaces("subarch"))
         title = make_name_without_spaces("title")
         filetype = random.choice([
-            boot_resources.BootResourceFiletype.TGZ,
-            boot_resources.BootResourceFiletype.DDTGZ])
+            boot_resources.BootResourceFileType.TGZ,
+            boot_resources.BootResourceFileType.DDTGZ])
         upload_uri = "/MAAS/api/2.0/boot-resources/%d/upload/1" % resource_id
 
         # Make chunks and upload in pieces of 4, where the last piece is
@@ -370,7 +309,6 @@ class TestBootResources(TestCase):
         BootResource = origin.BootResource
         BootResources._handler.uri = (
             "http://localhost:5240/MAAS/api/2.0/boot-resources/")
-        BootResources._handler.path = "/MAAS/api/2.0/boot-resources/"
         BootResources._handler.create.return_value = {
             "id": resource_id,
             "type": "Uploaded",
@@ -477,8 +415,8 @@ class TestBootResources(TestCase):
             make_name_without_spaces("subarch"))
         title = make_name_without_spaces("title")
         filetype = random.choice([
-            boot_resources.BootResourceFiletype.TGZ,
-            boot_resources.BootResourceFiletype.DDTGZ])
+            boot_resources.BootResourceFileType.TGZ,
+            boot_resources.BootResourceFileType.DDTGZ])
         upload_uri = "/MAAS/api/2.0/boot-resources/%d/upload/1" % resource_id
 
         # Make chunks and upload in pieces of 4, where the last piece is
