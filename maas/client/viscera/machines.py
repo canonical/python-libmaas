@@ -35,7 +35,7 @@ class MachinesType(ObjectType):
         return cls(cls)
 
     def allocate(
-            cls, *, hostname: str=None, architecture: str=None,
+            cls, *, name: str=None, architecture: str=None,
             cpus: int=None, memory: float=None, tags: Sequence[str]=None):
         """
         :param hostname: The hostname to match.
@@ -47,8 +47,8 @@ class MachinesType(ObjectType):
             associated with a matched machine.
         """
         params = {}
-        if hostname is not None:
-            params["hostname"] = hostname
+        if name is not None:
+            params["name"] = name
         if architecture is not None:
             params["architecture"] = architecture
         if cpus is not None:
