@@ -57,14 +57,14 @@ class TestMachines(TestCase):
         Machines._handler.allocate.return_value = {}
         hostname = make_name_without_spaces("hostname")
         Machines.allocate(
-            name=hostname,
+            hostname=hostname,
             architecture='amd64/generic',
             cpus=4,
             memory=1024.0,
             tags=['foo', 'bar', '-baz'],
         )
         Machines._handler.allocate.assert_called_once_with(
-            name=hostname,
+            name=hostname,  # API parameter is actually name, not hostname
             architecture='amd64/generic',
             cpu_count='4',
             mem='1024.0',
