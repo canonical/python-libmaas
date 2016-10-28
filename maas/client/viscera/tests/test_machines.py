@@ -64,7 +64,7 @@ class TestMachines(TestCase):
             tags=['foo', 'bar', '-baz'],
         )
         Machines._handler.allocate.assert_called_once_with(
-            hostname=hostname,
+            name=hostname,  # API parameter is actually name, not hostname
             architecture='amd64/generic',
             cpu_count='4',
             mem='1024.0',

@@ -48,7 +48,7 @@ class MachinesType(ObjectType):
         """
         params = {}
         if hostname is not None:
-            params["hostname"] = hostname
+            params["name"] = hostname
         if architecture is not None:
             params["architecture"] = architecture
         if cpus is not None:
