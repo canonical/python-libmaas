@@ -1,4 +1,4 @@
-# alburnum-maas-client
+# python-libmaas
 
 Python client API library made especially for [MAAS][1].
 
@@ -6,8 +6,8 @@ This was begun by a core MAAS developer, Gavin Panella, on his own time,
 but is now maintained by the core MAAS team at Canonical. It is licensed
 under the GNU Affero GPLv3, the same as MAAS itself.
 
-[![Build Status](https://travis-ci.org/alburnum/alburnum-maas-client.svg?branch=master)](https://travis-ci.org/alburnum/alburnum-maas-client)
-[![codecov.io](https://codecov.io/github/alburnum/alburnum-maas-client/coverage.svg?branch=master)](https://codecov.io/github/alburnum/alburnum-maas-client?branch=master)
+[![Build Status](https://travis-ci.org/maas/python-libmaas.svg?branch=master)](https://travis-ci.org/maas/python-libmaas)
+[![codecov.io](https://codecov.io/github/maas/python-libmaas/coverage.svg?branch=master)](https://codecov.io/github/maas/python-libmaas?branch=master)
 
 Some of the code in here has come from MAAS, upon which Canonical Ltd
 has the copyright. Gavin Panella licenses his parts under the AGPLv3,
@@ -22,7 +22,7 @@ with [pip](https://pip.pypa.io/). Python 3.5 is required.
 When working from trunk it can be helpful to use `virtualenv`:
 
     $ virtualenv --python=python3.5 amc && source amc/bin/activate
-    $ pip install git+https://github.com/alburnum/alburnum-maas-client.git
+    $ pip install git+https://github.com/maas/python-libmaas.git
     $ maas --help
 
 Releases are periodically made to [PyPI](https://pypi.python.org/) but,
@@ -37,4 +37,4 @@ Documentation can be generated with `make docs` which publishes into the
 
 
 [1]: https://maas.ubuntu.com/
-[2]: http://alburnum.github.io/alburnum-maas-client/
+[2]: http://maas.github.io/python-libmaas/

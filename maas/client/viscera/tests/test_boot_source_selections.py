@@ -1,4 +1,4 @@
-"""Test for `alburnum.maas.viscera.boot_source_selections`."""
+"""Test for `maas.client.viscera.boot_source_selections`."""
 
 __all__ = []
 
