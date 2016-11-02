@@ -1,5 +1,5 @@
-alburnum-maas-client
-====================
+python-libmaas
+==============
 
 Python client API library made especially for
 `MAAS <https://maas.ubuntu.com/>`__.
@@ -25,7 +25,7 @@ When working from trunk it can be helpful to use ``virtualenv``:
 ::
 
     $ virtualenv --python=python3.5 amc && source amc/bin/activate
-    $ pip install git+https://github.com/alburnum/alburnum-maas-client.git
+    $ pip install git+https://github.com/maas/python-libmaas.git
     $ maas --help
 
 Releases are periodically made to `PyPI <https://pypi.python.org/>`__
@@ -37,9 +37,9 @@ Documentation
 Documentation can be generated with ``make docs`` which publishes into
 the ``site`` directory. Recent documentation is also published to the
 `MAAS Client Library & CLI
-documentation <http://alburnum.github.io/alburnum-maas-client/>`__ site.
+documentation <http://maas.github.io/python-libmaas/>`__ site.
 
-.. |Build Status| image:: https://travis-ci.org/alburnum/alburnum-maas-client.svg?branch=master
-   :target: https://travis-ci.org/alburnum/alburnum-maas-client
-.. |codecov.io| image:: https://codecov.io/github/alburnum/alburnum-maas-client/coverage.svg?branch=master
-   :target: https://codecov.io/github/alburnum/alburnum-maas-client?branch=master
+.. |Build Status| image:: https://travis-ci.org/maas/python-libmaas.svg?branch=master
+   :target: https://travis-ci.org/maas/python-libmaas
+.. |codecov.io| image:: https://codecov.io/github/maas/python-libmaas/coverage.svg?branch=master
+   :target: https://codecov.io/github/maas/python-libmaas?branch=master

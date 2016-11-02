@@ -1,4 +1,4 @@
-"""Setuptools installer for alburnum-maas-client."""
+"""Setuptools installer for python-libmaas."""
 
 from setuptools import (
     find_packages,
@@ -7,10 +7,10 @@ from setuptools import (
 
 
 setup(
-    name='alburnum-maas-client',
-    author='Gavin Panella',
-    author_email='gavinpanella@gmail.com',
-    url='https://github.com/alburnum/alburnum-maas-client',
+    name='python-libmaas',
+    author='MAAS Developers',
+    author_email='maas-devel@lists.launchpad.net',
+    url='https://github.com/maas/python-libmaas',
     version="0.3.1",
     classifiers=[
         'Development Status :: 3 - Alpha',

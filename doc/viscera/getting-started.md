@@ -6,8 +6,8 @@
 Either work from a branch:
 
 ```console
-$ git clone https://github.com/alburnum/alburnum-maas-client.git
-$ cd alburnum-maas-client
+$ git clone https://github.com/maas/python-libmaas.git
+$ cd python-libmaas
 $ make
 ```
 
@@ -16,14 +16,14 @@ Or install with [pip](https://pip.pypa.io/) into a
 
 ```console
 $ virtualenv --python=python3.5 amc && source amc/bin/activate
-$ pip install git+https://github.com/alburnum/alburnum-maas-client.git
+$ pip install git+https://github.com/maas/python-libmaas.git
 ```
 
 Or install from [PyPI](https://pypi.python.org/):
 
 ```console
 $ virtualenv --python=python3.5 amc && source amc/bin/activate
-$ pip install alburnum-maas-client
+$ pip install python-libmaas
 ```
 
 *Note* that PyPI may lag the others.
