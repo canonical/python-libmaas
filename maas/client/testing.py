@@ -12,6 +12,7 @@ __all__ = [
     "TestCase",
 ]
 
+import asyncio
 import doctest
 from functools import partial
 from itertools import (
@@ -128,6 +129,12 @@ class WithScenarios(testscenarios.WithScenarios):
 
 
 class TestCase(WithScenarios, testcase.TestCase):
+
+    def setUp(self):
+        super(TestCase, self).setUp()
+        self.loop = asyncio.new_event_loop()
+        self.addCleanup(self.loop.close)
+        asyncio.set_event_loop(self.loop)
 
     def make_dir(self):
         """Create a temporary directory.

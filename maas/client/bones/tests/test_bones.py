@@ -9,7 +9,6 @@ import json
 from os.path import splitext
 from pathlib import Path
 import re
-import ssl
 import threading
 from unittest.mock import (
     ANY,
@@ -23,7 +22,6 @@ from urllib.parse import (
 from uuid import uuid1
 
 import fixtures
-import httplib2
 from pkg_resources import (
     resource_filename,
     resource_listdir,
@@ -110,18 +108,11 @@ class DescriptionServer(fixtures.Fixture):
 
 class TestSessionAPI(TestCase):
 
-    def test__fromURL_raises_SessionError_when_TLS_fails(self):
-        request = self.patch(httplib2.Http, "request")
-        request.side_effect = ssl.SSLError
-        error = self.assertRaises(
-            bones.SessionError, bones.SessionAPI.fromURL, "")
-        self.assertEqual("Certificate verification failed.", str(error))
-
     def test__fromURL_raises_SessionError_when_request_fails(self):
         fixture = self.useFixture(DescriptionServer(b"bogus"))
         error = self.assertRaises(
-            bones.SessionError, bones.SessionAPI.fromURL,
-            fixture.url + "bogus/")
+            bones.SessionError, self.loop.run_until_complete,
+            bones.SessionAPI.fromURL(fixture.url + "bogus/"))
         self.assertEqual(
             fixture.url + "bogus/ -> 404 Not Found",
             str(error))
@@ -130,7 +121,8 @@ class TestSessionAPI(TestCase):
         fixture = self.useFixture(DescriptionServer())
         fixture.handler.content_type = "text/json"
         error = self.assertRaises(
-            bones.SessionError, bones.SessionAPI.fromURL, fixture.url)
+            bones.SessionError, self.loop.run_until_complete,
+            bones.SessionAPI.fromURL(fixture.url))
         self.assertEqual(
             "Expected application/json, got: text/json",
             str(error))
@@ -138,14 +130,14 @@ class TestSessionAPI(TestCase):
     def test__fromURL_sets_credentials_on_session(self):
         fixture = self.useFixture(DescriptionServer())
         credentials = make_credentials()
-        session = bones.SessionAPI.fromURL(
-            fixture.url, credentials=credentials)
+        session = self.loop.run_until_complete(
+            bones.SessionAPI.fromURL(fixture.url, credentials=credentials))
         self.assertIs(credentials, session.credentials)
 
     def test__fromURL_sets_insecure_on_session(self):
         fixture = self.useFixture(DescriptionServer())
-        session = bones.SessionAPI.fromURL(
-            fixture.url, insecure=sentinel.insecure)
+        session = self.loop.run_until_complete(
+            bones.SessionAPI.fromURL(fixture.url, insecure=sentinel.insecure))
         self.assertIs(sentinel.insecure, session.insecure)
 
 
@@ -160,7 +152,8 @@ class TestSessionAPI_APIVersions(TestCase):
     def test__fromURL_downloads_description(self):
         description = self.path.read_bytes()
         fixture = self.useFixture(DescriptionServer(description))
-        session = bones.SessionAPI.fromURL(fixture.url)
+        session = self.loop.run_until_complete(
+            bones.SessionAPI.fromURL(fixture.url))
         self.assertEqual(
             json.loads(description.decode("utf-8")),
             session.description)
