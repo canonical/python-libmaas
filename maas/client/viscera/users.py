@@ -17,28 +17,26 @@ from . import (
 class UsersType(ObjectType):
     """Metaclass for `Users`."""
 
-    def __iter__(cls):
-        return map(cls._object, cls._handler.read())
-
-    def whoami(cls):
+    async def whoami(cls):
         """Get the logged-in user."""
-        data = cls._handler.whoami()
+        data = await cls._handler.whoami()
         return cls._object(data)
 
-    def create(cls, username, password, *, email=None, is_admin=False):
+    async def create(cls, username, password, *, email=None, is_admin=False):
         if email is None:
             email = "%s@null.maas.io" % username
-        data = cls._handler.create(
+        data = await cls._handler.create(
             username=username, email=email, password=password,
             is_superuser='1' if is_admin else '0')
+        return cls._object(data)
+
+    async def read(cls):
+        data = await cls._handler.read()
+        return cls(map(cls._object, data))
 
 
 class Users(ObjectSet, metaclass=UsersType):
     """The set of users."""
-
-    @classmethod
-    def read(cls):
-        return cls(cls)
 
 
 class User(Object):

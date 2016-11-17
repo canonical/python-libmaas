@@ -16,13 +16,13 @@ class AccountType(ObjectType):
     """Metaclass for `Account`."""
 
     @typed
-    def create_credentials(cls) -> Credentials:
-        data = cls._handler.create_authorisation_token()
+    async def create_credentials(cls) -> Credentials:
+        data = await cls._handler.create_authorisation_token()
         return Credentials(**data)
 
     @typed
-    def delete_credentials(cls, credentials: Credentials) -> None:
-        cls._handler.delete_authorisation_token(
+    async def delete_credentials(cls, credentials: Credentials) -> None:
+        await cls._handler.delete_authorisation_token(
             token_key=credentials.token_key)
 
 

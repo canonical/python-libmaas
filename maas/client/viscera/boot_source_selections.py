@@ -1,21 +1,18 @@
 """Objects for boot source selections."""
 
 __all__ = [
-    "BootSource",
-    "BootSources",
+    "BootSourceSelection",
+    "BootSourceSelections",
 ]
 
-from functools import partial
 from typing import List
 
 from . import (
     check,
-    check_optional,
     Object,
     ObjectField,
     ObjectSet,
     ObjectType,
-    parse_timestamp,
 )
 from .boot_sources import BootSource
 
@@ -23,7 +20,7 @@ from .boot_sources import BootSource
 class BootSourceSelectionsType(ObjectType):
     """Metaclass for `BootSourceSelections`."""
 
-    def create(
+    async def create(
             cls, boot_source, os, release, *,
             arches=None, subarches=None, labels=None):
         """Create a new `BootSourceSelection`."""
@@ -37,39 +34,37 @@ class BootSourceSelectionsType(ObjectType):
             subarches = ['*']
         if labels is None:
             labels = ['*']
-        data = cls._handler.create(
+        data = await cls._handler.create(
             boot_source_id=boot_source.id,
             os=os, release=release, arches=arches, subarches=subarches,
             labels=labels)
         return cls._object(data, {"boot_source_id": boot_source.id})
 
-
-class BootSourceSelections(ObjectSet, metaclass=BootSourceSelectionsType):
-    """The set of boot source selections."""
-
-    @classmethod
-    def read(cls, boot_source):
+    async def read(cls, boot_source):
         """Get list of `BootSourceSelection`'s."""
         if not isinstance(boot_source, BootSource):
             raise TypeError(
                 "boot_source must be a BootSource, not %s"
                 % type(boot_source).__name__)
-        return cls(map(
-            partial(
-                cls._object,
-                local_data={"boot_source_id": boot_source.id}),
-            cls._handler.read(boot_source_id=boot_source.id)))
+        data = await cls._handler.read(boot_source_id=boot_source.id)
+        return cls(
+            cls._object(item, local_data={"boot_source_id": boot_source.id})
+            for item in data)
+
+
+class BootSourceSelections(ObjectSet, metaclass=BootSourceSelectionsType):
+    """The set of boot source selections."""
 
 
 class BootSourceSelectionType(ObjectType):
 
-    def read(cls, boot_source, id):
+    async def read(cls, boot_source, id):
         """Get `BootSourceSelection` by `id`."""
         if not isinstance(boot_source, BootSource):
             raise TypeError(
                 "boot_source must be a BootSource, not %s"
                 % type(boot_source).__name__)
-        data = cls._handler.read(boot_source_id=boot_source.id, id=id)
+        data = await cls._handler.read(boot_source_id=boot_source.id, id=id)
         return cls(data, {"boot_source_id": boot_source.id})
 
 
@@ -98,6 +93,7 @@ class BootSourceSelection(Object, metaclass=BootSourceSelectionType):
         return super(BootSourceSelection, self).__repr__(
             fields={"os", "release", "arches", "subarches", "labels"})
 
-    def delete(self):
+    async def delete(self):
         """Delete boot source selection."""
-        self._handler.delete(boot_source_id=self.boot_source_id, id=self.id)
+        await self._handler.delete(
+            boot_source_id=self.boot_source_id, id=self.id)

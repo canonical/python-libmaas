@@ -5,11 +5,7 @@ __all__ = [
     "RackControllers",
 ]
 
-import base64
-from typing import (
-    List,
-    Union,
-)
+from typing import List
 
 from . import (
     check,
@@ -25,11 +21,9 @@ from . import (
 class RackControllersType(ObjectType):
     """Metaclass for `RackControllers`."""
 
-    def __iter__(cls):
-        return map(cls._object, cls._handler.read())
-
-    def read(cls):
-        return cls(cls)
+    async def read(cls):
+        data = await cls._handler.read()
+        return cls(map(cls._object, data))
 
 
 class RackControllerNotFound(Exception):
@@ -42,8 +36,8 @@ class RackControllers(ObjectSet, metaclass=RackControllersType):
 
 class RackControllerType(ObjectType):
 
-    def read(cls, system_id):
-        data = cls._handler.read(system_id=system_id)
+    async def read(cls, system_id):
+        data = await cls._handler.read(system_id=system_id)
         return cls(data)
 
 

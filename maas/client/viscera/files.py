@@ -17,11 +17,9 @@ from . import (
 class FilesType(ObjectType):
     """Metaclass for `Files`."""
 
-    def __iter__(cls):
-        return map(cls._object, cls._handler.read())
-
-    def read(cls):
-        return cls(cls)
+    async def read(cls):
+        data = await cls._handler.read()
+        return map(cls._object, data)
 
 
 class Files(ObjectSet, metaclass=FilesType):

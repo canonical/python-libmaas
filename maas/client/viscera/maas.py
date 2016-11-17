@@ -45,75 +45,75 @@ class MAASType(ObjectType):
     """Metaclass for `MAAS`."""
 
     @typed
-    def get_name(cls) -> str:
+    async def get_name(cls) -> str:
         """The name of the MAAS instance."""
-        return cls.get_config("maas_name")
+        return await cls.get_config("maas_name")
 
     @typed
-    def set_name(cls, name: str):
+    async def set_name(cls, name: str):
         """See `get_name`."""
-        return cls.set_config("maas_name", name)
+        return await cls.set_config("maas_name", name)
 
     @typed
-    def get_main_archive(cls) -> str:
+    async def get_main_archive(cls) -> str:
         """Main archive URL.
 
         Archive used by nodes to retrieve packages for Intel architectures,
         e.g. http://archive.ubuntu.com/ubuntu.
         """
-        return cls.get_config("main_archive")
+        return await cls.get_config("main_archive")
 
     @typed
-    def set_main_archive(cls, url: str):
+    async def set_main_archive(cls, url: str):
         """See `get_main_archive`."""
-        cls.set_config("main_archive", url)
+        await cls.set_config("main_archive", url)
 
     @typed
-    def get_ports_archive(cls) -> str:
+    async def get_ports_archive(cls) -> str:
         """Ports archive.
 
         Archive used by nodes to retrieve packages for non-Intel
         architectures. E.g. http://ports.ubuntu.com/ubuntu-ports.
         """
-        return cls.get_config("ports_archive")
+        return await cls.get_config("ports_archive")
 
     @typed
-    def set_ports_archive(cls, series: str):
+    async def set_ports_archive(cls, series: str):
         """See `get_ports_archive`."""
-        cls.set_config("ports_archive", series)
+        await cls.set_config("ports_archive", series)
 
     @typed
-    def get_default_os(cls) -> str:
+    async def get_default_os(cls) -> str:
         """Default OS used for deployment."""
-        return cls.get_config("default_osystem")
+        return await cls.get_config("default_osystem")
 
     @typed
-    def set_default_os(cls, series: str):
+    async def set_default_os(cls, series: str):
         """See `get_default_os`."""
-        cls.set_config("default_osystem", series)
+        await cls.set_config("default_osystem", series)
 
     @typed
-    def get_default_distro_series(cls) -> str:
+    async def get_default_distro_series(cls) -> str:
         """Default OS release used for deployment."""
-        return cls.get_config("default_distro_series")
+        return await cls.get_config("default_distro_series")
 
     @typed
-    def set_default_distro_series(cls, series: str):
+    async def set_default_distro_series(cls, series: str):
         """See `get_default_distro_series`."""
-        cls.set_config("default_distro_series", series)
+        await cls.set_config("default_distro_series", series)
 
     @typed
-    def get_commissioning_distro_series(cls) -> str:
+    async def get_commissioning_distro_series(cls) -> str:
         """Default Ubuntu release used for commissioning."""
-        return cls.get_config("commissioning_distro_series")
+        return await cls.get_config("commissioning_distro_series")
 
     @typed
-    def set_commissioning_distro_series(cls, series: str):
+    async def set_commissioning_distro_series(cls, series: str):
         """See `get_commissioning_distro_series`."""
-        cls.set_config("commissioning_distro_series", series)
+        await cls.set_config("commissioning_distro_series", series)
 
     @typed
-    def get_http_proxy(cls) -> Optional[str]:
+    async def get_http_proxy(cls) -> Optional[str]:
         """Proxy for APT and HTTP/HTTPS.
 
         This will be passed onto provisioned nodes to use as a proxy for APT
@@ -124,40 +124,40 @@ class MAASType(ObjectType):
         return None if data is None or data == "" else data
 
     @typed
-    def set_http_proxy(cls, url: Optional[str]):
+    async def set_http_proxy(cls, url: Optional[str]):
         """See `get_http_proxy`."""
-        cls.set_config("http_proxy", "" if url is None else url)
+        await cls.set_config("http_proxy", "" if url is None else url)
 
     @typed
-    def get_enable_http_proxy(cls) -> bool:
+    async def get_enable_http_proxy(cls) -> bool:
         """Enable the use of an APT and HTTP/HTTPS proxy.
 
         Provision nodes to use the built-in HTTP proxy (or user specified
         proxy) for APT. MAAS also uses the proxy for downloading boot images.
         """
-        return cls.get_config("enable_http_proxy")
+        return await cls.get_config("enable_http_proxy")
 
     @typed
-    def set_enable_http_proxy(cls, enabled: bool):
+    async def set_enable_http_proxy(cls, enabled: bool):
         """See `get_enable_http_proxy`."""
-        cls.set_config("enable_http_proxy", "1" if enabled else "0")
+        await cls.set_config("enable_http_proxy", "1" if enabled else "0")
 
     @typed
-    def get_curtin_verbose(cls) -> bool:
+    async def get_curtin_verbose(cls) -> bool:
         """Should `curtin` log with high verbosity?
 
         Run the fast-path installer with higher verbosity. This provides more
         detail in the installation logs.
         """
-        return cls.get_config("curtin_verbose")
+        return await cls.get_config("curtin_verbose")
 
     @typed
-    def set_curtin_verbose(cls, verbose: bool):
+    async def set_curtin_verbose(cls, verbose: bool):
         """See `get_curtin_verbose`."""
-        cls.set_config("curtin_verbose", "1" if verbose else "0")
+        await cls.set_config("curtin_verbose", "1" if verbose else "0")
 
     @typed
-    def get_kernel_options(cls) -> Optional[str]:
+    async def get_kernel_options(cls) -> Optional[str]:
         """Kernel options.
 
         Boot parameters to pass to the kernel by default.
@@ -166,12 +166,12 @@ class MAASType(ObjectType):
         return None if data is None or data == "" else data
 
     @typed
-    def set_kernel_options(cls, options: Optional[str]):
+    async def set_kernel_options(cls, options: Optional[str]):
         """See `get_kernel_options`."""
-        cls.set_config("kernel_opts", "" if options is None else options)
+        await cls.set_config("kernel_opts", "" if options is None else options)
 
     @typed
-    def get_upstream_dns(cls) -> list:
+    async def get_upstream_dns(cls) -> list:
         """Upstream DNS server addresses.
 
         Upstream DNS servers used to resolve domains not managed by this MAAS
@@ -183,9 +183,9 @@ class MAASType(ObjectType):
         return [] if data is None else re.split("[,\s]+", data)
 
     @typed
-    def set_upstream_dns(cls, addresses: Optional[Sequence[str]]):
+    async def set_upstream_dns(cls, addresses: Optional[Sequence[str]]):
         """See `get_upstream_dns`."""
-        cls.set_config("upstream_dns", (
+        await cls.set_config("upstream_dns", (
             "" if addresses is None else",".join(addresses)))
 
     class DNSSEC(DescriptiveEnum):
@@ -199,7 +199,7 @@ class MAASType(ObjectType):
         NO = "no", "No (disable DNSSEC)"
 
     @typed
-    def get_dnssec_validation(cls) -> DNSSEC:
+    async def get_dnssec_validation(cls) -> DNSSEC:
         """Enable DNSSEC validation of upstream zones.
 
         Only used when MAAS is running its own DNS server. This value is used
@@ -209,12 +209,12 @@ class MAASType(ObjectType):
         return cls.DNSSEC.lookup(data)
 
     @typed
-    def set_dnssec_validation(cls, validation: DNSSEC):
+    async def set_dnssec_validation(cls, validation: DNSSEC):
         """See `get_dnssec_validation`."""
-        cls.set_config("dnssec_validation", validation.parameter)
+        await cls.set_config("dnssec_validation", validation.parameter)
 
     @typed
-    def get_default_dns_ttl(cls) -> int:
+    async def get_default_dns_ttl(cls) -> int:
         """Default Time-To-Live for DNS records.
 
         If no TTL value is specified at a more specific point this is how long
@@ -223,22 +223,23 @@ class MAASType(ObjectType):
         return int(cls.get_config("default_dns_ttl"))
 
     @typed
-    def set_default_dns_ttl(cls, ttl: int):
+    async def set_default_dns_ttl(cls, ttl: int):
         """See `get_default_dns_ttl`."""
-        cls.set_config("default_dns_ttl", str(ttl))
+        await cls.set_config("default_dns_ttl", str(ttl))
 
     @typed
-    def get_enable_disk_erasing_on_release(cls) -> bool:
+    async def get_enable_disk_erasing_on_release(cls) -> bool:
         """Should nodes' disks be erased prior to releasing."""
-        return cls.get_config("enable_disk_erasing_on_release")
+        return await cls.get_config("enable_disk_erasing_on_release")
 
     @typed
-    def set_enable_disk_erasing_on_release(cls, erase: bool):
+    async def set_enable_disk_erasing_on_release(cls, erase: bool):
         """Should nodes' disks be erased prior to releasing."""
-        cls.set_config("enable_disk_erasing_on_release", "1" if erase else "0")
+        await cls.set_config(
+            "enable_disk_erasing_on_release", "1" if erase else "0")
 
     @typed
-    def get_windows_kms_host(cls) -> Optional[str]:
+    async def get_windows_kms_host(cls) -> Optional[str]:
         """Windows KMS activation host.
 
         FQDN or IP address of the host that provides the KMS Windows
@@ -249,33 +250,33 @@ class MAASType(ObjectType):
         return None if data is None or data == "" else data
 
     @typed
-    def set_windows_kms_host(cls, host: Optional[str]):
+    async def set_windows_kms_host(cls, host: Optional[str]):
         """See `get_windows_kms_host`."""
-        cls.set_config("windows_kms_host", "" if host is None else host)
+        await cls.set_config("windows_kms_host", "" if host is None else host)
 
     @typed
-    def get_boot_images_auto_import(cls) -> bool:
+    async def get_boot_images_auto_import(cls) -> bool:
         """Automatically import/refresh the boot images every 60 minutes."""
-        return cls.get_config("boot_images_auto_import")
+        return await cls.get_config("boot_images_auto_import")
 
     @typed
-    def set_boot_images_auto_import(cls, auto: bool):
+    async def set_boot_images_auto_import(cls, auto: bool):
         """See `get_boot_images_auto_import`."""
-        cls.set_config("boot_images_auto_import", "1" if auto else "0")
+        await cls.set_config("boot_images_auto_import", "1" if auto else "0")
 
     @typed
-    def get_ntp_server(cls) -> str:
+    async def get_ntp_server(cls) -> str:
         """Address of NTP server.
 
         NTP server address passed to nodes via a DHCP response. e.g.
         ntp.ubuntu.com.
         """
-        return cls.get_config("ntp_server")
+        return await cls.get_config("ntp_server")
 
     @typed
-    def set_ntp_server(cls, server: str):
+    async def set_ntp_server(cls, server: str):
         """See `get_ntp_server`."""
-        cls.set_config("ntp_server", server)
+        await cls.set_config("ntp_server", server)
 
     class StorageLayout(DescriptiveEnum):
 
@@ -284,7 +285,7 @@ class MAASType(ObjectType):
         BCACHE = "bcache", "Bcache layout"
 
     @typed
-    def get_default_storage_layout(cls) -> StorageLayout:
+    async def get_default_storage_layout(cls) -> StorageLayout:
         """Default storage layout.
 
         Storage layout that is applied to a node when it is deployed.
@@ -293,12 +294,12 @@ class MAASType(ObjectType):
         return cls.StorageLayout.lookup(data)
 
     @typed
-    def set_default_storage_layout(cls, series: StorageLayout):
+    async def set_default_storage_layout(cls, series: StorageLayout):
         """See `get_default_storage_layout`."""
-        cls.set_config("default_storage_layout", series.parameter)
+        await cls.set_config("default_storage_layout", series.parameter)
 
     @typed
-    def get_default_min_hwe_kernel(cls) -> Optional[str]:
+    async def get_default_min_hwe_kernel(cls) -> Optional[str]:
         """Default minimum kernel version.
 
         The minimum kernel version used on new and commissioned nodes.
@@ -307,38 +308,39 @@ class MAASType(ObjectType):
         return None if data is None or data == "" else data
 
     @typed
-    def set_default_min_hwe_kernel(cls, version: Optional[str]):
+    async def set_default_min_hwe_kernel(cls, version: Optional[str]):
         """See `get_default_min_hwe_kernel`."""
-        cls.set_config(
+        await cls.set_config(
             "default_min_hwe_kernel", "" if version is None else version)
 
     @typed
-    def get_enable_third_party_drivers(cls) -> bool:
+    async def get_enable_third_party_drivers(cls) -> bool:
         """Enable the installation of proprietary drivers, e.g. HPVSA."""
-        return cls.get_config("enable_third_party_drivers")
+        return await cls.get_config("enable_third_party_drivers")
 
     @typed
-    def set_enable_third_party_drivers(cls, enabled: bool):
+    async def set_enable_third_party_drivers(cls, enabled: bool):
         """See `get_enable_third_party_drivers`."""
-        cls.set_config("enable_third_party_drivers", "1" if enabled else "0")
+        await cls.set_config(
+            "enable_third_party_drivers", "1" if enabled else "0")
 
-    def get_config(cls, name: str):
+    async def get_config(cls, name: str):
         """Get a configuration value from MAAS.
 
         Consult your MAAS server for recognised settings. Alternatively, use
         the pre-canned functions also defined on this object.
         """
-        return cls._handler.get_config(name=[name])
+        return await cls._handler.get_config(name=[name])
 
-    def set_config(cls, name: str, value):
+    async def set_config(cls, name: str, value):
         """Set a configuration value in MAAS.
 
         Consult your MAAS server for recognised settings. Alternatively, use
         the pre-canned functions also defined on this object.
         """
-        return cls._handler.set_config(name=[name], value=[value])
+        return await cls._handler.set_config(name=[name], value=[value])
 
-    def _roundtrip(cls):
+    async def _roundtrip(cls):
         """Testing helper: gets each value and sets it again."""
         getters = {
             name[4:]: getattr(cls, name) for name in dir(cls)
@@ -351,12 +353,12 @@ class MAASType(ObjectType):
 
         for name, getter in getters.items():
             print(">>>", name)
-            value = getter()
+            value = await getter()
             print(" ->", repr(value))
             print("   ", type(value))
             setter = setters[name]
             try:
-                setter(value)
+                await setter(value)
             except CallError as error:
                 print(error)
                 print(error.content.decode("utf-8", "replace"))

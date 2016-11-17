@@ -20,11 +20,9 @@ from . import (
 class DevicesType(ObjectType):
     """Metaclass for `Devices`."""
 
-    def __iter__(cls):
-        return map(cls._object, cls._handler.read())
-
-    def read(cls):
-        return cls(cls)
+    async def read(cls):
+        data = await cls._handler.read()
+        return cls(map(cls._object, data))
 
 
 class DeviceNotFound(Exception):

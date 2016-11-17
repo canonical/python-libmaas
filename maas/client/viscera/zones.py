@@ -18,11 +18,9 @@ from . import (
 class ZonesType(ObjectType):
     """Metaclass for `Zones`."""
 
-    def __iter__(cls):
-        return map(cls._object, cls._handler.read())
-
-    def read(cls):
-        return cls(cls)
+    async def read(cls):
+        data = await cls._handler.read()
+        return cls(map(cls._object, data))
 
 
 class ZoneNotFound(Exception):
@@ -35,8 +33,8 @@ class Zones(ObjectSet, metaclass=ZonesType):
 
 class ZoneType(ObjectType):
 
-    def read(cls, name):
-        data = cls._handler.read(name=name)
+    async def read(cls, name):
+        data = await cls._handler.read(name=name)
         return cls(data)
 
 

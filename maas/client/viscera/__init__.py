@@ -32,15 +32,17 @@ from itertools import (
     chain,
     starmap,
 )
-import pytz
 from types import MethodType
 from typing import Optional
+
+import pytz
 
 from .. import bones
 from ..utils import (
     get_all_subclasses,
     vars_class,
 )
+from ..utils.async import Asynchronous
 
 
 undefined = object()
@@ -138,7 +140,7 @@ class OriginObjectRef:
         raise AttributeError()
 
 
-class ObjectType(type):
+class ObjectType(Asynchronous, metaclass=Asynchronous):
 
     def __dir__(cls):
         return dir_class(cls)

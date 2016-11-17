@@ -7,13 +7,10 @@ __all__ = [
 
 import enum
 import hashlib
-import httplib2
 import io
-from typing import (
-    Any,
-    Callable,
-)
 from urllib.parse import urlparse
+
+import aiohttp
 
 from . import (
     check,
@@ -83,15 +80,7 @@ class BootResourceSet(Object):
 class BootResourcesType(ObjectType):
     """Metaclass for `BootResources`."""
 
-    def __iter__(cls):
-        return map(cls._object, cls._handler.read())
-
-
-class BootResources(ObjectSet, metaclass=BootResourcesType):
-    """The set of boot resources."""
-
-    @classmethod
-    def read(cls):
+    async def read(cls):
         """Get list of `BootResource`'s.
 
         Each `BootResource` from the API is limited in that it does not
@@ -105,22 +94,20 @@ class BootResources(ObjectSet, metaclass=BootResourcesType):
             ]
 
         """
-        return cls(cls)
+        data = await cls._handler.read()
+        return cls(map(cls._object, data))
 
-    @classmethod
-    def start_import(cls):
+    async def start_import(cls):
         """Start the import of `BootResource`'s."""
         # Cannot use cls._handler.import() as import is a reserved statement.
         return getattr(cls._handler, "import")()
 
-    @classmethod
-    def stop_import(cls):
+    async def stop_import(cls):
         """Stop the import of `BootResource`'s."""
         return cls._handler.stop_import()
 
-    @classmethod
     @typed
-    def create(
+    async def create(
             cls, name: str, architecture: str, content: io.IOBase, *,
             title: str="",
             filetype: BootResourceFileType=BootResourceFileType.TGZ,
@@ -169,7 +156,7 @@ class BootResources(ObjectSet, metaclass=BootResourcesType):
                 "chunk_size must be greater than 0, not %d" % chunk_size)
 
         size, sha256 = calc_size_and_sha265(content, chunk_size)
-        resource = cls._object(cls._handler.create(
+        resource = cls._object(await cls._handler.create(
             name=name, architecture=architecture, title=title,
             filetype=filetype.value, size=str(size), sha256=sha256))
         newest_set = max(resource.sets, default=None)
@@ -182,12 +169,12 @@ class BootResources(ObjectSet, metaclass=BootResourcesType):
             return resource
         else:
             # Upload in chunks and reload boot resource.
-            cls._upload_chunks(rfile, content, chunk_size, progress_callback)
+            await cls._upload_chunks(
+                rfile, content, chunk_size, progress_callback)
             return cls._object.read(resource.id)
 
-    @classmethod
     @typed
-    def _upload_chunks(
+    async def _upload_chunks(
             cls, rfile: BootResourceFile, content: io.IOBase, chunk_size: int,
             progress_callback=None):
         """Upload the `content` to `rfile` in chunks using `chunk_size`."""
@@ -195,20 +182,27 @@ class BootResources(ObjectSet, metaclass=BootResourcesType):
         upload_uri = urlparse(
             cls._handler.uri)._replace(path=rfile._data['upload_uri']).geturl()
         uploaded_size = 0
-        while True:
-            buf = content.read(chunk_size)
-            length = len(buf)
-            if length > 0:
-                uploaded_size += length
-                cls._put_chunk(upload_uri, buf)
-                if progress_callback is not None:
-                    progress_callback(uploaded_size / rfile.size)
-            if length != chunk_size:
-                break
 
-    @classmethod
+        insecure = cls._handler.session.insecure
+        connector = aiohttp.TCPConnector(verify_ssl=(not insecure))
+        session = aiohttp.ClientSession(connector=connector)
+
+        async with session:
+            while True:
+                buf = content.read(chunk_size)
+                length = len(buf)
+                if length > 0:
+                    uploaded_size += length
+                    await cls._put_chunk(upload_uri, buf)
+                    if progress_callback is not None:
+                        progress_callback(uploaded_size / rfile.size)
+                if length != chunk_size:
+                    break
+
     @typed
-    def _put_chunk(cls, upload_uri: str, buf: bytes):
+    async def _put_chunk(
+            cls, session: aiohttp.ClientSession,
+            upload_uri: str, buf: bytes):
         """Upload one chunk to `upload_uri`."""
         # Build the correct headers.
         headers = {
@@ -220,10 +214,8 @@ class BootResources(ObjectSet, metaclass=BootResourcesType):
             utils.sign(upload_uri, headers, credentials)
 
         # Perform upload of chunk.
-        insecure = cls._handler.session.insecure
-        http = httplib2.Http(disable_ssl_certificate_validation=insecure)
-        response, content = http.request(
-            upload_uri, "PUT", body=buf, headers=headers)
+        response, content = await session.put(
+            upload_uri, data=buf, headers=headers)
         if response.status != 200:
             request = {
                 "body": buf,
@@ -234,11 +226,15 @@ class BootResources(ObjectSet, metaclass=BootResourcesType):
             raise CallError(request, response, content, None)
 
 
+class BootResources(ObjectSet, metaclass=BootResourcesType):
+    """The set of boot resources."""
+
+
 class BootResourceType(ObjectType):
 
-    def read(cls, id: int):
+    async def read(cls, id: int):
         """Get `BootResource` by `id`."""
-        data = cls._handler.read(id=id)
+        data = await cls._handler.read(id=id)
         return cls(data)
 
 
@@ -263,6 +259,6 @@ class BootResource(Object, metaclass=BootResourceType):
         return super(BootResource, self).__repr__(
             fields={"type", "name", "architecture"})
 
-    def delete(self):
+    async def delete(self):
         """Delete boot resource."""
-        self._handler.delete(id=self.id)
+        await self._handler.delete(id=self.id)
