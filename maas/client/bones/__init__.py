@@ -291,7 +291,7 @@ class ActionAPI:
         """
         return CallAPI(params, self)
 
-    def __call__(self, **data):
+    async def __call__(self, **data):
         """Convenience method to do ``this.bind(**params).call(**data).data``.
 
         The ``params`` are extracted from the given keyword arguments.
@@ -303,7 +303,8 @@ class ActionAPI:
         See `CallAPI.call()` for return information and exceptions.
         """
         params = {name: data.pop(name) for name in self.handler.params}
-        return self.bind(**params).call(**data).data
+        response = await self.bind(**params).call(**data)
+        return response.data
 
     def __repr__(self):
         if self.op is None:
@@ -444,7 +445,8 @@ class CallAPI:
         session = aiohttp.ClientSession(connector=connector)
         async with session:
             response = await session.request(
-                self.action.method, uri, data=body, headers=headers)
+                self.action.method, uri, data=body,
+                headers=_prefer_json(headers))
             async with response:
                 # Fetch the raw body content.
                 content = await response.read()
@@ -483,3 +485,19 @@ class CallAPI:
 
     def __repr__(self):
         return "<Call %s @%s>" % (self.action.fullname, self.uri)
+
+
+def _prefer_json(headers):
+    """Prefer JSON in HTTP requests.
+
+    If no `Accept` header has yet been defined in `headers`, this adds one
+    that makes `application/json` clearly preferred. See RFC-7159 re. this
+    choice of MIME type:
+
+      The MIME media type for JSON text is application/json.
+
+    It also happens to be what Piston understands, which is what MAAS uses.
+    """
+    if not any(header.lower() == "accept" for header in headers):
+        headers["Accept"] = "application/json,*/*;q=0.9"
+    return headers
