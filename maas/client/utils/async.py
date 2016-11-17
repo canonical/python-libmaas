@@ -3,9 +3,15 @@
 __all__ = [
     "asynchronous",
     "Asynchronous",
+    "is_loop_running",
 ]
 
+from asyncio import get_event_loop
 from functools import wraps
+from inspect import (
+    isawaitable,
+    iscoroutinefunction,
+)
 
 
 def asynchronous(func):
@@ -20,19 +26,14 @@ def asynchronous(func):
     function from outside of the event-loop, and so makes interactive use of
     these APIs far more intuitive.
     """
-    from asyncio import get_event_loop
-    from inspect import isawaitable
-
     @wraps(func)
     def wrapper(*args, **kwargs):
         eventloop = get_event_loop()
         result = func(*args, **kwargs)
-        if eventloop.is_running():
-            return result
-        elif isawaitable(result):
-            return eventloop.run_until_complete(result)
-        else:
-            return result
+        if not eventloop.is_running():
+            while isawaitable(result):
+                result = eventloop.run_until_complete(result)
+        return result
 
     return wrapper
 
@@ -52,9 +53,17 @@ class Asynchronous(type):
 
 def _maybe_wrap(attribute):
     """Helper for `Asynchronous`."""
-    if callable(attribute):
+    if iscoroutinefunction(attribute):
         return asynchronous(attribute)
-    elif isinstance(attribute, (classmethod, staticmethod)):
-        return attribute.__class__(asynchronous(attribute.__func__))
-    else:
-        return attribute
+    if isinstance(attribute, (classmethod, staticmethod)):
+        if iscoroutinefunction(attribute.__func__):
+            return attribute.__class__(asynchronous(attribute.__func__))
+    return attribute
+
+
+def is_loop_running():
+    """Is the current event-loop running right now?
+
+    Then we don't want to block, do we?
+    """
+    return get_event_loop().is_running()
