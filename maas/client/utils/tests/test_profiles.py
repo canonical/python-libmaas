@@ -14,17 +14,17 @@ from testtools.matchers import (
 )
 from twisted.python.filepath import FilePath
 
-from .test_auth import make_credentials
 from .. import profiles
+from ...testing import (
+    make_name_without_spaces,
+    TestCase,
+)
 from ..profiles import (
     Profile,
     ProfileNotFound,
     ProfileStore,
 )
-from ...testing import (
-    make_name_without_spaces,
-    TestCase,
-)
+from .test_auth import make_credentials
 
 
 def make_profile():

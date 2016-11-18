@@ -15,11 +15,11 @@ from .. import (
     login,
     profiles,
 )
-from .test_auth import make_credentials
 from ...testing import (
     make_name_without_spaces,
     TestCase,
 )
+from .test_auth import make_credentials
 
 
 class TestLogin(TestCase):

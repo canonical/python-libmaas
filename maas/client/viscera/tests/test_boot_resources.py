@@ -90,7 +90,7 @@ class TestBootResource(TestCase):
         BootResource = make_origin().BootResource
         BootResource._handler.read.return_value = {
             "id": resource_id, "type": rtype, "name": name,
-            "architecture": architecture, "subarches":subarches,
+            "architecture": architecture, "subarches": subarches,
             "sets": sets}
 
         resource = BootResource.read(resource_id)

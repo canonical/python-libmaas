@@ -10,12 +10,11 @@ from testtools.matchers import (
 )
 
 from .. import boot_sources
-from ..testing import bind
 from ...testing import (
     make_name_without_spaces,
-    pick_bool,
     TestCase,
 )
+from ..testing import bind
 
 
 def make_origin():
