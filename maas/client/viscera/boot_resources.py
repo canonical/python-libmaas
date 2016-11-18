@@ -193,7 +193,7 @@ class BootResourcesType(ObjectType):
                 length = len(buf)
                 if length > 0:
                     uploaded_size += length
-                    await cls._put_chunk(upload_uri, buf)
+                    await cls._put_chunk(session, upload_uri, buf)
                     if progress_callback is not None:
                         progress_callback(uploaded_size / rfile.size)
                 if length != chunk_size:
@@ -214,9 +214,10 @@ class BootResourcesType(ObjectType):
             utils.sign(upload_uri, headers, credentials)
 
         # Perform upload of chunk.
-        response, content = await session.put(
+        response = await session.put(
             upload_uri, data=buf, headers=headers)
         if response.status != 200:
+            content = await response.read()
             request = {
                 "body": buf,
                 "headers": headers,

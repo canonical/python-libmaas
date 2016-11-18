@@ -46,9 +46,9 @@ class BootSources(ObjectSet, metaclass=BootSourcesType):
 
 class BootSourceType(ObjectType):
 
-    def read(cls, id):
+    async def read(cls, id):
         """Get `BootSource` by `id`."""
-        data = cls._handler.read(id=id)
+        data = await cls._handler.read(id=id)
         return cls(data)
 
 

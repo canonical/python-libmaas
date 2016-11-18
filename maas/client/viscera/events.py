@@ -179,7 +179,7 @@ class Events(ObjectSet, metaclass=EventsType):
         else:
             return self._fetch(self._next_uri, count)
 
-    async def backwards(self):
+    def backwards(self):
         """Iterate continuously through events, backwards.
 
         Note: this returns an *asynchronous* iterator.
@@ -201,7 +201,7 @@ class Events(ObjectSet, metaclass=EventsType):
                     "event-loop is running.")
             current = current.prev()
 
-    async def forwards(self):
+    def forwards(self):
         """Iterate continuously through events, forwards.
 
         Note: this returns an *asynchronous* iterator.
