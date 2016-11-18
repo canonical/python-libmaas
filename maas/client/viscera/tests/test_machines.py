@@ -2,17 +2,14 @@
 
 __all__ = []
 
-import base64
-
 from testtools.matchers import Equals
 
 from .. import machines
-from ..testing import bind
 from ...testing import (
     make_name_without_spaces,
-    make_string,
     TestCase,
 )
+from ..testing import bind
 
 
 def make_origin():

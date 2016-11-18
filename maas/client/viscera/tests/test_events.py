@@ -8,10 +8,7 @@ from itertools import (
     count,
 )
 import random
-from unittest.mock import (
-    MagicMock,
-    Mock,
-)
+from unittest.mock import sentinel
 
 from testtools.matchers import (
     Equals,
@@ -19,13 +16,13 @@ from testtools.matchers import (
 )
 
 from .. import events
-from ..testing import bind
 from ...testing import (
     make_mac_address,
     make_name_without_spaces,
     randrange,
     TestCase,
 )
+from ..testing import bind
 
 
 event_ids = count(1)
@@ -46,7 +43,19 @@ def make_Event_dict():
 def make_origin():
     # Create a new origin with Events and Event. The former refers to the
     # latter via the origin, hence why it must be bound.
-    return bind(events.Events, events.Event)
+    origin = bind(events.Events, events.Event)
+    # Prepare a sensible default response from Events.query.
+    events_query = origin.session.handlers[events.Events.__name__].query
+    events_query.return_value = make_queried_events()
+    return origin
+
+
+def make_queried_events():
+    """Mimic the object returned from a query."""
+    return {
+        "events": [], "prev_uri": sentinel.prev_uri,
+        "next_uri": sentinel.next_uri,
+    }
 
 
 class TestEventsQuery(TestCase):

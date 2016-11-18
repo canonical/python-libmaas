@@ -8,12 +8,12 @@ from testtools.matchers import (
 )
 
 from .. import users
-from ..testing import bind
 from ...testing import (
     make_name_without_spaces,
     pick_bool,
     TestCase,
 )
+from ..testing import bind
 
 
 def make_origin():
@@ -68,7 +68,7 @@ class TestUsers(TestCase):
         Users._handler.create.return_value = {
             "username": username, "email": email, "is_superuser": is_admin}
 
-        user = Users.create(username, password, is_admin=is_admin)
+        Users.create(username, password, is_admin=is_admin)
         Users._handler.create.assert_called_once_with(
             username=username, password=password, email=email,
             is_superuser='1' if is_admin else '0')
@@ -84,7 +84,7 @@ class TestUsers(TestCase):
         Users._handler.create.return_value = {
             "username": username, "email": email, "is_superuser": is_admin}
 
-        user = Users.create(username, password, email=email, is_admin=is_admin)
+        Users.create(username, password, email=email, is_admin=is_admin)
         Users._handler.create.assert_called_once_with(
             username=username, password=password, email=email,
             is_superuser='1' if is_admin else '0')

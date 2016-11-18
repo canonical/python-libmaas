@@ -9,14 +9,15 @@ from testtools.matchers import (
     MatchesStructure,
 )
 
-from .. import boot_sources
-from .. import boot_source_selections
-from ..testing import bind
+from .. import (
+    boot_source_selections,
+    boot_sources,
+)
 from ...testing import (
     make_name_without_spaces,
-    pick_bool,
     TestCase,
 )
+from ..testing import bind
 
 
 def make_origin():

@@ -14,6 +14,9 @@ upload: bin/python setup.py README
 test: bin/tox
 	@bin/tox
 
+lint: bin/tox
+	@bin/tox -e lint
+
 clean:
 	$(RM) -r bin build dist include lib local share
 	find . -name '*.py[co]' -print0 | xargs -r0 $(RM) -r
@@ -44,4 +47,4 @@ bin/mkdocs: bin/pip
 
 # ---
 
-.PHONY: develop dist docs test clean
+.PHONY: develop dist docs test lint clean

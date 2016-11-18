@@ -16,10 +16,10 @@ from collections import (
 from http import HTTPStatus
 import json
 import re
-import ssl
 from urllib.parse import urljoin
 
-import httplib2
+import aiohttp
+import aiohttp.errors
 
 from .. import utils
 from ..utils import profiles
@@ -35,29 +35,26 @@ class SessionAPI:
     """Represents an API session with a remote MAAS installation."""
 
     @classmethod
-    def fromURL(cls, url, *, credentials=None, insecure=False):
+    async def fromURL(
+            cls, url, *, credentials=None, insecure=False):
         """Return a `SessionAPI` for a given MAAS instance."""
         url_describe = urljoin(url, "describe/")
-        http = httplib2.Http(disable_ssl_certificate_validation=insecure)
-
-        try:
-            response, content = http.request(url_describe, "GET")
-        except ssl.SSLError:
-            raise SessionError("Certificate verification failed.")
-
-        if response.status != HTTPStatus.OK:
-            raise SessionError(
-                "{0} -> {1.status} {1.reason}".format(url, response))
-        elif response["content-type"] != "application/json":
-            raise SessionError(
-                "Expected application/json, got: %(content-type)s"
-                % response)
-        else:
-            # MAAS will only ever produce JSON as ASCII or UTF-8.
-            description = json.loads(content.decode('utf-8'))
-            session = cls(description, credentials)
-            session.insecure = insecure
-            return session
+        connector = aiohttp.TCPConnector(verify_ssl=(not insecure))
+        session = aiohttp.ClientSession(connector=connector)
+        async with session, session.get(url_describe) as response:
+            if response.status != HTTPStatus.OK:
+                raise SessionError(
+                    "{0} -> {1.status} {1.reason}".format(
+                        url, response))
+            elif response.content_type != "application/json":
+                raise SessionError(
+                    "Expected application/json, got: %s"
+                    % response.content_type)
+            else:
+                description = await response.json()
+                session = cls(description, credentials)
+                session.insecure = insecure
+                return session
 
     @classmethod
     def fromProfile(cls, profile):
@@ -294,7 +291,7 @@ class ActionAPI:
         """
         return CallAPI(params, self)
 
-    def __call__(self, **data):
+    async def __call__(self, **data):
         """Convenience method to do ``this.bind(**params).call(**data).data``.
 
         The ``params`` are extracted from the given keyword arguments.
@@ -306,7 +303,8 @@ class ActionAPI:
         See `CallAPI.call()` for return information and exceptions.
         """
         params = {name: data.pop(name) for name in self.handler.params}
-        return self.bind(**params).call(**data).data
+        response = await self.bind(**params).call(**data)
+        return response.data
 
     def __repr__(self):
         if self.op is None:
@@ -436,41 +434,70 @@ class CallAPI:
 
         return uri, body, headers
 
-    def dispatch(self, uri, body, headers):
+    async def dispatch(self, uri, body, headers):
         """Dispatch the call via HTTP.
 
         This is used by `call` and can be overridden to use a different HTTP
         library.
         """
         insecure = self.action.handler.session.insecure
-        http = httplib2.Http(disable_ssl_certificate_validation=insecure)
-        response, content = http.request(
-            uri, self.action.method, body=body, headers=headers)
+        connector = aiohttp.TCPConnector(verify_ssl=(not insecure))
+        session = aiohttp.ClientSession(connector=connector)
+        async with session:
+            response = await session.request(
+                self.action.method, uri, data=body,
+                headers=_prefer_json(headers))
+            async with response:
+                # Fetch the raw body content.
+                content = await response.read()
 
-        # Debug output.
-        if self.action.handler.session.debug:
-            print(response)
+                # Debug output.
+                if self.action.handler.session.debug:
+                    print(response)
 
-        # 2xx status codes are all okay.
-        if response.status // 100 != 2:
-            request = {
-                "body": body,
-                "headers": headers,
-                "method": self.action.method,
-                "uri": uri,
-            }
-            raise CallError(request, response, content, self)
+                # 2xx status codes are all okay.
+                if response.status // 100 != 2:
+                    request = {
+                        "body": body,
+                        "headers": headers,
+                        "method": self.action.method,
+                        "uri": uri,
+                    }
+                    raise CallError(request, response, content, self)
 
-        # Decode from JSON if that's what it's declared as.
-        content_type = utils.get_response_content_type(response)
-        if content_type is None:
-            data = content
-        elif content_type.endswith('/json'):
-            data = json.loads(content.decode("utf-8"))  # Assume it's UTF-8.
-        else:
-            data = content
+                # Decode from JSON if that's what it's declared as.
+                if response.content_type is None:
+                    data = await response.read()
+                elif response.content_type.endswith('/json'):
+                    data = await response.json()
+                else:
+                    data = await response.read()
 
-        return CallResult(response, content, data)
+                if response.content_type is None:
+                    data = content
+                elif response.content_type.endswith('/json'):
+                    # JSON should always be UTF-8.
+                    data = json.loads(content.decode("utf-8"))
+                else:
+                    data = content
+
+                return CallResult(response, content, data)
 
     def __repr__(self):
         return "<Call %s @%s>" % (self.action.fullname, self.uri)
+
+
+def _prefer_json(headers):
+    """Prefer JSON in HTTP requests.
+
+    If no `Accept` header has yet been defined in `headers`, this adds one
+    that makes `application/json` clearly preferred. See RFC-7159 re. this
+    choice of MIME type:
+
+      The MIME media type for JSON text is application/json.
+
+    It also happens to be what Piston understands, which is what MAAS uses.
+    """
+    if not any(header.lower() == "accept" for header in headers):
+        headers["Accept"] = "application/json,*/*;q=0.9"
+    return headers

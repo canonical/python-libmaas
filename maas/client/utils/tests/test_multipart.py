@@ -14,13 +14,13 @@ from testtools.matchers import (
     StartsWith,
 )
 
-from ..multipart import (
-    encode_multipart_data,
-    get_content_type,
-)
 from ...testing import (
     make_string,
     TestCase,
+)
+from ..multipart import (
+    encode_multipart_data,
+    get_content_type,
 )
 
 # Django, sigh, needs this.

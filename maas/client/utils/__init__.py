@@ -3,7 +3,6 @@
 __all__ = [
     "api_url",
     "get_all_subclasses",
-    "get_response_content_type",
     "parse_docstring",
     "prepare_payload",
     "retries",
@@ -13,7 +12,6 @@ __all__ = [
 ]
 
 from collections import Iterable
-from email.message import Message
 from functools import (
     lru_cache,
     partial,
@@ -65,26 +63,6 @@ def urlencode(data):
     return "&".join(
         "%s=%s" % (dec(name), dec(value))
         for name, value in data)
-
-
-def get_response_content_type(response):
-    """Returns the response's content-type, without parameters.
-
-    If the content-type was not set in the response, returns `None`.
-
-    :type response: :class:`httplib2.Response`
-    """
-    try:
-        content_type = response["content-type"]
-    except KeyError:
-        return None
-    else:
-        # It seems odd to create a Message instance here, but at the time of
-        # writing it's the only place that has the smarts to correctly deal
-        # with a Content-Type that contains a charset (or other parameters).
-        message = Message()
-        message.set_type(content_type)
-        return message.get_content_type()
 
 
 def prepare_payload(op, method, uri, data):

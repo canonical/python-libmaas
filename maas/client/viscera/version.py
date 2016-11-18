@@ -20,8 +20,8 @@ def parse_version(version):
 class VersionType(ObjectType):
     """Metaclass for `Version`."""
 
-    def read(cls):
-        data = cls._handler.read()
+    async def read(cls):
+        data = await cls._handler.read()
         return cls(data)
 
 

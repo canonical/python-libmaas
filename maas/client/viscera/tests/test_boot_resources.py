@@ -3,28 +3,32 @@
 __all__ = []
 
 import hashlib
-import httplib2
+from http import HTTPStatus
 import io
 import random
-
-from testtools.matchers import (
-    Equals,
-    MatchesDict,
-    MatchesStructure,
-)
 from unittest.mock import (
     call,
     MagicMock,
     sentinel,
 )
 
+import aiohttp
+from testtools.matchers import (
+    Equals,
+    MatchesDict,
+    MatchesStructure,
+)
+
 from .. import boot_resources
-from ..testing import bind
 from ...testing import (
-    make_string,
     make_name_without_spaces,
+    make_string,
     pick_bool,
     TestCase,
+)
+from ..testing import (
+    AsyncMock,
+    bind,
 )
 
 
@@ -86,7 +90,7 @@ class TestBootResource(TestCase):
         BootResource = make_origin().BootResource
         BootResource._handler.read.return_value = {
             "id": resource_id, "type": rtype, "name": name,
-            "architecture": architecture, "subarches":subarches,
+            "architecture": architecture, "subarches": subarches,
             "sets": sets}
 
         resource = BootResource.read(resource_id)
@@ -360,11 +364,11 @@ class TestBootResources(TestCase):
         # Mock signing. Test checks that its actually called.
         mock_sign = self.patch(boot_resources.utils, "sign")
 
-        # Mock the httplib as the create performs PUT directly to the API.
-        http = MagicMock()
-        http.return_value.request.return_value = (
-            httplib2.Response({"status": 200}), b"")
-        self.patch(boot_resources.httplib2, "Http", http)
+        # Mock ClientSession.put as the create does PUT directly to the API.
+        put = AsyncMock()
+        response = put.return_value = AsyncMock(spec=aiohttp.ClientResponse)
+        response.status = HTTPStatus.OK.value
+        self.patch(boot_resources.aiohttp.ClientSession, "put", put)
 
         # Progress handler called on each chunk.
         progress_handler = MagicMock()
@@ -381,7 +385,7 @@ class TestBootResources(TestCase):
             name=name, architecture=architecture))
         self.assertTrue(resource.sets["20161026"].complete)
 
-        # Check that sign was called.
+        # Check that the request was signed.
         self.assertTrue(mock_sign.called)
 
         # Check that the PUT was called for each chunk.
@@ -389,14 +393,13 @@ class TestBootResources(TestCase):
             call(
                 "http://localhost:5240/MAAS/api/2.0/"
                 "boot-resources/%d/upload/1" % resource_id,
-                "PUT", body=data[0 + i:chunk_size + i],
-                headers={
+                data=data[0 + i:chunk_size + i], headers={
                     'Content-Type': 'application/octet-stream',
                     'Content-Length': str(len(data[0 + i:chunk_size + i])),
                 })
             for i in range(0, len(data), chunk_size)
         ]
-        self.assertEquals(calls, http.return_value.request.call_args_list)
+        self.assertEquals(calls, put.call_args_list)
 
         # Check that progress handler was called on each chunk.
         calls = [
@@ -433,7 +436,6 @@ class TestBootResources(TestCase):
         # upload is complete to get the updated object.
         origin = make_origin()
         BootResources = origin.BootResources
-        BootResource = origin.BootResource
         BootResources._handler.uri = (
             "http://localhost:5240/MAAS/api/2.0/boot-resources/")
         BootResources._handler.path = "/MAAS/api/2.0/boot-resources/"
@@ -465,13 +467,17 @@ class TestBootResources(TestCase):
         # Mock signing. Test checks that its actually called.
         mock_sign = self.patch(boot_resources.utils, "sign")
 
-        # Mock the httplib as the create performs PUT directly to the API.
-        http = MagicMock()
-        http.return_value.request.return_value = (
-            httplib2.Response({"status": 500}), b"Error")
-        self.patch(boot_resources.httplib2, "Http", http)
+        # Mock ClientSession.put as the create does PUT directly to the API.
+        put = AsyncMock()
+        response = put.return_value = AsyncMock(spec=aiohttp.ClientResponse)
+        response.status = HTTPStatus.INTERNAL_SERVER_ERROR.value
+        response.read.return_value = b"Error"
+        self.patch(boot_resources.aiohttp.ClientSession, "put", put)
 
         self.assertRaises(
             boot_resources.CallError, BootResources.create,
             name, architecture, buf,
             title=title, filetype=filetype, chunk_size=chunk_size)
+
+        # Check that the request was signed.
+        self.assertTrue(mock_sign.called)

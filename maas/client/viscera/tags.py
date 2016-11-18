@@ -18,17 +18,15 @@ from . import (
 class TagsType(ObjectType):
     """Metaclass for `Tags`."""
 
-    def __iter__(cls):
-        return map(cls._object, cls._handler.read())
-
-    def create(cls, name, *, comment="", definition="", kernel_opts=""):
-        data = cls._handler.new(
+    async def create(cls, name, *, comment="", definition="", kernel_opts=""):
+        data = await cls._handler.new(
             name=name, comment=comment, definition=definition,
             kernel_opts=kernel_opts)
         return cls._object(data)
 
-    def read(cls):
-        return cls(cls)
+    async def read(cls):
+        data = await cls._handler.read()
+        return cls(map(cls._object, data))
 
 
 class Tags(ObjectSet, metaclass=TagsType):

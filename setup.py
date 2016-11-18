@@ -21,16 +21,16 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Topic :: Software Development :: Libraries',
     ],
-    namespace_packages = ['maas'],
+    namespace_packages=['maas'],
     packages=find_packages(),
     package_data={
         'maas.client.bones.tests': ['*.json'],
     },
     install_requires={
+        "aiohttp >= 1.1.4",
         "argcomplete >= 1.0",
         "beautifulsoup4 >= 4.4.1",
         "colorclass >= 1.2.0",
-        "httplib2 >= 0.8",
         "oauthlib >= 1.0.3",
         "pytz >= 2014.10",
         "PyYAML >= 3.11",

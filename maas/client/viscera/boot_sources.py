@@ -7,7 +7,6 @@ __all__ = [
 
 from . import (
     check,
-    check_optional,
     Object,
     ObjectField,
     ObjectSet,
@@ -19,10 +18,7 @@ from . import (
 class BootSourcesType(ObjectType):
     """Metaclass for `BootSources`."""
 
-    def __iter__(cls):
-        return map(cls._object, cls._handler.read())
-
-    def create(cls, url, *, keyring_filename=None, keyring_data=None):
+    async def create(cls, url, *, keyring_filename=None, keyring_data=None):
         """Create a new `BootSource`."""
         if (not url.endswith(".json") and
                 keyring_filename is None and
@@ -30,7 +26,7 @@ class BootSourcesType(ObjectType):
             raise ValueError(
                 "Either keyring_filename and keyring_data must be set when "
                 "providing a signed source.")
-        data = cls._handler.create(
+        data = await cls._handler.create(
             url=url,
             keyring_filename=(
                 "" if keyring_filename is None else keyring_filename),
@@ -38,21 +34,21 @@ class BootSourcesType(ObjectType):
                 "" if keyring_data is None else keyring_data))
         return cls._object(data)
 
+    async def read(cls):
+        """Get list of `BootSource`'s."""
+        data = await cls._handler.read()
+        return cls(map(cls._object, data))
+
 
 class BootSources(ObjectSet, metaclass=BootSourcesType):
     """The set of boot sources."""
 
-    @classmethod
-    def read(cls):
-        """Get list of `BootSource`'s."""
-        return cls(cls)
-
 
 class BootSourceType(ObjectType):
 
-    def read(cls, id):
+    async def read(cls, id):
         """Get `BootSource` by `id`."""
-        data = cls._handler.read(id=id)
+        data = await cls._handler.read(id=id)
         return cls(data)
 
 
@@ -76,6 +72,6 @@ class BootSource(Object, metaclass=BootSourceType):
         return super(BootSource, self).__repr__(
             fields={"url", "keyring_filename", "keyring_data"})
 
-    def delete(self):
+    async def delete(self):
         """Delete boot source."""
-        self._handler.delete(id=self.id)
+        await self._handler.delete(id=self.id)

@@ -40,42 +40,53 @@ def typed(func):
     types_in = tuple(get_types_in(type_hints, func))
     type_out = get_type_out(type_hints, func)
 
-    if type_out is None:
-        @wraps(func)
-        def checked(*args, **kwargs):
-            bound = signature.bind(*args, **kwargs)
-            bound.apply_defaults()
-
-            # Check incoming arguments.
-            for name, type_in in types_in:
-                # An empty *args, for example, will not appear in the bound
-                # arguments list, so we much check for that.
-                if name in bound.arguments:
-                    value = bound.arguments[name]
-                    if not issubclass(type(value), type_in):
-                        raise ArgumentTypeError(func, name, value, type_in)
-
-            # No annotation on return value.
-            return func(*args, **kwargs)
-
-    else:
-        @wraps(func)
-        def checked(*args, **kwargs):
-            bound = signature.bind(*args, **kwargs)
-            bound.apply_defaults()
-
-            # Check incoming arguments.
-            for name, type_in in types_in:
+    def check_in(args, kwargs):
+        bound = signature.bind(*args, **kwargs)
+        bound.apply_defaults()
+        # Check incoming arguments.
+        for name, type_in in types_in:
+            # An empty *args, for example, will not appear in the bound
+            # arguments list, so we much check for that.
+            if name in bound.arguments:
                 value = bound.arguments[name]
                 if not issubclass(type(value), type_in):
                     raise ArgumentTypeError(func, name, value, type_in)
 
-            # Call function and check return value.
-            result = func(*args, **kwargs)
-            if issubclass(type(result), type_out):
+    def check_out(result):
+        if not issubclass(type(result), type_out):
+            raise ReturnTypeError(func, result, type_out)
+
+    if inspect.iscoroutinefunction(func):
+        if type_out is None:
+            @wraps(func)
+            async def checked(*args, **kwargs):
+                check_in(args, kwargs)
+                # No annotation on return value.
+                return await func(*args, **kwargs)
+
+        else:
+            @wraps(func)
+            async def checked(*args, **kwargs):
+                check_in(args, kwargs)
+                result = await func(*args, **kwargs)
+                check_out(result)
                 return result
-            else:
-                raise ReturnTypeError(func, result, type_out)
+
+    else:
+        if type_out is None:
+            @wraps(func)
+            def checked(*args, **kwargs):
+                check_in(args, kwargs)
+                # No annotation on return value.
+                return func(*args, **kwargs)
+
+        else:
+            @wraps(func)
+            def checked(*args, **kwargs):
+                check_in(args, kwargs)
+                result = func(*args, **kwargs)
+                check_out(result)
+                return result
 
     return checked
 

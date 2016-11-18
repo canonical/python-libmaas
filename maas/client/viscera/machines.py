@@ -28,13 +28,11 @@ from ..bones import CallError
 class MachinesType(ObjectType):
     """Metaclass for `Machines`."""
 
-    def __iter__(cls):
-        return map(cls._object, cls._handler.read())
+    async def read(cls):
+        data = await cls._handler.read()
+        return cls(map(cls._object, data))
 
-    def read(cls):
-        return cls(cls)
-
-    def allocate(
+    async def allocate(
             cls, *, hostname: str=None, architecture: str=None,
             cpus: int=None, memory: float=None, tags: Sequence[str]=None):
         """
@@ -62,7 +60,7 @@ class MachinesType(ObjectType):
                 tag[1:] for tag in tags if tag.startswith("-")]
 
         try:
-            data = cls._handler.allocate(**params)
+            data = await cls._handler.allocate(**params)
         except CallError as error:
             if error.status == HTTPStatus.CONFLICT:
                 message = "No machine matching the given criteria was found."
@@ -83,8 +81,8 @@ class Machines(ObjectSet, metaclass=MachinesType):
 
 class MachineType(ObjectType):
 
-    def read(cls, system_id):
-        data = cls._handler.read(system_id=system_id)
+    async def read(cls, system_id):
+        data = await cls._handler.read(system_id=system_id)
         return cls(data)
 
 
@@ -152,7 +150,7 @@ class Machine(Object, metaclass=MachineType):
     zone = zones.ZoneField(
         "zone", readonly=True)
 
-    def deploy(
+    async def deploy(
             self, user_data: Union[bytes, str]=None, distro_series: str=None,
             hwe_kernel: str=None, comment: str=None):
         """Deploy this machine.
@@ -180,14 +178,14 @@ class Machine(Object, metaclass=MachineType):
             params["hwe_kernel"] = hwe_kernel
         if comment is not None:
             params["comment"] = comment
-        data = self._handler.deploy(**params)
+        data = await self._handler.deploy(**params)
         return type(self)(data)
 
-    def release(self, comment: str=None):
+    async def release(self, comment: str=None):
         params = {"system_id": self.system_id}
         if comment is not None:
             params["comment"] = comment
-        data = self._handler.release(**params)
+        data = await self._handler.release(**params)
         return type(self)(data)
 
     def __repr__(self):

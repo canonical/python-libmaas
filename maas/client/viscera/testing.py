@@ -1,10 +1,15 @@
 """ Testing framework for maas.client.viscera """
 
-__all__ = ['bind']
+__all__ = [
+    'AsyncMock',
+    'Awaitable',
+    'bind',
+]
 
+from functools import partial
 from itertools import chain
 from typing import Mapping
-from unittest.mock import MagicMock
+from unittest.mock import Mock
 
 from . import OriginBase
 
@@ -37,10 +42,35 @@ def bind(*objects, session=None):
     objects = dict(objects)
 
     if session is None:
-        session = MagicMock(name="session")
+        session = Mock(name="session")
         session.handlers = {
-            name: MagicMock(name="handler(%s)" % name)
+            name: AsyncMock(name="handler(%s)" % name)
             for name in objects
         }
 
     return OriginBase(session, objects=objects)
+
+
+class AsyncMock(Mock):
+    """Mock that is "future-like"; see PEP-492 for the details.
+
+    The new `await` syntax chokes on arguments that are not future-like, i.e.
+    have an `__await__` call, so we have to fool it.
+    """
+
+    def __call__(_mock_self, *args, **kwargs):
+        callup = super(AsyncMock, _mock_self).__call__
+        call = partial(callup, *args, **kwargs)
+        return Awaitable(call)
+
+
+class Awaitable:
+    """Wrap a "normal" call in a future-like object."""
+
+    def __init__(self, call):
+        super(Awaitable, self).__init__()
+        self._call = call
+
+    def __await__(self):
+        yield  # This serves only to make this a generator.
+        return self._call()

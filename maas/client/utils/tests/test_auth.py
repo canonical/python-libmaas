@@ -2,7 +2,6 @@
 
 __all__ = []
 
-from argparse import Namespace
 import sys
 from unittest.mock import (
     ANY,
@@ -10,11 +9,11 @@ from unittest.mock import (
 )
 
 from .. import auth
-from ..creds import Credentials
 from ...testing import (
     make_name,
     TestCase,
 )
+from ..creds import Credentials
 
 
 def make_credentials():

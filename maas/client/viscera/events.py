@@ -25,6 +25,7 @@ from . import (
     ObjectSet,
     ObjectType,
 )
+from ..utils.async import is_loop_running
 from ..utils.typecheck import typed
 
 #
@@ -86,7 +87,7 @@ class EventsType(ObjectType):
     Level = Level
 
     @typed
-    def query(
+    async def query(
             cls, *,
             hostnames: Iterable[str]=None,
             domains: Iterable[str]=None,
@@ -127,7 +128,7 @@ class EventsType(ObjectType):
         if limit is not None:
             params["limit"] = ["{:d}".format(limit)]
 
-        data = cls._handler.query(**params)
+        data = await cls._handler.query(**params)
         return cls(data)
 
 
@@ -148,15 +149,15 @@ class Events(ObjectSet, metaclass=EventsType):
         self._next_uri = eventmap["next_uri"]
 
     @classmethod
-    def _fetch(cls, uri, count):
+    async def _fetch(cls, uri, count):
         query = urlparse(uri).query
         params = parse_qs(query, errors="strict")
         if count is not None:
             params["limit"] = ["{:d}".format(count)]
-        data = cls._handler.query(**params)
+        data = await cls._handler.query(**params)
         return cls(data)
 
-    def prev(self, count=None):
+    async def prev(self, count=None):
         """Load the previous (older) page/batch of events.
 
         :param count: A limit on the number of events to fetch. By default the
@@ -167,7 +168,7 @@ class Events(ObjectSet, metaclass=EventsType):
         else:
             return self._fetch(self._prev_uri, count)
 
-    def next(self, count=None):
+    async def next(self, count=None):
         """Load the next (newer) page/batch of events.
 
         :param count: A limit on the number of events to fetch. By default the
@@ -181,22 +182,90 @@ class Events(ObjectSet, metaclass=EventsType):
     def backwards(self):
         """Iterate continuously through events, backwards.
 
+        Note: this returns an *asynchronous* iterator.
+
         This will load new pages/batches of events on demand.
         """
+        if is_loop_running():
+            return EventsAsyncIteratorBackwards(self)
+        else:
+            return self._backwards_sync()
+
+    def _backwards_sync(self):
         current = self
         while len(current) != 0:
             yield from current
+            if is_loop_running():
+                raise RuntimeError(
+                    "Cannot iterate synchronously while "
+                    "event-loop is running.")
             current = current.prev()
 
     def forwards(self):
         """Iterate continuously through events, forwards.
 
+        Note: this returns an *asynchronous* iterator.
+
         This will load new pages/batches of events on demand.
         """
+        if is_loop_running():
+            return EventsAsyncIteratorForwards(self)
+        else:
+            return self._forwards_sync()
+
+    def _forwards_sync(self):
         current = self
         while len(current) != 0:
             yield from reversed(current)
+            if is_loop_running():
+                raise RuntimeError(
+                    "Cannot iterate synchronously while "
+                    "event-loop is running.")
             current = current.next()
+
+
+class EventsAsyncIteratorBackwards:
+
+    def __init__(self, current):
+        super(EventsAsyncIteratorBackwards, self).__init__()
+        self._current_iter = iter(current)
+        self._current = current
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        try:
+            return next(self._current_iter)
+        except StopIteration:
+            self._current = await self._current.prev()
+            self._current_iter = iter(self._current)
+            if len(self._current) == 0:
+                raise StopAsyncIteration()
+            else:
+                return next(self._current_iter)
+
+
+class EventsAsyncIteratorForwards:
+
+    def __init__(self, current):
+        super(EventsAsyncIteratorForwards, self).__init__()
+        self._current_iter = reversed(current)
+        self._current = current
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        try:
+            return next(self._current_iter)
+        except StopIteration:
+            self._current = await self._current.next()
+            self._current_iter = reversed(self._current)
+            if len(self._current) == 0:
+                raise StopAsyncIteration()
+            else:
+                return next(self._current_iter)
 
 
 def truncate(length, text):  # TODO: Move into utils.

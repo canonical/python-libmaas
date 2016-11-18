@@ -4,8 +4,8 @@ __all__ = []
 
 from testtools.matchers import IsInstance
 
-from ..creds import Credentials
 from ...testing import TestCase
+from ..creds import Credentials
 
 
 class TestCredentials(TestCase):
