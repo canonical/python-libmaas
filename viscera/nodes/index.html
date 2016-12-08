@@ -7,19 +7,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
   
-  
-  <title>Nodes - MAAS Client Library & CLI</title>
-  
-
   <link rel="shortcut icon" href="../../img/favicon.ico">
-
-  
+  <title>Nodes - MAAS Client Library & CLI</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
   <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
   <link rel="stylesheet" href="../../css/highlight.css">
-
   
   <script>
     // Current page data
@@ -30,9 +24,7 @@
   
   <script src="../../js/jquery-2.1.1.min.js"></script>
   <script src="../../js/modernizr-2.8.3.min.js"></script>
-  <script type="text/javascript" src="../../js/highlight.pack.js"></script>
-  <script src="../../js/theme.js"></script> 
-
+  <script type="text/javascript" src="../../js/highlight.pack.js"></script> 
   
 </head>
 
@@ -52,7 +44,7 @@
       </div>
 
       <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-        <ul class="current">
+	<ul class="current">
           
             <li>
     <li class="toctree-l1 ">
@@ -159,9 +151,8 @@
     <li>Nodes</li>
     <li class="wy-breadcrumbs-aside">
       
-        
-          <a href="https://github.com/alburnum/alburnum-maas-client" class="icon icon-github"> Edit on GitHub</a>
-        
+        <a href="https://github.com/maas/python-libmaas/edit/master/docs/viscera/nodes.md"
+          class="icon icon-github"> Edit on GitHub</a>
       
     </li>
   </ul>
@@ -172,21 +163,24 @@
               
                 <h1 id="viscera-working-with-nodes"><em>Viscera</em>: Working with nodes</h1>
 <h2 id="listing">Listing</h2>
-<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; for node in origin.Nodes:
-...     print(repr(node))
-&lt;Node hostname='namibia.maas' system_id='433333'&gt;
-&lt;Node hostname='botswana.maas' system_id='433334'&gt;</code></pre>
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">origin</span><span class="o">.</span><span class="n">Nodes</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">print</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">node</span><span class="p">))</span>
+<span class="go">&lt;Node hostname=&#39;namibia.maas&#39; system_id=&#39;433333&#39;&gt;</span>
+<span class="go">&lt;Node hostname=&#39;botswana.maas&#39; system_id=&#39;433334&#39;&gt;</span>
+</pre></div>
 
 
 <p>Individual nodes can be read from the Web API.</p>
-<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; node = origin.Node.read(system_id=&quot;433333&quot;)</code></pre>
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Node</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">system_id</span><span class="o">=</span><span class="s2">&quot;433333&quot;</span><span class="p">)</span>
+</pre></div>
 
 
 <p>Nodes have many useful attributes:</p>
-<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; node.architecture
-'amd64/generic'
-&gt;&gt;&gt; node.cpus
-4</code></pre>
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">architecture</span>
+<span class="go">&#39;amd64/generic&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">cpus</span>
+<span class="go">4</span>
+</pre></div>
 
 
 <p>Don&rsquo;t forget to try using tab-completion — the objects have been
@@ -194,23 +188,24 @@ designed to be particularly friendly for interactive use — or
 <code>dir(node)</code> to find out what other fields and methods are available.</p>
 <p><strong>TODO</strong>: Updating nodes.</p>
 <h2 id="acquiring-and-starting">Acquiring and starting</h2>
-<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; help(origin.Nodes.acquire)
-acquire(*, hostname:str=None, architecture:str=None, cpus:int=None,
-        memory:float=None, tags:typing.Sequence=None) method of
-            alburnum.maas.viscera.NodesType instance
-    :param hostname: The hostname to match.
-    :param architecture: The architecture to match, e.g. &quot;amd64&quot;.
-    :param cpus: The minimum number of CPUs to match.
-    :param memory: The minimum amount of RAM to match.
-    :param tags: The tags to match, as a sequence. Each tag may be
-        prefixed with a hyphen to denote that the given tag should NOT be
-        associated with a matched node.
-&gt;&gt;&gt; node = origin.Nodes.acquire(tags=(&quot;foo&quot;, &quot;-bar&quot;))
-&gt;&gt;&gt; print(node.substatus_name)
-Acquired
-&gt;&gt;&gt; node.start()
-&gt;&gt;&gt; print(node.substatus_name)
-Deploying</code></pre>
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">help</span><span class="p">(</span><span class="n">origin</span><span class="o">.</span><span class="n">Nodes</span><span class="o">.</span><span class="n">acquire</span><span class="p">)</span>
+<span class="go">acquire(*, hostname:str=None, architecture:str=None, cpus:int=None,</span>
+<span class="go">        memory:float=None, tags:typing.Sequence=None) method of</span>
+<span class="go">            maas.client.viscera.NodesType instance</span>
+<span class="go">    :param hostname: The hostname to match.</span>
+<span class="go">    :param architecture: The architecture to match, e.g. &quot;amd64&quot;.</span>
+<span class="go">    :param cpus: The minimum number of CPUs to match.</span>
+<span class="go">    :param memory: The minimum amount of RAM to match.</span>
+<span class="go">    :param tags: The tags to match, as a sequence. Each tag may be</span>
+<span class="go">        prefixed with a hyphen to denote that the given tag should NOT be</span>
+<span class="go">        associated with a matched node.</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Nodes</span><span class="o">.</span><span class="n">acquire</span><span class="p">(</span><span class="n">tags</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;foo&quot;</span><span class="p">,</span> <span class="s2">&quot;-bar&quot;</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">status_name</span><span class="p">)</span>
+<span class="go">Acquired</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">status_name</span><span class="p">)</span>
+<span class="go">Deploying</span>
+</pre></div>
               
             </div>
           </div>
@@ -240,13 +235,13 @@ Deploying</code></pre>
       </div>
 
     </section>
-
+    
   </div>
 
-<div class="rst-versions" role="note" style="cursor: pointer">
+  <div class="rst-versions" role="note" style="cursor: pointer">
     <span class="rst-current-version" data-toggle="rst-current-version">
       
-          <a href="https://github.com/alburnum/alburnum-maas-client" class="icon icon-github" style="float: left; color: #fcfcfc"> GitHub</a>
+          <a href="https://github.com/maas/python-libmaas" class="icon icon-github" style="float: left; color: #fcfcfc"> GitHub</a>
       
       
         <span><a href="../getting-started/index.html" style="color: #fcfcfc;">&laquo; Previous</a></span>
@@ -256,6 +251,7 @@ Deploying</code></pre>
       
     </span>
 </div>
+    <script src="../../js/theme.js"></script>
 
 </body>
 </html>

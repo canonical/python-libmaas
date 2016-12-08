@@ -7,19 +7,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
   
-  
-  <title>Events - MAAS Client Library & CLI</title>
-  
-
   <link rel="shortcut icon" href="../../img/favicon.ico">
-
-  
+  <title>Events - MAAS Client Library & CLI</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
   <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
   <link rel="stylesheet" href="../../css/highlight.css">
-
   
   <script>
     // Current page data
@@ -30,9 +24,7 @@
   
   <script src="../../js/jquery-2.1.1.min.js"></script>
   <script src="../../js/modernizr-2.8.3.min.js"></script>
-  <script type="text/javascript" src="../../js/highlight.pack.js"></script>
-  <script src="../../js/theme.js"></script> 
-
+  <script type="text/javascript" src="../../js/highlight.pack.js"></script> 
   
 </head>
 
@@ -52,7 +44,7 @@
       </div>
 
       <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-        <ul class="current">
+	<ul class="current">
           
             <li>
     <li class="toctree-l1 ">
@@ -155,9 +147,8 @@
     <li>Events</li>
     <li class="wy-breadcrumbs-aside">
       
-        
-          <a href="https://github.com/alburnum/alburnum-maas-client" class="icon icon-github"> Edit on GitHub</a>
-        
+        <a href="https://github.com/maas/python-libmaas/edit/master/docs/viscera/events.md"
+          class="icon icon-github"> Edit on GitHub</a>
       
     </li>
   </ul>
@@ -169,25 +160,28 @@
                 <h1 id="events">Events</h1>
 <p>Events are similar&hellip; but different. The only way to get events is by
 the <code>query</code> method:</p>
-<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; events = origin.Events.query()</code></pre>
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">events</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">query</span><span class="p">()</span>
+</pre></div>
 
 
 <p>This accepts a plethora of optional arguments to narrow down the results:</p>
-<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; events = origin.Events.query(hostnames={&quot;foo&quot;, &quot;bar&quot;})
-&gt;&gt;&gt; events = origin.Events.query(domains={&quot;example.com&quot;, &quot;maas.io&quot;})
-&gt;&gt;&gt; events = origin.Events.query(zones=[&quot;red&quot;, &quot;blue&quot;])
-&gt;&gt;&gt; events = origin.Events.query(macs=(&quot;12:34:56:78:90:ab&quot;, ))
-&gt;&gt;&gt; events = origin.Events.query(system_ids=…)
-&gt;&gt;&gt; events = origin.Events.query(agent_name=…)
-&gt;&gt;&gt; events = origin.Events.query(level=…)
-&gt;&gt;&gt; events = origin.Events.query(after=…, limit=…)</code></pre>
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">events</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">hostnames</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;foo&quot;</span><span class="p">,</span> <span class="s2">&quot;bar&quot;</span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">events</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">domains</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;example.com&quot;</span><span class="p">,</span> <span class="s2">&quot;maas.io&quot;</span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">events</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">zones</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="s2">&quot;blue&quot;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">events</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">macs</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;12:34:56:78:90:ab&quot;</span><span class="p">,</span> <span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">events</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">system_ids</span><span class="o">=</span><span class="err">…</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">events</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">agent_name</span><span class="o">=</span><span class="err">…</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">events</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="err">…</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">events</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">after</span><span class="o">=</span><span class="err">…</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="err">…</span><span class="p">)</span>
+</pre></div>
 
 
 <p>These arguments can be combined to narrow the results even further.</p>
 <p>The <code>level</code> argument is a little special. It&rsquo;s a choice from a
 predefined set. For convenience, those choices are defined in the
 <code>Level</code> enum:</p>
-<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; events = origin.Events.query(level=origin.Events.Level.ERROR)</code></pre>
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">events</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">origin</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">Level</span><span class="o">.</span><span class="n">ERROR</span><span class="p">)</span>
+</pre></div>
 
 
 <p>but you can also pass in the string &ldquo;ERROR&rdquo; or the number 40.</p>
@@ -220,13 +214,13 @@ predefined set. For convenience, those choices are defined in the
       </div>
 
     </section>
-
+    
   </div>
 
-<div class="rst-versions" role="note" style="cursor: pointer">
+  <div class="rst-versions" role="note" style="cursor: pointer">
     <span class="rst-current-version" data-toggle="rst-current-version">
       
-          <a href="https://github.com/alburnum/alburnum-maas-client" class="icon icon-github" style="float: left; color: #fcfcfc"> GitHub</a>
+          <a href="https://github.com/maas/python-libmaas" class="icon icon-github" style="float: left; color: #fcfcfc"> GitHub</a>
       
       
         <span><a href="../nodes/index.html" style="color: #fcfcfc;">&laquo; Previous</a></span>
@@ -236,6 +230,7 @@ predefined set. For convenience, those choices are defined in the
       
     </span>
 </div>
+    <script src="../../js/theme.js"></script>
 
 </body>
 </html>

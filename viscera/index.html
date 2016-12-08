@@ -7,19 +7,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
   
-  
-  <title>Home - MAAS Client Library & CLI</title>
-  
-
   <link rel="shortcut icon" href="../img/favicon.ico">
-
-  
+  <title>Home - MAAS Client Library & CLI</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
   <link rel="stylesheet" href="../css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
   <link rel="stylesheet" href="../css/highlight.css">
-
   
   <script>
     // Current page data
@@ -30,9 +24,7 @@
   
   <script src="../js/jquery-2.1.1.min.js"></script>
   <script src="../js/modernizr-2.8.3.min.js"></script>
-  <script type="text/javascript" src="../js/highlight.pack.js"></script>
-  <script src="../js/theme.js"></script> 
-
+  <script type="text/javascript" src="../js/highlight.pack.js"></script> 
   
 </head>
 
@@ -52,7 +44,7 @@
       </div>
 
       <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-        <ul class="current">
+	<ul class="current">
           
             <li>
     <li class="toctree-l1 ">
@@ -157,9 +149,8 @@
     <li>Home</li>
     <li class="wy-breadcrumbs-aside">
       
-        
-          <a href="https://github.com/alburnum/alburnum-maas-client" class="icon icon-github"> Edit on GitHub</a>
-        
+        <a href="https://github.com/maas/python-libmaas/edit/master/docs/viscera/index.md"
+          class="icon icon-github"> Edit on GitHub</a>
       
     </li>
   </ul>
@@ -170,28 +161,29 @@
               
                 <h1 id="viscera-high-level-python-client-api"><em>Viscera</em>: High-level Python client API</h1>
 <h2 id="some-example-code">Some example code</h2>
-<pre class="codehilite"><code class="language-python">#!/usr/bin/env python3.5
+<div class="codehilite"><pre><span></span><span class="ch">#!/usr/bin/env python3.5</span>
 
-from pprint import pprint
+<span class="kn">from</span> <span class="nn">pprint</span> <span class="kn">import</span> <span class="n">pprint</span>
 
-from alburnum.maas import viscera
+<span class="kn">from</span> <span class="nn">maas.client</span> <span class="kn">import</span> <span class="n">viscera</span>
 
 
-profile, origin = viscera.Origin.login(
-    &quot;http://localhost:5240/MAAS/&quot;, username=&quot;alice&quot;,
-    password=&quot;wonderland&quot;)
+<span class="n">profile</span><span class="p">,</span> <span class="n">origin</span> <span class="o">=</span> <span class="n">viscera</span><span class="o">.</span><span class="n">Origin</span><span class="o">.</span><span class="n">login</span><span class="p">(</span>
+    <span class="s2">&quot;http://localhost:5240/MAAS/&quot;</span><span class="p">,</span> <span class="n">username</span><span class="o">=</span><span class="s2">&quot;alice&quot;</span><span class="p">,</span>
+    <span class="n">password</span><span class="o">=</span><span class="s2">&quot;wonderland&quot;</span><span class="p">)</span>
 
-# List all the tags.
-print(&quot;&gt;&gt;&gt; origin.Tags.read()&quot;)
-pprint(origin.Tags.read())
-print(&quot;&gt;&gt;&gt; Or: list(origin.Tags)&quot;)
-pprint(list(origin.Tags))
+<span class="c1"># List all the tags.</span>
+<span class="k">print</span><span class="p">(</span><span class="s2">&quot;&gt;&gt;&gt; origin.Tags.read()&quot;</span><span class="p">)</span>
+<span class="n">pprint</span><span class="p">(</span><span class="n">origin</span><span class="o">.</span><span class="n">Tags</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+<span class="k">print</span><span class="p">(</span><span class="s2">&quot;&gt;&gt;&gt; Or: list(origin.Tags)&quot;</span><span class="p">)</span>
+<span class="n">pprint</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">origin</span><span class="o">.</span><span class="n">Tags</span><span class="p">))</span>
 
-# List all the nodes.
-print(&quot;&gt;&gt;&gt; origin.Nodes.read()&quot;)
-pprint(origin.Nodes.read())
-print(&quot;&gt;&gt;&gt; Or: list(origin.Nodes)&quot;)
-pprint(list(origin.Nodes))</code></pre>
+<span class="c1"># List all the nodes.</span>
+<span class="k">print</span><span class="p">(</span><span class="s2">&quot;&gt;&gt;&gt; origin.Nodes.read()&quot;</span><span class="p">)</span>
+<span class="n">pprint</span><span class="p">(</span><span class="n">origin</span><span class="o">.</span><span class="n">Nodes</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+<span class="k">print</span><span class="p">(</span><span class="s2">&quot;&gt;&gt;&gt; Or: list(origin.Nodes)&quot;</span><span class="p">)</span>
+<span class="n">pprint</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">origin</span><span class="o">.</span><span class="n">Nodes</span><span class="p">))</span>
+</pre></div>
               
             </div>
           </div>
@@ -221,13 +213,13 @@ pprint(list(origin.Nodes))</code></pre>
       </div>
 
     </section>
-
+    
   </div>
 
-<div class="rst-versions" role="note" style="cursor: pointer">
+  <div class="rst-versions" role="note" style="cursor: pointer">
     <span class="rst-current-version" data-toggle="rst-current-version">
       
-          <a href="https://github.com/alburnum/alburnum-maas-client" class="icon icon-github" style="float: left; color: #fcfcfc"> GitHub</a>
+          <a href="https://github.com/maas/python-libmaas" class="icon icon-github" style="float: left; color: #fcfcfc"> GitHub</a>
       
       
         <span><a href="../bones/index.html" style="color: #fcfcfc;">&laquo; Previous</a></span>
@@ -237,6 +229,7 @@ pprint(list(origin.Nodes))</code></pre>
       
     </span>
 </div>
+    <script src="../js/theme.js"></script>
 
 </body>
 </html>

@@ -7,19 +7,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
   
-  
-  <title>Getting started - MAAS Client Library & CLI</title>
-  
-
   <link rel="shortcut icon" href="../../img/favicon.ico">
-
-  
+  <title>Getting started - MAAS Client Library & CLI</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
   <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
   <link rel="stylesheet" href="../../css/highlight.css">
-
   
   <script>
     // Current page data
@@ -30,9 +24,7 @@
   
   <script src="../../js/jquery-2.1.1.min.js"></script>
   <script src="../../js/modernizr-2.8.3.min.js"></script>
-  <script type="text/javascript" src="../../js/highlight.pack.js"></script>
-  <script src="../../js/theme.js"></script> 
-
+  <script type="text/javascript" src="../../js/highlight.pack.js"></script> 
   
 </head>
 
@@ -52,7 +44,7 @@
       </div>
 
       <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-        <ul class="current">
+	<ul class="current">
           
             <li>
     <li class="toctree-l1 ">
@@ -163,9 +155,8 @@
     <li>Getting started</li>
     <li class="wy-breadcrumbs-aside">
       
-        
-          <a href="https://github.com/alburnum/alburnum-maas-client" class="icon icon-github"> Edit on GitHub</a>
-        
+        <a href="https://github.com/maas/python-libmaas/edit/master/docs/viscera/getting-started.md"
+          class="icon icon-github"> Edit on GitHub</a>
       
     </li>
   </ul>
@@ -177,74 +168,84 @@
                 <h1 id="getting-started-with-viscera">Getting started with <em>viscera</em></h1>
 <h2 id="installation">Installation</h2>
 <p>Either work from a branch:</p>
-<pre class="codehilite"><code class="language-console">$ git clone https://github.com/alburnum/alburnum-maas-client.git
-$ cd alburnum-maas-client
-$ make</code></pre>
+<div class="codehilite"><pre><span></span><span class="gp">$</span> git clone https://github.com/maas/python-libmaas.git
+<span class="gp">$</span> <span class="nb">cd</span> python-libmaas
+<span class="gp">$</span> make
+</pre></div>
 
 
 <p>Or install with <a href="https://pip.pypa.io/">pip</a> into a
 <a href="https://virtualenv.readthedocs.org/">virtualenv</a>:</p>
-<pre class="codehilite"><code class="language-console">$ virtualenv --python=python3.5 amc &amp;&amp; source amc/bin/activate
-$ pip install git+https://github.com/alburnum/alburnum-maas-client.git</code></pre>
+<div class="codehilite"><pre><span></span><span class="gp">$</span> virtualenv --python<span class="o">=</span>python3.5 amc <span class="o">&amp;&amp;</span> <span class="nb">source</span> amc/bin/activate
+<span class="gp">$</span> pip install git+https://github.com/maas/python-libmaas.git
+</pre></div>
 
 
 <p>Or install from <a href="https://pypi.python.org/">PyPI</a>:</p>
-<pre class="codehilite"><code class="language-console">$ virtualenv --python=python3.5 amc &amp;&amp; source amc/bin/activate
-$ pip install alburnum-maas-client</code></pre>
+<div class="codehilite"><pre><span></span><span class="gp">$</span> virtualenv --python<span class="o">=</span>python3.5 amc <span class="o">&amp;&amp;</span> <span class="nb">source</span> amc/bin/activate
+<span class="gp">$</span> pip install python-libmaas
+</pre></div>
 
 
 <p><em>Note</em> that PyPI may lag the others.</p>
 <h2 id="logging-in">Logging-in</h2>
 <p>Log-in using the command-line tool and start an interactive Python
 shell:</p>
-<pre class="codehilite"><code class="language-console">$ maas profiles login foo http://example.com:5240/MAAS/ admin
-Password: …
-$ maas shell</code></pre>
+<div class="codehilite"><pre><span></span><span class="gp">$</span> maas profiles login foo http://example.com:5240/MAAS/ admin
+<span class="go">Password: …</span>
+<span class="gp">$</span> maas shell
+</pre></div>
 
 
 <p>This will provide you with a pre-prepared <code>origin</code> object that points to
 <code>foo</code> from above. This is the root object of the API.</p>
 <p>You can also log-in programmatically:</p>
-<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; profile, origin = Origin.login(
-...     &quot;http://example.com:5240/MAAS/&quot;, username=&quot;admin&quot;,
-...     password=&quot;…&quot;)</code></pre>
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">profile</span><span class="p">,</span> <span class="n">origin</span> <span class="o">=</span> <span class="n">Origin</span><span class="o">.</span><span class="n">login</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="s2">&quot;http://example.com:5240/MAAS/&quot;</span><span class="p">,</span> <span class="n">username</span><span class="o">=</span><span class="s2">&quot;admin&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">password</span><span class="o">=</span><span class="s2">&quot;…&quot;</span><span class="p">)</span>
+</pre></div>
 
 
 <p>The <code>profile</code> has not been saved, but it&rsquo;s easy to do so:</p>
-<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; profile = profile.replace(name=&quot;foo&quot;)
-&gt;&gt;&gt; with ProfileStore.open() as store:
-...     store.save(profile)
-...     store.default = profile</code></pre>
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">profile</span> <span class="o">=</span> <span class="n">profile</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;foo&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">ProfileStore</span><span class="o">.</span><span class="n">open</span><span class="p">()</span> <span class="k">as</span> <span class="n">store</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="n">store</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">profile</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">store</span><span class="o">.</span><span class="n">default</span> <span class="o">=</span> <span class="n">profile</span>
+</pre></div>
 
 
 <p>This does the same as the <code>maas profiles login</code> command.</p>
 <p>But there&rsquo;s no need! There&rsquo;s a command built in to do it for you:</p>
-<pre class="codehilite"><code class="language-console">$ bin/maas shell
-Welcome to the MAAS shell.
+<div class="codehilite"><pre><span></span><span class="gp">$</span> bin/maas shell
+<span class="go">Welcome to the MAAS shell.</span>
 
-Predefined variables:
+<span class="go">Predefined variables:</span>
 
-    origin: A `viscera` origin, configured for foo.
-   session: A `bones` session, configured for foo.
+<span class="go">    origin: A `viscera` origin, configured for foo.</span>
+<span class="go">   session: A `bones` session, configured for foo.</span>
 
-&gt;&gt;&gt;</code></pre>
+<span class="gp">&gt;</span>&gt;&gt;
+</pre></div>
 
 
 <h2 id="logging-out">Logging-out</h2>
 <p>Log-out using the command-line tool:</p>
-<pre class="codehilite"><code class="language-console">$ bin/maas profiles remove foo</code></pre>
+<div class="codehilite"><pre><span></span><span class="gp">$</span> bin/maas profiles remove foo
+</pre></div>
 
 
 <p>or, programmatically:</p>
-<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; with ProfileStore.open() as store:
-...     store.delete(&quot;foo&quot;)</code></pre>
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">ProfileStore</span><span class="o">.</span><span class="n">open</span><span class="p">()</span> <span class="k">as</span> <span class="n">store</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="n">store</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="s2">&quot;foo&quot;</span><span class="p">)</span>
+</pre></div>
 
 
 <h2 id="dir-help-and-tab-completion"><code>dir()</code>, <code>help()</code>, and tab-completion</h2>
 <p>The <em>viscera</em> API has been designed to be very discoverable using
 tab-completion, <code>dir()</code>, <code>help()</code>, and so on. Start with that:</p>
-<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; origin.&lt;tab&gt;
-…</code></pre>
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">origin</span><span class="o">.&lt;</span><span class="n">tab</span><span class="o">&gt;</span>
+<span class="go">…</span>
+</pre></div>
 
 
 <p>This works best when you&rsquo;ve got <a href="https://ipython.org/">IPython</a>
@@ -278,13 +279,13 @@ installed.</p>
       </div>
 
     </section>
-
+    
   </div>
 
-<div class="rst-versions" role="note" style="cursor: pointer">
+  <div class="rst-versions" role="note" style="cursor: pointer">
     <span class="rst-current-version" data-toggle="rst-current-version">
       
-          <a href="https://github.com/alburnum/alburnum-maas-client" class="icon icon-github" style="float: left; color: #fcfcfc"> GitHub</a>
+          <a href="https://github.com/maas/python-libmaas" class="icon icon-github" style="float: left; color: #fcfcfc"> GitHub</a>
       
       
         <span><a href="../index.html" style="color: #fcfcfc;">&laquo; Previous</a></span>
@@ -294,6 +295,7 @@ installed.</p>
       
     </span>
 </div>
+    <script src="../../js/theme.js"></script>
 
 </body>
 </html>

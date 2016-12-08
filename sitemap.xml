@@ -3,8 +3,8 @@
 
     
     <url>
-     <loc>None/index.html</loc>
-     <lastmod>2016-01-28</lastmod>
+     <loc>/index.html</loc>
+     <lastmod>2016-12-08</lastmod>
      <changefreq>daily</changefreq>
     </url>
     
@@ -12,8 +12,8 @@
     
         
     <url>
-     <loc>None/bones/index.html</loc>
-     <lastmod>2016-01-28</lastmod>
+     <loc>/bones/index.html</loc>
+     <lastmod>2016-12-08</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
@@ -22,32 +22,32 @@
     
         
     <url>
-     <loc>None/viscera/index.html</loc>
-     <lastmod>2016-01-28</lastmod>
+     <loc>/viscera/index.html</loc>
+     <lastmod>2016-12-08</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
-     <loc>None/viscera/getting-started/index.html</loc>
-     <lastmod>2016-01-28</lastmod>
+     <loc>/viscera/getting-started/index.html</loc>
+     <lastmod>2016-12-08</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
-     <loc>None/viscera/nodes/index.html</loc>
-     <lastmod>2016-01-28</lastmod>
+     <loc>/viscera/nodes/index.html</loc>
+     <lastmod>2016-12-08</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
-     <loc>None/viscera/events/index.html</loc>
-     <lastmod>2016-01-28</lastmod>
+     <loc>/viscera/events/index.html</loc>
+     <lastmod>2016-12-08</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
-     <loc>None/viscera/other/index.html</loc>
-     <lastmod>2016-01-28</lastmod>
+     <loc>/viscera/other/index.html</loc>
+     <lastmod>2016-12-08</lastmod>
      <changefreq>daily</changefreq>
     </url>
         

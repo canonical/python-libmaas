@@ -5,34 +5,26 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="None">
   
-  
-  
-  <title>MAAS Client Library & CLI</title>
-  
-
   <link rel="shortcut icon" href="./img/favicon.ico">
-
-  
+  <title>Home - MAAS Client Library & CLI</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
   <link rel="stylesheet" href="./css/theme.css" type="text/css" />
   <link rel="stylesheet" href="./css/theme_extra.css" type="text/css" />
   <link rel="stylesheet" href="./css/highlight.css">
-
   
   <script>
     // Current page data
-    var mkdocs_page_name = "None";
+    var mkdocs_page_name = "Home";
     var mkdocs_page_input_path = "index.md";
     var mkdocs_page_url = "/index.html";
   </script>
   
   <script src="./js/jquery-2.1.1.min.js"></script>
   <script src="./js/modernizr-2.8.3.min.js"></script>
-  <script type="text/javascript" src="./js/highlight.pack.js"></script>
-  <script src="./js/theme.js"></script> 
-
+  <script type="text/javascript" src="./js/highlight.pack.js"></script> 
   
 </head>
 
@@ -52,7 +44,7 @@
       </div>
 
       <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-        <ul class="current">
+	<ul class="current">
           
             <li>
     <li class="toctree-l1 current">
@@ -155,9 +147,8 @@
     <li>Home</li>
     <li class="wy-breadcrumbs-aside">
       
-        
-          <a href="https://github.com/alburnum/alburnum-maas-client" class="icon icon-github"> Edit on GitHub</a>
-        
+        <a href="https://github.com/maas/python-libmaas/edit/master/docs/index.md"
+          class="icon icon-github"> Edit on GitHub</a>
       
     </li>
   </ul>
@@ -170,16 +161,17 @@
 <p>For documentation on the MAAS server components, visit
 <a href="https://maas.ubuntu.com/docs/">maas.ubuntu.com</a>.</p>
 <h2 id="command-line">Command-line</h2>
-<pre class="codehilite"><code class="language-console">$ bin/maas profiles login --help
-$ bin/maas profiles login exmpl http://example.com:5240/MAAS/ my_username
-Password: …
-$ bin/maas list nodes
-┌───────────────┬───────────┬───────────────┬───────┬────────┬───────────┬───────┐
-│ Hostname      │ System ID │ Architecture  │ #CPUs │ RAM    │ Status    │ Power │
-├───────────────┼───────────┼───────────────┼───────┼────────┼───────────┼───────┤
-│ botswana.maas │ 433334    │ amd64/generic │ 4     │ 8.0 GB │ Ready     │ Off   │
-│ namibia.maas  │ 433333    │ amd64/generic │ 4     │ 8.0 GB │ Allocated │ Off   │
-└───────────────┴───────────┴───────────────┴───────┴────────┴───────────┴───────┘</code></pre>
+<div class="codehilite"><pre><span></span><span class="gp">$</span> bin/maas profiles login --help
+<span class="gp">$</span> bin/maas profiles login exmpl http://example.com:5240/MAAS/ my_username
+<span class="go">Password: …</span>
+<span class="gp">$</span> bin/maas list nodes
+<span class="go">┌───────────────┬───────────┬───────────────┬───────┬────────┬───────────┬───────┐</span>
+<span class="go">│ Hostname      │ System ID │ Architecture  │ #CPUs │ RAM    │ Status    │ Power │</span>
+<span class="go">├───────────────┼───────────┼───────────────┼───────┼────────┼───────────┼───────┤</span>
+<span class="go">│ botswana.maas │ 433334    │ amd64/generic │ 4     │ 8.0 GB │ Ready     │ Off   │</span>
+<span class="go">│ namibia.maas  │ 433333    │ amd64/generic │ 4     │ 8.0 GB │ Allocated │ Off   │</span>
+<span class="go">└───────────────┴───────────┴───────────────┴───────┴────────┴───────────┴───────┘</span>
+</pre></div>
 
 
 <h2 id="client-libraries">Client libraries</h2>
@@ -228,13 +220,13 @@ for application development.</p>
       </div>
 
     </section>
-
+    
   </div>
 
-<div class="rst-versions" role="note" style="cursor: pointer">
+  <div class="rst-versions" role="note" style="cursor: pointer">
     <span class="rst-current-version" data-toggle="rst-current-version">
       
-          <a href="https://github.com/alburnum/alburnum-maas-client" class="icon icon-github" style="float: left; color: #fcfcfc"> GitHub</a>
+          <a href="https://github.com/maas/python-libmaas" class="icon icon-github" style="float: left; color: #fcfcfc"> GitHub</a>
       
       
       
@@ -242,11 +234,12 @@ for application development.</p>
       
     </span>
 </div>
+    <script src="./js/theme.js"></script>
 
 </body>
 </html>
 
 <!--
-MkDocs version : 0.15.0
-Build Date UTC : 2016-01-28 12:35:14.790444
+MkDocs version : 0.16.0
+Build Date UTC : 2016-12-08 15:38:13
 -->
