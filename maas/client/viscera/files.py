@@ -19,7 +19,7 @@ class FilesType(ObjectType):
 
     async def read(cls):
         data = await cls._handler.read()
-        return map(cls._object, data)
+        return cls(map(cls._object, data))
 
 
 class Files(ObjectSet, metaclass=FilesType):
