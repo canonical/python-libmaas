@@ -33,6 +33,7 @@ from ... import (
     viscera,
 )
 from ...testing import (
+    make_name,
     make_name_without_spaces,
     TestCase,
 )
@@ -272,6 +273,21 @@ class TestObject(TestCase):
         error = self.assertRaises(TypeError, Object, ["some", "items"])
         self.assertThat(str(error), Equals("data must be a mapping, not list"))
 
+    def test__equal_when_data_matches(self):
+        data = {"key": make_name("value")}
+        object_a = Object(data)
+        object_b = Object(data)
+        self.assertThat(object_a, Equals(object_b))
+        self.assertThat(object_b, Equals(object_a))
+
+    def test__not_equal_when_types_different(self):
+        # Even if one is a subclass of the other.
+        data = {"key": make_name("value")}
+        object_a = Object(data)
+        object_b = type("Object", (Object,), {})(data)
+        self.assertThat(object_a, Not(Equals(object_b)))
+        self.assertThat(object_b, Not(Equals(object_a)))
+
     def test__string_representation_includes_field_values(self):
 
         class Example(Object):
@@ -381,6 +397,21 @@ class TestObjectSet(TestCase):
         objectset = ObjectSet([item1])
         self.assertThat(objectset, Contains(item1))
         self.assertThat(objectset, Not(Contains(item2)))
+
+    def test__equal_when_items_match(self):
+        items = [{"key": make_name("value")}]
+        objectset_a = ObjectSet(items)
+        objectset_b = ObjectSet(items)
+        self.assertThat(objectset_a, Equals(objectset_b))
+        self.assertThat(objectset_b, Equals(objectset_a))
+
+    def test__not_equal_when_types_different(self):
+        # Even if one is a subclass of the other.
+        items = [{"key": make_name("value")}]
+        objectset_a = ObjectSet(items)
+        objectset_b = type("ObjectSet", (ObjectSet,), {})(items)
+        self.assertThat(objectset_a, Not(Equals(objectset_b)))
+        self.assertThat(objectset_b, Not(Equals(objectset_a)))
 
     def test__string_representation_includes_length_and_items(self):
 
