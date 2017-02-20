@@ -1,6 +1,7 @@
 """Testing framework for `maas.client`."""
 
 __all__ = [
+    "AsyncMock",
     "make_file",
     "make_mac_address",
     "make_name",
@@ -182,3 +183,28 @@ class TestCase(WithScenarios, testcase.TestCase):
             value = mock.MagicMock(__name__=attribute)
         super(TestCase, self).patch(obj, attribute, value)
         return value
+
+
+class AsyncMock(mock.Mock):
+    """Mock that is "future-like"; see PEP-492 for the details.
+
+    The new `await` syntax chokes on arguments that are not future-like, i.e.
+    have an `__await__` call, so we have to fool it.
+    """
+
+    def __call__(_mock_self, *args, **kwargs):
+        callup = super(AsyncMock, _mock_self).__call__
+        call = partial(callup, *args, **kwargs)
+        return Awaitable(call)
+
+
+class Awaitable:
+    """Wrap a "normal" call in a future-like object."""
+
+    def __init__(self, call):
+        super(Awaitable, self).__init__()
+        self._call = call
+
+    def __await__(self):
+        yield  # This serves only to make this a generator.
+        return self._call()

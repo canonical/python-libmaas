@@ -21,15 +21,13 @@ from testtools.matchers import (
 
 from .. import boot_resources
 from ...testing import (
+    AsyncMock,
     make_name_without_spaces,
     make_string,
     pick_bool,
     TestCase,
 )
-from ..testing import (
-    AsyncMock,
-    bind,
-)
+from ..testing import bind
 
 
 def make_origin():

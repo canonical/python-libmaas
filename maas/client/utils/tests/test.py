@@ -24,12 +24,12 @@ from ... import (
     utils,
 )
 from ...testing import (
+    AsyncMock,
     make_name,
     make_name_without_spaces,
     make_string,
     TestCase,
 )
-from ...viscera.testing import AsyncMock
 from ..creds import Credentials
 
 
