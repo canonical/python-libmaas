@@ -15,7 +15,9 @@ from .. import (
     connect,
     profiles,
 )
+from ...bones import helpers
 from ...testing import (
+    AsyncMock,
     make_name_without_spaces,
     TestCase,
 )
@@ -27,12 +29,14 @@ class TestConnect(TestCase):
 
     def setUp(self):
         super(TestConnect, self).setUp()
-        self.patch(connect, "fetch_api_description").return_value = {}
+        self.patch(
+            helpers, "fetch_api_description",
+            AsyncMock(return_value={}))
 
     def test__anonymous_when_no_apikey_provided(self):
         # Connect without an apikey.
         profile = connect.connect("http://example.org:5240/MAAS/")
-        connect.fetch_api_description.assert_called_once_with(
+        helpers.fetch_api_description.assert_called_once_with(
             urlparse("http://example.org:5240/MAAS/api/2.0/"),
             None, False)
         # A Profile instance was returned with no credentials.
@@ -45,7 +49,7 @@ class TestConnect(TestCase):
         profile = connect.connect(
             "http://example.org:5240/MAAS/", apikey=str(credentials))
         # The description was fetched.
-        connect.fetch_api_description.assert_called_once_with(
+        helpers.fetch_api_description.assert_called_once_with(
             urlparse("http://example.org:5240/MAAS/api/2.0/"),
             credentials, False)
         # A Profile instance was returned with the expected credentials.
@@ -73,13 +77,13 @@ class TestConnect(TestCase):
         self.assertThat(profile.name, Equals(domain))
 
     def test__API_description_is_saved_in_profile(self):
-        description = connect.fetch_api_description.return_value = {
+        description = helpers.fetch_api_description.return_value = {
             "foo": "bar"}
         profile = connect.connect("http://example.org:5240/MAAS/")
         self.assertThat(profile.description, Equals(description))
 
     def test__API_description_is_fetched_insecurely_if_requested(self):
         connect.connect("http://example.org:5240/MAAS/", insecure=True)
-        connect.fetch_api_description.assert_called_once_with(
+        helpers.fetch_api_description.assert_called_once_with(
             urlparse("http://example.org:5240/MAAS/api/2.0/"),
             None, True)

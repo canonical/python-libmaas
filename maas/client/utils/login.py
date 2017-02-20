@@ -14,10 +14,8 @@ __all__ = [
 
 from urllib.parse import urlparse
 
-from . import (
-    api_url,
-    fetch_api_description,
-)
+from . import api_url
+from .async import asynchronous
 from .auth import obtain_token
 from .profiles import Profile
 
@@ -34,7 +32,8 @@ class UsernameWithoutPassword(LoginError):
     """A user-name was provided without a corresponding password."""
 
 
-def login(url, *, username=None, password=None, insecure=False):
+@asynchronous
+async def login(url, *, username=None, password=None, insecure=False):
     """Log-in to a remote MAAS instance.
 
     Returns a new :class:`Profile` which has NOT been saved. To log-in AND
@@ -90,7 +89,11 @@ def login(url, *, username=None, password=None, insecure=False):
             credentials = obtain_token(
                 url.geturl(), username, password, insecure=insecure)
 
+    # Circular import.
+    from ..bones.helpers import fetch_api_description
+    description = await fetch_api_description(url, credentials, insecure)
+
     # Return a new (unsaved) profile.
     return Profile(
         name=url.netloc, url=url.geturl(), credentials=credentials,
-        description=fetch_api_description(url, credentials, insecure))
+        description=description)

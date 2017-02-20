@@ -1,4 +1,4 @@
-"""Utilities for the Alburnum MAAS client."""
+"""Utilities for the MAAS client."""
 
 __all__ = [
     "api_url",
@@ -29,22 +29,17 @@ import re
 import sys
 import threading
 from time import time
-from typing import Optional
 from urllib.parse import (
-    ParseResult,
     quote_plus,
     urlparse,
 )
 
 from oauthlib import oauth1
 
-from .async import asynchronous
-from .creds import Credentials
 from .multipart import (
     build_multipart_message,
     encode_multipart_message,
 )
-from .typecheck import typed
 
 
 def urlencode(data):
@@ -334,16 +329,3 @@ class Spinner:
         if self.stream.isatty():
             self.__done.set()
             self.__thread.join()
-
-
-@typed
-@asynchronous
-async def fetch_api_description(
-        url: ParseResult, credentials: Optional[Credentials],
-        insecure: bool):
-    """Fetch the API description from the remote MAAS instance."""
-    # Circular import.
-    from .. import bones
-    session = await bones.SessionAPI.fromURL(
-        url.geturl(), credentials=credentials, insecure=insecure)
-    return session.description

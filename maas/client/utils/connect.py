@@ -7,19 +7,18 @@ __all__ = [
 
 from urllib.parse import urlparse
 
-from . import (
-    api_url,
-    fetch_api_description,
-)
+from . import api_url
 from .creds import Credentials
 from .profiles import Profile
+from .async import asynchronous
 
 
 class ConnectError(Exception):
     """An error with connecting."""
 
 
-def connect(url, *, apikey=None, insecure=False):
+@asynchronous
+async def connect(url, *, apikey=None, insecure=False):
     """Connect to a remote MAAS instance with `apikey`.
 
     Returns a new :class:`Profile` which has NOT been saved. To connect AND
@@ -51,7 +50,11 @@ def connect(url, *, apikey=None, insecure=False):
     else:
         credentials = Credentials.parse(apikey)
 
+    # Circular import.
+    from ..bones.helpers import fetch_api_description
+    description = await fetch_api_description(url, credentials, insecure)
+
     # Return a new (unsaved) profile.
     return Profile(
         name=url.netloc, url=url.geturl(), credentials=credentials,
-        description=fetch_api_description(url, credentials, insecure))
+        description=description)

@@ -15,7 +15,10 @@ from .. import (
     login,
     profiles,
 )
+from ...bones import helpers
 from ...testing import (
+    AsyncMock,
+    make_name,
     make_name_without_spaces,
     TestCase,
 )
@@ -28,14 +31,16 @@ class TestLogin(TestCase):
     def setUp(self):
         super(TestLogin, self).setUp()
         self.patch(login, "obtain_token").return_value = None
-        self.patch(login, "fetch_api_description").return_value = {}
+        self.patch(
+            helpers, "fetch_api_description",
+            AsyncMock(return_value={}))
 
     def test__anonymous_when_neither_username_nor_password_provided(self):
         # Log-in without a user-name or a password.
         profile = login.login("http://example.org:5240/MAAS/")
         # No token was obtained, but the description was fetched.
         login.obtain_token.assert_not_called()
-        login.fetch_api_description.assert_called_once_with(
+        helpers.fetch_api_description.assert_called_once_with(
             urlparse("http://example.org:5240/MAAS/api/2.0/"),
             None, False)
         # A Profile instance was returned with no credentials.
@@ -50,7 +55,7 @@ class TestLogin(TestCase):
         login.obtain_token.assert_called_once_with(
             "http://example.org:5240/MAAS/api/2.0/",
             "foo", "bar", insecure=False)
-        login.fetch_api_description.assert_called_once_with(
+        helpers.fetch_api_description.assert_called_once_with(
             urlparse("http://example.org:5240/MAAS/api/2.0/"),
             credentials, False)
         # A Profile instance was returned with the expected credentials.
@@ -98,7 +103,8 @@ class TestLogin(TestCase):
         self.assertThat(profile.name, Equals(domain))
 
     def test__API_description_is_saved_in_profile(self):
-        description = login.fetch_api_description.return_value = {"foo": "bar"}
+        description = {make_name("key"): make_name("value")}
+        helpers.fetch_api_description.return_value = description
         profile = login.login("http://example.org:5240/MAAS/")
         self.assertThat(profile.description, Equals(description))
 
@@ -110,7 +116,7 @@ class TestLogin(TestCase):
 
     def test__API_description_is_fetched_insecurely_if_requested(self):
         login.login("http://example.org:5240/MAAS/", insecure=True)
-        login.fetch_api_description.assert_called_once_with(
+        helpers.fetch_api_description.assert_called_once_with(
             urlparse("http://example.org:5240/MAAS/api/2.0/"),
             None, True)
 
