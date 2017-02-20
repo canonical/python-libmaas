@@ -1,46 +1,35 @@
 """Basic entry points."""
 
-import threading as _threading
+from . import _client
 
 
-def _connect(url, *, apikey=None, insecure=False):
-    """Make an `Origin` by connecting with an apikey.
+def connect(url, *, apikey=None, insecure=False):
+    """Connect to MAAS at `url` using a previously obtained API key.
 
-    :return: A tuple of ``profile`` and ``origin``, where the former is an
-        unsaved `Profile` instance, and the latter is an `Origin` instance
-        made using the profile.
+    :param url: The URL of MAAS, e.g. http://maas.example.com:5240/MAAS/
+    :param apikey: The API key to use, e.g.
+        SkTvsyHhzkREvvdtNk:Ywn5FvXVupVPvNUhrN:cm3Q2f5naXYPYsrPDPfQy9Q9cUFaEgbM
+    :param insecure: Whether to check TLS certificates when using HTTPS.
+
+    :return: A client object.
     """
-    _load()
-    return connect(url, apikey=apikey, insecure=insecure)
+    from .viscera import Origin  # Lazy.
+    profile, origin = Origin.connect(
+        url, apikey=apikey, insecure=insecure)
+    return _client.Client(origin)
 
 
-def _login(url, *, username=None, password=None, insecure=False):
-    """Make an `Origin` by logging-in with a username and password.
+def login(url, *, username=None, password=None, insecure=False):
+    """Connect to MAAS at `url` with a user name and password.
 
-    :return: A tuple of ``profile`` and ``origin``, where the former is an
-        unsaved `Profile` instance, and the latter is an `Origin` instance
-        made using the profile.
+    :param url: The URL of MAAS, e.g. http://maas.example.com:5240/MAAS/
+    :param username: The user name to use, e.g. fred.
+    :param password: The user's password.
+    :param insecure: Whether to check TLS certificates when using HTTPS.
+
+    :return: A client object.
     """
-    _load()
-    return login(url, username=username, password=password, insecure=insecure)
-
-
-# Begin with stubs. We keep the stubs in _connect and _login for run-time
-# reference, for the curious, but also for testing, where we verify that the
-# stubs' signatures perfectly match those of the concrete implementation.
-connect = _connect
-login = _login
-
-
-# Paranoia, belt-n-braces, call it what you will: replace the stubs only when
-# holding this lock, just in case.
-_load_lock = _threading.RLock()
-
-
-def _load():
-    """Replace stubs with concrete implementations."""
-    global connect, login
-    with _load_lock:
-        from .viscera import Origin
-        connect = Origin.connect
-        login = Origin.login
+    from .viscera import Origin  # Lazy.
+    profile, origin = Origin.login(
+        url, username=username, password=password, insecure=insecure)
+    return _client.Client(origin)
