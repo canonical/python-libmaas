@@ -35,8 +35,8 @@ class Devices(ObjectSet, metaclass=DevicesType):
 
 class DeviceType(ObjectType):
 
-    def read(cls, system_id):
-        data = cls._handler.read(system_id=system_id)
+    async def read(cls, system_id):
+        data = await cls._handler.read(system_id=system_id)
         return cls(data)
 
 
