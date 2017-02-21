@@ -196,6 +196,14 @@ class Object(ObjectBasics, metaclass=ObjectType):
                     "local_data must be a mapping, not %s"
                     % type(data).__name__)
 
+    def __eq__(self, other):
+        """Strict equality check.
+
+        The type of `other` must exactly match the type of `self`. All data
+        must also match.
+        """
+        return type(self) is type(other) and self._data == other._data
+
     def __repr__(self, *, name=None, fields=None):
         if name is None:
             name = self.__class__.__name__
@@ -273,6 +281,14 @@ class ObjectSet(ObjectBasics, metaclass=ObjectType):
         protocol using ``__len__`` and ``__getitem__``.
         """
         return item in self._items
+
+    def __eq__(self, other):
+        """Strict equality check.
+
+        The type of `other` must exactly match the type of `self`. All items
+        must also match.
+        """
+        return type(self) is type(other) and self._items == other._items
 
     def __repr__(self):
         return "<%s length=%d items=%r>" % (

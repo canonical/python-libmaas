@@ -67,7 +67,7 @@ def obtain_token(url, username, password, *, insecure=False):
 
         # Extract the CSRF token.
         login_doc = bs4.BeautifulSoup(response.content, "html.parser")
-        login_button = login_doc.find('input', value="Login")
+        login_button = login_doc.find('button', text="Login")
         login_form = login_button.findParent("form")
         login_data = {
             elem["name"]: elem["value"] for elem in login_form("input")
@@ -77,7 +77,7 @@ def obtain_token(url, username, password, *, insecure=False):
         login_data["password"] = password
         # The following `requester` field is not used (at the time of
         # writing) but it ought to be associated with this new token so
-        # that tokens can be selectively revoked a later date.
+        # that tokens can be selectively revoked at a later date.
         login_data["requester"] = "%s@%s" % (getuser(), gethostname())
 
         # Log-in to MAAS.
