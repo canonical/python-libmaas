@@ -22,8 +22,6 @@ import aiohttp.errors
 from . import helpers
 from .. import utils
 from ..utils import profiles
-from ..utils.connect import connect
-from ..utils.login import login
 
 
 class SessionError(Exception):
@@ -74,7 +72,7 @@ class SessionAPI:
             an unsaved `Profile` instance, and the latter is a `SessionAPI`
             instance made using the profile.
         """
-        profile = login(
+        profile = helpers.login(
             url=url, username=username, password=password, insecure=insecure)
         session = cls(profile.description, profile.credentials)
         session.insecure = insecure
@@ -89,7 +87,7 @@ class SessionAPI:
             an unsaved `Profile` instance, and the latter is a `SessionAPI`
             instance made using the profile.
         """
-        profile = connect(
+        profile = helpers.connect(
             url=url, apikey=apikey, insecure=insecure)
         session = cls(profile.description, profile.credentials)
         session.insecure = insecure
