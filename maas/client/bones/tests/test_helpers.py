@@ -1,4 +1,4 @@
-"""Tests for `maas.client.utils.remote`."""
+"""Tests for `maas.client.bones.helpers`."""
 
 import json
 from urllib.parse import urlparse
