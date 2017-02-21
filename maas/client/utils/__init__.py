@@ -38,6 +38,7 @@ from urllib.parse import (
 
 from oauthlib import oauth1
 
+from .async import asynchronous
 from .creds import Credentials
 from .multipart import (
     build_multipart_message,
@@ -336,12 +337,13 @@ class Spinner:
 
 
 @typed
-def fetch_api_description(
+@asynchronous
+async def fetch_api_description(
         url: ParseResult, credentials: Optional[Credentials],
         insecure: bool):
     """Fetch the API description from the remote MAAS instance."""
     # Circular import.
     from .. import bones
-    session = bones.SessionAPI.fromURL(
+    session = await bones.SessionAPI.fromURL(
         url.geturl(), credentials=credentials, insecure=insecure)
     return session.description
