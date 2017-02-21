@@ -1,9 +1,9 @@
-"""Client façade."""
+"""Client facade."""
 
 from functools import update_wrapper
 
 
-class Façade:
+class Facade:
     """Present a simplified API for interacting with MAAS.
 
     The viscera API separates set-based interactions from those on individual
@@ -13,12 +13,12 @@ class Façade:
 
     However, we want to present a simplified commingled namespace to users of
     MAAS's *client* API. For example, all entry points related to machines
-    should be available as ``client.machines``. This façade class allows us to
+    should be available as ``client.machines``. This facade class allows us to
     present that commingled namespace without coding it as such.
     """
 
     def __init__(self, client, name, methods):
-        super(Façade, self).__init__()
+        super(Facade, self).__init__()
         self._client = client
         self._name = name
         self._populate(methods)
@@ -31,8 +31,8 @@ class Façade:
         return "<%s>" % self._name
 
 
-class FaçadeDescriptor:
-    """Lazily create a façade on first use.
+class FacadeDescriptor:
+    """Lazily create a facade on first use.
 
     It will be stored in the instance dictionary using the given name. This
     should match the name by which the descriptor is bound into the instance
@@ -47,19 +47,19 @@ class FaçadeDescriptor:
     """
 
     def __init__(self, name, factory):
-        super(FaçadeDescriptor, self).__init__()
+        super(FacadeDescriptor, self).__init__()
         self.name, self.factory = name, factory
 
     def __get__(self, obj, typ=None):
         methods = self.factory(obj._origin)
-        façade = Façade(obj, self.name, methods)
-        obj.__dict__[self.name] = façade
-        return façade
+        facade = Facade(obj, self.name, methods)
+        obj.__dict__[self.name] = facade
+        return facade
 
 
-def façade(factory):
-    """Declare a method as a façade factory."""
-    wrapper = FaçadeDescriptor(factory.__name__, factory)
+def facade(factory):
+    """Declare a method as a facade factory."""
+    wrapper = FacadeDescriptor(factory.__name__, factory)
     return update_wrapper(wrapper, factory)
 
 
@@ -70,7 +70,7 @@ class Client:
         super(Client, self).__init__()
         self._origin = origin
 
-    @façade
+    @facade
     def machines(origin):
         return {
             "allocate": origin.Machines.allocate,
@@ -78,7 +78,7 @@ class Client:
             "list": origin.Machines.read,
         }
 
-    @façade
+    @facade
     def devices(origin):
         return {
             "get": origin.Device.read,

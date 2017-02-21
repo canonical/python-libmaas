@@ -28,7 +28,7 @@ class TestClient(TestCase):
 
     def test__client_maps_devices(self):
         self.assertThat(self.client, MatchesClient(
-            devices=MatchesFaçade(
+            devices=MatchesFacade(
                 get=self.origin.Device.read,
                 list=self.origin.Devices.read,
             ),
@@ -36,7 +36,7 @@ class TestClient(TestCase):
 
     def test__client_maps_machines(self):
         self.assertThat(self.client, MatchesClient(
-            machines=MatchesFaçade(
+            machines=MatchesFacade(
                 allocate=self.origin.Machines.allocate,
                 get=self.origin.Machine.read,
                 list=self.origin.Machines.read,
@@ -44,19 +44,19 @@ class TestClient(TestCase):
         ))
 
 
-def MatchesClient(**façades):
-    """Matches a `_client.Client` with the given façades."""
+def MatchesClient(**facades):
+    """Matches a `_client.Client` with the given facades."""
     return MatchesAll(
         IsInstance(_client.Client),
-        MatchesStructure(**façades),
+        MatchesStructure(**facades),
         first_only=True,
     )
 
 
-def MatchesFaçade(**methods):
-    """Matches a `_client.Façade` with the given methods."""
+def MatchesFacade(**methods):
+    """Matches a `_client.Facade` with the given methods."""
     return MatchesAll(
-        IsInstance(_client.Façade),
+        IsInstance(_client.Facade),
         MatchesStructure.byEquality(**methods),
         first_only=True,
     )
