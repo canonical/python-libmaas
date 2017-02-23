@@ -24,7 +24,7 @@ setup(
     namespace_packages=['maas'],
     packages=find_packages(),
     package_data={
-        'maas.client.bones.tests': ['*.json'],
+        'maas.client.bones.testing': ['*.json'],
     },
     install_requires={
         "aiohttp >= 1.1.4",
