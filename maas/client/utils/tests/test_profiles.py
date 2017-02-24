@@ -24,13 +24,13 @@ from ..profiles import (
     ProfileNotFound,
     ProfileStore,
 )
-from ..testing import make_credentials
+from ..testing import make_Credentials
 
 
 def make_profile():
     return Profile(
         name=make_name_without_spaces("name"), url="http://example.com:5240/",
-        credentials=make_credentials(), description={"resources": []},
+        credentials=make_Credentials(), description={"resources": []},
         something=make_name_without_spaces("something"))
 
 

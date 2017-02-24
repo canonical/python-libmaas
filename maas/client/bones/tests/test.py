@@ -23,7 +23,7 @@ from testtools.matchers import (
 from .. import testing
 from ... import bones
 from ...testing import TestCase
-from ...utils.tests.test_auth import make_credentials
+from ...utils.tests.test_auth import make_Credentials
 
 
 class TestSessionAPI(TestCase):
@@ -49,7 +49,7 @@ class TestSessionAPI(TestCase):
 
     def test__fromURL_sets_credentials_on_session(self):
         fixture = self.useFixture(testing.DescriptionServer())
-        credentials = make_credentials()
+        credentials = make_Credentials()
         session = self.loop.run_until_complete(
             bones.SessionAPI.fromURL(fixture.url, credentials=credentials))
         self.assertIs(credentials, session.credentials)
