@@ -23,7 +23,7 @@ from ...utils import (
     api_url,
     profiles,
 )
-from ...utils.tests.test_auth import make_credentials
+from ...utils.testing import make_credentials
 
 
 class TestFetchAPIDescription(TestCase):

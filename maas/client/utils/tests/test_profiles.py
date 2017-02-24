@@ -24,7 +24,7 @@ from ..profiles import (
     ProfileNotFound,
     ProfileStore,
 )
-from .test_auth import make_credentials
+from ..testing import make_credentials
 
 
 def make_profile():

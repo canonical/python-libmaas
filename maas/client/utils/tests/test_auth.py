@@ -9,19 +9,8 @@ from unittest.mock import (
 )
 
 from .. import auth
-from ...testing import (
-    make_name,
-    TestCase,
-)
-from ..creds import Credentials
-
-
-def make_credentials():
-    return Credentials(
-        make_name('consumer_key'),
-        make_name('token_key'),
-        make_name('secret_key'),
-        )
+from ...testing import TestCase
+from ..testing import make_credentials
 
 
 class TestAuth(TestCase):
