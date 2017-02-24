@@ -18,9 +18,9 @@ from .. import (
     bones,
     utils,
 )
+from ..bones import helpers
 from ..utils import (
     auth,
-    login,
     profiles,
 )
 
@@ -90,10 +90,10 @@ class cmd_login(cmd_login_base):
 
         while True:
             try:
-                profile = login.login(
+                profile = helpers.login(
                     options.url, username=options.username,
                     password=options.password, insecure=options.insecure)
-            except login.UsernameWithoutPassword:
+            except helpers.UsernameWithoutPassword:
                 # Try to obtain the password interactively.
                 options.password = auth.try_getpass("Password: ")
                 if options.password is None:

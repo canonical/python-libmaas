@@ -7,30 +7,21 @@ from functools import partial
 from itertools import cycle
 import os
 import os.path
-import random
 from unittest.mock import sentinel
-from urllib.parse import urlparse
 
 from testtools.matchers import (
     AfterPreprocessing,
     Equals,
-    Is,
     MatchesListwise,
 )
 from twisted.internet.task import Clock
 
-from ... import (
-    bones,
-    utils,
-)
+from ... import utils
 from ...testing import (
-    make_name,
     make_name_without_spaces,
     make_string,
     TestCase,
 )
-from ...viscera.testing import AsyncMock
-from ..creds import Credentials
 
 
 class TestMAASOAuth(TestCase):
@@ -439,23 +430,3 @@ class TestRetries(TestCase):
         self.assertRetry(clock, next(gen_retries), 103.5, -98.5, 0.0)
         # All done.
         self.assertRaises(StopIteration, next, gen_retries)
-
-
-class TestFetchAPIDescription(TestCase):
-    """Tests for `fetch_api_description`."""
-
-    def test__calls_through_to_SessionAPI(self):
-        fromURL = self.patch(bones.SessionAPI, "fromURL", AsyncMock())
-        fromURL.return_value.description = sentinel.description
-
-        url = urlparse("http://maas.example.com:5420/MAAS/")
-        credentials = Credentials(
-            make_name('consumer_key'), make_name('token_key'),
-            make_name('secret_key'))
-        insecure = random.choice((True, False))
-
-        self.assertThat(
-            utils.fetch_api_description(url, credentials, insecure),
-            Is(sentinel.description))
-        fromURL.assert_called_once_with(
-            url.geturl(), credentials=credentials, insecure=insecure)

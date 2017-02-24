@@ -13,18 +13,15 @@ from collections import (
     Iterable,
     namedtuple,
 )
-from http import HTTPStatus
 import json
 import re
-from urllib.parse import urljoin
 
 import aiohttp
 import aiohttp.errors
 
+from . import helpers
 from .. import utils
 from ..utils import profiles
-from ..utils.connect import connect
-from ..utils.login import login
 
 
 class SessionError(Exception):
@@ -38,23 +35,16 @@ class SessionAPI:
     async def fromURL(
             cls, url, *, credentials=None, insecure=False):
         """Return a `SessionAPI` for a given MAAS instance."""
-        url_describe = urljoin(url, "describe/")
-        connector = aiohttp.TCPConnector(verify_ssl=(not insecure))
-        session = aiohttp.ClientSession(connector=connector)
-        async with session, session.get(url_describe) as response:
-            if response.status != HTTPStatus.OK:
-                raise SessionError(
-                    "{0} -> {1.status} {1.reason}".format(
-                        url, response))
-            elif response.content_type != "application/json":
-                raise SessionError(
-                    "Expected application/json, got: %s"
-                    % response.content_type)
-            else:
-                description = await response.json()
-                session = cls(description, credentials)
-                session.insecure = insecure
-                return session
+        try:
+            description = await helpers.fetch_api_description(
+                url, credentials=credentials, insecure=insecure)
+        except helpers.RemoteError as error:
+            # For now just re-raise as SessionError.
+            raise SessionError(str(error))
+        else:
+            session = cls(description, credentials)
+            session.insecure = insecure
+            return session
 
     @classmethod
     def fromProfile(cls, profile):
@@ -82,7 +72,7 @@ class SessionAPI:
             an unsaved `Profile` instance, and the latter is a `SessionAPI`
             instance made using the profile.
         """
-        profile = login(
+        profile = helpers.login(
             url=url, username=username, password=password, insecure=insecure)
         session = cls(profile.description, profile.credentials)
         session.insecure = insecure
@@ -97,7 +87,7 @@ class SessionAPI:
             an unsaved `Profile` instance, and the latter is a `SessionAPI`
             instance made using the profile.
         """
-        profile = connect(
+        profile = helpers.connect(
             url=url, apikey=apikey, insecure=insecure)
         session = cls(profile.description, profile.credentials)
         session.insecure = insecure

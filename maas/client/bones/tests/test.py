@@ -2,18 +2,11 @@
 
 __all__ = []
 
-from fnmatch import fnmatchcase
-import http
-import http.server
 import json
-from os.path import splitext
-from pathlib import Path
-import re
-import threading
+import random
 from unittest.mock import (
     ANY,
     Mock,
-    sentinel,
 )
 from urllib.parse import (
     parse_qsl,
@@ -21,95 +14,22 @@ from urllib.parse import (
 )
 from uuid import uuid1
 
-import fixtures
-from pkg_resources import (
-    resource_filename,
-    resource_listdir,
-)
 from testtools.matchers import (
     Equals,
+    Is,
     MatchesStructure,
 )
 
+from .. import testing
 from ... import bones
 from ...testing import TestCase
 from ...utils.tests.test_auth import make_credentials
 
 
-def list_api_descriptions():
-    for filename in resource_listdir(__name__, "."):
-        if fnmatchcase(filename, "api*.json"):
-            path = resource_filename(__name__, filename)
-            name, _ = splitext(filename)
-            yield name, Path(path)
-
-
-class DescriptionHandler(http.server.BaseHTTPRequestHandler):
-    """An HTTP request handler that serves only API descriptions.
-
-    The `desc` attribute ought to be specified, for example by subclassing, or
-    by using the `make` class-method.
-
-    The `content_type` attribute can be overridden to simulate a different
-    Content-Type header for the description.
-    """
-
-    # Override these in subclasses.
-    description = b'{"resources": []}'
-    content_type = "application/json"
-
-    @classmethod
-    def make(cls, description=description):
-        return type(
-            "DescriptionHandler", (cls, ),
-            {"description": description},
-        )
-
-    def setup(self):
-        super(DescriptionHandler, self).setup()
-        self.logs = []
-
-    def log_message(self, *args):
-        """By default logs go to stdout/stderr. Instead, capture them."""
-        self.logs.append(args)
-
-    def do_GET(self):
-        version_match = re.match(r"/MAAS/api/([0-9.]+)/describe/$", self.path)
-        if version_match is None:
-            self.send_error(http.HTTPStatus.NOT_FOUND)
-        else:
-            self.send_response(http.HTTPStatus.OK)
-            self.send_header("Content-Type", self.content_type)
-            self.send_header("Content-Length", str(len(self.description)))
-            self.end_headers()
-            self.wfile.write(self.description)
-
-
-class DescriptionServer(fixtures.Fixture):
-    """Fixture to start up an HTTP server for API descriptions only.
-
-    :ivar handler: A `DescriptionHandler` subclass.
-    :ivar server: An `http.server.HTTPServer` instance.
-    :ivar url: A URL that points to the API that `server` is mocking.
-    """
-
-    def __init__(self, description=DescriptionHandler.description):
-        super(DescriptionServer, self).__init__()
-        self.description = description
-
-    def _setUp(self):
-        self.handler = DescriptionHandler.make(self.description)
-        self.server = http.server.HTTPServer(("", 0), self.handler)
-        self.url = "http://%s:%d/MAAS/api/2.0/" % self.server.server_address
-        threading.Thread(target=self.server.serve_forever).start()
-        self.addCleanup(self.server.server_close)
-        self.addCleanup(self.server.shutdown)
-
-
 class TestSessionAPI(TestCase):
 
     def test__fromURL_raises_SessionError_when_request_fails(self):
-        fixture = self.useFixture(DescriptionServer(b"bogus"))
+        fixture = self.useFixture(testing.DescriptionServer(b"bogus"))
         error = self.assertRaises(
             bones.SessionError, self.loop.run_until_complete,
             bones.SessionAPI.fromURL(fixture.url + "bogus/"))
@@ -118,7 +38,7 @@ class TestSessionAPI(TestCase):
             str(error))
 
     def test__fromURL_raises_SessionError_when_content_not_json(self):
-        fixture = self.useFixture(DescriptionServer())
+        fixture = self.useFixture(testing.DescriptionServer())
         fixture.handler.content_type = "text/json"
         error = self.assertRaises(
             bones.SessionError, self.loop.run_until_complete,
@@ -128,17 +48,18 @@ class TestSessionAPI(TestCase):
             str(error))
 
     def test__fromURL_sets_credentials_on_session(self):
-        fixture = self.useFixture(DescriptionServer())
+        fixture = self.useFixture(testing.DescriptionServer())
         credentials = make_credentials()
         session = self.loop.run_until_complete(
             bones.SessionAPI.fromURL(fixture.url, credentials=credentials))
         self.assertIs(credentials, session.credentials)
 
     def test__fromURL_sets_insecure_on_session(self):
-        fixture = self.useFixture(DescriptionServer())
+        insecure = random.choice((True, False))
+        fixture = self.useFixture(testing.DescriptionServer())
         session = self.loop.run_until_complete(
-            bones.SessionAPI.fromURL(fixture.url, insecure=sentinel.insecure))
-        self.assertIs(sentinel.insecure, session.insecure)
+            bones.SessionAPI.fromURL(fixture.url, insecure=insecure))
+        self.assertThat(session.insecure, Is(insecure))
 
 
 class TestSessionAPI_APIVersions(TestCase):
@@ -146,12 +67,12 @@ class TestSessionAPI_APIVersions(TestCase):
 
     scenarios = tuple(
         (name, dict(path=path))
-        for name, path in list_api_descriptions()
+        for name, path in testing.list_api_descriptions()
     )
 
     def test__fromURL_downloads_description(self):
         description = self.path.read_bytes()
-        fixture = self.useFixture(DescriptionServer(description))
+        fixture = self.useFixture(testing.DescriptionServer(description))
         session = self.loop.run_until_complete(
             bones.SessionAPI.fromURL(fixture.url))
         self.assertEqual(
@@ -159,22 +80,12 @@ class TestSessionAPI_APIVersions(TestCase):
             session.description)
 
 
-def load_api_descriptions():
-    for name, path in list_api_descriptions():
-        description = path.read_text("utf-8")
-        yield name, json.loads(description)
-
-
-api_descriptions = list(load_api_descriptions())
-assert len(api_descriptions) != 0
-
-
 class TestActionAPI_APIVersions(TestCase):
     """Tests for `ActionAPI` with multiple API versions."""
 
     scenarios = tuple(
         (name, dict(description=description))
-        for name, description in api_descriptions
+        for name, description in testing.api_descriptions
     )
 
     def test__Version_read(self):
@@ -200,7 +111,7 @@ class TestCallAPI_APIVersions(TestCase):
 
     scenarios = tuple(
         (name, dict(description=description))
-        for name, description in api_descriptions
+        for name, description in testing.api_descriptions
     )
 
     def test__marshals_lists_into_query_as_repeat_parameters(self):
