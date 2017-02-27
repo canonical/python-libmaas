@@ -77,8 +77,8 @@ class TestPayloadPreparation(TestCase):
         ("create",
          {"method": "POST", "data": [],
           "expected_uri": uri_base,
-          "expected_body": None,
-          "expected_headers": []}),
+          "expected_body": sentinel.body,
+          "expected_headers": sentinel.headers}),
         ("read",
          {"method": "GET", "data": [],
           "expected_uri": uri_base,
@@ -87,13 +87,13 @@ class TestPayloadPreparation(TestCase):
         ("update",
          {"method": "PUT", "data": [],
           "expected_uri": uri_base,
-          "expected_body": None,
-          "expected_headers": []}),
+          "expected_body": sentinel.body,
+          "expected_headers": sentinel.headers}),
         ("delete",
          {"method": "DELETE", "data": [],
           "expected_uri": uri_base,
-          "expected_body": None,
-          "expected_headers": []}),
+          "expected_body": sentinel.body,
+          "expected_headers": sentinel.headers}),
         # With data, PUT, POST, and DELETE requests have their body and
         # extra headers prepared by build_multipart_message and
         # encode_multipart_message. For GET requests, the data is
@@ -128,8 +128,8 @@ class TestPayloadPreparation(TestCase):
         ("create",
          {"method": "POST", "data": [],
           "expected_uri": uri_base + "?op=something",
-          "expected_body": None,
-          "expected_headers": []}),
+          "expected_body": sentinel.body,
+          "expected_headers": sentinel.headers}),
         ("read",
          {"method": "GET", "data": [],
           "expected_uri": uri_base + "?op=something",
@@ -138,13 +138,13 @@ class TestPayloadPreparation(TestCase):
         ("update",
          {"method": "PUT", "data": [],
           "expected_uri": uri_base + "?op=something",
-          "expected_body": None,
-          "expected_headers": []}),
+          "expected_body": sentinel.body,
+          "expected_headers": sentinel.headers}),
         ("delete",
          {"method": "DELETE", "data": [],
           "expected_uri": uri_base + "?op=something",
-          "expected_body": None,
-          "expected_headers": []}),
+          "expected_body": sentinel.body,
+          "expected_headers": sentinel.headers}),
         # With data, PUT, POST, and DELETE requests have their body and
         # extra headers prepared by build_multipart_message and
         # encode_multipart_message. For GET requests, the data is
@@ -204,7 +204,6 @@ class TestPayloadPreparation(TestCase):
         # encode_multipart_message, when called, is passed the data
         # unadulterated.
         if self.expected_body is sentinel.body:
-            build_multipart.assert_called_once_with(self.data)
             encode_multipart.assert_called_once_with(sentinel.message)
 
 
