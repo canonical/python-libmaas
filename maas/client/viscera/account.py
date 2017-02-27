@@ -18,7 +18,9 @@ class AccountType(ObjectType):
     @typed
     async def create_credentials(cls) -> Credentials:
         data = await cls._handler.create_authorisation_token()
-        return Credentials(**data)
+        return Credentials(
+            consumer_key=data["consumer_key"], token_key=data["token_key"],
+            token_secret=data["token_secret"])
 
     @typed
     async def delete_credentials(cls, credentials: Credentials) -> None:
