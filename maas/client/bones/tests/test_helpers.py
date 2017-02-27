@@ -23,7 +23,7 @@ from ...utils import (
     api_url,
     profiles,
 )
-from ...utils.tests.test_auth import make_credentials
+from ...utils.testing import make_Credentials
 
 
 class TestFetchAPIDescription(TestCase):
@@ -87,7 +87,7 @@ class TestConnect(TestCase):
         self.assertThat(profile.credentials, Is(None))
 
     def test__connected_when_apikey_provided(self):
-        credentials = make_credentials()
+        credentials = make_Credentials()
         # Connect with an apikey.
         profile = helpers.connect(
             "http://example.org:5240/MAAS/", apikey=str(credentials))
@@ -155,7 +155,7 @@ class TestLogin(TestCase):
         self.assertThat(profile.credentials, Is(None))
 
     def test__authenticated_when_username_and_password_provided(self):
-        credentials = make_credentials()
+        credentials = make_Credentials()
         helpers.obtain_token.return_value = credentials
         # Log-in with a user-name and a password.
         profile = helpers.login("http://foo:bar@example.org:5240/MAAS/")
