@@ -88,12 +88,10 @@ def prepare_payload(op, method, uri, data):
             (name, slurp(value) if callable(value) else value)
             for name, value in data)
     else:
-        data = list(data)
-        if len(data) == 0:
-            headers, body = [], None
-        else:
-            message = build_multipart_message(data)
-            headers, body = encode_multipart_message(message)
+        # Even if data is empty, construct a multipart request body. Piston
+        # (server-side) sets `request.data` to `None` if there's no payload.
+        message = build_multipart_message(data)
+        headers, body = encode_multipart_message(message)
 
     uri = urlparse(uri)._replace(query=urlencode(query)).geturl()
     return uri, body, headers
