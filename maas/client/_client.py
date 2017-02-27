@@ -71,6 +71,23 @@ class Client:
         self._origin = origin
 
     @facade
+    def account(origin):
+        return {
+            "create_credentials": origin.Account.create_credentials,
+            "delete_credentials": origin.Account.delete_credentials,
+        }
+
+    @facade
+    def boot_resources(origin):
+        return {
+            "create": origin.BootResources.create,
+            "get": origin.BootResource.read,
+            "list": origin.BootResources.read,
+            "start_import": origin.BootResources.start_import,
+            "stop_import": origin.BootResources.stop_import,
+        }
+
+    @facade
     def machines(origin):
         return {
             "allocate": origin.Machines.allocate,
