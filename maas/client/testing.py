@@ -1,7 +1,10 @@
 """Testing framework for `maas.client`."""
 
 __all__ = [
-    "AsyncMock",
+    "AsyncAwaitableMock",
+    "AsyncCallableMock",
+    "AsyncContextMock",
+    "AsyncIterableMock",
     "make_file",
     "make_mac_address",
     "make_name",
@@ -185,26 +188,58 @@ class TestCase(WithScenarios, testcase.TestCase):
         return value
 
 
-class AsyncMock(mock.Mock):
-    """Mock that is "future-like"; see PEP-492 for the details.
+class AsyncAwaitableMock(mock.Mock):
+    """Mock that is "future-like"; see PEP-492.
 
     The new `await` syntax chokes on arguments that are not future-like, i.e.
     have an `__await__` call, so we have to fool it.
+
+    This passes calls to `__await__` through to `__call__`.
     """
 
-    def __call__(_mock_self, *args, **kwargs):
-        callup = super(AsyncMock, _mock_self).__call__
-        call = partial(callup, *args, **kwargs)
-        return Awaitable(call)
+    async def __await__(_mock_self, *args, **kwargs):
+        return super().__call__(*args, **kwargs)
 
 
-class Awaitable:
-    """Wrap a "normal" call in a future-like object."""
+class AsyncCallableMock(mock.Mock):
+    """Mock which ensures calls are "future-like"; see PEP-492.
 
-    def __init__(self, call):
-        super(Awaitable, self).__init__()
-        self._call = call
+    As in, calls to this mock return `return_value` or `side_effect` as usual,
+    but these are awaitable, or native coroutines.
+    """
 
-    def __await__(self):
-        yield  # This serves only to make this a generator.
-        return self._call()
+    async def __call__(_mock_self, *args, **kwargs):
+        return super().__call__(*args, **kwargs)
+
+
+class AsyncContextMock(mock.Mock):
+    """Mock that acts as an async context manager; see PEP-492.
+
+    It's not enough to mock `__aenter__` and `__aexit__` because Python
+    obtains these callable attributes from the context manager's *type*. See
+    https://www.python.org/dev/peps/pep-0492/#new-syntax. This is consistent
+    with how non-asynchronous context managers work, but it's counterintuitive
+    nonetheless.
+
+    This returns itself from `__aenter__` and `None` from `__aexit__`.
+    """
+
+    async def __aenter__(_mock_self):
+        return _mock_self
+
+    async def __aexit__(_mock_self, *exc_info):
+        return None
+
+
+class AsyncIterableMock(mock.Mock):
+    """Mock that can be asynchronously iterated; see PEP-492.
+
+    This returns itself from `__aiter__` and passes through calls to
+    `__anext__` to `__call__`.
+    """
+
+    def __aiter__(_mock_self):
+        return _mock_self
+
+    async def __anext__(_mock_self):
+        return super().__call__()

@@ -9,7 +9,7 @@ from typing import Mapping
 from unittest.mock import Mock
 
 from . import OriginBase
-from ..testing import AsyncMock
+from ..testing import AsyncCallableMock
 
 
 def bind(*objects, session=None):
@@ -42,7 +42,7 @@ def bind(*objects, session=None):
     if session is None:
         session = Mock(name="session")
         session.handlers = {
-            name: AsyncMock(name="handler(%s)" % name)
+            name: AsyncCallableMock(name="handler(%s)" % name)
             for name in objects
         }
 
