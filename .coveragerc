@@ -1,0 +1,11 @@
+[run]
+branch = True
+source =
+  maas/client
+omit =
+  */testing.py
+  */tests/*.py
+
+[html]
+title =
+  Coverage for python-libmaas
