@@ -13,6 +13,7 @@ from unittest.mock import (
 )
 
 import aiohttp
+from aiohttp.test_utils import make_mocked_coro
 from testtools.matchers import (
     Equals,
     MatchesDict,
@@ -21,7 +22,8 @@ from testtools.matchers import (
 
 from .. import boot_resources
 from ...testing import (
-    AsyncMock,
+    AsyncCallableMock,
+    AsyncContextMock,
     make_name_without_spaces,
     make_string,
     pick_bool,
@@ -363,9 +365,10 @@ class TestBootResources(TestCase):
         mock_sign = self.patch(boot_resources.utils, "sign")
 
         # Mock ClientSession.put as the create does PUT directly to the API.
-        put = AsyncMock()
-        response = put.return_value = AsyncMock(spec=aiohttp.ClientResponse)
+        response = AsyncContextMock(spec=aiohttp.ClientResponse)
         response.status = HTTPStatus.OK.value
+
+        put = AsyncCallableMock(return_value=response)
         self.patch(boot_resources.aiohttp.ClientSession, "put", put)
 
         # Progress handler called on each chunk.
@@ -373,9 +376,8 @@ class TestBootResources(TestCase):
 
         # Create and upload the resource.
         resource = BootResources.create(
-            name, architecture, buf,
-            title=title, filetype=filetype, chunk_size=chunk_size,
-            progress_callback=progress_handler)
+            name, architecture, buf, title=title, filetype=filetype,
+            chunk_size=chunk_size, progress_callback=progress_handler)
 
         # Check that returned resource is correct and updated.
         self.assertThat(resource, MatchesStructure.byEquality(
@@ -466,16 +468,17 @@ class TestBootResources(TestCase):
         mock_sign = self.patch(boot_resources.utils, "sign")
 
         # Mock ClientSession.put as the create does PUT directly to the API.
-        put = AsyncMock()
-        response = put.return_value = AsyncMock(spec=aiohttp.ClientResponse)
+        response = AsyncContextMock(spec=aiohttp.ClientResponse)
         response.status = HTTPStatus.INTERNAL_SERVER_ERROR.value
-        response.read.return_value = b"Error"
+        response.read = make_mocked_coro(b"Error")
+
+        put = AsyncCallableMock(return_value=response)
         self.patch(boot_resources.aiohttp.ClientSession, "put", put)
 
         self.assertRaises(
-            boot_resources.CallError, BootResources.create,
-            name, architecture, buf,
-            title=title, filetype=filetype, chunk_size=chunk_size)
+            boot_resources.CallError, BootResources.create, name,
+            architecture, buf, title=title, filetype=filetype,
+            chunk_size=chunk_size)
 
         # Check that the request was signed.
         self.assertTrue(mock_sign.called)

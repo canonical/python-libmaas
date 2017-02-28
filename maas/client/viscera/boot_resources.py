@@ -214,17 +214,17 @@ class BootResourcesType(ObjectType):
             utils.sign(upload_uri, headers, credentials)
 
         # Perform upload of chunk.
-        response = await session.put(
-            upload_uri, data=buf, headers=headers)
-        if response.status != 200:
-            content = await response.read()
-            request = {
-                "body": buf,
-                "headers": headers,
-                "method": "PUT",
-                "uri": upload_uri,
-            }
-            raise CallError(request, response, content, None)
+        async with await session.put(
+                upload_uri, data=buf, headers=headers) as response:
+            if response.status != 200:
+                content = await response.read()
+                request = {
+                    "body": buf,
+                    "headers": headers,
+                    "method": "PUT",
+                    "uri": upload_uri,
+                }
+                raise CallError(request, response, content, None)
 
 
 class BootResources(ObjectSet, metaclass=BootResourcesType):

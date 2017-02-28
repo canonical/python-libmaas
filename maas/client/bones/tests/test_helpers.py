@@ -14,7 +14,7 @@ from .. import (
     testing,
 )
 from ...testing import (
-    AsyncMock,
+    AsyncCallableMock,
     make_name,
     make_name_without_spaces,
     TestCase,
@@ -74,7 +74,7 @@ class TestConnect(TestCase):
         super(TestConnect, self).setUp()
         self.patch(
             helpers, "fetch_api_description",
-            AsyncMock(return_value={}))
+            AsyncCallableMock(return_value={}))
 
     def test__anonymous_when_no_apikey_provided(self):
         # Connect without an apikey.
@@ -140,7 +140,7 @@ class TestLogin(TestCase):
         self.patch(helpers, "obtain_token").return_value = None
         self.patch(
             helpers, "fetch_api_description",
-            AsyncMock(return_value={}))
+            AsyncCallableMock(return_value={}))
 
     def test__anonymous_when_neither_username_nor_password_provided(self):
         # Log-in without a user-name or a password.
