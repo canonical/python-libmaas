@@ -86,16 +86,6 @@ class TestBootSources(TestCase):
         sources = BootSources.read()
         self.assertEquals(2, len(sources))
 
-    def test__create_raises_ValueError_when_signed(self):
-        url = "http://images.maas.io/ephemeral-v3/daily/"
-
-        BootSources = make_origin().BootSources
-
-        error = self.assertRaises(ValueError, BootSources.create, url)
-        self.assertEquals(
-            "Either keyring_filename and keyring_data must be set when "
-            "providing a signed source.", str(error))
-
     def test__create_calls_create_with_keyring_filename(self):
         source_id = random.randint(0, 100)
         url = "http://images.maas.io/ephemeral-v3/daily/"

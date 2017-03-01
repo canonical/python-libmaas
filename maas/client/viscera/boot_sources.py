@@ -13,6 +13,7 @@ from . import (
     ObjectType,
     parse_timestamp,
 )
+from ..utils import coalesce
 
 
 class BootSourcesType(ObjectType):
@@ -20,18 +21,9 @@ class BootSourcesType(ObjectType):
 
     async def create(cls, url, *, keyring_filename=None, keyring_data=None):
         """Create a new `BootSource`."""
-        if (not url.endswith(".json") and
-                keyring_filename is None and
-                keyring_data is None):
-            raise ValueError(
-                "Either keyring_filename and keyring_data must be set when "
-                "providing a signed source.")
         data = await cls._handler.create(
-            url=url,
-            keyring_filename=(
-                "" if keyring_filename is None else keyring_filename),
-            keyring_data=(
-                "" if keyring_data is None else keyring_data))
+            url=url, keyring_filename=coalesce(keyring_filename, ""),
+            keyring_data=coalesce(keyring_data, ""))
         return cls._object(data)
 
     async def read(cls):
