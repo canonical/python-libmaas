@@ -5,6 +5,7 @@ __all__ = [
     "AsyncCallableMock",
     "AsyncContextMock",
     "AsyncIterableMock",
+    "make_bytes",
     "make_mac_address",
     "make_name",
     "make_name_without_spaces",
@@ -78,6 +79,11 @@ def make_name_without_spaces(prefix="name", sep='-', size=6):
     return prefix + sep + make_string_without_spaces(size)
 
 
+def make_bytes(size=10):
+    """Make a random byte string."""
+    return bytes(islice(random_octets, size))
+
+
 def make_mac_address(delimiter=":"):
     """Make a MAC address string with the given delimiter."""
     octets = islice(random_octets, 6)
@@ -133,7 +139,7 @@ class TestCase(WithScenarios, testcase.TestCase):
         :param name: Name for the file; optional. If omitted, a random name
             will be chosen.
         :param contents: Contents for the file; optional. If omitted, some
-            arbitrary text will be written.
+            arbitrary bytes will be written.
         :param location: Path to a directory; optional. If omitted, a new
             temporary directory will be created with `makeDir`.
 
@@ -141,12 +147,7 @@ class TestCase(WithScenarios, testcase.TestCase):
         """
         location = self.makeDir() if location is None else Path(location)
         filepath = location.joinpath(make_string() if name is None else name)
-
-        if contents is None:
-            filepath.write_text(make_string())
-        else:
-            filepath.write_bytes(contents)
-
+        filepath.write_bytes(make_bytes() if contents is None else contents)
         return filepath
 
     def assertDocTestMatches(self, expected, observed, flags=None):
