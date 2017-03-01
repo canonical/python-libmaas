@@ -1,5 +1,6 @@
 """Integration tests for `maas.client`."""
 
+from collections import Mapping
 from datetime import datetime
 from http import HTTPStatus
 import io
@@ -21,8 +22,10 @@ from maas.client.utils import (
 from testtools.matchers import (
     AllMatch,
     Equals,
+    Is,
     IsInstance,
     MatchesAll,
+    MatchesAny,
     MatchesStructure,
 )
 
@@ -65,6 +68,17 @@ class TestBootResources(IntegrationTestCase):
             IsInstance(self.origin.BootResources),
             AllMatch(IsInstance(self.origin.BootResource)),
         ))
+        self.assertThat(
+            boot_resources,
+            AllMatch(MatchesStructure(
+                id=IsInstance(int),
+                type=IsInstance(str),
+                name=IsInstance(str),
+                architecture=IsInstance(str),
+                subarches=Optional(IsInstance(str)),
+                sets=Optional(IsInstance(Mapping)),
+            )),
+        )
 
     def test__create_and_delete_boot_resource(self):
         chunk = random.getrandbits(8 * 128).to_bytes(128, "big")
@@ -113,16 +127,16 @@ class TestBootSources(IntegrationTestCase):
             AllMatch(IsInstance(self.origin.BootSource)),
         ))
         self.assertThat(
-            boot_sources, AllMatch(
-                MatchesStructure(
-                    id=IsInstance(int),
-                    url=IsInstance(str),
-                    keyring_filename=IsInstance(str),
-                    keyring_data=IsInstance(str),  # ??? Binary, no?
-                    created=IsInstance(datetime),
-                    updated=IsInstance(datetime),
-                ),
-            ))
+            boot_sources,
+            AllMatch(MatchesStructure(
+                id=IsInstance(int),
+                url=IsInstance(str),
+                keyring_filename=IsInstance(str),
+                keyring_data=IsInstance(str),  # ??? Binary, no?
+                created=IsInstance(datetime),
+                updated=IsInstance(datetime),
+            )),
+        )
 
 
 # TestBootSourceSelections
@@ -140,6 +154,20 @@ class TestEvents(IntegrationTestCase):
         events = events.next()
         self.assertThat(events, IsInstance(self.origin.Events))
 
+    def test__events(self):
+        self.assertThat(
+            self.origin.Events.query(),
+            AllMatch(MatchesStructure(
+                event_id=IsInstance(int),
+                event_type=IsInstance(str),
+                system_id=IsInstance(str),
+                hostname=IsInstance(str),
+                level=IsInstance(viscera.events.Level),
+                created=IsInstance(datetime),
+                description=IsInstance(str),
+            )),
+        )
+
 
 # TestFiles
 # TestMAAS
@@ -149,6 +177,12 @@ class TestEvents(IntegrationTestCase):
 # TestUsers
 # TestVersion
 # TestZones
+
+
+# Additional matchers.
+
+def Optional(matcher, default=Is(None)):
+    return MatchesAny(matcher, default)
 
 
 # End.
