@@ -8,10 +8,10 @@ __all__ = [
     "make_mac_address",
     "make_name",
     "make_name_without_spaces",
+    "make_range",
     "make_string",
     "make_string_without_spaces",
     "pick_bool",
-    "randrange",
     "TestCase",
 ]
 
@@ -84,14 +84,14 @@ def make_mac_address(delimiter=":"):
     return delimiter.join(format(octet, "02x") for octet in octets)
 
 
+def make_range(cmin=1, cmax=9):
+    """Return a range of random length between `cmin` and `cmax`."""
+    return range(random.randint(cmin, cmax))
+
+
 def pick_bool():
     """Return either `True` or `False` at random."""
     return random.choice((True, False))
-
-
-def randrange(cmin=1, cmax=9):
-    """Yield a random number of times between `cmin` and `cmax`."""
-    return range(random.randint(cmin, cmax))
 
 
 class WithScenarios(testscenarios.WithScenarios):
