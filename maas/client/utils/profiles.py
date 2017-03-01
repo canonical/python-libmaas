@@ -9,13 +9,7 @@ __all__ = [
 from contextlib import contextmanager
 from copy import deepcopy
 import json
-import os
-from os.path import (
-    exists,
-    expanduser,
-    isfile,
-    samefile,
-)
+from pathlib import Path
 import sqlite3
 from textwrap import dedent
 from typing import (
@@ -161,7 +155,7 @@ def schema_import(conn, dbpath):
     :param dbpath: The filesystem path to the source SQLite3 database.
     """
     conn.execute(
-        "ATTACH DATABASE ? AS source", (dbpath,))
+        "ATTACH DATABASE ? AS source", (str(dbpath),))
     conn.execute(
         "INSERT OR IGNORE INTO profiles (name, data)"
         " SELECT name, data FROM source.profiles"
@@ -244,7 +238,7 @@ class ProfileStore:
 
     @classmethod
     @contextmanager
-    def open(cls, dbpath=expanduser("~/.maas.db")):
+    def open(cls, dbpath=Path("~/.maas.db").expanduser()):
         """Load a profiles database.
 
         Called without arguments this will open (and create) a database in the
@@ -255,15 +249,17 @@ class ProfileStore:
 
         :param dbpath: The path to the database file to create and open.
         """
+        # Ensure we're working with a Path instance.
+        dbpath = Path(dbpath)
         # See if we ought to do a one-time migration.
-        migrate_from = expanduser("~/.maascli.db")
-        migrate = isfile(migrate_from) and not exists(dbpath)
+        migrate_from = Path("~/.maascli.db").expanduser()
+        migrate = migrate_from.is_file() and not dbpath.exists()
         # Initialise filename with restrictive permissions...
-        os.close(os.open(dbpath, os.O_CREAT | os.O_APPEND, 0o600))
+        dbpath.touch(mode=0o600, exist_ok=True)
         # Final check to see if it's safe to migrate.
-        migrate = migrate and not samefile(migrate_from, dbpath)
+        migrate = migrate and not migrate_from.samefile(dbpath)
         # before opening it with sqlite.
-        database = sqlite3.connect(dbpath)
+        database = sqlite3.connect(str(dbpath))
         try:
             store = cls(database)
             if migrate:

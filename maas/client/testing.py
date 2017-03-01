@@ -22,7 +22,7 @@ from itertools import (
     islice,
     repeat,
 )
-from os import path
+from pathlib import Path
 import random
 import string
 from unittest import mock
@@ -119,9 +119,10 @@ class TestCase(WithScenarios, testcase.TestCase):
         This creates a new temporary directory. This will be removed during
         test tear-down.
 
-        :return: The path to the directory.
+        :return: The path to the directory, as a `pathlib.Path`.
         """
-        return self.useFixture(TempDir()).path
+        tempdir = self.useFixture(TempDir())
+        return Path(tempdir.path)
 
     def makeFile(self, name=None, contents=None, location=None):
         """Create a file, and write data to it.
@@ -132,22 +133,21 @@ class TestCase(WithScenarios, testcase.TestCase):
         :param name: Name for the file; optional. If omitted, a random name
             will be chosen.
         :param contents: Contents for the file; optional. If omitted, some
-            arbitrary ASCII text will be written.
+            arbitrary text will be written.
         :param location: Path to a directory; optional. If omitted, a new
             temporary directory will be created with `makeDir`.
 
-        :return: The path to the file.
+        :return: The path to the file, as a `pathlib.Path`.
         """
-        if name is None:
-            name = make_string()
+        location = self.makeDir() if location is None else Path(location)
+        filepath = location.joinpath(make_string() if name is None else name)
+
         if contents is None:
-            contents = make_string().encode('ascii')
-        if location is None:
-            location = self.makeDir()
-        filename = path.join(location, name)
-        with open(filename, 'wb') as f:
-            f.write(contents)
-        return filename
+            filepath.write_text(make_string())
+        else:
+            filepath.write_bytes(contents)
+
+        return filepath
 
     def assertDocTestMatches(self, expected, observed, flags=None):
         """See if `observed` matches `expected`, a doctest sample.
