@@ -14,6 +14,9 @@ upload: bin/python setup.py README
 test: bin/tox
 	@bin/tox
 
+integrate: bin/tox
+	@bin/tox -e integrate
+
 lint: bin/tox
 	@bin/tox -e lint
 
@@ -25,6 +28,7 @@ clean:
 	find . -name '*.egg-info' -print0 | xargs -r0 $(RM) -r
 	find . -name '*~' -print0 | xargs -r0 $(RM)
 	$(RM) -r .eggs .tox .coverage TAGS tags
+	$(RM) pip-selfcheck.json
 
 # ---
 
@@ -47,4 +51,4 @@ bin/mkdocs: bin/pip
 
 # ---
 
-.PHONY: develop dist docs test lint clean
+.PHONY: develop dist docs test integrate lint clean

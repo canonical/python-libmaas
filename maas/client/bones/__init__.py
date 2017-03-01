@@ -326,7 +326,7 @@ class CallError(Exception):
 
     @property
     def status(self):
-        return int(self.response["status"])
+        return self.response.status
 
 
 class CallAPI:
