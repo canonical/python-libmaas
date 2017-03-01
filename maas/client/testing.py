@@ -5,7 +5,6 @@ __all__ = [
     "AsyncCallableMock",
     "AsyncContextMock",
     "AsyncIterableMock",
-    "make_file",
     "make_mac_address",
     "make_name",
     "make_name_without_spaces",
@@ -79,32 +78,6 @@ def make_name_without_spaces(prefix="name", sep='-', size=6):
     return prefix + sep + make_string_without_spaces(size)
 
 
-def make_file(location, name=None, contents=None):
-    """Create a file, and write data to it.
-
-    Prefer the eponymous convenience wrapper in
-    :class:`maastesting.testcase.MAASTestCase`.  It creates a temporary
-    directory and arranges for its eventual cleanup.
-
-    :param location: Directory.  Use a temporary directory for this, and
-        make sure it gets cleaned up after the test!
-    :param name: Optional name for the file.  If none is given, one will
-        be made up.
-    :param contents: Optional contents for the file.  If omitted, some
-        arbitrary ASCII text will be written.
-    :type contents: unicode, but containing only ASCII characters.
-    :return: Path to the file.
-    """
-    if name is None:
-        name = make_string()
-    if contents is None:
-        contents = make_string().encode('ascii')
-    filename = path.join(location, name)
-    with open(filename, 'wb') as f:
-        f.write(contents)
-    return filename
-
-
 def make_mac_address(delimiter=":"):
     """Make a MAC address string with the given delimiter."""
     octets = islice(random_octets, 6)
@@ -140,22 +113,41 @@ class TestCase(WithScenarios, testcase.TestCase):
         self.addCleanup(self.loop.close)
         asyncio.set_event_loop(self.loop)
 
-    def make_dir(self):
+    def makeDir(self):
         """Create a temporary directory.
 
-        This is a convenience wrapper around a fixture incantation.  That's
-        the only reason why it's on the test case and not in a factory.
+        This creates a new temporary directory. This will be removed during
+        test tear-down.
+
+        :return: The path to the directory.
         """
         return self.useFixture(TempDir()).path
 
-    def make_file(self, name=None, contents=None):
-        """Create, and write to, a file.
+    def makeFile(self, name=None, contents=None, location=None):
+        """Create a file, and write data to it.
 
-        This is a convenience wrapper around `make_dir` and a factory
-        call.  It ensures that the file is in a directory that will be
-        cleaned up at the end of the test.
+        This creates a new file `name` in `location` and fills it with
+        `contents`. This file will be removed during test tear-down.
+
+        :param name: Name for the file; optional. If omitted, a random name
+            will be chosen.
+        :param contents: Contents for the file; optional. If omitted, some
+            arbitrary ASCII text will be written.
+        :param location: Path to a directory; optional. If omitted, a new
+            temporary directory will be created with `makeDir`.
+
+        :return: The path to the file.
         """
-        return make_file(self.make_dir(), name, contents)
+        if name is None:
+            name = make_string()
+        if contents is None:
+            contents = make_string().encode('ascii')
+        if location is None:
+            location = self.makeDir()
+        filename = path.join(location, name)
+        with open(filename, 'wb') as f:
+            f.write(contents)
+        return filename
 
     def assertDocTestMatches(self, expected, observed, flags=None):
         """See if `observed` matches `expected`, a doctest sample.

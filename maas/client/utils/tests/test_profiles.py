@@ -146,7 +146,7 @@ class TestProfileStore(TestCase):
     def test_open_and_close(self):
         # ProfileStore.open() returns a context manager that closes the
         # database on exit.
-        config_file = os.path.join(self.make_dir(), "config")
+        config_file = os.path.join(self.makeDir(), "config")
         config = ProfileStore.open(config_file)
         self.assertIsInstance(config, contextlib._GeneratorContextManager)
         with config as config:
@@ -160,7 +160,7 @@ class TestProfileStore(TestCase):
     def test_open_permissions_new_database(self):
         # ProfileStore.open() applies restrictive file permissions to newly
         # created configuration databases.
-        config_file = os.path.join(self.make_dir(), "config")
+        config_file = os.path.join(self.makeDir(), "config")
         with ProfileStore.open(config_file):
             perms = FilePath(config_file).getPermissions()
             self.assertEqual("rw-------", perms.shorthand())
@@ -168,7 +168,7 @@ class TestProfileStore(TestCase):
     def test_open_permissions_existing_database(self):
         # ProfileStore.open() leaves the file permissions of existing
         # configuration databases.
-        config_file = os.path.join(self.make_dir(), "config")
+        config_file = os.path.join(self.makeDir(), "config")
         open(config_file, "wb").close()  # touch.
         os.chmod(config_file, 0o644)  # u=rw,go=r
         with ProfileStore.open(config_file):
@@ -176,7 +176,7 @@ class TestProfileStore(TestCase):
             self.assertEqual("rw-r--r--", perms.shorthand())
 
     def test_open_does_one_time_migration(self):
-        home = self.make_dir()
+        home = self.makeDir()
         dbpath_old = os.path.join(home, ".maascli.db")
         dbpath_new = os.path.join(home, ".maas.db")
 
