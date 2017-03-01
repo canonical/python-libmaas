@@ -20,7 +20,14 @@ class BootSourcesType(ObjectType):
     """Metaclass for `BootSources`."""
 
     async def create(cls, url, *, keyring_filename=None, keyring_data=None):
-        """Create a new `BootSource`."""
+        """Create a new `BootSource`.
+
+        :param url: The URL for the boot source.
+        :param keyring_filename: The path to the keyring file on the server.
+        :param keyring_data: The GPG keyring data, binary. as a file-like
+            object. For example: an open file handle in binary mode, or an
+            instance of `io.BytesIO`.
+        """
         data = await cls._handler.create(
             url=url, keyring_filename=coalesce(keyring_filename, ""),
             keyring_data=coalesce(keyring_data, ""))

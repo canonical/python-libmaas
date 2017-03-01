@@ -49,7 +49,6 @@ class IntegrationTestCase(TestCase):
 
 
 class TestAccount(IntegrationTestCase):
-    """Tests for module functions."""
 
     def test__create_and_delete_credentials(self):
         credentials = self.origin.Account.create_credentials()
@@ -75,13 +74,38 @@ class TestBootResources(IntegrationTestCase):
         self.assertThat(boot_resource, IsInstance(self.origin.BootResource))
         boot_resource.delete()
         error = self.assertRaises(
-            bones.CallError,
-            self.origin.BootResource.read, boot_resource.id)
+            bones.CallError, self.origin.BootResource.read, boot_resource.id)
         self.assertThat(error, MatchesStructure(
             status=Equals(HTTPStatus.NOT_FOUND)))
 
 
-# TestBootSources
+class TestBootSources(IntegrationTestCase):
+
+    def test__create_and_delete_source_with_keyring_filename(self):
+        source_url = make_name_without_spaces("http://maas.example.com/")
+        keyring_filename = make_name_without_spaces("keyring-filename")
+        boot_source = self.origin.BootSources.create(
+            source_url, keyring_filename=keyring_filename)
+        self.assertThat(boot_source, IsInstance(self.origin.BootSource))
+        boot_source.delete()
+        error = self.assertRaises(
+            bones.CallError, self.origin.BootSource.read, boot_source.id)
+        self.assertThat(error, MatchesStructure(
+            status=Equals(HTTPStatus.NOT_FOUND)))
+
+    def test__create_and_delete_source_with_keyring_data(self):
+        source_url = make_name_without_spaces("http://maas.example.com/")
+        keyring_data = make_name_without_spaces("keyring-data").encode()
+        boot_source = self.origin.BootSources.create(
+            source_url, keyring_data=io.BytesIO(keyring_data))
+        self.assertThat(boot_source, IsInstance(self.origin.BootSource))
+        boot_source.delete()
+        error = self.assertRaises(
+            bones.CallError, self.origin.BootSource.read, boot_source.id)
+        self.assertThat(error, MatchesStructure(
+            status=Equals(HTTPStatus.NOT_FOUND)))
+
+
 # TestBootSourceSelections
 # TestControllers
 # TestDevices
