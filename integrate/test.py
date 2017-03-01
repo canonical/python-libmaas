@@ -1,5 +1,6 @@
 """Integration tests for `maas.client`."""
 
+from datetime import datetime
 from http import HTTPStatus
 import io
 from itertools import repeat
@@ -104,6 +105,24 @@ class TestBootSources(IntegrationTestCase):
             bones.CallError, self.origin.BootSource.read, boot_source.id)
         self.assertThat(error, MatchesStructure(
             status=Equals(HTTPStatus.NOT_FOUND)))
+
+    def test__list_boot_sources(self):
+        boot_sources = self.origin.BootSources.read()
+        self.assertThat(boot_sources, MatchesAll(
+            IsInstance(self.origin.BootSources),
+            AllMatch(IsInstance(self.origin.BootSource)),
+        ))
+        self.assertThat(
+            boot_sources, AllMatch(
+                MatchesStructure(
+                    id=IsInstance(int),
+                    url=IsInstance(str),
+                    keyring_filename=IsInstance(str),
+                    keyring_data=IsInstance(str),  # ??? Binary, no?
+                    created=IsInstance(datetime),
+                    updated=IsInstance(datetime),
+                ),
+            ))
 
 
 # TestBootSourceSelections
