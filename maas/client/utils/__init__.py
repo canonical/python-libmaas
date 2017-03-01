@@ -2,6 +2,7 @@
 
 __all__ = [
     "api_url",
+    "coalesce",
     "get_all_subclasses",
     "parse_docstring",
     "prepare_payload",
@@ -285,6 +286,20 @@ def gen_retries(start, end, intervals, time=time):
         else:
             yield now - start, end - now, 0
             break
+
+
+def coalesce(*values, default=None):
+    """Return the first argument that is not `None`.
+
+    If all arguments are `None`, return `default`, which is `None` by default.
+
+    Similar to PostgreSQL's `COALESCE` function.
+    """
+    for value in values:
+        if value is not None:
+            return value
+    else:
+        return default
 
 
 class Spinner:

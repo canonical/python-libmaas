@@ -12,6 +12,7 @@ from unittest.mock import sentinel
 from testtools.matchers import (
     AfterPreprocessing,
     Equals,
+    Is,
     MatchesListwise,
 )
 from twisted.internet.task import Clock
@@ -321,6 +322,15 @@ class TestFunctions(TestCase):
             for url_out in urls_out
             ]
         self.assertThat(urls, MatchesListwise(expected))
+
+    def test_coalesce(self):
+        self.assertThat(utils.coalesce("abc"), Equals("abc"))
+        self.assertThat(utils.coalesce(None, "abc"), Equals("abc"))
+        self.assertThat(utils.coalesce("abc", None), Equals("abc"))
+        self.assertThat(utils.coalesce("abc", "def"), Equals("abc"))
+        self.assertThat(utils.coalesce(default="foo"), Equals("foo"))
+        self.assertThat(utils.coalesce(None, default="foo"), Equals("foo"))
+        self.assertThat(utils.coalesce(), Is(None))
 
 
 class TestRetries(TestCase):
