@@ -198,7 +198,7 @@ class AsyncAwaitableMock(mock.Mock):
     """
 
     async def __await__(_mock_self, *args, **kwargs):
-        return super().__call__(*args, **kwargs)
+        return _mock_self(*args, **kwargs)
 
 
 class AsyncCallableMock(mock.Mock):
@@ -242,4 +242,4 @@ class AsyncIterableMock(mock.Mock):
         return _mock_self
 
     async def __anext__(_mock_self):
-        return super().__call__()
+        return _mock_self()
