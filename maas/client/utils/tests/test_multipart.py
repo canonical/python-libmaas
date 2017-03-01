@@ -117,8 +117,8 @@ class TestMultiPart(TestCase):
         ]
         files = [
             BytesIO(b"f1"),
-            open(self.make_file(contents=b"f2"), "rb"),
-            open(self.make_file(contents=b"f3"), "rb"),
+            self.makeFile(contents=b"f2").open("rb"),
+            self.makeFile(contents=b"f3").open("rb"),
         ]
         for fd in files:
             self.addCleanup(fd.close)

@@ -3,8 +3,7 @@
 __all__ = []
 
 import contextlib
-import os
-import os.path
+from pathlib import Path
 import sqlite3
 
 from testtools.matchers import (
@@ -146,7 +145,7 @@ class TestProfileStore(TestCase):
     def test_open_and_close(self):
         # ProfileStore.open() returns a context manager that closes the
         # database on exit.
-        config_file = os.path.join(self.make_dir(), "config")
+        config_file = self.makeDir().joinpath("config")
         config = ProfileStore.open(config_file)
         self.assertIsInstance(config, contextlib._GeneratorContextManager)
         with config as config:
@@ -160,33 +159,36 @@ class TestProfileStore(TestCase):
     def test_open_permissions_new_database(self):
         # ProfileStore.open() applies restrictive file permissions to newly
         # created configuration databases.
-        config_file = os.path.join(self.make_dir(), "config")
+        config_file = self.makeDir().joinpath("config")
         with ProfileStore.open(config_file):
-            perms = FilePath(config_file).getPermissions()
+            perms = FilePath(str(config_file)).getPermissions()
             self.assertEqual("rw-------", perms.shorthand())
 
     def test_open_permissions_existing_database(self):
         # ProfileStore.open() leaves the file permissions of existing
         # configuration databases.
-        config_file = os.path.join(self.make_dir(), "config")
-        open(config_file, "wb").close()  # touch.
-        os.chmod(config_file, 0o644)  # u=rw,go=r
+        config_file = self.makeDir().joinpath("config")
+        config_file.touch()
+        config_file.chmod(0o644)  # u=rw,go=r
         with ProfileStore.open(config_file):
-            perms = FilePath(config_file).getPermissions()
+            perms = FilePath(str(config_file)).getPermissions()
             self.assertEqual("rw-r--r--", perms.shorthand())
 
     def test_open_does_one_time_migration(self):
-        home = self.make_dir()
-        dbpath_old = os.path.join(home, ".maascli.db")
-        dbpath_new = os.path.join(home, ".maas.db")
+        home = self.makeDir()
+        dbpath_old = home.joinpath(".maascli.db")
+        dbpath_new = home.joinpath(".maas.db")
 
+        # Path.expanduser() is used by ProfileStore.open(). We expect the
+        # paths to be expanded to be one of those below.
         def expanduser(path):
-            # We expect the paths to be expanded to be one of those below.
-            paths = {"~/.maas.db": dbpath_new, "~/.maascli.db": dbpath_old}
-            return paths[path]
+            if path == Path("~/.maas.db"):
+                return dbpath_new
+            if path == Path("~/.maascli.db"):
+                return dbpath_old
+            raise ValueError(path)
 
-        # expanduser() is used by ProfileStore.open().
-        self.patch(profiles, "expanduser", expanduser)
+        self.patch(profiles.Path, "expanduser", expanduser)
 
         # A profile that will be migrated.
         profile = make_profile()

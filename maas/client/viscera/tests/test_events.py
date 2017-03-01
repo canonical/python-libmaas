@@ -19,7 +19,7 @@ from .. import events
 from ...testing import (
     make_mac_address,
     make_name_without_spaces,
-    randrange,
+    make_range,
     TestCase,
 )
 from ..testing import bind
@@ -160,12 +160,12 @@ class TestEvents(TestCase):
     def test__forwards_returns_a_continuous_iterator(self):
         pages = [
             {
-                "events": [make_Event_dict() for _ in randrange()],
+                "events": [make_Event_dict() for _ in make_range()],
                 "prev_uri": "?going=backwards",
                 "next_uri": "?going=forwards",
             },
             {
-                "events": [make_Event_dict() for _ in randrange()],
+                "events": [make_Event_dict() for _ in make_range()],
                 "prev_uri": "?going=backwards",
                 "next_uri": "?going=forwards",
             },
@@ -188,12 +188,12 @@ class TestEvents(TestCase):
     def test__backwards_returns_a_continuous_iterator(self):
         pages = [
             {
-                "events": [make_Event_dict() for _ in randrange()],
+                "events": [make_Event_dict() for _ in make_range()],
                 "prev_uri": "?going=backwards",
                 "next_uri": "?going=forwards",
             },
             {
-                "events": [make_Event_dict() for _ in randrange()],
+                "events": [make_Event_dict() for _ in make_range()],
                 "prev_uri": "?going=backwards",
                 "next_uri": "?going=forwards",
             },

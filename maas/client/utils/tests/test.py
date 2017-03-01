@@ -214,12 +214,12 @@ class TestPayloadPreparationWithFiles(TestCase):
     def test_files_are_included(self):
         parameter = make_string()
         contents = os.urandom(5)
-        filename = self.make_file(contents=contents)
+        filepath = self.makeFile(contents=contents)
         # Writing the parameter as "parameter@=filename" on the
         # command-line causes name_value_pair() to return a `name,
         # opener` tuple, where `opener` is a callable that returns an
         # open file handle.
-        data = [(parameter, partial(open, filename, "rb"))]
+        data = [(parameter, partial(filepath.open, "rb"))]
         uri, body, headers = utils.prepare_payload(
             op=None, method="POST", uri="http://localhost", data=data)
 

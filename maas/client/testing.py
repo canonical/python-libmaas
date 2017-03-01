@@ -5,14 +5,14 @@ __all__ = [
     "AsyncCallableMock",
     "AsyncContextMock",
     "AsyncIterableMock",
-    "make_file",
+    "make_bytes",
     "make_mac_address",
     "make_name",
     "make_name_without_spaces",
+    "make_range",
     "make_string",
     "make_string_without_spaces",
     "pick_bool",
-    "randrange",
     "TestCase",
 ]
 
@@ -23,7 +23,7 @@ from itertools import (
     islice,
     repeat,
 )
-from os import path
+from pathlib import Path
 import random
 import string
 from unittest import mock
@@ -79,30 +79,9 @@ def make_name_without_spaces(prefix="name", sep='-', size=6):
     return prefix + sep + make_string_without_spaces(size)
 
 
-def make_file(location, name=None, contents=None):
-    """Create a file, and write data to it.
-
-    Prefer the eponymous convenience wrapper in
-    :class:`maastesting.testcase.MAASTestCase`.  It creates a temporary
-    directory and arranges for its eventual cleanup.
-
-    :param location: Directory.  Use a temporary directory for this, and
-        make sure it gets cleaned up after the test!
-    :param name: Optional name for the file.  If none is given, one will
-        be made up.
-    :param contents: Optional contents for the file.  If omitted, some
-        arbitrary ASCII text will be written.
-    :type contents: unicode, but containing only ASCII characters.
-    :return: Path to the file.
-    """
-    if name is None:
-        name = make_string()
-    if contents is None:
-        contents = make_string().encode('ascii')
-    filename = path.join(location, name)
-    with open(filename, 'wb') as f:
-        f.write(contents)
-    return filename
+def make_bytes(size=10):
+    """Make a random byte string."""
+    return bytes(islice(random_octets, size))
 
 
 def make_mac_address(delimiter=":"):
@@ -111,14 +90,14 @@ def make_mac_address(delimiter=":"):
     return delimiter.join(format(octet, "02x") for octet in octets)
 
 
+def make_range(cmin=1, cmax=9):
+    """Return a range of random length between `cmin` and `cmax`."""
+    return range(random.randint(cmin, cmax))
+
+
 def pick_bool():
     """Return either `True` or `False` at random."""
     return random.choice((True, False))
-
-
-def randrange(cmin=1, cmax=9):
-    """Yield a random number of times between `cmin` and `cmax`."""
-    return range(random.randint(cmin, cmax))
 
 
 class WithScenarios(testscenarios.WithScenarios):
@@ -140,22 +119,36 @@ class TestCase(WithScenarios, testcase.TestCase):
         self.addCleanup(self.loop.close)
         asyncio.set_event_loop(self.loop)
 
-    def make_dir(self):
+    def makeDir(self):
         """Create a temporary directory.
 
-        This is a convenience wrapper around a fixture incantation.  That's
-        the only reason why it's on the test case and not in a factory.
-        """
-        return self.useFixture(TempDir()).path
+        This creates a new temporary directory. This will be removed during
+        test tear-down.
 
-    def make_file(self, name=None, contents=None):
-        """Create, and write to, a file.
-
-        This is a convenience wrapper around `make_dir` and a factory
-        call.  It ensures that the file is in a directory that will be
-        cleaned up at the end of the test.
+        :return: The path to the directory, as a `pathlib.Path`.
         """
-        return make_file(self.make_dir(), name, contents)
+        tempdir = self.useFixture(TempDir())
+        return Path(tempdir.path)
+
+    def makeFile(self, name=None, contents=None, location=None):
+        """Create a file, and write data to it.
+
+        This creates a new file `name` in `location` and fills it with
+        `contents`. This file will be removed during test tear-down.
+
+        :param name: Name for the file; optional. If omitted, a random name
+            will be chosen.
+        :param contents: Contents for the file; optional. If omitted, some
+            arbitrary bytes will be written.
+        :param location: Path to a directory; optional. If omitted, a new
+            temporary directory will be created with `makeDir`.
+
+        :return: The path to the file, as a `pathlib.Path`.
+        """
+        location = self.makeDir() if location is None else Path(location)
+        filepath = location.joinpath(make_string() if name is None else name)
+        filepath.write_bytes(make_bytes() if contents is None else contents)
+        return filepath
 
     def assertDocTestMatches(self, expected, observed, flags=None):
         """See if `observed` matches `expected`, a doctest sample.
