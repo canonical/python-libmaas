@@ -6,6 +6,7 @@ from http import HTTPStatus
 import io
 from itertools import repeat
 import random
+from time import sleep
 
 from maas.client import (
     bones,
@@ -18,6 +19,7 @@ from maas.client.testing import (
 from maas.client.utils import (
     creds,
     profiles,
+    retries,
 )
 from testtools.matchers import (
     AllMatch,
@@ -171,7 +173,77 @@ class TestEvents(IntegrationTestCase):
 
 # TestFiles
 # TestMAAS
-# TestMachines
+
+
+class TestMachines(IntegrationTestCase):
+
+    def test__list_machines(self):
+        machines = self.origin.Machines.read()
+        self.assertThat(machines, MatchesAll(
+            IsInstance(self.origin.Machines),
+            AllMatch(IsInstance(self.origin.Machine)),
+        ))
+        self.assertThat(
+            machines,
+            AllMatch(MatchesStructure(
+                # This is NOT exhaustive.
+                system_id=IsInstance(str),
+                architecture=IsInstance(str),
+                hostname=IsInstance(str),
+                ip_addresses=IsInstance(list),
+                status=IsInstance(int),
+                status_name=IsInstance(str),
+                tags=IsInstance(list),
+            )),
+        )
+
+    def test__allocate_deploy_and_release(self):
+        machines_ready = [
+            machine for machine in self.origin.Machines.read()
+            if machine.status_name == "Ready"
+        ]
+        if len(machines_ready) == 0:
+            self.skip("No machines available.")
+
+        # Allocate one of the ready machines. XXX: This ought to be a method
+        # on Machine or take a `system_id` argument.
+        machine = random.choice(machines_ready)
+        machine = self.origin.Machines.allocate(hostname=machine.hostname)
+        self.assertThat(machine.status_name, Equals("Allocated"))
+
+        try:
+            # Deploy the machine with defaults.
+            machine = machine.deploy()
+            self.assertThat(machine.status_name, Equals("Deploying"))
+            # Wait for the machine to deploy.
+            for elapsed, remaining, wait in retries(600, 10):
+                machine = self.origin.Machine.read(machine.system_id)
+                if machine.status_name == "Deploying":
+                    sleep(wait)
+                else:
+                    break
+            else:
+                self.fail("Timed-out waiting for machine to deploy.")
+            # The machine has deployed.
+            self.assertThat(machine.status_name, Equals("Deployed"))
+
+        finally:
+            # Release the machine.
+            machine = machine.release("Finished with this now, thanks.")
+            self.assertThat(machine.status_name, Equals("Releasing"))
+            # Wait for the machine to release.
+            for elapsed, remaining, wait in retries(300, 10):
+                machine = self.origin.Machine.read(machine.system_id)
+                if machine.status_name == "Releasing":
+                    sleep(wait)
+                else:
+                    break
+            else:
+                self.fail("Timed-out waiting for machine to release.")
+            # The machine has been released.
+            self.assertThat(machine.status_name, Equals("Ready"))
+
+
 # TestTags
 # TestTesting
 # TestUsers
