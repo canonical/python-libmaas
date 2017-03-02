@@ -78,9 +78,26 @@ class Resource:
             name = "%s_" % name if iskeyword(name) else name
             setattr(self, name, Action(self, action))
 
+    def __getitem__(self, name):
+        if name in {"path", "uri"}:
+            return self._data[name]
+        elif name == "raw-name":
+            return self._data["name"]
+        elif name == "name":
+            return self._name
+        elif name == "doc":
+            doc = self._data["doc"]
+            return parse_docstring(doc)
+        elif name == "params":
+            params = self._data[name]
+            return tuple(params)
+        elif name == "is_anonymous":
+            return self._anonymous
+        else:
+            raise KeyError(name)
+
     def __repr__(self):
-        doc = self._data["doc"]
-        title, body = parse_docstring(doc)
+        title, body = self["doc"]
         return "<%s:%s %r>" % (
             self.__class__.__name__,
             self._name, title.rstrip("."),
@@ -98,20 +115,24 @@ class Action:
     # Resource-specific properties.
 
     @property
+    def resource(self):
+        return self._resource
+
+    @property
     def is_anonymous(self):
-        return self._resource._anonymous
+        return self._resource["is_anonymous"]
 
     @property
     def params(self):
-        return frozenset(self._resource._data["params"])
+        return self._resource["params"]
 
     @property
     def path(self):
-        return self._resource._data["path"]
+        return self._resource["path"]
 
     @property
     def uri(self):
-        return self._resource._data["uri"]
+        return self._resource["uri"]
 
     # Action-specific properties.
 
