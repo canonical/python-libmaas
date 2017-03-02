@@ -3,6 +3,7 @@
 __all__ = [
     "connect",
     "ConnectError",
+    "derive_resource_name",
     "fetch_api_description",
     "login",
     "LoginError",
@@ -68,6 +69,17 @@ def _ensure_url_string(url):
     else:
         raise TypeError(
             "Could not convert %r to a string URL." % (url,))
+
+
+def derive_resource_name(name):
+    """A stable, human-readable name and identifier for a resource."""
+    if name.startswith("Anon"):
+        name = name[4:]
+    if name.endswith("Handler"):
+        name = name[:-7]
+    if name == "Maas":
+        name = "MAAS"
+    return name
 
 
 class ConnectError(Exception):
