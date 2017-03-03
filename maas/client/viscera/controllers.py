@@ -26,10 +26,6 @@ class RackControllersType(ObjectType):
         return cls(map(cls._object, data))
 
 
-class RackControllerNotFound(Exception):
-    """Rack-controller was not found."""
-
-
 class RackControllers(ObjectSet, metaclass=RackControllersType):
     """The set of rack-controllers stored in MAAS."""
 

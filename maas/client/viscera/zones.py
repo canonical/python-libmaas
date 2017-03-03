@@ -23,10 +23,6 @@ class ZonesType(ObjectType):
         return cls(map(cls._object, data))
 
 
-class ZoneNotFound(Exception):
-    """Zone was not found."""
-
-
 class Zones(ObjectSet, metaclass=ZonesType):
     """The set of zones stored in MAAS."""
 

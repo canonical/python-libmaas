@@ -25,10 +25,6 @@ class DevicesType(ObjectType):
         return cls(map(cls._object, data))
 
 
-class DeviceNotFound(Exception):
-    """Device was not found."""
-
-
 class Devices(ObjectSet, metaclass=DevicesType):
     """The set of devices stored in MAAS."""
 
