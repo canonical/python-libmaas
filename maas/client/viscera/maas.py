@@ -387,18 +387,6 @@ class MAASType(ObjectType):
                         "!!! Round-trip failed:", repr(value),
                         "-->", repr(value2))
 
-        getters_without_setters = set(getters).difference(setters)
-        if getters_without_setters:
-            print(
-                "!!! Getters without setters:",
-                " ".join(getters_without_setters))
-
-        setters_without_getters = set(setters).difference(getters)
-        if setters_without_getters:
-            print(
-                "!!! Setters without getters:",
-                " ".join(setters_without_getters))
-
 
 class MAAS(Object, metaclass=MAASType):
     """The current MAAS."""
