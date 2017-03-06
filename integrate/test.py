@@ -196,7 +196,7 @@ class TestMachines(IntegrationTestCase):
             )),
         )
 
-    def test__allocate_deploy_and_release(self):
+    def XXXtest__allocate_deploy_and_release(self):
         machines_ready = [
             machine for machine in self.origin.Machines.read()
             if machine.status_name == "Ready"
