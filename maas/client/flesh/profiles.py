@@ -23,6 +23,7 @@ from ..utils import (
     auth,
     profiles,
 )
+from ..utils.async import asynchronous
 
 
 class cmd_login_base(Command):
@@ -83,14 +84,15 @@ class cmd_login(cmd_login_base):
             ),
         )
 
-    def __call__(self, options):
+    @asynchronous
+    async def __call__(self, options):
         # Special-case when password is "-", meaning read from stdin.
         if options.password == "-":
             options.password = sys.stdin.readline().strip()
 
         while True:
             try:
-                profile = helpers.login(
+                profile = await helpers.login(
                     options.url, username=options.username,
                     password=options.password, insecure=options.insecure)
             except helpers.UsernameWithoutPassword:
@@ -133,12 +135,13 @@ class cmd_add(cmd_login_base):
             ),
         )
 
-    def __call__(self, options):
+    @asynchronous
+    async def __call__(self, options):
         # Try and obtain credentials interactively if they're not given, or
         # read them from stdin if they're specified as "-".
         credentials = auth.obtain_credentials(options.credentials)
         # Establish a session with the remote API.
-        session = bones.SessionAPI.fromURL(
+        session = await bones.SessionAPI.fromURL(
             options.url, credentials=credentials, insecure=options.insecure)
         # Make a new profile and save it as the default.
         profile = profiles.Profile(
