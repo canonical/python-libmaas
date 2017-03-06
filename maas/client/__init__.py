@@ -1,6 +1,9 @@
 """Basic entry points."""
 
-from . import _client
+__all__ = [
+    "connect",
+    "login",
+]
 
 
 def connect(url, *, apikey=None, insecure=False):
@@ -13,10 +16,11 @@ def connect(url, *, apikey=None, insecure=False):
 
     :return: A client object.
     """
+    from .facade import Client  # Lazy.
     from .viscera import Origin  # Lazy.
     profile, origin = Origin.connect(
         url, apikey=apikey, insecure=insecure)
-    return _client.Client(origin)
+    return Client(origin)
 
 
 def login(url, *, username=None, password=None, insecure=False):
@@ -29,7 +33,8 @@ def login(url, *, username=None, password=None, insecure=False):
 
     :return: A client object.
     """
+    from .facade import Client  # Lazy.
     from .viscera import Origin  # Lazy.
     profile, origin = Origin.login(
         url, username=username, password=password, insecure=insecure)
-    return _client.Client(origin)
+    return Client(origin)

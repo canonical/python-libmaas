@@ -11,7 +11,7 @@ from testtools.matchers import (
 )
 
 from .. import (
-    _client,
+    facade,
     viscera,
 )
 from ..testing import TestCase
@@ -30,7 +30,7 @@ class TestClient(TestCase):
         super(TestClient, self).setUp()
         self.session = Mock(name="session", handlers={})
         self.origin = viscera.Origin(self.session)
-        self.client = _client.Client(self.origin)
+        self.client = facade.Client(self.origin)
 
     def test__client_maps_account(self):
         self.assertThat(self.client, MatchesClient(
@@ -146,18 +146,18 @@ class TestClient(TestCase):
 
 
 def MatchesClient(**facades):
-    """Matches a `_client.Client` with the given facades."""
+    """Matches a `facade.Client` with the given facades."""
     return MatchesAll(
-        IsInstance(_client.Client),
+        IsInstance(facade.Client),
         MatchesStructure(**facades),
         first_only=True,
     )
 
 
 def MatchesFacade(**methods):
-    """Matches a `_client.Facade` with the given methods."""
+    """Matches a `facade.Facade` with the given methods."""
     return MatchesAll(
-        IsInstance(_client.Facade),
+        IsInstance(facade.Facade),
         MatchesStructure.byEquality(**methods),
         first_only=True,
     )

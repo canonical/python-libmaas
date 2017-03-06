@@ -12,7 +12,7 @@ from testtools.matchers import (
     Not,
 )
 
-from .. import _client
+from .. import facade
 from ... import client
 from ..testing import TestCase
 from ..viscera import Origin
@@ -32,7 +32,7 @@ class TestFunctions(TestCase):
             sentinel.url, apikey=sentinel.apikey, insecure=sentinel.insecure)
         connect.assert_called_once_with(
             sentinel.url, apikey=sentinel.apikey, insecure=sentinel.insecure)
-        self.assertThat(client_object, IsInstance(_client.Client))
+        self.assertThat(client_object, IsInstance(facade.Client))
         self.assertThat(client_object._origin, Is(sentinel.origin))
 
     def test__login_matches_Origin_login(self):
@@ -48,7 +48,7 @@ class TestFunctions(TestCase):
         login.assert_called_once_with(
             sentinel.url, username=sentinel.username,
             password=sentinel.password, insecure=sentinel.insecure)
-        self.assertThat(client_object, IsInstance(_client.Client))
+        self.assertThat(client_object, IsInstance(facade.Client))
         self.assertThat(client_object._origin, Is(sentinel.origin))
 
     def assertSignaturesMatch(self, stub, real):
