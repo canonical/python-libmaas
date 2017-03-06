@@ -142,7 +142,6 @@ class TestBootSources(IntegrationTestCase):
 
 
 # TestBootSourceSelections
-# TestControllers
 # TestDevices
 
 
@@ -244,6 +243,33 @@ class TestMachines(IntegrationTestCase):
             self.assertThat(machine.status_name, Equals("Ready"))
 
 
+class TestRackControllers(IntegrationTestCase):
+
+    def test__list_rack_controllers(self):
+        machines = self.origin.RackControllers.read()
+        self.assertThat(machines, MatchesAll(
+            IsInstance(self.origin.RackControllers),
+            AllMatch(IsInstance(self.origin.RackController)),
+        ))
+        self.assertThat(
+            machines,
+            AllMatch(MatchesStructure(
+                # This is NOT exhaustive.
+                architecture=IsInstance(str),
+                cpus=IsInstance(int),
+                distro_series=IsInstance(str),
+                fqdn=IsInstance(str),
+                hostname=IsInstance(str),
+                ip_addresses=IsInstance(list),
+                memory=IsInstance(int),
+                power_state=IsInstance(str),
+                system_id=IsInstance(str),
+                zone=IsInstance(self.origin.Zone),
+            )),
+        )
+
+
+# TestRegionControllers
 # TestTags
 # TestTesting
 # TestUsers
