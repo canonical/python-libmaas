@@ -89,14 +89,6 @@ class Client:
         }
 
     @facade
-    def boot_source_selections(origin):
-        return {
-            "create": origin.BootSourceSelections.create,
-            "get": origin.BootSourceSelection.read,
-            "list": origin.BootSourceSelections.read,
-        }
-
-    @facade
     def boot_sources(origin):
         return {
             "create": origin.BootSources.create,

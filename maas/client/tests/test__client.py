@@ -51,15 +51,6 @@ class TestClient(TestCase):
             ),
         ))
 
-    def test__client_maps_boot_source_selections(self):
-        self.assertThat(self.client, MatchesClient(
-            boot_source_selections=MatchesFacade(
-                create=self.origin.BootSourceSelections.create,
-                get=self.origin.BootSourceSelection.read,
-                list=self.origin.BootSourceSelections.read,
-            ),
-        ))
-
     def test__client_maps_boot_sources(self):
         self.assertThat(self.client, MatchesClient(
             boot_sources=MatchesFacade(
