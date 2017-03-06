@@ -104,6 +104,14 @@ class TestClient(TestCase):
             ),
         ))
 
+    def test__client_maps_region_controllers(self):
+        self.assertThat(self.client, MatchesClient(
+            region_controllers=MatchesFacade(
+                get=self.origin.RegionController.read,
+                list=self.origin.RegionControllers.read,
+            ),
+        ))
+
     def test__client_maps_tags(self):
         self.assertThat(self.client, MatchesClient(
             tags=MatchesFacade(

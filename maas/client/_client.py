@@ -149,6 +149,13 @@ class Client:
         }
 
     @facade
+    def region_controllers(origin):
+        return {
+            "get": origin.RegionController.read,
+            "list": origin.RegionControllers.read,
+        }
+
+    @facade
     def tags(origin):
         return {
             "create": origin.Tags.create,
