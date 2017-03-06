@@ -1,5 +1,6 @@
 """Client facade."""
 
+import enum
 from functools import update_wrapper
 
 
@@ -71,6 +72,68 @@ class Client:
         self._origin = origin
 
     @facade
+    def account(origin):
+        return {
+            "create_credentials": origin.Account.create_credentials,
+            "delete_credentials": origin.Account.delete_credentials,
+        }
+
+    @facade
+    def boot_resources(origin):
+        return {
+            "create": origin.BootResources.create,
+            "get": origin.BootResource.read,
+            "list": origin.BootResources.read,
+            "start_import": origin.BootResources.start_import,
+            "stop_import": origin.BootResources.stop_import,
+        }
+
+    @facade
+    def boot_sources(origin):
+        return {
+            "create": origin.BootSources.create,
+            "get": origin.BootSource.read,
+            "list": origin.BootSources.read,
+        }
+
+    @facade
+    def devices(origin):
+        return {
+            "get": origin.Device.read,
+            "list": origin.Devices.read,
+        }
+
+    @facade
+    def events(origin):
+        namespace = {
+            "query": origin.Events.query,
+        }
+        namespace.update({
+            level.name: level
+            for level in origin.Events.Level
+        })
+        return namespace
+
+    @facade
+    def files(origin):
+        return {
+            "list": origin.Files.read,
+        }
+
+    @facade
+    def maas(origin):
+        attrs = (
+            (name, getattr(origin.MAAS, name))
+            for name in dir(origin.MAAS)
+            if not name.startswith("_")
+        )
+        return {
+            name: attr for name, attr in attrs if
+            isinstance(attr, enum.EnumMeta) or
+            name.startswith(("get_", "set_"))
+        }
+
+    @facade
     def machines(origin):
         return {
             "allocate": origin.Machines.allocate,
@@ -79,8 +142,36 @@ class Client:
         }
 
     @facade
-    def devices(origin):
+    def rack_controllers(origin):
         return {
-            "get": origin.Device.read,
-            "list": origin.Devices.read,
+            "get": origin.RackController.read,
+            "list": origin.RackControllers.read,
+        }
+
+    @facade
+    def tags(origin):
+        return {
+            "create": origin.Tags.create,
+            "list": origin.Tags.read,
+        }
+
+    @facade
+    def users(origin):
+        return {
+            "create": origin.Users.create,
+            "list": origin.Users.read,
+            "whoami": origin.Users.whoami,
+        }
+
+    @facade
+    def version(origin):
+        return {
+            "get": origin.Version.read,
+        }
+
+    @facade
+    def zones(origin):
+        return {
+            "get": origin.Zone.read,
+            "list": origin.Zones.read,
         }

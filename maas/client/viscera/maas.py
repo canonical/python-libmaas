@@ -19,6 +19,24 @@ from ..bones import CallError
 from ..utils.typecheck import typed
 
 
+def _django_boolean(boolean):
+    """Render a string suitable for use in a Django form.
+
+    Django's `BooleanField` understands "true", "false", "1", "0", "t", and
+    "f" as valid form values, but the widget `CheckboxInput` that is used by
+    `BooleanField` by default gets a shot at converting the form input first.
+    It inexplicably has different rules. See in `value_from_datadict`:
+
+      values = {'true': True, 'false': False}
+      if isinstance(value, six.string_types):
+          value = values.get(value.lower(), value)
+      return bool(value)
+
+    Sigh.
+    """
+    return "true" if boolean else "false"
+
+
 class DescriptiveEnum(enum.Enum):
     """An enum where each member is a `(parameter, description)` tuple."""
 
@@ -120,7 +138,7 @@ class MAASType(ObjectType):
         traffic. MAAS also uses the proxy for downloading boot images. If no
         URL is provided, the built-in MAAS proxy will be used.
         """
-        data = cls.get_config("http_proxy")
+        data = await cls.get_config("http_proxy")
         return None if data is None or data == "" else data
 
     @typed
@@ -140,7 +158,7 @@ class MAASType(ObjectType):
     @typed
     async def set_enable_http_proxy(cls, enabled: bool):
         """See `get_enable_http_proxy`."""
-        await cls.set_config("enable_http_proxy", "1" if enabled else "0")
+        await cls.set_config("enable_http_proxy", _django_boolean(enabled))
 
     @typed
     async def get_curtin_verbose(cls) -> bool:
@@ -154,7 +172,7 @@ class MAASType(ObjectType):
     @typed
     async def set_curtin_verbose(cls, verbose: bool):
         """See `get_curtin_verbose`."""
-        await cls.set_config("curtin_verbose", "1" if verbose else "0")
+        await cls.set_config("curtin_verbose", _django_boolean(verbose))
 
     @typed
     async def get_kernel_options(cls) -> Optional[str]:
@@ -162,7 +180,7 @@ class MAASType(ObjectType):
 
         Boot parameters to pass to the kernel by default.
         """
-        data = cls.get_config("kernel_opts")
+        data = await cls.get_config("kernel_opts")
         return None if data is None or data == "" else data
 
     @typed
@@ -179,7 +197,7 @@ class MAASType(ObjectType):
         DNS server. This value is used as the value of 'forwarders' in the DNS
         server config.
         """
-        data = cls.get_config("upstream_dns")
+        data = await cls.get_config("upstream_dns")
         return [] if data is None else re.split("[,\s]+", data)
 
     @typed
@@ -205,7 +223,7 @@ class MAASType(ObjectType):
         Only used when MAAS is running its own DNS server. This value is used
         as the value of 'dnssec_validation' in the DNS server config.
         """
-        data = cls.get_config("dnssec_validation")
+        data = await cls.get_config("dnssec_validation")
         return cls.DNSSEC.lookup(data)
 
     @typed
@@ -220,7 +238,7 @@ class MAASType(ObjectType):
         If no TTL value is specified at a more specific point this is how long
         DNS responses are valid, in seconds.
         """
-        return int(cls.get_config("default_dns_ttl"))
+        return int(await cls.get_config("default_dns_ttl"))
 
     @typed
     async def set_default_dns_ttl(cls, ttl: int):
@@ -236,7 +254,7 @@ class MAASType(ObjectType):
     async def set_enable_disk_erasing_on_release(cls, erase: bool):
         """Should nodes' disks be erased prior to releasing."""
         await cls.set_config(
-            "enable_disk_erasing_on_release", "1" if erase else "0")
+            "enable_disk_erasing_on_release", _django_boolean(erase))
 
     @typed
     async def get_windows_kms_host(cls) -> Optional[str]:
@@ -246,7 +264,7 @@ class MAASType(ObjectType):
         activation service. (Only needed for Windows deployments using KMS
         activation.)
         """
-        data = cls.get_config("windows_kms_host")
+        data = await cls.get_config("windows_kms_host")
         return None if data is None or data == "" else data
 
     @typed
@@ -262,7 +280,7 @@ class MAASType(ObjectType):
     @typed
     async def set_boot_images_auto_import(cls, auto: bool):
         """See `get_boot_images_auto_import`."""
-        await cls.set_config("boot_images_auto_import", "1" if auto else "0")
+        await cls.set_config("boot_images_auto_import", _django_boolean(auto))
 
     @typed
     async def get_ntp_server(cls) -> str:
@@ -290,7 +308,7 @@ class MAASType(ObjectType):
 
         Storage layout that is applied to a node when it is deployed.
         """
-        data = cls.get_config("default_storage_layout")
+        data = await cls.get_config("default_storage_layout")
         return cls.StorageLayout.lookup(data)
 
     @typed
@@ -304,7 +322,7 @@ class MAASType(ObjectType):
 
         The minimum kernel version used on new and commissioned nodes.
         """
-        data = cls.get_config("default_min_hwe_kernel")
+        data = await cls.get_config("default_min_hwe_kernel")
         return None if data is None or data == "" else data
 
     @typed
@@ -322,7 +340,7 @@ class MAASType(ObjectType):
     async def set_enable_third_party_drivers(cls, enabled: bool):
         """See `get_enable_third_party_drivers`."""
         await cls.set_config(
-            "enable_third_party_drivers", "1" if enabled else "0")
+            "enable_third_party_drivers", _django_boolean(enabled))
 
     async def get_config(cls, name: str):
         """Get a configuration value from MAAS.
@@ -363,23 +381,11 @@ class MAASType(ObjectType):
                 print(error)
                 print(error.content.decode("utf-8", "replace"))
             else:
-                value2 = getter()
+                value2 = await getter()
                 if value2 != value:
                     print(
                         "!!! Round-trip failed:", repr(value),
                         "-->", repr(value2))
-
-        getters_without_setters = set(getters).difference(setters)
-        if getters_without_setters:
-            print(
-                "!!! Getters without setters:",
-                " ".join(getters_without_setters))
-
-        setters_without_getters = set(setters).difference(getters)
-        if setters_without_getters:
-            print(
-                "!!! Setters without getters:",
-                " ".join(setters_without_getters))
 
 
 class MAAS(Object, metaclass=MAASType):
