@@ -14,8 +14,6 @@
 
 """Tests for asynchronous helpers."""
 
-__all__ = []
-
 import asyncio
 from inspect import isawaitable
 

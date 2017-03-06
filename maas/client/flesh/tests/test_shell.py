@@ -1,7 +1,5 @@
 """Tests for `maas.client.flesh.shell`."""
 
-__all__ = []
-
 import random
 
 from testtools.matchers import (

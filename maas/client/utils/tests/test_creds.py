@@ -1,7 +1,5 @@
 """Tests for handling of MAAS API credentials."""
 
-__all__ = []
-
 from testtools.matchers import IsInstance
 
 from ...testing import TestCase

@@ -1,7 +1,5 @@
 """Tests for `maas.client.utils.profiles`."""
 
-__all__ = []
-
 import contextlib
 from pathlib import Path
 import sqlite3

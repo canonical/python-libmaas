@@ -1,7 +1,5 @@
 """Tests for `maas.client.utils.auth`."""
 
-__all__ = []
-
 import sys
 from unittest.mock import (
     ANY,

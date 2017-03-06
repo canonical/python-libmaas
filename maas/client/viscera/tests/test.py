@@ -1,7 +1,5 @@
 """Tests for `maas.client.viscera`."""
 
-__all__ = []
-
 from random import randrange
 from unittest.mock import sentinel
 

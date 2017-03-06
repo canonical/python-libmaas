@@ -1,7 +1,5 @@
 """Tests for `maas.client.flesh.profiles`."""
 
-__all__ = []
-
 from io import StringIO
 import sys
 from textwrap import dedent

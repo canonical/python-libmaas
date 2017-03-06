@@ -1,7 +1,5 @@
 """Tests for `maas.client`."""
 
-__all__ = []
-
 from inspect import signature
 from unittest.mock import sentinel
 

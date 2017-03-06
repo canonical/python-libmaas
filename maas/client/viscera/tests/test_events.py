@@ -1,7 +1,5 @@
 """Test for `maas.client.viscera.events`."""
 
-__all__ = []
-
 from datetime import datetime
 from itertools import (
     chain,

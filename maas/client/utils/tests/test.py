@@ -1,7 +1,5 @@
 """Tests for `maas.client.utils`."""
 
-__all__ = []
-
 import base64
 from functools import partial
 from itertools import cycle

@@ -1,7 +1,5 @@
 """Test for `maas.client.viscera.boot_source_selections`."""
 
-__all__ = []
-
 import random
 
 from testtools.matchers import (

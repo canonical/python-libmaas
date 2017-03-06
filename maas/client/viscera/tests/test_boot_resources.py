@@ -1,7 +1,5 @@
 """Test for `maas.client.viscera.boot_resources`."""
 
-__all__ = []
-
 import hashlib
 from http import HTTPStatus
 import io

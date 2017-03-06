@@ -1,7 +1,5 @@
 """Tests for `maas.client._client`."""
 
-__all__ = []
-
 from unittest.mock import Mock
 
 from testtools.matchers import (

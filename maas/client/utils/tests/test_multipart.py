@@ -1,7 +1,5 @@
 """Test multipart MIME helpers."""
 
-__all__ = []
-
 from io import BytesIO
 from os import urandom
 

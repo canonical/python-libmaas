@@ -1,7 +1,5 @@
 """Tests for `maas.client.bones`."""
 
-__all__ = []
-
 import json
 import random
 from unittest.mock import (

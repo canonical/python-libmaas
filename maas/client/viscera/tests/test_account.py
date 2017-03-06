@@ -1,7 +1,5 @@
 """Test for `maas.client.viscera.account`."""
 
-__all__ = []
-
 from testtools.matchers import (
     Equals,
     IsInstance,

@@ -1,7 +1,5 @@
 """Test for `maas.client.viscera.version`."""
 
-__all__ = []
-
 from random import randrange
 
 from testtools.matchers import Equals
