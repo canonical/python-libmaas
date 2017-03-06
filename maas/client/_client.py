@@ -1,5 +1,6 @@
 """Client facade."""
 
+import enum
 from functools import update_wrapper
 
 
@@ -88,6 +89,59 @@ class Client:
         }
 
     @facade
+    def boot_source_selections(origin):
+        return {
+            "create": origin.BootSourceSelections.create,
+            "get": origin.BootSourceSelection.read,
+            "list": origin.BootSourceSelections.read,
+        }
+
+    @facade
+    def boot_sources(origin):
+        return {
+            "create": origin.BootSources.create,
+            "get": origin.BootSource.read,
+            "list": origin.BootSources.read,
+        }
+
+    @facade
+    def devices(origin):
+        return {
+            "get": origin.Device.read,
+            "list": origin.Devices.read,
+        }
+
+    @facade
+    def events(origin):
+        namespace = {
+            "query": origin.Events.query,
+        }
+        namespace.update({
+            level.name: level
+            for level in origin.Events.Level
+        })
+        return namespace
+
+    @facade
+    def files(origin):
+        return {
+            "list": origin.Files.read,
+        }
+
+    @facade
+    def maas(origin):
+        attrs = (
+            (name, getattr(origin.MAAS, name))
+            for name in dir(origin.MAAS)
+            if not name.startswith("_")
+        )
+        return {
+            name: attr for name, attr in attrs if
+            isinstance(attr, enum.EnumMeta) or
+            name.startswith(("get_", "set_"))
+        }
+
+    @facade
     def machines(origin):
         return {
             "allocate": origin.Machines.allocate,
@@ -96,8 +150,36 @@ class Client:
         }
 
     @facade
-    def devices(origin):
+    def rack_controllers(origin):
         return {
-            "get": origin.Device.read,
-            "list": origin.Devices.read,
+            "get": origin.RackController.read,
+            "list": origin.RackControllers.read,
+        }
+
+    @facade
+    def tags(origin):
+        return {
+            "create": origin.Tags.create,
+            "list": origin.Tags.read,
+        }
+
+    @facade
+    def users(origin):
+        return {
+            "create": origin.Users.create,
+            "list": origin.Users.read,
+            "whoami": origin.Users.whoami,
+        }
+
+    @facade
+    def version(origin):
+        return {
+            "get": origin.Version.read,
+        }
+
+    @facade
+    def zones(origin):
+        return {
+            "get": origin.Zone.read,
+            "list": origin.Zones.read,
         }
