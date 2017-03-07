@@ -15,7 +15,7 @@ class cmd_list_files(OriginTableCommand):
 
     def execute(self, origin, options, target):
         table = tables.FilesTable()
-        print(table.render(target, origin.Files))
+        print(table.render(target, origin.Files.read()))
 
 
 def register(parser):

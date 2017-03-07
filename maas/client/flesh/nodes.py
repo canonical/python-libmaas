@@ -58,7 +58,7 @@ class cmd_launch_machine(cmd_allocate_machine):
         print(table.render(target, [machine]))
 
         with utils.Spinner():
-            machine = machine.start()
+            machine = machine.deploy()
             for elapsed, remaining, wait in utils.retries(options.wait, 1.0):
                 if machine.status_name == "Deploying":
                     sleep(wait)
@@ -86,14 +86,14 @@ class cmd_release_machine(OriginTableCommand):
                 "Number of seconds to wait for release to complete."))
 
     def execute(self, origin, options, target):
-        machine = origin.Node.read(system_id=options.system_id)
+        machine = origin.Machine.read(system_id=options.system_id)
         machine = machine.release()
 
         with utils.Spinner():
             for elapsed, remaining, wait in utils.retries(options.wait, 1.0):
                 if machine.status_name == "Releasing":
                     sleep(wait)
-                    machine = origin.Node.read(system_id=machine.system_id)
+                    machine = origin.Machine.read(system_id=machine.system_id)
                 else:
                     break
 
