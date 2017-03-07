@@ -12,11 +12,7 @@ import json
 from pathlib import Path
 import sqlite3
 from textwrap import dedent
-from typing import (
-    Optional,
-    Sequence,
-    Union,
-)
+import typing
 
 from . import api_url
 from .creds import Credentials
@@ -30,7 +26,7 @@ class Profile(tuple):
 
     def __new__(
             cls, name: str, url: str, *,
-            credentials: Union[Credentials, Sequence, str, None],
+            credentials: typing.Union[Credentials, typing.Sequence, str, None],
             description: dict, **other: JSONObject):
         return super(Profile, cls).__new__(cls, (
             name, api_url(url), Credentials.parse(credentials),
@@ -47,7 +43,7 @@ class Profile(tuple):
         return self[1]
 
     @property
-    def credentials(self) -> Optional[Credentials]:
+    def credentials(self) -> typing.Optional[Credentials]:
         """The credentials for this profile, if set."""
         return self[2]
 
@@ -206,7 +202,7 @@ class ProfileStore:
             "DELETE FROM profiles WHERE name = ?", (name,))
 
     @property
-    def default(self) -> Optional[Profile]:
+    def default(self) -> typing.Optional[Profile]:
         """The name of the default profile to use, or `None`."""
         found = self.database.execute(
             "SELECT name, data FROM profiles WHERE selected"

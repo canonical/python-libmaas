@@ -18,11 +18,7 @@ from abc import (
 import argparse
 from importlib import import_module
 import sys
-from typing import (
-    Optional,
-    Sequence,
-    Tuple,
-)
+import typing
 
 import argcomplete
 import colorclass
@@ -48,7 +44,8 @@ def colorized(text):
         return colorclass.Color(text).value_no_colors
 
 
-def get_profile_names_and_default() -> Tuple[Sequence[str], Optional[Profile]]:
+def get_profile_names_and_default() -> (
+        typing.Tuple[typing.Sequence[str], typing.Optional[Profile]]):
     """Return the list of profile names and the default profile object.
 
     The list of names is sorted.

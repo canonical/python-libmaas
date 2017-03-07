@@ -4,8 +4,8 @@ __all__ = [
     'bind',
 ]
 
+from collections import Mapping
 from itertools import chain
-from typing import Mapping
 from unittest.mock import Mock
 
 from . import OriginBase

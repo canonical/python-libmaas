@@ -12,7 +12,7 @@ __all__ = [
 ]
 
 from http import HTTPStatus
-from typing import Optional
+import typing
 from urllib.parse import (
     urljoin,
     urlparse,
@@ -33,7 +33,7 @@ class RemoteError(Exception):
 
 
 async def fetch_api_description(
-        url: str, credentials: Optional[Credentials]=None,
+        url: str, credentials: typing.Optional[Credentials]=None,
         insecure: bool=False):
     """Fetch the API description from the remote MAAS instance."""
     url_describe = urljoin(url, "describe/")

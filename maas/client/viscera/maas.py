@@ -6,10 +6,7 @@ __all__ = [
 
 import enum
 import re
-from typing import (
-    Optional,
-    Sequence,
-)
+import typing
 
 from . import (
     Object,
@@ -117,7 +114,7 @@ class MAASType(ObjectType):
         """See `get_commissioning_distro_series`."""
         await cls.set_config("commissioning_distro_series", series)
 
-    async def get_http_proxy(cls) -> Optional[str]:
+    async def get_http_proxy(cls) -> typing.Optional[str]:
         """Proxy for APT and HTTP/HTTPS.
 
         This will be passed onto provisioned nodes to use as a proxy for APT
@@ -127,7 +124,7 @@ class MAASType(ObjectType):
         data = await cls.get_config("http_proxy")
         return None if data is None or data == "" else data
 
-    async def set_http_proxy(cls, url: Optional[str]):
+    async def set_http_proxy(cls, url: typing.Optional[str]):
         """See `get_http_proxy`."""
         await cls.set_config("http_proxy", "" if url is None else url)
 
@@ -155,7 +152,7 @@ class MAASType(ObjectType):
         """See `get_curtin_verbose`."""
         await cls.set_config("curtin_verbose", _django_boolean(verbose))
 
-    async def get_kernel_options(cls) -> Optional[str]:
+    async def get_kernel_options(cls) -> typing.Optional[str]:
         """Kernel options.
 
         Boot parameters to pass to the kernel by default.
@@ -163,7 +160,7 @@ class MAASType(ObjectType):
         data = await cls.get_config("kernel_opts")
         return None if data is None or data == "" else data
 
-    async def set_kernel_options(cls, options: Optional[str]):
+    async def set_kernel_options(cls, options: typing.Optional[str]):
         """See `get_kernel_options`."""
         await cls.set_config("kernel_opts", "" if options is None else options)
 
@@ -178,7 +175,8 @@ class MAASType(ObjectType):
         data = await cls.get_config("upstream_dns")
         return [] if data is None else re.split("[,\s]+", data)
 
-    async def set_upstream_dns(cls, addresses: Optional[Sequence[str]]):
+    async def set_upstream_dns(
+            cls, addresses: typing.Optional[typing.Sequence[str]]):
         """See `get_upstream_dns`."""
         await cls.set_config("upstream_dns", (
             "" if addresses is None else",".join(addresses)))
@@ -227,7 +225,7 @@ class MAASType(ObjectType):
         await cls.set_config(
             "enable_disk_erasing_on_release", _django_boolean(erase))
 
-    async def get_windows_kms_host(cls) -> Optional[str]:
+    async def get_windows_kms_host(cls) -> typing.Optional[str]:
         """Windows KMS activation host.
 
         FQDN or IP address of the host that provides the KMS Windows
@@ -237,7 +235,7 @@ class MAASType(ObjectType):
         data = await cls.get_config("windows_kms_host")
         return None if data is None or data == "" else data
 
-    async def set_windows_kms_host(cls, host: Optional[str]):
+    async def set_windows_kms_host(cls, host: typing.Optional[str]):
         """See `get_windows_kms_host`."""
         await cls.set_config("windows_kms_host", "" if host is None else host)
 
@@ -279,7 +277,7 @@ class MAASType(ObjectType):
         """See `get_default_storage_layout`."""
         await cls.set_config("default_storage_layout", series.parameter)
 
-    async def get_default_min_hwe_kernel(cls) -> Optional[str]:
+    async def get_default_min_hwe_kernel(cls) -> typing.Optional[str]:
         """Default minimum kernel version.
 
         The minimum kernel version used on new and commissioned nodes.
@@ -287,7 +285,7 @@ class MAASType(ObjectType):
         data = await cls.get_config("default_min_hwe_kernel")
         return None if data is None or data == "" else data
 
-    async def set_default_min_hwe_kernel(cls, version: Optional[str]):
+    async def set_default_min_hwe_kernel(cls, version: typing.Optional[str]):
         """See `get_default_min_hwe_kernel`."""
         await cls.set_config(
             "default_min_hwe_kernel", "" if version is None else version)

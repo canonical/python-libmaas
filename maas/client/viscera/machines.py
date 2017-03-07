@@ -6,12 +6,9 @@ __all__ = [
 ]
 
 import base64
+from collections import Sequence
 from http import HTTPStatus
-from typing import (
-    List,
-    Sequence,
-    Union,
-)
+import typing
 
 from . import (
     check,
@@ -33,8 +30,8 @@ class MachinesType(ObjectType):
         return cls(map(cls._object, data))
 
     async def allocate(
-            cls, *, hostname: str=None, architecture: str=None,
-            cpus: int=None, memory: float=None, tags: Sequence[str]=None):
+            cls, *, hostname: str=None, architecture: str=None, cpus: int=None,
+            memory: float=None, tags: typing.Sequence[str]=None):
         """
         :param hostname: The hostname to match.
         :param architecture: The architecture to match, e.g. "amd64".
@@ -103,8 +100,8 @@ class Machine(Object, metaclass=MachineType):
         "hostname", check(str), check(str))
     hwe_kernel = ObjectField.Checked(
         "hwe_kernel", check_optional(str), check_optional(str))
-    ip_addresses = ObjectField.Checked(
-        "ip_addresses", check(List[str]), readonly=True)
+    ip_addresses = ObjectField.Checked(  # List[str]
+        "ip_addresses", check(Sequence), readonly=True)
     memory = ObjectField.Checked(
         "memory", check(int), check(int))
     min_hwe_kernel = ObjectField.Checked(
@@ -142,8 +139,8 @@ class Machine(Object, metaclass=MachineType):
 
     system_id = ObjectField.Checked(
         "system_id", check(str), readonly=True)
-    tags = ObjectField.Checked(
-        "tag_names", check(List[str]), readonly=True)
+    tags = ObjectField.Checked(  # List[str]
+        "tag_names", check(Sequence), readonly=True)
 
     # virtualblockdevice_set
 
@@ -151,8 +148,8 @@ class Machine(Object, metaclass=MachineType):
         "zone", readonly=True)
 
     async def deploy(
-            self, user_data: Union[bytes, str]=None, distro_series: str=None,
-            hwe_kernel: str=None, comment: str=None):
+            self, user_data: typing.Union[bytes, str]=None,
+            distro_series: str=None, hwe_kernel: str=None, comment: str=None):
         """Deploy this machine.
 
         :param user_data: User-data to provide to the machine when booting. If

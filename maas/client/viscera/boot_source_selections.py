@@ -5,7 +5,7 @@ __all__ = [
     "BootSourceSelections",
 ]
 
-from typing import List
+from collections import Sequence
 
 from . import (
     check,
@@ -82,12 +82,12 @@ class BootSourceSelection(Object, metaclass=BootSourceSelectionType):
         "os", check(str), check(str))
     release = ObjectField.Checked(
         "release", check(str), check(str))
-    arches = ObjectField.Checked(
-        "arches", check(List[str]), check(List[str]))
-    subarches = ObjectField.Checked(
-        "subarches", check(List[str]), check(List[str]))
-    labels = ObjectField.Checked(
-        "labels", check(List[str]), check(List[str]))
+    arches = ObjectField.Checked(  # List[str]
+        "arches", check(Sequence), check(Sequence))
+    subarches = ObjectField.Checked(  # List[str]
+        "subarches", check(Sequence), check(Sequence))
+    labels = ObjectField.Checked(  # List[str]
+        "labels", check(Sequence), check(Sequence))
 
     def __repr__(self):
         return super(BootSourceSelection, self).__repr__(
