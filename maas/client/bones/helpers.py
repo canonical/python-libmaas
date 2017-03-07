@@ -14,6 +14,8 @@ __all__ = [
 from http import HTTPStatus
 import typing
 from urllib.parse import (
+    ParseResult,
+    SplitResult,
     urljoin,
     urlparse,
 )
@@ -33,10 +35,11 @@ class RemoteError(Exception):
 
 
 async def fetch_api_description(
-        url: str, credentials: typing.Optional[Credentials]=None,
+        url: typing.Union[str, ParseResult, SplitResult],
+        credentials: typing.Optional[Credentials]=None,
         insecure: bool=False):
     """Fetch the API description from the remote MAAS instance."""
-    url_describe = urljoin(url, "describe/")
+    url_describe = urljoin(_ensure_url_string(url), "describe/")
     connector = aiohttp.TCPConnector(verify_ssl=(not insecure))
     session = aiohttp.ClientSession(connector=connector)
     async with session, session.get(url_describe) as response:
@@ -50,6 +53,19 @@ async def fetch_api_description(
                 % response.content_type)
         else:
             return await response.json()
+
+
+def _ensure_url_string(url):
+    """Convert `url` to a string URL if it isn't one already."""
+    if isinstance(url, str):
+        return url
+    elif isinstance(url, ParseResult):
+        return url.geturl()
+    elif isinstance(url, SplitResult):
+        return url.geturl()
+    else:
+        raise TypeError(
+            "Could not convert %r to a string URL." % (url,))
 
 
 class ConnectError(Exception):
