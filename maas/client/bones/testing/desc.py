@@ -42,6 +42,11 @@ class Description:
     def raw(self):
         return self._description
 
+    def __iter__(self):
+        """Iterate all resources, anonymous first."""
+        yield from self.anon
+        yield from self.auth
+
     def __repr__(self):
         title, body = self.doc
         return "<%s %r %s>" % (
@@ -53,22 +58,28 @@ class Description:
 class Resources:
     """Pincushion of API resources."""
 
-    def __init__(self, anonymous, resources):
+    def __init__(self, is_anonymous, resources):
         super(Resources, self).__init__()
         for resource in resources:
             name = derive_resource_name(resource["name"])
-            resource = Resource(name, anonymous, resource)
+            resource = Resource(name, is_anonymous, resource)
             attrname = "%s_" % name if iskeyword(name) else name
             setattr(self, attrname, resource)
+
+    def __iter__(self):
+        """Iterate all resources."""
+        for value in vars(self).values():
+            if isinstance(value, Resource):
+                yield value
 
 
 class Resource:
     """An API resource, like `Machines`."""
 
-    def __init__(self, name, anonymous, data):
+    def __init__(self, name, is_anonymous, data):
         super(Resource, self).__init__()
+        self._is_anonymous = is_anonymous
         self._name = name
-        self._anonymous = anonymous
         self._data = data
         self._populate()
 
@@ -77,24 +88,24 @@ class Resource:
             name = action["name"]
             name = "%s_" % name if iskeyword(name) else name
             setattr(self, name, Action(self, action))
+        self._properties = {
+            "doc": parse_docstring(self._data["doc"]),
+            "is_anonymous": self._is_anonymous,
+            "name": self._name,
+            "name/raw": self._data["name"],
+            "params": tuple(self._data["params"]),
+            "path": self._data["path"],
+            "uri": self._data["uri"],
+        }
 
     def __getitem__(self, name):
-        if name in {"path", "uri"}:
-            return self._data[name]
-        elif name == "raw-name":
-            return self._data["name"]
-        elif name == "name":
-            return self._name
-        elif name == "doc":
-            doc = self._data["doc"]
-            return parse_docstring(doc)
-        elif name == "params":
-            params = self._data[name]
-            return tuple(params)
-        elif name == "is_anonymous":
-            return self._anonymous
-        else:
-            raise KeyError(name)
+        return self._properties[name]
+
+    def __iter__(self):
+        """Iterate all actions."""
+        for value in vars(self).values():
+            if isinstance(value, Action):
+                yield value
 
     def __repr__(self):
         title, body = self["doc"]
@@ -156,6 +167,11 @@ class Action:
     @property
     def is_restful(self):
         return self._data["restful"]
+
+    @property
+    def action_name(self):
+        anon_auth = "anon" if self.is_anonymous else "auth"
+        return "%s:%s.%s" % (anon_auth, self.resource["name"], self.name)
 
     # Other.
 
