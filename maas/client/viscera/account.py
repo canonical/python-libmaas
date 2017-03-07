@@ -9,20 +9,17 @@ from . import (
     ObjectType,
 )
 from ..utils.creds import Credentials
-from ..utils.typecheck import typed
 
 
 class AccountType(ObjectType):
     """Metaclass for `Account`."""
 
-    @typed
     async def create_credentials(cls) -> Credentials:
         data = await cls._handler.create_authorisation_token()
         return Credentials(
             consumer_key=data["consumer_key"], token_key=data["token_key"],
             token_secret=data["token_secret"])
 
-    @typed
     async def delete_credentials(cls, credentials: Credentials) -> None:
         await cls._handler.delete_authorisation_token(
             token_key=credentials.token_key)

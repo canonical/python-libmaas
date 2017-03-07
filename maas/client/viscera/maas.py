@@ -16,7 +16,6 @@ from . import (
     ObjectType,
 )
 from ..bones import CallError
-from ..utils.typecheck import typed
 
 
 def _django_boolean(boolean):
@@ -62,17 +61,14 @@ class DescriptiveEnum(enum.Enum):
 class MAASType(ObjectType):
     """Metaclass for `MAAS`."""
 
-    @typed
     async def get_name(cls) -> str:
         """The name of the MAAS instance."""
         return await cls.get_config("maas_name")
 
-    @typed
     async def set_name(cls, name: str):
         """See `get_name`."""
         return await cls.set_config("maas_name", name)
 
-    @typed
     async def get_main_archive(cls) -> str:
         """Main archive URL.
 
@@ -81,12 +77,10 @@ class MAASType(ObjectType):
         """
         return await cls.get_config("main_archive")
 
-    @typed
     async def set_main_archive(cls, url: str):
         """See `get_main_archive`."""
         await cls.set_config("main_archive", url)
 
-    @typed
     async def get_ports_archive(cls) -> str:
         """Ports archive.
 
@@ -95,42 +89,34 @@ class MAASType(ObjectType):
         """
         return await cls.get_config("ports_archive")
 
-    @typed
     async def set_ports_archive(cls, series: str):
         """See `get_ports_archive`."""
         await cls.set_config("ports_archive", series)
 
-    @typed
     async def get_default_os(cls) -> str:
         """Default OS used for deployment."""
         return await cls.get_config("default_osystem")
 
-    @typed
     async def set_default_os(cls, series: str):
         """See `get_default_os`."""
         await cls.set_config("default_osystem", series)
 
-    @typed
     async def get_default_distro_series(cls) -> str:
         """Default OS release used for deployment."""
         return await cls.get_config("default_distro_series")
 
-    @typed
     async def set_default_distro_series(cls, series: str):
         """See `get_default_distro_series`."""
         await cls.set_config("default_distro_series", series)
 
-    @typed
     async def get_commissioning_distro_series(cls) -> str:
         """Default Ubuntu release used for commissioning."""
         return await cls.get_config("commissioning_distro_series")
 
-    @typed
     async def set_commissioning_distro_series(cls, series: str):
         """See `get_commissioning_distro_series`."""
         await cls.set_config("commissioning_distro_series", series)
 
-    @typed
     async def get_http_proxy(cls) -> Optional[str]:
         """Proxy for APT and HTTP/HTTPS.
 
@@ -141,12 +127,10 @@ class MAASType(ObjectType):
         data = await cls.get_config("http_proxy")
         return None if data is None or data == "" else data
 
-    @typed
     async def set_http_proxy(cls, url: Optional[str]):
         """See `get_http_proxy`."""
         await cls.set_config("http_proxy", "" if url is None else url)
 
-    @typed
     async def get_enable_http_proxy(cls) -> bool:
         """Enable the use of an APT and HTTP/HTTPS proxy.
 
@@ -155,12 +139,10 @@ class MAASType(ObjectType):
         """
         return await cls.get_config("enable_http_proxy")
 
-    @typed
     async def set_enable_http_proxy(cls, enabled: bool):
         """See `get_enable_http_proxy`."""
         await cls.set_config("enable_http_proxy", _django_boolean(enabled))
 
-    @typed
     async def get_curtin_verbose(cls) -> bool:
         """Should `curtin` log with high verbosity?
 
@@ -169,12 +151,10 @@ class MAASType(ObjectType):
         """
         return await cls.get_config("curtin_verbose")
 
-    @typed
     async def set_curtin_verbose(cls, verbose: bool):
         """See `get_curtin_verbose`."""
         await cls.set_config("curtin_verbose", _django_boolean(verbose))
 
-    @typed
     async def get_kernel_options(cls) -> Optional[str]:
         """Kernel options.
 
@@ -183,12 +163,10 @@ class MAASType(ObjectType):
         data = await cls.get_config("kernel_opts")
         return None if data is None or data == "" else data
 
-    @typed
     async def set_kernel_options(cls, options: Optional[str]):
         """See `get_kernel_options`."""
         await cls.set_config("kernel_opts", "" if options is None else options)
 
-    @typed
     async def get_upstream_dns(cls) -> list:
         """Upstream DNS server addresses.
 
@@ -200,7 +178,6 @@ class MAASType(ObjectType):
         data = await cls.get_config("upstream_dns")
         return [] if data is None else re.split("[,\s]+", data)
 
-    @typed
     async def set_upstream_dns(cls, addresses: Optional[Sequence[str]]):
         """See `get_upstream_dns`."""
         await cls.set_config("upstream_dns", (
@@ -216,7 +193,6 @@ class MAASType(ObjectType):
         YES = "yes", "Yes (manually configured root key)"
         NO = "no", "No (disable DNSSEC)"
 
-    @typed
     async def get_dnssec_validation(cls) -> DNSSEC:
         """Enable DNSSEC validation of upstream zones.
 
@@ -226,12 +202,10 @@ class MAASType(ObjectType):
         data = await cls.get_config("dnssec_validation")
         return cls.DNSSEC.lookup(data)
 
-    @typed
     async def set_dnssec_validation(cls, validation: DNSSEC):
         """See `get_dnssec_validation`."""
         await cls.set_config("dnssec_validation", validation.parameter)
 
-    @typed
     async def get_default_dns_ttl(cls) -> int:
         """Default Time-To-Live for DNS records.
 
@@ -240,23 +214,19 @@ class MAASType(ObjectType):
         """
         return int(await cls.get_config("default_dns_ttl"))
 
-    @typed
     async def set_default_dns_ttl(cls, ttl: int):
         """See `get_default_dns_ttl`."""
         await cls.set_config("default_dns_ttl", str(ttl))
 
-    @typed
     async def get_enable_disk_erasing_on_release(cls) -> bool:
         """Should nodes' disks be erased prior to releasing."""
         return await cls.get_config("enable_disk_erasing_on_release")
 
-    @typed
     async def set_enable_disk_erasing_on_release(cls, erase: bool):
         """Should nodes' disks be erased prior to releasing."""
         await cls.set_config(
             "enable_disk_erasing_on_release", _django_boolean(erase))
 
-    @typed
     async def get_windows_kms_host(cls) -> Optional[str]:
         """Windows KMS activation host.
 
@@ -267,22 +237,18 @@ class MAASType(ObjectType):
         data = await cls.get_config("windows_kms_host")
         return None if data is None or data == "" else data
 
-    @typed
     async def set_windows_kms_host(cls, host: Optional[str]):
         """See `get_windows_kms_host`."""
         await cls.set_config("windows_kms_host", "" if host is None else host)
 
-    @typed
     async def get_boot_images_auto_import(cls) -> bool:
         """Automatically import/refresh the boot images every 60 minutes."""
         return await cls.get_config("boot_images_auto_import")
 
-    @typed
     async def set_boot_images_auto_import(cls, auto: bool):
         """See `get_boot_images_auto_import`."""
         await cls.set_config("boot_images_auto_import", _django_boolean(auto))
 
-    @typed
     async def get_ntp_server(cls) -> str:
         """Address of NTP server.
 
@@ -291,7 +257,6 @@ class MAASType(ObjectType):
         """
         return await cls.get_config("ntp_server")
 
-    @typed
     async def set_ntp_server(cls, server: str):
         """See `get_ntp_server`."""
         await cls.set_config("ntp_server", server)
@@ -302,7 +267,6 @@ class MAASType(ObjectType):
         LVM = "lvm", "LVM layout"
         BCACHE = "bcache", "Bcache layout"
 
-    @typed
     async def get_default_storage_layout(cls) -> StorageLayout:
         """Default storage layout.
 
@@ -311,12 +275,10 @@ class MAASType(ObjectType):
         data = await cls.get_config("default_storage_layout")
         return cls.StorageLayout.lookup(data)
 
-    @typed
     async def set_default_storage_layout(cls, series: StorageLayout):
         """See `get_default_storage_layout`."""
         await cls.set_config("default_storage_layout", series.parameter)
 
-    @typed
     async def get_default_min_hwe_kernel(cls) -> Optional[str]:
         """Default minimum kernel version.
 
@@ -325,18 +287,15 @@ class MAASType(ObjectType):
         data = await cls.get_config("default_min_hwe_kernel")
         return None if data is None or data == "" else data
 
-    @typed
     async def set_default_min_hwe_kernel(cls, version: Optional[str]):
         """See `get_default_min_hwe_kernel`."""
         await cls.set_config(
             "default_min_hwe_kernel", "" if version is None else version)
 
-    @typed
     async def get_enable_third_party_drivers(cls) -> bool:
         """Enable the installation of proprietary drivers, e.g. HPVSA."""
         return await cls.get_config("enable_third_party_drivers")
 
-    @typed
     async def set_enable_third_party_drivers(cls, enabled: bool):
         """See `get_enable_third_party_drivers`."""
         await cls.set_config(

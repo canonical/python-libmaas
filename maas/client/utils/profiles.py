@@ -20,7 +20,6 @@ from typing import (
 
 from . import api_url
 from .creds import Credentials
-from .typecheck import typed
 from .types import JSONObject
 
 
@@ -29,7 +28,6 @@ class Profile(tuple):
 
     __slots__ = ()
 
-    @typed
     def __new__(
             cls, name: str, url: str, *,
             credentials: Union[Credentials, Sequence, str, None],
@@ -175,7 +173,6 @@ class ProfileStore:
         results = self.database.execute("SELECT name FROM profiles").fetchall()
         return (name for (name,) in results)
 
-    @typed
     def load(self, name: str) -> Profile:
         found = self.database.execute(
             "SELECT data FROM profiles"
@@ -187,7 +184,6 @@ class ProfileStore:
             state["name"] = name  # Belt-n-braces.
             return Profile(**state)
 
-    @typed
     def save(self, profile: Profile):
         state = profile.dump()
         data = json.dumps(state)
@@ -205,7 +201,6 @@ class ProfileStore:
                 "UPDATE profiles SET data = ? WHERE name = ?",
                 (data, profile.name))
 
-    @typed
     def delete(self, name: str):
         self.database.execute(
             "DELETE FROM profiles WHERE name = ?", (name,))
@@ -224,7 +219,6 @@ class ProfileStore:
             return Profile(**state)
 
     @default.setter
-    @typed
     def default(self, profile: Profile):
         with self.database:
             self.save(profile)

@@ -26,7 +26,6 @@ from . import (
     ObjectType,
 )
 from ..utils.async import is_loop_running
-from ..utils.typecheck import typed
 
 #
 # The query API call returns:
@@ -86,7 +85,6 @@ class EventsType(ObjectType):
 
     Level = Level
 
-    @typed
     async def query(
             cls, *,
             hostnames: Iterable[str]=None,

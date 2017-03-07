@@ -23,7 +23,6 @@ from . import (
 )
 from .. import utils
 from ..bones import CallError
-from ..utils.typecheck import typed
 
 
 def calc_size_and_sha265(content: io.IOBase, chunk_size: int):
@@ -106,7 +105,6 @@ class BootResourcesType(ObjectType):
         """Stop the import of `BootResource`'s."""
         return cls._handler.stop_import()
 
-    @typed
     async def create(
             cls, name: str, architecture: str, content: io.IOBase, *,
             title: str="",
@@ -173,7 +171,6 @@ class BootResourcesType(ObjectType):
                 rfile, content, chunk_size, progress_callback)
             return cls._object.read(resource.id)
 
-    @typed
     async def _upload_chunks(
             cls, rfile: BootResourceFile, content: io.IOBase, chunk_size: int,
             progress_callback=None):
@@ -199,7 +196,6 @@ class BootResourcesType(ObjectType):
                 if length != chunk_size:
                     break
 
-    @typed
     async def _put_chunk(
             cls, session: aiohttp.ClientSession,
             upload_uri: str, buf: bytes):

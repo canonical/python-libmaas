@@ -26,14 +26,12 @@ from ..utils.async import asynchronous
 from ..utils.auth import obtain_token
 from ..utils.creds import Credentials
 from ..utils.profiles import Profile
-from ..utils.typecheck import typed
 
 
 class RemoteError(Exception):
     """Miscellaneous error related to a remote system."""
 
 
-@typed
 async def fetch_api_description(
         url: str, credentials: Optional[Credentials]=None,
         insecure: bool=False):
