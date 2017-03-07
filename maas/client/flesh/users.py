@@ -15,7 +15,7 @@ class cmd_list_users(OriginTableCommand):
 
     def execute(self, origin, options, target):
         table = tables.UsersTable()
-        print(table.render(target, origin.Users))
+        print(table.render(target, origin.Users.read()))
 
 
 def register(parser):

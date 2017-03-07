@@ -15,7 +15,7 @@ class cmd_list_tags(OriginTableCommand):
 
     def execute(self, origin, options, target):
         table = tables.TagsTable()
-        print(table.render(target, origin.Tags))
+        print(table.render(target, origin.Tags.read()))
 
 
 def register(parser):

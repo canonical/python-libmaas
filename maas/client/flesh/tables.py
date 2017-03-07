@@ -12,7 +12,10 @@ from operator import itemgetter
 
 from colorclass import Color
 
-from ..viscera.controllers import RackController
+from ..viscera.controllers import (
+    RackController,
+    RegionController,
+)
 from ..viscera.devices import Device
 from ..viscera.machines import Machine
 from .tabular import (
@@ -188,20 +191,20 @@ class NodesTable(Table):
                 node.architecture,
                 node.cpus,
                 node.memory,
-                node.status_name,
+                "—",  # status_name
                 node.power_state,
             )
-        # elif isinstance(node, RegionController):
-        #     return (
-        #         "∷",
-        #         node.hostname,
-        #         node.system_id,
-        #         node.architecture,
-        #         node.cpus,
-        #         node.memory,
-        #         node.status_name,
-        #         node.power_state,
-        #     )
+        elif isinstance(node, RegionController):
+            return (
+                NodeTypeColumn.REGION,
+                node.hostname,
+                node.system_id,
+                node.architecture,
+                node.cpus,
+                node.memory,
+                "—",  # status_name
+                node.power_state,
+            )
         else:
             raise TypeError(
                 "Cannot extract data from %r (%s)"

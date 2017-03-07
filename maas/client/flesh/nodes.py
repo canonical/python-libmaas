@@ -4,6 +4,7 @@ __all__ = [
     "register",
 ]
 
+import asyncio
 from itertools import chain
 from time import sleep
 
@@ -14,6 +15,7 @@ from . import (
     tables,
 )
 from .. import utils
+from ..utils.async import asynchronous
 
 
 class cmd_allocate_machine(OriginTableCommand):
@@ -56,7 +58,7 @@ class cmd_launch_machine(cmd_allocate_machine):
         print(table.render(target, [machine]))
 
         with utils.Spinner():
-            machine = machine.start()
+            machine = machine.deploy()
             for elapsed, remaining, wait in utils.retries(options.wait, 1.0):
                 if machine.status_name == "Deploying":
                     sleep(wait)
@@ -84,14 +86,14 @@ class cmd_release_machine(OriginTableCommand):
                 "Number of seconds to wait for release to complete."))
 
     def execute(self, origin, options, target):
-        machine = origin.Node.read(system_id=options.system_id)
+        machine = origin.Machine.read(system_id=options.system_id)
         machine = machine.release()
 
         with utils.Spinner():
             for elapsed, remaining, wait in utils.retries(options.wait, 1.0):
                 if machine.status_name == "Releasing":
                     sleep(wait)
-                    machine = origin.Node.read(system_id=machine.system_id)
+                    machine = origin.Machine.read(system_id=machine.system_id)
                 else:
                     break
 
@@ -119,26 +121,38 @@ class cmd_list_nodes(OriginTableCommand):
         parser.add_argument(
             "--rack-controllers", action="store_true", default=False,
             help="Show rack-controllers.")
-        # parser.add_argument(
-        #     "--region-controllers", action="store_true", default=False,
-        #     help="Show region controllers.")
+        parser.add_argument(
+            "--region-controllers", action="store_true", default=False,
+            help="Show region controllers.")
 
-    def execute(self, origin, options, target):
-        nodes = []
+    @asynchronous
+    async def execute(self, origin, options, target):
+        nodesets = []
 
         if options.all or options.devices:
-            nodes.append(origin.Devices)
+            nodesets.append(origin.Devices)
         if options.all or options.machines:
-            nodes.append(origin.Machines)
+            nodesets.append(origin.Machines)
         if options.all or options.rack_controllers:
-            nodes.append(origin.RackControllers)
-        # if options.all or options.regions:
-        #     nodes.append(origin.Regions)
+            nodesets.append(origin.RackControllers)
+        if options.all or options.region_controllers:
+            nodesets.append(origin.RegionControllers)
 
-        if len(nodes) == 0:
-            nodes.append(origin.Machines)
+        if len(nodesets) == 0:
+            nodesets.append(origin.Machines)
 
-        nodes = chain.from_iterable(nodes)
+        # Don't make more than two concurrent requests to MAAS.
+        semaphore = asyncio.Semaphore(2)
+
+        async def read(nodeset):
+            async with semaphore:
+                return await nodeset.read()
+
+        nodesets = await asyncio.gather(*map(read, nodesets))
+        nodes = chain.from_iterable(nodesets)
+
+        nodes = list(nodes)
+
         table = tables.NodesTable()
         print(table.render(target, nodes))
 

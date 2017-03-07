@@ -1,7 +1,10 @@
 """Tests for `maas.client.bones.helpers`."""
 
 import json
-from urllib.parse import urlparse
+from urllib.parse import (
+    urlparse,
+    urlsplit,
+)
 
 from testtools.matchers import (
     Equals,
@@ -47,6 +50,25 @@ class TestFetchAPIDescription(TestCase):
         self.assertEqual(
             "Expected application/json, got: text/json",
             str(error))
+
+
+class TestFetchAPIDescriptionURLs(TestCase):
+    """Tests for URL types accepted by `fetch_api_description`."""
+
+    scenarios = (
+        ("string", dict(prepare=str)),
+        ("split", dict(prepare=urlsplit)),
+        ("parsed", dict(prepare=urlparse)),
+    )
+
+    def test__accepts_prepared_url(self):
+        description = {"foo": make_name_without_spaces("bar")}
+        description_json = json.dumps(description).encode("ascii")
+        fixture = self.useFixture(testing.DescriptionServer(description_json))
+        description_url = self.prepare(fixture.url)  # Parse, perhaps.
+        description_fetched = self.loop.run_until_complete(
+            helpers.fetch_api_description(description_url))
+        self.assertThat(description_fetched, Equals(description))
 
 
 class TestFetchAPIDescription_APIVersions(TestCase):
