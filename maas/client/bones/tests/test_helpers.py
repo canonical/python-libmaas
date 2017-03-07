@@ -159,7 +159,9 @@ class TestLogin(TestCase):
 
     def setUp(self):
         super(TestLogin, self).setUp()
-        self.patch(helpers, "obtain_token").return_value = None
+        self.patch(
+            helpers, "_obtain_token",
+            AsyncCallableMock(return_value=None))
         self.patch(
             helpers, "fetch_api_description",
             AsyncCallableMock(return_value={}))
@@ -168,7 +170,7 @@ class TestLogin(TestCase):
         # Log-in without a user-name or a password.
         profile = helpers.login("http://example.org:5240/MAAS/")
         # No token was obtained, but the description was fetched.
-        helpers.obtain_token.assert_not_called()
+        helpers._obtain_token.assert_not_called()
         helpers.fetch_api_description.assert_called_once_with(
             urlparse("http://example.org:5240/MAAS/api/2.0/"),
             None, False)
@@ -178,11 +180,11 @@ class TestLogin(TestCase):
 
     def test__authenticated_when_username_and_password_provided(self):
         credentials = make_Credentials()
-        helpers.obtain_token.return_value = credentials
+        helpers._obtain_token.return_value = credentials
         # Log-in with a user-name and a password.
         profile = helpers.login("http://foo:bar@example.org:5240/MAAS/")
         # A token was obtained, and the description was fetched.
-        helpers.obtain_token.assert_called_once_with(
+        helpers._obtain_token.assert_called_once_with(
             "http://example.org:5240/MAAS/api/2.0/",
             "foo", "bar", insecure=False)
         helpers.fetch_api_description.assert_called_once_with(
@@ -240,7 +242,7 @@ class TestLogin(TestCase):
 
     def test__API_token_is_fetched_insecurely_if_requested(self):
         helpers.login("http://foo:bar@example.org:5240/MAAS/", insecure=True)
-        helpers.obtain_token.assert_called_once_with(
+        helpers._obtain_token.assert_called_once_with(
             "http://example.org:5240/MAAS/api/2.0/",
             "foo", "bar", insecure=True)
 
@@ -252,15 +254,15 @@ class TestLogin(TestCase):
 
     def test__uses_username_from_URL_if_set(self):
         helpers.login("http://foo@maas.io/", password="bar")
-        helpers.obtain_token.assert_called_once_with(
+        helpers._obtain_token.assert_called_once_with(
             "http://maas.io/api/2.0/", "foo", "bar", insecure=False)
 
     def test__uses_username_and_password_from_URL_if_set(self):
         helpers.login("http://foo:bar@maas.io/")
-        helpers.obtain_token.assert_called_once_with(
+        helpers._obtain_token.assert_called_once_with(
             "http://maas.io/api/2.0/", "foo", "bar", insecure=False)
 
     def test__uses_empty_username_and_password_in_URL_if_set(self):
         helpers.login("http://:@maas.io/")
-        helpers.obtain_token.assert_called_once_with(
+        helpers._obtain_token.assert_called_once_with(
             "http://maas.io/api/2.0/", "", "", insecure=False)
