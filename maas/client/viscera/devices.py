@@ -5,7 +5,7 @@ __all__ = [
     "Devices",
 ]
 
-from typing import List
+from collections import Sequence
 
 from . import (
     check,
@@ -41,16 +41,16 @@ class Device(Object, metaclass=DeviceType):
 
     hostname = ObjectField.Checked(
         "hostname", check(str), check(str))
-    ip_addresses = ObjectField.Checked(
-        "ip_addresses", check(List[str]), readonly=True)
+    ip_addresses = ObjectField.Checked(  # List[str]
+        "ip_addresses", check(Sequence), readonly=True)
 
     # owner
     # resource_uri
 
     system_id = ObjectField.Checked(
         "system_id", check(str), readonly=True)
-    tags = ObjectField.Checked(
-        "tag_names", check(List[str]), readonly=True)
+    tags = ObjectField.Checked(  # List[str]
+        "tag_names", check(Sequence), readonly=True)
     zone = zones.ZoneField(
         "zone", readonly=True)
 

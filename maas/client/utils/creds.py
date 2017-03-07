@@ -14,7 +14,7 @@ __all__ = [
     ]
 
 from collections import namedtuple
-from typing import Optional
+import typing
 
 
 CredentialsBase = namedtuple(
@@ -27,7 +27,7 @@ class Credentials(CredentialsBase):
     __slots__ = ()
 
     @classmethod
-    def parse(cls, credentials) -> Optional["Credentials"]:
+    def parse(cls, credentials) -> typing.Optional["Credentials"]:
         """Parse/interpret some given credentials.
 
         These may take the form of:

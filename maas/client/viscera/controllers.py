@@ -7,7 +7,7 @@ __all__ = [
     "RegionControllers",
 ]
 
-from typing import List
+from collections import Sequence
 
 from . import (
     check,
@@ -58,8 +58,8 @@ class RackController(Object, metaclass=RackControllerType):
 
     # interface_set
 
-    ip_addresses = ObjectField.Checked(
-        "ip_addresses", check(List[str]), readonly=True)
+    ip_addresses = ObjectField.Checked(  # List[str]
+        "ip_addresses", check(Sequence), readonly=True)
     memory = ObjectField.Checked(
         "memory", check(int), check(int))
 
@@ -125,8 +125,8 @@ class RegionController(Object, metaclass=RegionControllerType):
 
     # interface_set
 
-    ip_addresses = ObjectField.Checked(
-        "ip_addresses", check(List[str]), readonly=True)
+    ip_addresses = ObjectField.Checked(  # List[str]
+        "ip_addresses", check(Sequence), readonly=True)
     memory = ObjectField.Checked(
         "memory", check(int), check(int))
 

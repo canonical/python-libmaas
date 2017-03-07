@@ -33,7 +33,6 @@ from itertools import (
     starmap,
 )
 from types import MethodType
-from typing import Optional
 
 import pytz
 
@@ -523,7 +522,7 @@ def check(expected):
 
 
 def check_optional(expected):
-    return check(Optional[expected])
+    return check((expected, type(None)))
 
 
 def parse_timestamp(created):

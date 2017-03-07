@@ -8,10 +8,7 @@ from datetime import datetime
 import enum
 from functools import partial
 import logging
-from typing import (
-    Iterable,
-    Union,
-)
+import typing
 from urllib.parse import (
     parse_qs,
     urlparse,
@@ -26,7 +23,6 @@ from . import (
     ObjectType,
 )
 from ..utils.async import is_loop_running
-from ..utils.typecheck import typed
 
 #
 # The query API call returns:
@@ -86,16 +82,15 @@ class EventsType(ObjectType):
 
     Level = Level
 
-    @typed
     async def query(
             cls, *,
-            hostnames: Iterable[str]=None,
-            domains: Iterable[str]=None,
-            zones: Iterable[str]=None,
-            macs: Iterable[str]=None,
-            system_ids: Iterable[str]=None,
+            hostnames: typing.Iterable[str]=None,
+            domains: typing.Iterable[str]=None,
+            zones: typing.Iterable[str]=None,
+            macs: typing.Iterable[str]=None,
+            system_ids: typing.Iterable[str]=None,
             agent_name: str=None,
-            level: Union[Level, int, str]=None,
+            level: typing.Union[Level, int, str]=None,
             before: int=None,
             after: int=None,
             limit: int=None):
