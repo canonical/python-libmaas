@@ -11,7 +11,9 @@ __all__ = [
     "UsernameWithoutPassword",
 ]
 
+from getpass import getuser
 from http import HTTPStatus
+from socket import gethostname
 import typing
 from urllib.parse import (
     ParseResult,
@@ -22,10 +24,10 @@ from urllib.parse import (
 
 import aiohttp
 import aiohttp.errors
+import bs4
 
 from ..utils import api_url
 from ..utils.async import asynchronous
-from ..utils.auth import obtain_token
 from ..utils.creds import Credentials
 from ..utils.profiles import Profile
 
@@ -181,7 +183,7 @@ async def login(url, *, username=None, password=None, insecure=False):
             raise UsernameWithoutPassword(
                 "User-name provided without password; specify password.")
         else:
-            credentials = obtain_token(
+            credentials = await _obtain_token(
                 url.geturl(), username, password, insecure=insecure)
 
     # Circular import.
@@ -192,3 +194,72 @@ async def login(url, *, username=None, password=None, insecure=False):
     return Profile(
         name=url.netloc, url=url.geturl(), credentials=credentials,
         description=description)
+
+
+async def _obtain_token(url, username, password, *, insecure=False):
+    """Obtain a new API key by logging into MAAS.
+
+    :param url: URL for the MAAS API (i.e. ends with ``/api/x.y/``).
+    :param insecure: If true, don't verify SSL/TLS certificates.
+    :return: A `Credentials` instance.
+    """
+    url_login = urljoin(url, "../../accounts/login/")
+    url_token = urljoin(url, "account/")
+
+    def check_response(response):
+        if response.status != HTTPStatus.OK:
+            raise RemoteError(
+                "{0} -> {1.status} {1.reason}".format(
+                    response.url_obj.human_repr(), response))
+
+    connector = aiohttp.TCPConnector(verify_ssl=(not insecure))
+    session = aiohttp.ClientSession(connector=connector)
+    async with session:
+
+        # Fetch and process the log-in page.
+        async with session.get(url_login) as response:
+            check_response(response)
+            login_doc_content = await response.read()
+
+        login_doc = bs4.BeautifulSoup(login_doc_content, "html.parser")
+        login_button = login_doc.find('button', text="Login")
+        login_form = login_button.findParent("form")
+
+        # Log-in to MAAS.
+        login_data = {
+            elem["name"]: elem["value"] for elem in login_form("input")
+            if elem.has_attr("name") and elem.has_attr("value")
+        }
+        login_data["username"] = username
+        login_data["password"] = password
+        # The following `requester` field is not used (at the time of
+        # writing) but it ought to be associated with this new token so
+        # that tokens can be selectively revoked at a later date.
+        login_data["requester"] = "%s@%s" % (getuser(), gethostname())
+
+        async with session.post(url_login, data=login_data) as response:
+            check_response(response)
+
+        # Extract the CSRF cookie.
+        csrf_cookie = next(
+            cookie for cookie in session.cookie_jar
+            if cookie.key == "csrftoken")
+
+        # Request a new API token.
+        create_data = {
+            "csrfmiddlewaretoken": csrf_cookie.value,
+            "op": "create_authorisation_token",
+        }
+        create_headers = {
+            "Accept": "application/json",
+        }
+        async with session.post(
+                url_token, data=create_data,
+                headers=create_headers) as response:
+            check_response(response)
+            token = await response.json()
+            return Credentials(
+                token["consumer_key"],
+                token["token_key"],
+                token["token_secret"],
+            )
