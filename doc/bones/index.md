@@ -13,9 +13,7 @@ _bones_ behind the scenes).
 
 from http import HTTPStatus
 from pprint import pprint
-
 from maas.client import bones
-
 
 profile, session = bones.SessionAPI.login(
     "http://localhost:5240/MAAS/", username="alice",
