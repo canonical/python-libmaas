@@ -55,6 +55,21 @@
           
             <li>
     <ul class="subnav">
+    <li><span>Client</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../client/index.html">Home</a>
+        
+    </li>
+
+        
+    </ul>
+<li>
+          
+            <li>
+    <ul class="subnav">
     <li><span>Bones</span></li>
 
         
@@ -93,11 +108,11 @@
         
             <ul>
             
-                <li class="toctree-l3"><a href="#viscera-working-with-nodes">Viscera: Working with nodes</a></li>
+                <li class="toctree-l3"><a href="#viscera-working-with-machines-devices-racks-and-regions">Viscera: Working with machines, devices, racks, and regions</a></li>
                 
-                    <li><a class="toctree-l4" href="#listing">Listing</a></li>
+                    <li><a class="toctree-l4" href="#an-example">An example</a></li>
                 
-                    <li><a class="toctree-l4" href="#acquiring-and-starting">Acquiring and starting</a></li>
+                    <li><a class="toctree-l4" href="#allocating-and-deploying">Allocating and deploying</a></li>
                 
             
             </ul>
@@ -161,49 +176,75 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="viscera-working-with-nodes"><em>Viscera</em>: Working with nodes</h1>
-<h2 id="listing">Listing</h2>
-<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">origin</span><span class="o">.</span><span class="n">Nodes</span><span class="p">:</span>
+                <h1 id="viscera-working-with-machines-devices-racks-and-regions"><em>Viscera</em>: Working with machines, devices, racks, and regions</h1>
+<p>Given an <code>Origin</code> instance bound to your MAAS server, you can
+interrogate your nodes with:</p>
+<div class="codehilite"><pre><span></span><span class="n">origin</span><span class="o">.</span><span class="n">Machines</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+  <span class="c1"># returns an origin.Machines instance, a</span>
+  <span class="c1"># sequence of origin.Machine instances.</span>
+
+<span class="n">origin</span><span class="o">.</span><span class="n">Devices</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+  <span class="c1"># returns an origin.Devices instance, a</span>
+  <span class="c1"># sequence of origin.Device instances.</span>
+
+<span class="n">origin</span><span class="o">.</span><span class="n">RackControllers</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+  <span class="c1"># returns an origin.RackControllers instance, a</span>
+  <span class="c1"># sequence of origin.RackController instances.</span>
+
+<span class="n">origin</span><span class="o">.</span><span class="n">RegionControllers</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+  <span class="c1"># returns an origin.RegionControllers instance, a</span>
+  <span class="c1"># sequence of origin.RegionController instances.</span>
+</pre></div>
+
+
+<h2 id="an-example">An example</h2>
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">machine</span> <span class="ow">in</span> <span class="n">origin</span><span class="o">.</span><span class="n">Machines</span><span class="o">.</span><span class="n">read</span><span class="p">():</span>
 <span class="gp">... </span>    <span class="k">print</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">node</span><span class="p">))</span>
-<span class="go">&lt;Node hostname=&#39;namibia.maas&#39; system_id=&#39;433333&#39;&gt;</span>
-<span class="go">&lt;Node hostname=&#39;botswana.maas&#39; system_id=&#39;433334&#39;&gt;</span>
+<span class="go">&lt;Machine hostname=&#39;botswana&#39; system_id=&#39;pncys4&#39;&gt;</span>
 </pre></div>
 
 
 <p>Individual nodes can be read from the Web API.</p>
-<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Node</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">system_id</span><span class="o">=</span><span class="s2">&quot;433333&quot;</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">machine</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Machine</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">system_id</span><span class="o">=</span><span class="s2">&quot;pncys4&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">machine</span>
+<span class="go">&lt;Machine hostname=&#39;botswana&#39; system_id=&#39;pncys4&#39;&gt;</span>
 </pre></div>
 
 
-<p>Nodes have many useful attributes:</p>
-<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">architecture</span>
+<p>Machines — and devices, racks, and regions — have many useful
+attributes:</p>
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">machine</span><span class="o">.</span><span class="n">architecture</span>
 <span class="go">&#39;amd64/generic&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">cpus</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">machine</span><span class="o">.</span><span class="n">cpus</span>
 <span class="go">4</span>
 </pre></div>
 
 
 <p>Don&rsquo;t forget to try using tab-completion — the objects have been
 designed to be particularly friendly for interactive use — or
-<code>dir(node)</code> to find out what other fields and methods are available.</p>
+<code>dir(machine)</code> to find out what other fields and methods are
+available.</p>
 <p><strong>TODO</strong>: Updating nodes.</p>
-<h2 id="acquiring-and-starting">Acquiring and starting</h2>
-<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">help</span><span class="p">(</span><span class="n">origin</span><span class="o">.</span><span class="n">Nodes</span><span class="o">.</span><span class="n">acquire</span><span class="p">)</span>
-<span class="go">acquire(*, hostname:str=None, architecture:str=None, cpus:int=None,</span>
-<span class="go">        memory:float=None, tags:typing.Sequence=None) method of</span>
-<span class="go">            maas.client.viscera.NodesType instance</span>
+<h2 id="allocating-and-deploying">Allocating and deploying</h2>
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">help</span><span class="p">(</span><span class="n">origin</span><span class="o">.</span><span class="n">Machines</span><span class="o">.</span><span class="n">allocate</span><span class="p">)</span>
+<span class="go">Help on method allocate in module maas.client.viscera.machines:</span>
+
+<span class="go">allocate(</span>
+<span class="go">    *, hostname:str=None, architecture:str=None, cpus:int=None,</span>
+<span class="go">    memory:float=None, tags:typing.Sequence=None)</span>
+<span class="go">  method of maas.client.viscera.machines.MachinesType instance</span>
 <span class="go">    :param hostname: The hostname to match.</span>
 <span class="go">    :param architecture: The architecture to match, e.g. &quot;amd64&quot;.</span>
 <span class="go">    :param cpus: The minimum number of CPUs to match.</span>
 <span class="go">    :param memory: The minimum amount of RAM to match.</span>
 <span class="go">    :param tags: The tags to match, as a sequence. Each tag may be</span>
 <span class="go">        prefixed with a hyphen to denote that the given tag should NOT be</span>
-<span class="go">        associated with a matched node.</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Nodes</span><span class="o">.</span><span class="n">acquire</span><span class="p">(</span><span class="n">tags</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;foo&quot;</span><span class="p">,</span> <span class="s2">&quot;-bar&quot;</span><span class="p">))</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">status_name</span><span class="p">)</span>
+<span class="go">        associated with a matched machine.</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">machine</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Machines</span><span class="o">.</span><span class="n">allocate</span><span class="p">(</span><span class="n">tags</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;foo&quot;</span><span class="p">,</span> <span class="s2">&quot;-bar&quot;</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span><span class="p">(</span><span class="n">machine</span><span class="o">.</span><span class="n">status_name</span><span class="p">)</span>
 <span class="go">Acquired</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">status_name</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">machine</span><span class="o">.</span><span class="n">deploy</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span><span class="p">(</span><span class="n">machine</span><span class="o">.</span><span class="n">status_name</span><span class="p">)</span>
 <span class="go">Deploying</span>
 </pre></div>
               
