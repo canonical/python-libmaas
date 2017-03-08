@@ -6,11 +6,9 @@ __all__ = [
     "list_api_descriptions",
 ]
 
-from fnmatch import fnmatchcase
 import http
 import http.server
 import json
-from os.path import splitext
 from pathlib import Path
 import re
 import threading
@@ -23,17 +21,26 @@ from pkg_resources import (
 
 
 def list_api_descriptions():
+    """List API description documents.
+
+    They're searched for in the same directory as this file, and their name
+    must match "apiXX.json" where "XX" denotes the major and minor version
+    number of the API.
+    """
     for filename in resource_listdir(__name__, "."):
-        if fnmatchcase(filename, "api*.json"):
+        match = re.match("api(\d)(\d)[.]json", filename)
+        if match is not None:
+            version = tuple(map(int, match.groups()))
             path = resource_filename(__name__, filename)
-            name, _ = splitext(filename)
-            yield name, Path(path)
+            name = "%d.%d" % version
+            yield name, version, Path(path)
 
 
 def load_api_descriptions():
-    for name, path in list_api_descriptions():
+    """Load the API description documents found by `list_api_descriptions`."""
+    for name, version, path in list_api_descriptions():
         description = path.read_text("utf-8")
-        yield name, json.loads(description)
+        yield name, version, json.loads(description)
 
 
 api_descriptions = list(load_api_descriptions())

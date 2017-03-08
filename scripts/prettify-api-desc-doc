@@ -1,0 +1,25 @@
+#!/usr/bin/env python3.5
+
+import json
+import sys
+
+
+def getname(thing):
+    return thing["name"]
+
+
+if __name__ == '__main__':
+    # Read description JSON from stdin.
+    doc = json.load(sys.stdin)
+    # Remove the legacy handlers.
+    doc.pop("handlers")
+    # Sort resources by their name.
+    doc["resources"].sort(key=getname)
+    # Sort resource actions by name.
+    for resource in doc["resources"]:
+        if resource["anon"] is not None:
+            resource["anon"]["actions"].sort(key=getname)
+        if resource["auth"] is not None:
+            resource["auth"]["actions"].sort(key=getname)
+    # Dump back out to stdout, pretty.
+    json.dump(doc, sys.stdout, sort_keys=True, indent="  ")

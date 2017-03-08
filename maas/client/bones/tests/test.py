@@ -64,8 +64,8 @@ class TestSessionAPI_APIVersions(TestCase):
     """Tests for `SessionAPI` with multiple API versions."""
 
     scenarios = tuple(
-        (name, dict(path=path))
-        for name, path in testing.list_api_descriptions()
+        (name, dict(version=version, path=path))
+        for name, version, path in testing.list_api_descriptions()
     )
 
     def test__fromURL_downloads_description(self):
@@ -82,8 +82,8 @@ class TestActionAPI_APIVersions(TestCase):
     """Tests for `ActionAPI` with multiple API versions."""
 
     scenarios = tuple(
-        (name, dict(description=description))
-        for name, description in testing.api_descriptions
+        (name, dict(version=version, description=description))
+        for name, version, description in testing.api_descriptions
     )
 
     def test__Version_read(self):
@@ -95,6 +95,9 @@ class TestActionAPI_APIVersions(TestCase):
         ))
 
     def test__Machines_deployment_status(self):
+        if self.version > (2, 0):
+            self.skipTest("Machines.deployment_status only in <= 2.0")
+
         session = bones.SessionAPI(self.description, ("a", "b", "c"))
         action = session.Machines.deployment_status
         self.assertThat(action, MatchesStructure.byEquality(
@@ -103,19 +106,28 @@ class TestActionAPI_APIVersions(TestCase):
             op="deployment_status",
         ))
 
+    def test__Machines_power_parameters(self):
+        session = bones.SessionAPI(self.description, ("a", "b", "c"))
+        action = session.Machines.power_parameters
+        self.assertThat(action, MatchesStructure.byEquality(
+            name="power_parameters", fullname="Machines.power_parameters",
+            method="GET", handler=session.Machines, is_restful=False,
+            op="power_parameters",
+        ))
+
 
 class TestCallAPI_APIVersions(TestCase):
     """Tests for `CallAPI` with multiple API versions."""
 
     scenarios = tuple(
-        (name, dict(description=description))
-        for name, description in testing.api_descriptions
+        (name, dict(version=version, description=description))
+        for name, version, description in testing.api_descriptions
     )
 
     def test__marshals_lists_into_query_as_repeat_parameters(self):
         system_ids = list(str(uuid1()) for _ in range(3))
         session = bones.SessionAPI(self.description, ("a", "b", "c"))
-        call = session.Machines.deployment_status.bind()
+        call = session.Machines.power_parameters.bind()
         call.dispatch = Mock()
 
         call.call(nodes=system_ids)
@@ -124,7 +136,7 @@ class TestCallAPI_APIVersions(TestCase):
         uri, body, headers = call.dispatch.call_args[0]
         uri = urlparse(uri)
         self.assertThat(uri.path, Equals("/MAAS/api/2.0/machines/"))
-        query_expected = [('op', 'deployment_status')]
+        query_expected = [('op', 'power_parameters')]
         query_expected.extend(('nodes', system_id) for system_id in system_ids)
         query_observed = parse_qsl(uri.query)
         self.assertThat(query_observed, Equals(query_expected))
