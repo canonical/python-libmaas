@@ -51,4 +51,17 @@ bin/mkdocs: bin/pip
 
 # ---
 
-.PHONY: develop dist docs test integrate lint clean
+api-json-raw := $(wildcard maas/client/bones/testing/*.raw.json)
+api-json := $(patsubst %.raw.json,%.json,$(api-json-raw))
+
+pretty: $(api-json)
+
+%.json: %.pretty.json
+	cp $^ $@
+
+%.pretty.json: %.raw.json
+	scripts/prettify-api-desc-doc < $^ > $@
+
+# ---
+
+.PHONY: develop dist docs test integrate lint clean pretty
