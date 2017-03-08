@@ -2,17 +2,9 @@ python-libmaas
 ==============
 
 Python client API library made especially for
-`MAAS <https://maas.ubuntu.com/>`__.
-
-This was begun by a core MAAS developer, Gavin Panella, on his own time,
-but is now maintained by the core MAAS team at Canonical. It is licensed
-under the GNU Affero GPLv3, the same as MAAS itself.
+`MAAS <https://maas.io/>`__.
 
 |Build Status| |codecov.io|
-
-Some of the code in here has come from MAAS, upon which Canonical Ltd
-has the copyright. Gavin Panella licenses his parts under the AGPLv3,
-and MAAS is also under the AGPLv3, so everything should be good.
 
 Installation
 ------------
@@ -38,6 +30,42 @@ Documentation can be generated with ``make docs`` which publishes into
 the ``site`` directory. Recent documentation is also published to the
 `MAAS Client Library & CLI
 documentation <http://maas.github.io/python-libmaas/>`__ site.
+
+Development
+-----------
+
+It's pretty easy to start hacking on *python-libmaas*:
+
+::
+
+    $ git clone git@github.com:maas/python-libmaas.git
+    $ cd python-libmaas
+    $ make develop
+
+Installing `IPython <https://ipython.org/>`__ is generally a good idea
+too:
+
+::
+
+    $ bin/pip install -UI IPython
+
+Pull requests are welcome but authors need to sign the `Canonical
+contributor license
+agreement <https://www.ubuntu.com/legal/contributors>`__ before those
+PRs can be merged.
+
+History & licence
+-----------------
+
+In short: `AGPLv3 <https://www.gnu.org/licenses/agpl-3.0.html>`__.
+
+*python-libmaas* was begun by a core MAAS developer, Gavin Panella, on
+his own time, but is now maintained by the core MAAS team at Canonical.
+It is licensed under the GNU Affero GPLv3, the same as MAAS itself.
+
+Some of the code in here has come from MAAS, upon which Canonical Ltd
+has the copyright. Gavin Panella licenses his parts under the AGPLv3,
+and MAAS is also under the AGPLv3, so everything should be good.
 
 .. |Build Status| image:: https://travis-ci.org/maas/python-libmaas.svg?branch=master
    :target: https://travis-ci.org/maas/python-libmaas

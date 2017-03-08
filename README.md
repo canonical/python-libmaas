@@ -1,17 +1,9 @@
 # python-libmaas
 
-Python client API library made especially for [MAAS][1].
-
-This was begun by a core MAAS developer, Gavin Panella, on his own time,
-but is now maintained by the core MAAS team at Canonical. It is licensed
-under the GNU Affero GPLv3, the same as MAAS itself.
+Python client API library made especially for [MAAS][].
 
 [![Build Status](https://travis-ci.org/maas/python-libmaas.svg?branch=master)](https://travis-ci.org/maas/python-libmaas)
 [![codecov.io](https://codecov.io/github/maas/python-libmaas/coverage.svg?branch=master)](https://codecov.io/github/maas/python-libmaas?branch=master)
-
-Some of the code in here has come from MAAS, upon which Canonical Ltd
-has the copyright. Gavin Panella licenses his parts under the AGPLv3,
-and MAAS is also under the AGPLv3, so everything should be good.
 
 
 ## Installation
@@ -33,8 +25,42 @@ at least for now, it makes more sense to work directly from trunk.
 
 Documentation can be generated with `make docs` which publishes into the
 `site` directory. Recent documentation is also published to the
-[MAAS Client Library & CLI documentation][2] site.
+[MAAS Client Library & CLI documentation][docs] site.
 
 
-[1]: https://maas.ubuntu.com/
-[2]: http://maas.github.io/python-libmaas/
+## Development
+
+It's pretty easy to start hacking on _python-libmaas_:
+
+    $ git clone git@github.com:maas/python-libmaas.git
+    $ cd python-libmaas
+    $ make develop
+
+Installing [IPython][] is generally a good idea too:
+
+    $ bin/pip install -UI IPython
+
+Pull requests are welcome but authors need to sign the [Canonical
+contributor license agreement][CCLA] before those PRs can be merged.
+
+
+## History & licence
+
+In short: [AGPLv3][].
+
+_python-libmaas_ was begun by a core MAAS developer, Gavin Panella, on
+his own time, but is now maintained by the core MAAS team at Canonical.
+It is licensed under the GNU Affero GPLv3, the same as MAAS itself.
+
+Some of the code in here has come from MAAS, upon which Canonical Ltd
+has the copyright. Gavin Panella licenses his parts under the AGPLv3,
+and MAAS is also under the AGPLv3, so everything should be good.
+
+
+[MAAS]: https://maas.io/
+[docs]: http://maas.github.io/python-libmaas/
+
+[CCLA]: https://www.ubuntu.com/legal/contributors
+[AGPLv3]: https://www.gnu.org/licenses/agpl-3.0.html
+
+[IPython]: https://ipython.org/
