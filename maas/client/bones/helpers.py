@@ -223,7 +223,11 @@ async def _obtain_token(url, username, password, *, insecure=False):
 
         login_doc = bs4.BeautifulSoup(login_doc_content, "html.parser")
         login_button = login_doc.find('button', text="Login")
-        login_form = login_button.findParent("form")
+        if login_button is None:
+            login_button = login_doc.find('input', value='Login')
+            login_form = login_button.findParent("form")
+        else:
+            login_form = login_button.findParent("form")
 
         # Log-in to MAAS.
         login_data = {
