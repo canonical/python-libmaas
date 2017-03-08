@@ -10,6 +10,8 @@ theme: readthedocs
 use_directory_urls: false
 pages:
   - Home: index.md
+  - Client:
+      - Home: client/index.md
   - Bones:
       - Home: bones/index.md
   - Viscera:
