@@ -75,8 +75,8 @@ class TestFetchAPIDescription_APIVersions(TestCase):
     """Tests for `fetch_api_description` with multiple API versions."""
 
     scenarios = tuple(
-        (name, dict(path=path))
-        for name, path in testing.list_api_descriptions()
+        (name, dict(version=version, path=path))
+        for name, version, path in testing.list_api_descriptions()
     )
 
     def test__downloads_description(self):
