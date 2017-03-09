@@ -1,4 +1,4 @@
-# Welcome to MAAS's new command-line tool & Python client libraries
+# Welcome to MAAS's new command-line tool & Python client library
 
 _python-libmaas_ provides:
 
@@ -13,6 +13,13 @@ _python-libmaas_ provides:
 
 For MAAS _server_ documentation, visit
 [docs.ubuntu.com](https://docs.ubuntu.com/maas/).
+
+----
+
+This is **ALPHA** software. We are converging on a finished product, but
+until we release a beta all APIs could change.
+
+----
 
 
 ## Installation
@@ -69,12 +76,13 @@ $ bin/maas list
 
 ## Client library
 
-The simplest entry points into ``python-libmaas`` are the ``connect``
-and ``login`` functions in ``maas.client``. The former connects to a
-MAAS server using a previously obtained API key, and the latter logs-in
-to MAAS with your username and password. These returns a ``Client``
-object that has convenient attributes for working with MAAS. For
-example, to print out a few recent events:
+For a developer the simplest entry points into ``python-libmaas`` are
+the ``connect`` and ``login`` functions in ``maas.client``. The former
+connects to a MAAS server using a previously obtained API key, and the
+latter logs-in to MAAS with your username and password. These returns a
+``Client`` object that has convenient attributes for working with MAAS.
+
+For example, this prints out a few recent events:
 
 ```python
 from maas.client import login
@@ -117,19 +125,24 @@ Welcome to the MAAS shell.
 
 It's easy to start hacking on _python-libmaas_:
 
-    $ git clone git@github.com:maas/python-libmaas.git
-    $ cd python-libmaas
-    $ make develop
+```console
+$ git clone git@github.com:maas/python-libmaas.git
+$ cd python-libmaas
+$ make develop
+$ make test
+```
 
 Installing [IPython][] is generally a good idea too:
 
-    $ bin/pip install -UI IPython
+```console
+$ bin/pip install -UI IPython
+```
 
 Pull requests are welcome but authors need to sign the [Canonical
 contributor license agreement][CCLA] before those PRs can be merged.
 
 
-### _Bones_ & _viscera_
+### _bones_ & _viscera_
 
 Digging around in the code and when using the primary client API, you
 may find references to _bones_ and _viscera_. These libraries form the

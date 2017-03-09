@@ -35,6 +35,7 @@ It's pretty easy to start hacking on _python-libmaas_:
     $ git clone git@github.com:maas/python-libmaas.git
     $ cd python-libmaas
     $ make develop
+    $ make test
 
 Installing [IPython][] is generally a good idea too:
 

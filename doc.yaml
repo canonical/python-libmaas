@@ -11,11 +11,11 @@ use_directory_urls: false
 pages:
   - Home: index.md
   - Client:
-      - Home: client/index.md
-  - Bones:
-      - Home: bones/index.md
-  - Viscera:
-      - Home: viscera/index.md
+    - Introduction: client/index.md
+  - Internals:
+    - Bones: bones/index.md
+    - Viscera:
+      - Introduction: viscera/index.md
       - Getting started: viscera/getting-started.md
       - Nodes: viscera/nodes.md
       - Events: viscera/events.md
