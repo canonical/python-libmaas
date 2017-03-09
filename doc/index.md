@@ -93,25 +93,6 @@ for event in client.events.query():
 Learn more about the [client](client/index.md).
 
 
-### _Bones_ & _viscera_
-
-The primary client is based on two underlying libraries:
-
-* A lower-level library that closely mirrors MAAS's Web API, referred to
-  as _bones_. The MAAS server publishes a description of its Web API and
-  _bones_ provides a convenient mechanism to interact with it.
-
-* A higher-level library that's designed for developers, referred to as
-  _viscera_. MAAS's Web API is sometimes unfriendly or inconsistent, but
-  _viscera_ presents a hand-crafted API specifically _designed_ for
-  developers rather than machines.
-
-The implementation of [_viscera_](viscera/index.md) makes use of
-[_bones_](bones/index.md).
-
-Try this next: [Get started with _viscera_](viscera/getting-started.md)
-
-
 ## Shell
 
 There's an interactive shell too. This imports some convenient bits into
@@ -132,4 +113,41 @@ Welcome to the MAAS shell.
 ```
 
 
+## Development
+
+It's easy to start hacking on _python-libmaas_:
+
+    $ git clone git@github.com:maas/python-libmaas.git
+    $ cd python-libmaas
+    $ make develop
+
+Installing [IPython][] is generally a good idea too:
+
+    $ bin/pip install -UI IPython
+
+Pull requests are welcome but authors need to sign the [Canonical
+contributor license agreement][CCLA] before those PRs can be merged.
+
+
+### _Bones_ & _viscera_
+
+Digging around in the code and when using the primary client API, you
+may find references to _bones_ and _viscera_. These libraries form the
+base for the client API:
+
+* [_bones_](bones/index.md) is a lower-level library that closely
+  mirrors MAAS's Web API. Every MAAS server publishes a description of
+  its Web API and _bones_ generates a convenient mechanism to interact
+  with it.
+
+* [_viscera_](viscera/index.md) is a higher-level library which makes
+  heavy use of _bones_. MAAS's Web API is sometimes unfriendly or
+  inconsistent, but _viscera_ presents a hand-crafted API that has been
+  designed for developers rather than machines.
+
+
 [asyncio]: https://docs.python.org/3/library/asyncio.html
+
+[CCLA]: https://www.ubuntu.com/legal/contributors
+
+[IPython]: https://ipython.org/
