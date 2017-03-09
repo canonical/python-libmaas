@@ -566,12 +566,12 @@ def find_objects(modules):
     }
 
 
-class OriginType(type):
+class OriginType(Asynchronous):
     """Metaclass for `Origin`."""
 
-    def fromURL(cls, url, *, credentials=None, insecure=False):
+    async def fromURL(cls, url, *, credentials=None, insecure=False):
         """Return an `Origin` for a given MAAS instance."""
-        session = bones.SessionAPI.fromURL(
+        session = await bones.SessionAPI.fromURL(
             url, credentials=credentials, insecure=insecure)
         return cls(session)
 
@@ -591,7 +591,7 @@ class OriginType(type):
         session = bones.SessionAPI.fromProfileName(name)
         return cls(session)
 
-    def login(
+    async def login(
             cls, url, *, username=None, password=None, insecure=False):
         """Make an `Origin` by logging-in with a username and password.
 
@@ -599,11 +599,11 @@ class OriginType(type):
             unsaved `Profile` instance, and the latter is an `Origin` instance
             made using the profile.
         """
-        profile, session = bones.SessionAPI.login(
+        profile, session = await bones.SessionAPI.login(
             url=url, username=username, password=password, insecure=insecure)
         return profile, cls(session)
 
-    def connect(
+    async def connect(
             cls, url, *, apikey=None, insecure=False):
         """Make an `Origin` by connecting with an apikey.
 
@@ -611,7 +611,7 @@ class OriginType(type):
             unsaved `Profile` instance, and the latter is an `Origin` instance
             made using the profile.
         """
-        profile, session = bones.SessionAPI.connect(
+        profile, session = await bones.SessionAPI.connect(
             url=url, apikey=apikey, insecure=insecure)
         return profile, cls(session)
 

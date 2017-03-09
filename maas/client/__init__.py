@@ -5,8 +5,11 @@ __all__ = [
     "login",
 ]
 
+from .utils.async import asynchronous
 
-def connect(url, *, apikey=None, insecure=False):
+
+@asynchronous
+async def connect(url, *, apikey=None, insecure=False):
     """Connect to MAAS at `url` using a previously obtained API key.
 
     :param url: The URL of MAAS, e.g. http://maas.example.com:5240/MAAS/
@@ -18,12 +21,13 @@ def connect(url, *, apikey=None, insecure=False):
     """
     from .facade import Client  # Lazy.
     from .viscera import Origin  # Lazy.
-    profile, origin = Origin.connect(
+    profile, origin = await Origin.connect(
         url, apikey=apikey, insecure=insecure)
     return Client(origin)
 
 
-def login(url, *, username=None, password=None, insecure=False):
+@asynchronous
+async def login(url, *, username=None, password=None, insecure=False):
     """Connect to MAAS at `url` with a user name and password.
 
     :param url: The URL of MAAS, e.g. http://maas.example.com:5240/MAAS/
@@ -35,6 +39,6 @@ def login(url, *, username=None, password=None, insecure=False):
     """
     from .facade import Client  # Lazy.
     from .viscera import Origin  # Lazy.
-    profile, origin = Origin.login(
+    profile, origin = await Origin.login(
         url, username=username, password=password, insecure=insecure)
     return Client(origin)
