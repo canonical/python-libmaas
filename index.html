@@ -52,7 +52,9 @@
         
             <ul>
             
-                <li class="toctree-l3"><a href="#welcome-to-maass-new-command-line-tool-python-client-libraries">Welcome to MAAS's new command-line tool &amp; Python client libraries.</a></li>
+                <li class="toctree-l3"><a href="#welcome-to-maass-new-command-line-tool-python-client-libraries">Welcome to MAAS's new command-line tool &amp; Python client libraries</a></li>
+                
+                    <li><a class="toctree-l4" href="#installation">Installation</a></li>
                 
                     <li><a class="toctree-l4" href="#command-line">Command-line</a></li>
                 
@@ -174,9 +176,51 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="welcome-to-maass-new-command-line-tool-python-client-libraries">Welcome to MAAS&rsquo;s new command-line tool &amp; Python client libraries.</h1>
-<p>For documentation on the MAAS server components, visit
+                <h1 id="welcome-to-maass-new-command-line-tool-python-client-libraries">Welcome to MAAS&rsquo;s new command-line tool &amp; Python client libraries</h1>
+<p><em>python-libmaas</em> provides:</p>
+<ul>
+<li>
+<p>A rich and stable Python client library for interacting with MAAS 2.0+
+  servers. This can be used in a synchronous/blocking mode, or an
+  asynchronous/non-blocking mode based on <a href="https://docs.python.org/3/library/asyncio.html">asyncio</a>.</p>
+</li>
+<li>
+<p>A lower-level Python client library, auto-generated to match the MAAS
+  server it&rsquo;s interacting with.</p>
+</li>
+<li>
+<p>A command-line tool for working with MAAS servers.</p>
+</li>
+</ul>
+<p>For MAAS <em>server</em> documentation, visit
 <a href="https://docs.ubuntu.com/maas/">docs.ubuntu.com</a>.</p>
+<h2 id="installation">Installation</h2>
+<p>Either work from a branch:</p>
+<div class="codehilite"><pre><span></span><span class="gp">$</span> git clone https://github.com/maas/python-libmaas.git
+<span class="gp">$</span> <span class="nb">cd</span> python-libmaas
+<span class="gp">$</span> make
+</pre></div>
+
+
+<p>Or install with <a href="https://pip.pypa.io/">pip</a> into a
+<a href="https://virtualenv.readthedocs.org/">virtualenv</a>:</p>
+<div class="codehilite"><pre><span></span><span class="gp">$</span> virtualenv --python<span class="o">=</span>python3.5 amc <span class="o">&amp;&amp;</span> <span class="nb">source</span> amc/bin/activate
+<span class="gp">$</span> pip install git+https://github.com/maas/python-libmaas.git
+</pre></div>
+
+
+<p>Or install from <a href="https://pypi.python.org/">PyPI</a>:</p>
+<div class="codehilite"><pre><span></span><span class="gp">$</span> virtualenv --python<span class="o">=</span>python3.5 amc <span class="o">&amp;&amp;</span> <span class="nb">source</span> amc/bin/activate
+<span class="gp">$</span> pip install python-libmaas
+</pre></div>
+
+
+<p><strong>Note</strong> that PyPI may lag the others.</p>
+<p>This documentation assumes you&rsquo;re working from a branch or in a
+virtualenv. In practice this means it will use partially qualified paths
+like <code>bin/maas</code> instead of bare <code>maas</code> invocations. If you&rsquo;ve
+installed from PyPI the <code>maas</code> command will probably be installed on
+your shell&rsquo;s <code>PATH</code> so you can invoke it as <code>maas</code>.</p>
 <h2 id="command-line">Command-line</h2>
 <div class="codehilite"><pre><span></span><span class="gp">$</span> bin/maas profiles login --help
 <span class="gp">$</span> bin/maas profiles login exmpl <span class="se">\</span>
@@ -214,9 +258,9 @@ example, to print out a few recent events:</p>
 </pre></div>
 
 
-<p>Learn more about the primary <a href="client/index.html">Web API client</a>.</p>
+<p>Learn more about the <a href="client/index.html">client</a>.</p>
 <h3 id="bones-viscera"><em>Bones</em> &amp; <em>viscera</em></h3>
-<p>The primary client is based on two underlying client libraries:</p>
+<p>The primary client is based on two underlying libraries:</p>
 <ul>
 <li>
 <p>A lower-level library that closely mirrors MAAS&rsquo;s Web API, referred to
@@ -295,5 +339,5 @@ the default namespace, and creates a <em>viscera</em> <code>Origin</code> instan
 
 <!--
 MkDocs version : 0.16.1
-Build Date UTC : 2017-03-08 10:25:38
+Build Date UTC : 2017-03-09 15:28:19
 -->
