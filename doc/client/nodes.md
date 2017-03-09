@@ -1,31 +1,20 @@
 # Machines, devices, racks, and regions
 
-Given an ``Origin`` instance bound to your MAAS server, you can
+Given a ``Client`` instance bound to your MAAS server, you can
 interrogate your nodes with:
 
 ```python
-origin.Machines.read()
-  # returns an origin.Machines instance, a
-  # sequence of origin.Machine instances.
-
-origin.Devices.read()
-  # returns an origin.Devices instance, a
-  # sequence of origin.Device instances.
-
-origin.RackControllers.read()
-  # returns an origin.RackControllers instance, a
-  # sequence of origin.RackController instances.
-
-origin.RegionControllers.read()
-  # returns an origin.RegionControllers instance, a
-  # sequence of origin.RegionController instances.
+client.machines.list()
+client.devices.list()
+client.rack_controllers.list()
+client.region_controllers.list()
 ```
 
 
-## An example
+## Some examples
 
 ```pycon
->>> for machine in origin.Machines.read():
+>>> for machine in client.machines.read():
 ...     print(repr(node))
 <Machine hostname='botswana' system_id='pncys4'>
 ```
@@ -33,7 +22,7 @@ origin.RegionControllers.read()
 Individual nodes can be read from the Web API.
 
 ```pycon
->>> machine = origin.Machine.read(system_id="pncys4")
+>>> machine = client.machines.get(system_id="pncys4")
 >>> machine
 <Machine hostname='botswana' system_id='pncys4'>
 ```
@@ -59,7 +48,7 @@ __TODO__: Updating nodes.
 ## Allocating and deploying
 
 ```pycon
->>> help(origin.Machines.allocate)
+>>> help(client.machines.allocate)
 Help on method allocate in module maas.client.viscera.machines:
 
 allocate(
@@ -73,7 +62,7 @@ allocate(
     :param tags: The tags to match, as a sequence. Each tag may be
         prefixed with a hyphen to denote that the given tag should NOT be
         associated with a matched machine.
->>> machine = origin.Machines.allocate(tags=("foo", "-bar"))
+>>> machine = client.machines.allocate(tags=("foo", "-bar"))
 >>> print(machine.status_name)
 Acquired
 >>> machine.deploy()

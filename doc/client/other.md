@@ -1,6 +1,6 @@
 # Other objects
 
-There are several other object types available via _viscera_. Use
+There are several other object types available via the client API. Use
 ``dir()`` and tab-completion to dig around interactively, or read the
 code; we've tried to keep it readable.
 
@@ -10,9 +10,9 @@ code; we've tried to keep it readable.
 Similarly to nodes, these sets of objects can be fetched:
 
 ```pycon
->>> tags = origin.Tags.read()
->>> files = origin.Files.read()
->>> users = origin.Users.read()
+>>> tags = client.tags.list()
+>>> files = client.files.list()
+>>> users = client.users.list()
 ```
 
 When reading from collections, as above, the returned object is
