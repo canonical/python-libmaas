@@ -41,10 +41,10 @@ machine.deploy()
 ### Again, but asynchronous
 
 At first glance _python-libmaas_ appears to be a blocking API, but it's
-actually asynchronous under the skin, based on [``asyncio``][asyncio].
-If you call into _python-libmaas_ from within a running event loop it
-will behave asynchronously, but called from outside it behaves
-synchronously, and blocks.
+actually asynchronous under the skin, based on [asyncio][]. If you call
+into _python-libmaas_ from within a running event loop it will behave
+asynchronously, but called from outside it behaves synchronously, and
+blocks.
 
 Using _python-libmaas_ interactively, when exploring the library or
 trying something out, is familiar and natural because it behaves as a
