@@ -1,4 +1,4 @@
-# _Viscera_: High-level Python client API
+<h1><em>viscera</em> &mdash; High-level Python client API</h1>
 
 
 ## Some example code

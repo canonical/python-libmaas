@@ -1,4 +1,4 @@
-# _Bones_: Low-level Python client API
+<h1><em>bones</em> &mdash; Low-level Python client API</h1>
 
 You may prefer the [higher-level API _viscera_](../viscera/index.md),
 but maybe you need to do something that you can't do in _viscera_ yet
