@@ -1,4 +1,4 @@
-# The Web API client
+<h1>The Web API client</h1>
 
 Calling ``maas.client.login`` or ``maas.client.connect`` will return a
 ``maas.client.facade.Client`` instance. This provides an easy to

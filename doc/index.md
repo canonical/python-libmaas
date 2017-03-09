@@ -1,4 +1,4 @@
-# Welcome to MAAS's new command-line tool & Python client library
+<h1>Welcome to MAAS's new command-line tool &amp; Python client library</h1>
 
 _python-libmaas_ provides:
 

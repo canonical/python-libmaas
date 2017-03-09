@@ -1,4 +1,4 @@
-# Events
+<h1>Events</h1>
 
 Events are similar to other _viscera_ objects... but a little different
 too. The only way to get events is by the ``query`` method:

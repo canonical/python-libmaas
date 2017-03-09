@@ -1,4 +1,4 @@
-# Machines, devices, racks, and regions
+<h1>Machines, devices, racks, and regions</h1>
 
 Given an ``Origin`` instance bound to your MAAS server, you can
 interrogate your nodes with:

@@ -1,4 +1,4 @@
-# Other objects
+<h1>Other objects</h1>
 
 There are several other object types available via the client API. Use
 ``dir()`` and tab-completion to dig around interactively, or read the
