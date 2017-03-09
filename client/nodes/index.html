@@ -8,7 +8,7 @@
   
   
   <link rel="shortcut icon" href="../../img/favicon.ico">
-  <title>Nodes - MAAS Client Library & CLI</title>
+  <title>Machines, devices, racks, and regions - MAAS Client Library & CLI</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
   <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
@@ -17,9 +17,9 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "Nodes";
-    var mkdocs_page_input_path = "viscera/nodes.md";
-    var mkdocs_page_url = "/viscera/nodes/index.html";
+    var mkdocs_page_name = "Machines, devices, racks, and regions";
+    var mkdocs_page_input_path = "client/nodes.md";
+    var mkdocs_page_url = "/client/nodes/index.html";
   </script>
   
   <script src="../../js/jquery-2.1.1.min.js"></script>
@@ -60,28 +60,38 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../client/index.html">Introduction</a>
+        <a class="" href="../index.html">Introduction</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 current">
+        <a class="current" href="index.html">Machines, devices, racks, and regions</a>
+        
+            <ul>
+            
+                <li class="toctree-l3"><a href="#some-examples">Some examples</a></li>
+                
+            
+                <li class="toctree-l3"><a href="#allocating-and-deploying">Allocating and deploying</a></li>
+                
+            
+            </ul>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../client/nodes/index.html">Machines, devices, racks, and regions</a>
+        <a class="" href="../events/index.html">Events</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../client/events/index.html">Events</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../client/other/index.html">Others</a>
+        <a class="" href="../other/index.html">Others</a>
         
     </li>
 
@@ -108,45 +118,35 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../index.html">Introduction</a>
+        <a class="" href="../../viscera/index.html">Introduction</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../getting-started/index.html">Getting started</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 current">
-        <a class="current" href="index.html">Nodes</a>
-        
-            <ul>
-            
-                <li class="toctree-l3"><a href="#an-example">An example</a></li>
-                
-            
-                <li class="toctree-l3"><a href="#allocating-and-deploying">Allocating and deploying</a></li>
-                
-            
-            </ul>
+        <a class="" href="../../viscera/getting-started/index.html">Getting started</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../events/index.html">Events</a>
+        <a class="" href="../../viscera/nodes/index.html">Nodes</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../other/index.html">Others</a>
+        <a class="" href="../../viscera/events/index.html">Events</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../viscera/other/index.html">Others</a>
         
     </li>
 
@@ -179,18 +179,14 @@
     
       
         
-          <li>Internals &raquo;</li>
-        
-      
-        
-          <li>Viscera &raquo;</li>
+          <li>Client &raquo;</li>
         
       
     
-    <li>Nodes</li>
+    <li>Machines, devices, racks, and regions</li>
     <li class="wy-breadcrumbs-aside">
       
-        <a href="https://github.com/maas/python-libmaas/edit/master/docs/viscera/nodes.md"
+        <a href="https://github.com/maas/python-libmaas/edit/master/docs/client/nodes.md"
           class="icon icon-github"> Edit on GitHub</a>
       
     </li>
@@ -202,35 +198,24 @@
               
                 <h1>Machines, devices, racks, and regions</h1>
 
-<p>Given an <code>Origin</code> instance bound to your MAAS server, you can
+<p>Given a <code>Client</code> instance bound to your MAAS server, you can
 interrogate your nodes with:</p>
-<div class="codehilite"><pre><span></span><span class="n">origin</span><span class="o">.</span><span class="n">Machines</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-  <span class="c1"># returns an origin.Machines instance, a</span>
-  <span class="c1"># sequence of origin.Machine instances.</span>
-
-<span class="n">origin</span><span class="o">.</span><span class="n">Devices</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-  <span class="c1"># returns an origin.Devices instance, a</span>
-  <span class="c1"># sequence of origin.Device instances.</span>
-
-<span class="n">origin</span><span class="o">.</span><span class="n">RackControllers</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-  <span class="c1"># returns an origin.RackControllers instance, a</span>
-  <span class="c1"># sequence of origin.RackController instances.</span>
-
-<span class="n">origin</span><span class="o">.</span><span class="n">RegionControllers</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-  <span class="c1"># returns an origin.RegionControllers instance, a</span>
-  <span class="c1"># sequence of origin.RegionController instances.</span>
+<div class="codehilite"><pre><span></span><span class="n">client</span><span class="o">.</span><span class="n">machines</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
+<span class="n">client</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
+<span class="n">client</span><span class="o">.</span><span class="n">rack_controllers</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
+<span class="n">client</span><span class="o">.</span><span class="n">region_controllers</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
 </pre></div>
 
 
-<h2 id="an-example">An example</h2>
-<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">machine</span> <span class="ow">in</span> <span class="n">origin</span><span class="o">.</span><span class="n">Machines</span><span class="o">.</span><span class="n">read</span><span class="p">():</span>
+<h2 id="some-examples">Some examples</h2>
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">machine</span> <span class="ow">in</span> <span class="n">client</span><span class="o">.</span><span class="n">machines</span><span class="o">.</span><span class="n">read</span><span class="p">():</span>
 <span class="gp">... </span>    <span class="k">print</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">node</span><span class="p">))</span>
 <span class="go">&lt;Machine hostname=&#39;botswana&#39; system_id=&#39;pncys4&#39;&gt;</span>
 </pre></div>
 
 
 <p>Individual nodes can be read from the Web API.</p>
-<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">machine</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Machine</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">system_id</span><span class="o">=</span><span class="s2">&quot;pncys4&quot;</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">machine</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">machines</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">system_id</span><span class="o">=</span><span class="s2">&quot;pncys4&quot;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">machine</span>
 <span class="go">&lt;Machine hostname=&#39;botswana&#39; system_id=&#39;pncys4&#39;&gt;</span>
 </pre></div>
@@ -251,7 +236,7 @@ designed to be particularly friendly for interactive use — or
 available.</p>
 <p><strong>TODO</strong>: Updating nodes.</p>
 <h2 id="allocating-and-deploying">Allocating and deploying</h2>
-<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">help</span><span class="p">(</span><span class="n">origin</span><span class="o">.</span><span class="n">Machines</span><span class="o">.</span><span class="n">allocate</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">help</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">machines</span><span class="o">.</span><span class="n">allocate</span><span class="p">)</span>
 <span class="go">Help on method allocate in module maas.client.viscera.machines:</span>
 
 <span class="go">allocate(</span>
@@ -265,7 +250,7 @@ available.</p>
 <span class="go">    :param tags: The tags to match, as a sequence. Each tag may be</span>
 <span class="go">        prefixed with a hyphen to denote that the given tag should NOT be</span>
 <span class="go">        associated with a matched machine.</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">machine</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Machines</span><span class="o">.</span><span class="n">allocate</span><span class="p">(</span><span class="n">tags</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;foo&quot;</span><span class="p">,</span> <span class="s2">&quot;-bar&quot;</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">machine</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">machines</span><span class="o">.</span><span class="n">allocate</span><span class="p">(</span><span class="n">tags</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;foo&quot;</span><span class="p">,</span> <span class="s2">&quot;-bar&quot;</span><span class="p">))</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">print</span><span class="p">(</span><span class="n">machine</span><span class="o">.</span><span class="n">status_name</span><span class="p">)</span>
 <span class="go">Acquired</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">machine</span><span class="o">.</span><span class="n">deploy</span><span class="p">()</span>
@@ -282,7 +267,7 @@ available.</p>
         <a href="../events/index.html" class="btn btn-neutral float-right" title="Events">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../getting-started/index.html" class="btn btn-neutral" title="Getting started"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../index.html" class="btn btn-neutral" title="Introduction"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -310,7 +295,7 @@ available.</p>
           <a href="https://github.com/maas/python-libmaas" class="icon icon-github" style="float: left; color: #fcfcfc"> GitHub</a>
       
       
-        <span><a href="../getting-started/index.html" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../index.html" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
         <span style="margin-left: 15px"><a href="../events/index.html" style="color: #fcfcfc">Next &raquo;</a></span>
