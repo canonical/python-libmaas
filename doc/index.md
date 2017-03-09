@@ -1,7 +1,52 @@
-# Welcome to MAAS's new command-line tool & Python client libraries.
+# Welcome to MAAS's new command-line tool & Python client libraries
 
-For documentation on the MAAS server components, visit
+_python-libmaas_ provides:
+
+* A rich and stable Python client library for interacting with MAAS 2.0+
+  servers. This can be used in a synchronous/blocking mode, or an
+  asynchronous/non-blocking mode based on [asyncio][].
+
+* A lower-level Python client library, auto-generated to match the MAAS
+  server it's interacting with.
+
+* A command-line tool for working with MAAS servers.
+
+For MAAS _server_ documentation, visit
 [docs.ubuntu.com](https://docs.ubuntu.com/maas/).
+
+
+## Installation
+
+Either work from a branch:
+
+```console
+$ git clone https://github.com/maas/python-libmaas.git
+$ cd python-libmaas
+$ make
+```
+
+Or install with [pip](https://pip.pypa.io/) into a
+[virtualenv](https://virtualenv.readthedocs.org/):
+
+```console
+$ virtualenv --python=python3.5 amc && source amc/bin/activate
+$ pip install git+https://github.com/maas/python-libmaas.git
+```
+
+Or install from [PyPI](https://pypi.python.org/):
+
+```console
+$ virtualenv --python=python3.5 amc && source amc/bin/activate
+$ pip install python-libmaas
+```
+
+**Note** that PyPI may lag the others.
+
+This documentation assumes you're working from a branch or in a
+virtualenv. In practice this means it will use partially qualified paths
+like ``bin/maas`` instead of bare ``maas`` invocations. If you've
+installed from PyPI the ``maas`` command will probably be installed on
+your shell's ``PATH`` so you can invoke it as ``maas``.
 
 
 ## Command-line
@@ -45,12 +90,12 @@ for event in client.events.query():
     print(tmpl.format(event))
 ```
 
-Learn more about the primary [Web API client](client/index.md).
+Learn more about the [client](client/index.md).
 
 
 ### _Bones_ & _viscera_
 
-The primary client is based on two underlying client libraries:
+The primary client is based on two underlying libraries:
 
 * A lower-level library that closely mirrors MAAS's Web API, referred to
   as _bones_. The MAAS server publishes a description of its Web API and
@@ -85,3 +130,6 @@ Welcome to the MAAS shell.
 >>> origin.Version.read()
 <Version 2.2.0 beta2+bzr5717 [bridging-automatic-ubuntu ...]>
 ```
+
+
+[asyncio]: https://docs.python.org/3/library/asyncio.html

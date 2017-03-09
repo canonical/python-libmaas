@@ -12,7 +12,10 @@ from testtools.matchers import (
 
 from .. import facade
 from ... import client
-from ..testing import TestCase
+from ..testing import (
+    AsyncCallableMock,
+    TestCase,
+)
 from ..viscera import Origin
 
 
@@ -24,7 +27,7 @@ class TestFunctions(TestCase):
         self.assertSignaturesMatch(stub, real)
 
     def test__connect_calls_through_to_Origin(self):
-        connect = self.patch(Origin, "connect")
+        connect = self.patch(Origin, "connect", AsyncCallableMock())
         connect.return_value = sentinel.profile, sentinel.origin
         client_object = client.connect(
             sentinel.url, apikey=sentinel.apikey, insecure=sentinel.insecure)
@@ -38,7 +41,7 @@ class TestFunctions(TestCase):
         self.assertSignaturesMatch(stub, real)
 
     def test__login_calls_through_to_Origin(self):
-        login = self.patch(Origin, "login")
+        login = self.patch(Origin, "login", AsyncCallableMock())
         login.return_value = sentinel.profile, sentinel.origin
         client_object = client.login(
             sentinel.url, username=sentinel.username,

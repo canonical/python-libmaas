@@ -64,7 +64,7 @@ class SessionAPI:
             return cls.fromProfile(config.load(name))
 
     @classmethod
-    def login(
+    async def login(
             cls, url, *, username=None, password=None, insecure=False):
         """Make a `SessionAPI` by logging-in with a username and password.
 
@@ -72,14 +72,14 @@ class SessionAPI:
             an unsaved `Profile` instance, and the latter is a `SessionAPI`
             instance made using the profile.
         """
-        profile = helpers.login(
+        profile = await helpers.login(
             url=url, username=username, password=password, insecure=insecure)
         session = cls(profile.description, profile.credentials)
         session.insecure = insecure
         return profile, session
 
     @classmethod
-    def connect(
+    async def connect(
             cls, url, *, apikey=None, insecure=False):
         """Make a `SessionAPI` by connecting with an apikey.
 
@@ -87,7 +87,7 @@ class SessionAPI:
             an unsaved `Profile` instance, and the latter is a `SessionAPI`
             instance made using the profile.
         """
-        profile = helpers.connect(
+        profile = await helpers.connect(
             url=url, apikey=apikey, insecure=insecure)
         session = cls(profile.description, profile.credentials)
         session.insecure = insecure
