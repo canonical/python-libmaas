@@ -1,8 +1,16 @@
 """Test for `maas.client.viscera.machines`."""
 
-from testtools.matchers import Equals
+from maas.client.bones.testing.server import ApplicationBuilder
+from maas.client.utils.testing import make_Credentials
+from maas.client.viscera import Origin
+from testtools.matchers import (
+    ContainsDict,
+    Equals,
+    MatchesStructure,
+)
 
 from .. import machines
+from ...bones.testing import api_descriptions
 from ...testing import (
     make_name_without_spaces,
     TestCase,
@@ -27,22 +35,40 @@ class TestMachine(TestCase):
             "<Machine hostname=%(hostname)r system_id=%(system_id)r>"
             % machine._data))
 
-    def test__deploy(self):
-        Machine = make_origin().Machine
-        Machine._handler.deploy.return_value = {}
-        machine = Machine({
-            "system_id": make_name_without_spaces("system-id"),
-            "hostname": make_name_without_spaces("hostname"),
-        })
-        machine.deploy(
-            distro_series='ubuntu/xenial',
-            hwe_kernel='hwe-x',
-        )
-        machine._handler.deploy.assert_called_once_with(
-            system_id=machine.system_id,
-            distro_series='ubuntu/xenial',
-            hwe_kernel='hwe-x',
-        )
+
+class TestMachine_APIVersion(TestCase):
+
+    scenarios = tuple(
+        (name, dict(version=version, description=description))
+        for name, version, description in api_descriptions)
+
+    async def test__deploy(self):
+        builder = ApplicationBuilder(self.description)
+
+        @builder.handle("auth:Machine.deploy")
+        async def deploy(request, system_id):
+            self.assertThat(request.params, ContainsDict({
+                "distro_series": Equals("ubuntu/xenial"),
+                "hwe_kernel": Equals("hwe-x"),
+            }))
+            return {
+                "system_id": system_id,
+                "status_name": "Deploying",
+            }
+
+        async with builder.serve() as baseurl:
+            origin = await Origin.fromURL(
+                baseurl, credentials=make_Credentials())
+            machine = origin.Machine({
+                "system_id": make_name_without_spaces("system-id"),
+            })
+            machine = await machine.deploy(
+                distro_series='ubuntu/xenial',
+                hwe_kernel='hwe-x',
+            )
+            self.assertThat(
+                machine, MatchesStructure.byEquality(
+                    status_name="Deploying"))
 
 
 class TestMachines(TestCase):

@@ -1,24 +1,30 @@
 """Testing server."""
 
 __all__ = [
-    "ApplicationServer",
+    "ApplicationBuilder",
 ]
 
 from collections import defaultdict
+from functools import partial
 import json
 from operator import attrgetter
 import re
 from urllib.parse import urlparse
 
+from aiohttp.multipart import (
+    CONTENT_DISPOSITION,
+    parse_content_disposition,
+)
 import aiohttp.web
+from multidict import MultiDict
 
 from . import desc
 
 
-class ApplicationServer:
+class ApplicationBuilder:
 
     def __init__(self, description):
-        super(ApplicationServer, self).__init__()
+        super(ApplicationBuilder, self).__init__()
         self._description = desc.Description(description)
         self._application = aiohttp.web.Application()
         self._basepath, self._version = self._discover_version_and_base_path()
@@ -26,11 +32,15 @@ class ApplicationServer:
         self._actions = {}
         self._views = {}
 
-    def handle(self, action_name, handler):
+    def handle(self, action_name, handler=None):
+        if handler is None:
+            return partial(self.handle, action_name)
+
         action = self._resolve_action(action_name)
         view_name = self._view_name(action)
         assert view_name not in self._actions
         self._actions[view_name] = action
+        handler = self._wrap_handler(handler)
         if view_name in self._views:
             view = self._views[view_name]
             view.set(action, handler)
@@ -40,7 +50,24 @@ class ApplicationServer:
             view.set(action, handler)
 
     def serve(self):
-        aiohttp.web.run_app(self._application)
+        return ApplicationRunner(
+            self._application, self._basepath)
+
+    @staticmethod
+    def _wrap_handler(handler):
+        """Wrap `handler` in some conveniences."""
+
+        async def wrapper(request):
+            # For convenience, read in all multipart parameters.
+            assert not hasattr(request, "params")
+            request.params = await _get_multipart_params(request)
+            response = await handler(request, **request.match_info)
+            # For convenience, assume non-Responses are meant as JSON.
+            if not isinstance(response, aiohttp.web.Response):
+                response = aiohttp.web.json_response(response)
+            return response
+
+        return wrapper
 
     @staticmethod
     def _view_name(action):
@@ -58,7 +85,7 @@ class ApplicationServer:
                 "Could not discover version or base path.")
 
     def _wire_up_description(self):
-        path = "%s/describe" % self._basepath
+        path = "%s/describe/" % self._basepath
 
         def describe(request):
             description = self._render_description(
@@ -75,20 +102,18 @@ class ApplicationServer:
         for action in self._actions.values():
             by_resource[action.resource].append(action)
 
-        by_resource_name = defaultdict(dict)
+        def make_resource_skeleton():
+            # The "names" set gets popped later and replaced.
+            return {"anon": None, "auth": None, "names": set()}
+
+        by_resource_name = defaultdict(make_resource_skeleton)
         for resource, actions in by_resource.items():
             res_name = resource["name"]
             res_name_raw = resource["name/raw"]
             res_desc = by_resource_name[res_name]
-
-            if "names" in res_desc:
-                res_desc["names"].add(res_name_raw)
-            else:
-                res_desc["names"] = {res_name_raw}
-
-            assert res_desc.setdefault("name", res_name) == res_name
+            res_desc["names"].add(res_name_raw)
             anon_auth = "anon" if resource["is_anonymous"] else "auth"
-            assert anon_auth not in res_desc
+            assert res_desc[anon_auth] is None
             res_desc[anon_auth] = {
                 "actions": [
                     {
@@ -101,7 +126,7 @@ class ApplicationServer:
                     for action in actions
                 ],
                 "doc": resource["doc"].title,
-                "name": resource["name/raw"],
+                "name": res_name_raw,
                 "params": resource["params"],
                 "path": resource["path"],
                 "uri": str(base) + resource["path"],
@@ -169,4 +194,52 @@ class ApplicationView:
             raise aiohttp.web.HTTPMethodNotAllowed(
                 request.method, self.allowed_methods)
         else:
-            return handler(request)
+            return await handler(request)
+
+
+class ApplicationRunner:
+
+    def __init__(self, application, basepath):
+        super(ApplicationRunner, self).__init__()
+        self._application = application
+        self._loop = application.loop
+        self._basepath = basepath
+
+    async def __aenter__(self):
+        self._handler = self._application.make_handler()
+        self._server = await self._loop.create_server(
+            self._handler, host="0.0.0.0", port=0)
+        return "http://%s:%d/%s/" % (
+            *self._server.sockets[0].getsockname(),
+            self._basepath.strip("/"))
+
+    async def __aexit__(self, *exc_info):
+        self._server.close()
+        await self._server.wait_closed()
+        await self._application.shutdown()
+        await self._handler.shutdown(10.0)
+        await self._application.cleanup()
+
+
+async def _get_multipart_params(request):
+    """Extract a mapping of parts sent in a multipart request.
+
+    :rtype: MultiDict
+    """
+
+    def get_part_name(part):
+        _, params = parse_content_disposition(
+            part.headers.get(CONTENT_DISPOSITION))
+        return params.get("name")
+
+    def get_part_data(part):
+        if part.filename is None:
+            return part.text()
+        else:
+            return part.read(decode=True)
+
+    params = MultiDict()
+    async for part in await request.multipart():
+        params.add(get_part_name(part), await get_part_data(part))
+
+    return params
