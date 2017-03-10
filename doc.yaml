@@ -23,3 +23,5 @@ pages:
       - Nodes: viscera/nodes.md
       - Events: viscera/events.md
       - Others: viscera/other.md
+  - Development:
+    - Release checklist: development/releasing.md
