@@ -112,9 +112,10 @@ Learn more about the [client](client/index.md).
 
 ## Shell
 
-There's an interactive shell too. This imports some convenient bits into
-the default namespace, and creates a _viscera_ ``Origin`` instance and a
-_bones_ ``SessionAPI`` instance bound to the currently selected profile.
+There's an interactive shell. If a profile name is given or a default
+profile has been set — see ``maas profiles --help`` — this places a
+``Client`` instance in the default namespace (as ``client``) that you
+can use interactively or in a script.
 
 For the best experience install [IPython](https://ipython.org/) first.
 
@@ -127,6 +128,27 @@ Welcome to the MAAS shell.
 ```pycon
 >>> origin.Version.read()
 <Version 2.2.0 beta2+bzr5717 [bridging-automatic-ubuntu ...]>
+>>> dir(client)
+[..., 'account', 'boot_resources', ...]
+```
+
+Scripts can also be run. For example, given the following ``script.py``:
+
+```python
+print("Machines:", len(client.machines.list()))
+print("Devices:", len(client.devices.list()))
+print("Racks:", len(client.rack_controllers.list()))
+print("Regions:", len(client.region_controllers.list()))
+```
+
+the following will run it against the default profile:
+
+```console
+$ bin/maas shell script.py
+Machines: 1
+Devices: 0
+Racks: 2
+Regions: 1
 ```
 
 

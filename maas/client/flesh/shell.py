@@ -7,6 +7,7 @@ __all__ = [
 import code
 import sys
 import textwrap
+import tokenize
 
 from . import (
     colorized,
@@ -16,9 +17,9 @@ from . import (
 )
 from .. import (
     bones,
+    facade,
     viscera,
 )
-from ..utils import profiles
 
 
 class cmd_shell(Command):
@@ -57,74 +58,100 @@ class cmd_shell(Command):
                         else " [default: %(default)s]"
                     )
                 ))
+        parser.add_argument(
+            "--viscera", action="store_true", default=False, help=(
+                "Create a pre-canned viscera `Origin` for the selected "
+                "profile. This is available as `origin` in the shell's "
+                "namespace. You probably do not need this unless you're "
+                "developing python-libmaas itself."
+            ))
+        parser.add_argument(
+            "--bones", action="store_true", default=False, help=(
+                "Create a pre-canned bones `Session` for the selected "
+                "profile. This is available as `session` in the shell's "
+                "namespace. You probably do not need this unless you're "
+                "developing python-libmaas itself."
+            ))
+        parser.add_argument(
+            "script", metavar="SCRIPT", nargs="?", default=None, help=(
+                "Python script to run in the shell's namespace. An "
+                "interactive shell is started if none is given."
+            ))
 
     def __call__(self, options):
         """Execute this command."""
 
         # The namespace that code will run in.
-        namespace = {
-            "Origin": viscera.Origin,
-            "Session": bones.SessionAPI,
-            "ProfileStore": profiles.ProfileStore,
-        }
+        namespace = {}
         # Descriptions of the namespace variables.
-        descriptions = {
-            "Origin": (
-                "The entry-point into the `viscera` higher-level API. "
-                "Get started with `Origin.login`."
-            ),
-            "Session": (
-                "The entry-point into the `bones` lower-level API. "
-                "Get started with `SessionAPI.login`."
-            ),
-            "ProfileStore": (
-                "Use `ProfileStore.open()` as a context-manager to "
-                "work with your profile store."
-            ),
-        }
+        descriptions = {}
 
         # If a profile has been selected, set up a `bones` session and a
         # `viscera` origin in the default namespace.
         if options.profile_name is not None:
             session = bones.SessionAPI.fromProfileName(options.profile_name)
-            namespace["session"] = session
-            descriptions["session"] = (
-                "A pre-canned `bones` session for '%s'."
-                % options.profile_name)
+            if options.bones:
+                namespace["session"] = session
+                descriptions["session"] = (
+                    "A pre-canned `bones` session for '%s'."
+                    % options.profile_name)
             origin = viscera.Origin(session)
-            namespace["origin"] = origin
-            descriptions["origin"] = (
-                "A pre-canned `viscera` origin for '%s'."
+            if options.viscera:
+                namespace["origin"] = origin
+                descriptions["origin"] = (
+                    "A pre-canned `viscera` origin for '%s'."
+                    % options.profile_name)
+            client = facade.Client(origin)
+            namespace["client"] = client
+            descriptions["client"] = (
+                "A pre-canned client for '%s'."
                 % options.profile_name)
 
-        if sys.stdin.isatty() and sys.stdout.isatty():
-            # We at a fully interactive terminal — i.e. stdin AND stdout are
-            # connected to the TTY — so display some introductory text...
-            banner = ["{automagenta}Welcome to the MAAS shell.{/automagenta}"]
-            if len(descriptions) > 0:
-                banner += ["", "Predefined objects:", ""]
-                wrap = textwrap.TextWrapper(60, "    ", "    ").wrap
-                sortkey = lambda name: (name.casefold(), name)
-                for name in sorted(descriptions, key=sortkey):
-                    banner.append("  {autoyellow}%s{/autoyellow}:" % name)
-                    banner.extend(wrap(descriptions[name]))
-                    banner.append("")
-            for line in banner:
-                print(colorized(line))
-            # ... then start IPython, or the plain familiar Python REPL if
-            # IPython is not installed.
-            try:
-                import IPython
-            except ImportError:
-                code.InteractiveConsole(namespace).interact(" ")
+        if options.script is None:
+            if sys.stdin.isatty() and sys.stdout.isatty():
+                self._run_interactive(namespace, descriptions)
             else:
-                IPython.start_ipython(
-                    argv=[], display_banner=False, user_ns=namespace)
+                self._run_stdin(namespace)
         else:
-            # Either stdin or stdout is NOT connected to the TTY, so simply
-            # slurp from stdin and exec in the already created namespace.
-            source = sys.stdin.read()
-            exec(source, namespace, namespace)
+            self._run_script(namespace, options.script)
+
+    @staticmethod
+    def _run_interactive(namespace, descriptions):
+        # We at a fully interactive terminal — i.e. stdin AND stdout are
+        # connected to the TTY — so display some introductory text...
+        banner = ["{automagenta}Welcome to the MAAS shell.{/automagenta}"]
+        if len(descriptions) > 0:
+            banner += ["", "Predefined objects:", ""]
+            wrap = textwrap.TextWrapper(60, "    ", "    ").wrap
+            sortkey = lambda name: (name.casefold(), name)
+            for name in sorted(descriptions, key=sortkey):
+                banner.append("  {autoyellow}%s{/autoyellow}:" % name)
+                banner.extend(wrap(descriptions[name]))
+                banner.append("")
+        for line in banner:
+            print(colorized(line))
+        # ... then start IPython, or the plain familiar Python REPL if
+        # IPython is not installed.
+        try:
+            import IPython
+        except ImportError:
+            code.InteractiveConsole(namespace).interact(" ")
+        else:
+            IPython.start_ipython(
+                argv=[], display_banner=False, user_ns=namespace)
+
+    @staticmethod
+    def _run_script(namespace, filename):
+        namespace = dict(namespace, __file__=filename)
+        with tokenize.open(filename) as fd:
+            code = compile(fd.read(), filename, "exec")
+        exec(code, namespace, namespace)
+
+    @staticmethod
+    def _run_stdin(namespace):
+        namespace = dict(namespace, __file__="<stdin>")
+        code = compile(sys.stdin.read(), "<stdin>", "exec")
+        exec(code, namespace, namespace)
 
 
 def register(parser):
