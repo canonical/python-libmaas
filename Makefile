@@ -6,10 +6,10 @@ develop: bin/python setup.py
 	bin/python setup.py develop
 
 dist: bin/python setup.py README
-	bin/python setup.py egg_info sdist
+	bin/python setup.py sdist bdist_wheel
 
 upload: bin/python setup.py README
-	bin/python setup.py egg_info sdist upload
+	bin/python setup.py sdist bdist_wheel upload
 
 test: bin/tox
 	@bin/tox
@@ -38,6 +38,9 @@ README: README.md
 docs: bin/mkdocs
 	bin/mkdocs build --config-file doc.yaml --clean --strict
 
+docs-to-github: bin/mkdocs
+	bin/mkdocs gh-deploy --config-file doc.yaml --clean
+
 # ---
 
 bin/tox: bin/pip
@@ -64,4 +67,4 @@ pretty: $(api-json)
 
 # ---
 
-.PHONY: develop dist docs test integrate lint clean pretty
+.PHONY: develop dist docs docs-to-github test integrate lint clean pretty
