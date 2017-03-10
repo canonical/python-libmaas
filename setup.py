@@ -11,7 +11,7 @@ setup(
     author='MAAS Developers',
     author_email='maas-devel@lists.launchpad.net',
     url='https://github.com/maas/python-libmaas',
-    version="0.4.0",
+    version="0.4.1",
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
