@@ -73,6 +73,15 @@ $ bin/maas list
 └───┴────────────┴───────────┴───────┴────────┴────────┴─────────┘
 ```
 
+Tab-completion in ``bash`` and ``tcsh`` is supported too. For example,
+in ``bash``:
+
+```console
+$ source <(bin/register-python-argcomplete --shell=bash bin/maas)
+$ bin/maas <tab>
+allocate  launch  list  list-files  list-tags  ...
+```
+
 
 ## Client library
 
