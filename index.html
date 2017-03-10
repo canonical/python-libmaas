@@ -228,20 +228,23 @@ until we release a beta all APIs could change.</p>
 <hr />
 <h2 id="installation">Installation</h2>
 <p>Either work from a branch:</p>
-<pre class="codehilite"><code class="language-console">$ git clone https://github.com/maas/python-libmaas.git
-$ cd python-libmaas
-$ make</code></pre>
+<div class="codehilite"><pre><span></span><span class="gp">$</span> git clone https://github.com/maas/python-libmaas.git
+<span class="gp">$</span> <span class="nb">cd</span> python-libmaas
+<span class="gp">$</span> make
+</pre></div>
 
 
 <p>Or install with <a href="https://pip.pypa.io/">pip</a> into a
 <a href="https://virtualenv.readthedocs.org/">virtualenv</a>:</p>
-<pre class="codehilite"><code class="language-console">$ virtualenv --python=python3.5 amc &amp;&amp; source amc/bin/activate
-$ pip install git+https://github.com/maas/python-libmaas.git</code></pre>
+<div class="codehilite"><pre><span></span><span class="gp">$</span> virtualenv --python<span class="o">=</span>python3.5 amc <span class="o">&amp;&amp;</span> <span class="nb">source</span> amc/bin/activate
+<span class="gp">$</span> pip install git+https://github.com/maas/python-libmaas.git
+</pre></div>
 
 
 <p>Or install from <a href="https://pypi.python.org/">PyPI</a>:</p>
-<pre class="codehilite"><code class="language-console">$ virtualenv --python=python3.5 amc &amp;&amp; source amc/bin/activate
-$ pip install python-libmaas</code></pre>
+<div class="codehilite"><pre><span></span><span class="gp">$</span> virtualenv --python<span class="o">=</span>python3.5 amc <span class="o">&amp;&amp;</span> <span class="nb">source</span> amc/bin/activate
+<span class="gp">$</span> pip install python-libmaas
+</pre></div>
 
 
 <p><strong>Note</strong> that PyPI may lag the others.</p>
@@ -251,18 +254,27 @@ like <code>bin/maas</code> instead of bare <code>maas</code> invocations. If you
 installed from PyPI the <code>maas</code> command will probably be installed on
 your shell&rsquo;s <code>PATH</code> so you can invoke it as <code>maas</code>.</p>
 <h2 id="command-line">Command-line</h2>
-<pre class="codehilite"><code class="language-console">$ bin/maas profiles login --help
-$ bin/maas profiles login exmpl \
+<div class="codehilite"><pre><span></span><span class="gp">$</span> bin/maas profiles login --help
+<span class="gp">$</span> bin/maas profiles login exmpl <span class="se">\</span>
 &gt;   http://example.com:5240/MAAS/ my_username
-Password: …
-$ bin/maas list
-┌───┬────────────┬───────────┬───────┬────────┬────────┬─────────┐
-│   │ Hostname   │ System ID │ #CPUs │ RAM    │ Status │ Power   │
-├───┼────────────┼───────────┼───────┼────────┼────────┼─────────┤
-│ m │ botswana   │ pncys4    │ 4     │ 8.0 GB │ Ready  │ Off     │
-│ c │ namibia    │ xfaxgw    │ 4     │ 8.0 GB │ —      │ Error   │
-│ C │ madagascar │ 4y3h7n    │ 4     │ 8.0 GB │ —      │ Unknown │
-└───┴────────────┴───────────┴───────┴────────┴────────┴─────────┘</code></pre>
+<span class="go">Password: …</span>
+<span class="gp">$</span> bin/maas list
+<span class="go">┌───┬────────────┬───────────┬───────┬────────┬────────┬─────────┐</span>
+<span class="go">│   │ Hostname   │ System ID │ #CPUs │ RAM    │ Status │ Power   │</span>
+<span class="go">├───┼────────────┼───────────┼───────┼────────┼────────┼─────────┤</span>
+<span class="go">│ m │ botswana   │ pncys4    │ 4     │ 8.0 GB │ Ready  │ Off     │</span>
+<span class="go">│ c │ namibia    │ xfaxgw    │ 4     │ 8.0 GB │ —      │ Error   │</span>
+<span class="go">│ C │ madagascar │ 4y3h7n    │ 4     │ 8.0 GB │ —      │ Unknown │</span>
+<span class="go">└───┴────────────┴───────────┴───────┴────────┴────────┴─────────┘</span>
+</pre></div>
+
+
+<p>Tab-completion in <code>bash</code> and <code>tcsh</code> is supported too. For example,
+in <code>bash</code>:</p>
+<div class="codehilite"><pre><span></span><span class="gp">$</span> <span class="nb">source</span> &lt;<span class="o">(</span>bin/register-python-argcomplete --shell<span class="o">=</span>bash bin/maas<span class="o">)</span>
+<span class="gp">$</span> bin/maas &lt;tab&gt;
+<span class="go">allocate  launch  list  list-files  list-tags  ...</span>
+</pre></div>
 
 
 <h2 id="client-library">Client library</h2>
@@ -272,44 +284,69 @@ connects to a MAAS server using a previously obtained API key, and the
 latter logs-in to MAAS with your username and password. These returns a
 <code>Client</code> object that has convenient attributes for working with MAAS.</p>
 <p>For example, this prints out a few recent events:</p>
-<pre class="codehilite"><code class="language-python">from maas.client import login
-client = login(
-    &quot;http://localhost:5240/MAAS/&quot;,
-    username=&quot;my_user&quot;, password=&quot;my_pass&quot;,
-)
-tmpl = (
-    &quot;{0.created:%Y-%m-%d %H:%M:%S} &quot;
-    &quot;{0.level.name} {0.description_short}&quot;
-)
-for event in client.events.query():
-    print(tmpl.format(event))</code></pre>
+<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">maas.client</span> <span class="kn">import</span> <span class="n">login</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">login</span><span class="p">(</span>
+    <span class="s2">&quot;http://localhost:5240/MAAS/&quot;</span><span class="p">,</span>
+    <span class="n">username</span><span class="o">=</span><span class="s2">&quot;my_user&quot;</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="s2">&quot;my_pass&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">tmpl</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">&quot;{0.created:%Y-%m-</span><span class="si">%d</span><span class="s2"> %H:%M:%S} &quot;</span>
+    <span class="s2">&quot;{0.level.name} {0.description_short}&quot;</span>
+<span class="p">)</span>
+<span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">client</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">query</span><span class="p">():</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">tmpl</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">event</span><span class="p">))</span>
+</pre></div>
 
 
 <p>Learn more about the <a href="client/index.html">client</a>.</p>
 <h2 id="shell">Shell</h2>
-<p>There&rsquo;s an interactive shell too. This imports some convenient bits into
-the default namespace, and creates a <em>viscera</em> <code>Origin</code> instance and a
-<em>bones</em> <code>SessionAPI</code> instance bound to the currently selected profile.</p>
+<p>There&rsquo;s an interactive shell. If a profile name is given or a default
+profile has been set — see <code>maas profiles --help</code> — this places a
+<code>Client</code> instance in the default namespace (as <code>client</code>) that you
+can use interactively or in a script.</p>
 <p>For the best experience install <a href="https://ipython.org/">IPython</a> first.</p>
-<pre class="codehilite"><code class="language-console">$ bin/maas shell
-Welcome to the MAAS shell.
-...</code></pre>
+<div class="codehilite"><pre><span></span><span class="gp">$</span> bin/maas shell
+<span class="go">Welcome to the MAAS shell.</span>
+<span class="go">...</span>
+</pre></div>
 
 
-<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; origin.Version.read()
-&lt;Version 2.2.0 beta2+bzr5717 [bridging-automatic-ubuntu ...]&gt;</code></pre>
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">origin</span><span class="o">.</span><span class="n">Version</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+<span class="go">&lt;Version 2.2.0 beta2+bzr5717 [bridging-automatic-ubuntu ...]&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">dir</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
+<span class="go">[..., &#39;account&#39;, &#39;boot_resources&#39;, ...]</span>
+</pre></div>
+
+
+<p>Scripts can also be run. For example, given the following <code>script.py</code>:</p>
+<div class="codehilite"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="s2">&quot;Machines:&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">machines</span><span class="o">.</span><span class="n">list</span><span class="p">()))</span>
+<span class="k">print</span><span class="p">(</span><span class="s2">&quot;Devices:&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">list</span><span class="p">()))</span>
+<span class="k">print</span><span class="p">(</span><span class="s2">&quot;Racks:&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">rack_controllers</span><span class="o">.</span><span class="n">list</span><span class="p">()))</span>
+<span class="k">print</span><span class="p">(</span><span class="s2">&quot;Regions:&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">region_controllers</span><span class="o">.</span><span class="n">list</span><span class="p">()))</span>
+</pre></div>
+
+
+<p>the following will run it against the default profile:</p>
+<div class="codehilite"><pre><span></span><span class="gp">$</span> bin/maas shell script.py
+<span class="go">Machines: 1</span>
+<span class="go">Devices: 0</span>
+<span class="go">Racks: 2</span>
+<span class="go">Regions: 1</span>
+</pre></div>
 
 
 <h2 id="development">Development</h2>
 <p>It&rsquo;s easy to start hacking on <em>python-libmaas</em>:</p>
-<pre class="codehilite"><code class="language-console">$ git clone git@github.com:maas/python-libmaas.git
-$ cd python-libmaas
-$ make develop
-$ make test</code></pre>
+<div class="codehilite"><pre><span></span><span class="gp">$</span> git clone git@github.com:maas/python-libmaas.git
+<span class="gp">$</span> <span class="nb">cd</span> python-libmaas
+<span class="gp">$</span> make develop
+<span class="gp">$</span> make <span class="nb">test</span>
+</pre></div>
 
 
 <p>Installing <a href="https://ipython.org/">IPython</a> is generally a good idea too:</p>
-<pre class="codehilite"><code class="language-console">$ bin/pip install -UI IPython</code></pre>
+<div class="codehilite"><pre><span></span><span class="gp">$</span> bin/pip install -UI IPython
+</pre></div>
 
 
 <p>Pull requests are welcome but authors need to sign the <a href="https://www.ubuntu.com/legal/contributors">Canonical
@@ -380,5 +417,5 @@ base for the client API:</p>
 
 <!--
 MkDocs version : 0.16.1
-Build Date UTC : 2017-03-10 10:04:59
+Build Date UTC : 2017-03-10 12:48:31
 -->
