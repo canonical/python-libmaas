@@ -14,7 +14,6 @@ from collections import (
     namedtuple,
 )
 import json
-import re
 
 import aiohttp
 import aiohttp.errors
@@ -175,12 +174,7 @@ class HandlerAPI:
     @property
     def name(self):
         """A stable, human-readable name and identifier for this handler."""
-        name = self.__handler["name"]
-        if name.startswith("Anon"):
-            name = name[4:]
-        if name.endswith("Handler"):
-            name = name[:-7]
-        return re.sub('maas', 'MAAS', name, flags=re.IGNORECASE)
+        return helpers.derive_resource_name(self.__handler["name"])
 
     @property
     def uri(self):

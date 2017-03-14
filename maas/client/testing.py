@@ -33,6 +33,8 @@ import testscenarios
 from testtools import testcase
 from testtools.matchers import DocTestMatches
 
+from .utils.async import Asynchronous
+
 
 random_letters = map(
     random.choice, repeat(string.ascii_letters + string.digits))
@@ -111,7 +113,13 @@ class WithScenarios(testscenarios.WithScenarios):
             super(WithScenarios, self).__call__(result)
 
 
-class TestCase(WithScenarios, testcase.TestCase):
+class TestCase(WithScenarios, testcase.TestCase, metaclass=Asynchronous):
+    """Base test case class for all of python-libmaas.
+
+    This creates a new `asyncio` event loop for every test, and tears it down
+    afterwards. It transparently copes with asynchronous test methods and
+    other test methods by running them in this freshly created loop.
+    """
 
     def setUp(self):
         super(TestCase, self).setUp()

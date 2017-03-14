@@ -9,6 +9,7 @@ __all__ = [
 import http
 import http.server
 import json
+from operator import itemgetter
 from pathlib import Path
 import re
 import threading
@@ -43,7 +44,7 @@ def load_api_descriptions():
         yield name, version, json.loads(description)
 
 
-api_descriptions = list(load_api_descriptions())
+api_descriptions = sorted(load_api_descriptions(), key=itemgetter(1))
 assert len(api_descriptions) != 0
 
 

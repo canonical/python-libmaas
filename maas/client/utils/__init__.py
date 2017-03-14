@@ -12,7 +12,10 @@ __all__ = [
     "vars_class",
 ]
 
-from collections import Iterable
+from collections import (
+    Iterable,
+    namedtuple,
+)
 from functools import (
     lru_cache,
     partial,
@@ -170,6 +173,9 @@ newline = "\n"
 empty = ""
 
 
+docstring = namedtuple("docstring", ("title", "body"))
+
+
 @lru_cache(2**10)
 def parse_docstring(thing):
     """Parse a Python docstring, or the docstring found on `thing`.
@@ -191,7 +197,7 @@ def parse_docstring(thing):
     title = remove_line_breaks(title)
     # Normalise line-breaks on newline.
     body = body.replace("\r\n", newline).replace("\r", newline)
-    return title, body
+    return docstring(title, body)
 
 
 def ensure_trailing_slash(string):

@@ -266,3 +266,27 @@ class TestLogin(TestCase):
         helpers.login("http://:@maas.io/")
         helpers._obtain_token.assert_called_once_with(
             "http://maas.io/api/2.0/", "", "", insecure=False)
+
+
+class TestDeriveResourceName(TestCase):
+    """Tests for `derive_resource_name`."""
+
+    def test__removes_Anon_prefix(self):
+        self.assertThat(
+            helpers.derive_resource_name("AnonFooBar"),
+            Equals("FooBar"))
+
+    def test__removes_Handler_suffix(self):
+        self.assertThat(
+            helpers.derive_resource_name("FooBarHandler"),
+            Equals("FooBar"))
+
+    def test__normalises_Maas_to_MAAS(self):
+        self.assertThat(
+            helpers.derive_resource_name("Maas"),
+            Equals("MAAS"))
+
+    def test__does_all_the_above(self):
+        self.assertThat(
+            helpers.derive_resource_name("AnonMaasHandler"),
+            Equals("MAAS"))
