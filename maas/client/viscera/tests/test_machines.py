@@ -92,3 +92,7 @@ class TestMachines(TestCase):
             tags=['foo', 'bar'],
             not_tags=['baz'],
         )
+
+    def test_power_parameters(self):
+        Machines = make_origin().Machines
+        Machines._handler.power_parameters.return_value = {}

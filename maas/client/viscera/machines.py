@@ -67,6 +67,16 @@ class MachinesType(ObjectType):
         else:
             return cls._object(data)
 
+    async def power_parameters(cls, *, system_ids: typing.Sequence[str]=None):
+        """
+        :param system_ids: The system IDs to get power parameters for
+        """
+        params = {}
+        if system_ids is not None:
+            params["id"] = system_ids
+        data = await cls.handler.power_parameters(**params)
+        return cls._object(data)
+
 
 class MachineNotFound(Exception):
     """Machine was not found."""
