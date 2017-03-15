@@ -93,8 +93,33 @@ class TestMachines(TestCase):
             not_tags=['baz'],
         )
 
-    def test__power_parameters(self):
+    def test__get_power_parameters(self):
+        power_parameters = {
+            make_name_without_spaces("system_id"): {
+                "key": make_name_without_spaces("value")
+            }
+        }
         Machines = make_origin().Machines
-        Machines._handler.power_parameters.return_value = {}
-        Machines.power_parameters()
+        Machines._handler.power_parameters.return_value = power_parameters
+        self.assertThat(
+            Machines.get_power_parameters(),
+            Equals(power_parameters)
+        )
         Machines._handler.power_parameters.assert_called_once_with(id=[])
+
+    def test__get_power_parameters_with_system_ids(self):
+        power_parameters = {
+            make_name_without_spaces("system_id"): {
+                "key": make_name_without_spaces("value")
+            }
+            for _ in range(3)
+        }
+        Machines = make_origin().Machines
+        Machines._handler.power_parameters.return_value = power_parameters
+        self.assertThat(
+            Machines.get_power_parameters(system_ids=power_parameters.keys()),
+            Equals(power_parameters)
+        )
+        Machines._handler.power_parameters.assert_called_once_with(
+            id=power_parameters.keys()
+        )
