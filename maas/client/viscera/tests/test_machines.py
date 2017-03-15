@@ -93,6 +93,8 @@ class TestMachines(TestCase):
             not_tags=['baz'],
         )
 
-    def test_power_parameters(self):
+    def test__power_parameters(self):
         Machines = make_origin().Machines
         Machines._handler.power_parameters.return_value = {}
+        Machines.power_parameters()
+        Machines._handler.power_parameters.assert_called_once_with(id=[])
