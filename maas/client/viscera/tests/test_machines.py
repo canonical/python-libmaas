@@ -52,11 +52,17 @@ class TestMachine(TestCase):
             "hostname": make_name_without_spaces("hostname"),
         })
         Machines = origin.Machines
-        power_parameters = make_power_params()
+        # The power_parameters handler returns a dict of dicts,
+        # but we just want the inner dict so we look it up with the system_id
+        power_parameters = {
+            machine.system_id: {
+                "key": make_name_without_spaces("value")
+            }
+        }
         Machines._handler.power_parameters.return_value = power_parameters
         self.assertThat(
             machine.get_power_parameters(),
-            Equals(power_parameters),
+            Equals(power_parameters[machine.system_id]),
         )
         Machines._handler.power_parameters.assert_called_once_with(
             id=[machine.system_id]

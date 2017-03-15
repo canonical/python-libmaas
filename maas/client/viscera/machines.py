@@ -197,7 +197,7 @@ class Machine(Object, metaclass=MachineType):
         data = await self._origin.Machines._handler.power_parameters(
             id=[self.system_id]
         )
-        return data
+        return data[self.system_id]
 
     def __repr__(self):
         return super(Machine, self).__repr__(
