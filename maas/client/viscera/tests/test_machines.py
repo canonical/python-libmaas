@@ -46,26 +46,20 @@ class TestMachine(TestCase):
             % machine._data))
 
     def test__get_power_parameters(self):
-        origin = make_origin()
-        machine = origin.Machine({
+        machine = make_origin().Machine({
             "system_id": make_name_without_spaces("system-id"),
             "hostname": make_name_without_spaces("hostname"),
         })
-        Machines = origin.Machines
-        # The power_parameters handler returns a dict of dicts,
-        # but we just want the inner dict so we look it up with the system_id
         power_parameters = {
-            machine.system_id: {
-                "key": make_name_without_spaces("value")
-            }
+            "key": make_name_without_spaces("value"),
         }
-        Machines._handler.power_parameters.return_value = power_parameters
+        machine._handler.power_parameters.return_value = power_parameters
         self.assertThat(
             machine.get_power_parameters(),
-            Equals(power_parameters[machine.system_id]),
+            Equals(power_parameters),
         )
-        Machines._handler.power_parameters.assert_called_once_with(
-            id=[machine.system_id]
+        machine._handler.power_parameters.assert_called_once_with(
+            system_id=machine.system_id
         )
 
 
