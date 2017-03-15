@@ -171,20 +171,16 @@ class TestCase(WithScenarios, testcase.TestCase, metaclass=Asynchronous):
     def patch(self, obj, attribute, value=mock.sentinel.unset):
         """Patch `obj.attribute` with `value`.
 
-        If `value` is unspecified, a new `MagicMock` will be created and
-        patched-in instead. Its ``__name__`` attribute will be set to
-        `attribute` or the ``__name__`` of the replaced object if `attribute`
-        is not given.
+        If `value` is unspecified, a new `Mock` will be created and patched-in
+        instead. Its ``__name__`` attribute will be set to `attribute`.
 
         This is a thin customisation of `testtools.TestCase.patch`, so refer
         to that in case of doubt.
 
         :return: The patched-in object.
         """
-        if isinstance(attribute, bytes):
-            attribute = attribute.decode("ascii")
         if value is mock.sentinel.unset:
-            value = mock.MagicMock(__name__=attribute)
+            value = mock.Mock(__name__=attribute)
         super(TestCase, self).patch(obj, attribute, value)
         return value
 
