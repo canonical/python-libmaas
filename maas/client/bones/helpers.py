@@ -1,12 +1,14 @@
 """Miscellaneous helpers for Bones."""
 
 __all__ = [
+    "authenticate",
     "connect",
     "ConnectError",
     "derive_resource_name",
     "fetch_api_description",
     "login",
     "LoginError",
+    "LoginNotSupported",
     "PasswordWithoutUsername",
     "RemoteError",
     "UsernameWithoutPassword",
@@ -25,7 +27,6 @@ from urllib.parse import (
 
 import aiohttp
 import aiohttp.errors
-import bs4
 
 from ..utils import api_url
 from ..utils.async import asynchronous
@@ -141,6 +142,10 @@ class UsernameWithoutPassword(LoginError):
     """A user-name was provided without a corresponding password."""
 
 
+class LoginNotSupported(LoginError):
+    """Server does not support login-type auth for API clients."""
+
+
 @asynchronous
 async def login(url, *, username=None, password=None, insecure=False):
     """Log-in to a remote MAAS instance.
@@ -156,6 +161,11 @@ async def login(url, *, username=None, password=None, insecure=False):
             # Optionally, set it as the default.
             config.default = profile.name
 
+    :raise RemoteError: An unexpected error from the remote system.
+    :raise LoginError: An error related to logging-in.
+    :raise PasswordWithoutUsername: Password given, but not username.
+    :raise UsernameWithoutPassword: Username given, but not password.
+    :raise LoginNotSupported: Server does not support API client log-in.
     """
     url = api_url(url)
     url = urlparse(url)
@@ -195,7 +205,7 @@ async def login(url, *, username=None, password=None, insecure=False):
             raise UsernameWithoutPassword(
                 "User-name provided without password; specify password.")
         else:
-            credentials = await _obtain_token(
+            credentials = await authenticate(
                 url.geturl(), username, password, insecure=insecure)
 
     # Circular import.
@@ -208,17 +218,20 @@ async def login(url, *, username=None, password=None, insecure=False):
         description=description)
 
 
-async def _obtain_token(url, username, password, *, insecure=False):
+async def authenticate(url, username, password, *, insecure=False):
     """Obtain a new API key by logging into MAAS.
 
     :param url: URL for the MAAS API (i.e. ends with ``/api/x.y/``).
     :param insecure: If true, don't verify SSL/TLS certificates.
     :return: A `Credentials` instance.
-    """
-    url_login = urljoin(url, "../../accounts/login/")
-    url_token = urljoin(url, "account/")
 
-    def check_response(response):
+    :raise RemoteError: An unexpected error from the remote system.
+    :raise LoginNotSupported: Server does not support API client log-in.
+    """
+    url_versn = urljoin(url, "version/")
+    url_authn = urljoin(url, "../../accounts/authenticate/")
+
+    def check_response_is_okay(response):
         if response.status != HTTPStatus.OK:
             raise RemoteError(
                 "{0} -> {1.status} {1.reason}".format(
@@ -227,55 +240,27 @@ async def _obtain_token(url, username, password, *, insecure=False):
     connector = aiohttp.TCPConnector(verify_ssl=(not insecure))
     session = aiohttp.ClientSession(connector=connector)
     async with session:
+        # Check that this server supports `authenticate-api`.
+        async with session.get(url_versn) as response:
+            check_response_is_okay(response)
+            version_info = await response.json()
 
-        # Fetch and process the log-in page.
-        async with session.get(url_login) as response:
-            check_response(response)
-            login_doc_content = await response.read()
+        if "authenticate-api" not in version_info["capabilities"]:
+            raise LoginNotSupported(
+                "Server does not support automated client log-in. "
+                "Please obtain an API token via the MAAS UI.")
 
-        login_doc = bs4.BeautifulSoup(login_doc_content, "html.parser")
-        login_button = login_doc.find('button', text="Login")
-        if login_button is None:
-            login_button = login_doc.find('input', value='Login')
-            login_form = login_button.findParent("form")
-        else:
-            login_form = login_button.findParent("form")
-
-        # Log-in to MAAS.
-        login_data = {
-            elem["name"]: elem["value"] for elem in login_form("input")
-            if elem.has_attr("name") and elem.has_attr("value")
+        # POST to the `authenticate` endpoint.
+        data = {
+            "username": username, "password": password,
+            "consumer": "%s@%s" % (getuser(), gethostname())
         }
-        login_data["username"] = username
-        login_data["password"] = password
-        # The following `requester` field is not used (at the time of
-        # writing) but it ought to be associated with this new token so
-        # that tokens can be selectively revoked at a later date.
-        login_data["requester"] = "%s@%s" % (getuser(), gethostname())
+        async with session.post(url_authn, data=data) as response:
+            check_response_is_okay(response)
+            token_info = await response.json()
 
-        async with session.post(url_login, data=login_data) as response:
-            check_response(response)
-
-        # Extract the CSRF cookie.
-        csrf_cookie = next(
-            cookie for cookie in session.cookie_jar
-            if cookie.key == "csrftoken")
-
-        # Request a new API token.
-        create_data = {
-            "csrfmiddlewaretoken": csrf_cookie.value,
-            "op": "create_authorisation_token",
-        }
-        create_headers = {
-            "Accept": "application/json",
-        }
-        async with session.post(
-                url_token, data=create_data,
-                headers=create_headers) as response:
-            check_response(response)
-            token = await response.json()
-            return Credentials(
-                token["consumer_key"],
-                token["token_key"],
-                token["token_secret"],
-            )
+        return Credentials(
+            token_info["consumer_key"],
+            token_info["token_key"],
+            token_info["token_secret"],
+        )
