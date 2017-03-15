@@ -193,6 +193,12 @@ class Machine(Object, metaclass=MachineType):
         data = await self._handler.release(**params)
         return type(self)(data)
 
+    async def get_power_parameters(self):
+        data = await self._origin.Machines._handler.power_parameters(
+            id=[self.system_id]
+        )
+        return data
+
     def __repr__(self):
         return super(Machine, self).__repr__(
             fields={"system_id", "hostname"})

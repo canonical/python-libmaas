@@ -24,6 +24,16 @@ def make_origin():
     return bind(machines.Machines, machines.Machine)
 
 
+def make_power_params(quantity=1):
+    # Create dummy power parameters for testing
+    return {
+        make_name_without_spaces("system_id"): {
+            "key": make_name_without_spaces("value")
+        }
+        for _ in range(quantity)
+    }
+
+
 class TestMachine(TestCase):
 
     def test__string_representation_includes_only_system_id_and_hostname(self):
@@ -34,6 +44,23 @@ class TestMachine(TestCase):
         self.assertThat(repr(machine), Equals(
             "<Machine hostname=%(hostname)r system_id=%(system_id)r>"
             % machine._data))
+
+    def test__get_power_parameters(self):
+        origin = make_origin()
+        machine = origin.Machine({
+            "system_id": make_name_without_spaces("system-id"),
+            "hostname": make_name_without_spaces("hostname"),
+        })
+        Machines = origin.Machines
+        power_parameters = make_power_params()
+        Machines._handler.power_parameters.return_value = power_parameters
+        self.assertThat(
+            machine.get_power_parameters(),
+            Equals(power_parameters),
+        )
+        Machines._handler.power_parameters.assert_called_once_with(
+            id=[machine.system_id]
+        )
 
 
 class TestMachine_APIVersion(TestCase):
@@ -94,12 +121,8 @@ class TestMachines(TestCase):
         )
 
     def test__get_power_parameters(self):
-        power_parameters = {
-            make_name_without_spaces("system_id"): {
-                "key": make_name_without_spaces("value")
-            }
-        }
         Machines = make_origin().Machines
+        power_parameters = make_power_params()
         Machines._handler.power_parameters.return_value = power_parameters
         self.assertThat(
             Machines.get_power_parameters(),
@@ -108,12 +131,7 @@ class TestMachines(TestCase):
         Machines._handler.power_parameters.assert_called_once_with(id=[])
 
     def test__get_power_parameters_with_system_ids(self):
-        power_parameters = {
-            make_name_without_spaces("system_id"): {
-                "key": make_name_without_spaces("value")
-            }
-            for _ in range(3)
-        }
+        power_parameters = make_power_params(quantity=3)
         Machines = make_origin().Machines
         Machines._handler.power_parameters.return_value = power_parameters
         self.assertThat(
