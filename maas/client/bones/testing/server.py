@@ -27,12 +27,62 @@ class ApplicationBuilder:
         super(ApplicationBuilder, self).__init__()
         self._description = desc.Description(description)
         self._application = aiohttp.web.Application()
-        self._basepath, self._version = self._discover_version_and_base_path()
+        self._rootpath, self._basepath, self._version = (
+            self._discover_version_and_paths())
         self._wire_up_description()
         self._actions = {}
         self._views = {}
 
+    def route(self, method, path, handler=None):
+        """Add a handler for a specific path.
+
+        The path must start with a forward slash or be empty. The root URL of
+        the server is automatically discovered from the API description and is
+        added as a prefix to `path`, i.e. it's correct to specify "/accounts/"
+        but incorrect to specify "/MAAS/accounts/".
+
+        The handler is wrapped by `_wrap_handler` but should otherwise a normal
+        `aiohttp` request handler.
+
+        This method can be used as a decorator by omitting `handler`:
+
+          @builder.route("GET", "/foo/bar")
+          async def foobar(request):
+              ...
+
+        The use of `handle` should be preferred to `route` where the endpoint
+        is part of MAAS's Web API. This method allows mocking of miscellaneous
+        other paths when absolutely necessary.
+        """
+        if handler is None:
+            return partial(self.route, method, path)
+
+        if not path.startswith("/"):
+            raise ValueError("Path should start with / or be empty.")
+
+        handler = self._wrap_handler(handler)
+        path = "%s/%s" % (self._rootpath, path.lstrip("/"))
+        self._application.router.add_route(method, path, handler)
+
     def handle(self, action_name, handler=None):
+        """Add a handler for a specific API action.
+
+        The action string describes an action from the server's API
+        description document. Some examples:
+
+          auth:Machines.allocate
+          anon:Version.read
+
+        The handler is wrapped by `_wrap_handler` but should otherwise a normal
+        `aiohttp` request handler.
+
+        This method can be used as a decorator by omitting `handler`:
+
+          @builder.handle("anon:Version.read")
+          async def version(request):
+              ...
+
+        """
         if handler is None:
             return partial(self.handle, action_name)
 
@@ -50,17 +100,34 @@ class ApplicationBuilder:
             view.set(action, handler)
 
     def serve(self):
+        """Return an async context manager to serve the built application."""
         return ApplicationRunner(
             self._application, self._basepath)
 
     @staticmethod
     def _wrap_handler(handler):
-        """Wrap `handler` in some conveniences."""
+        """Wrap `handler` in some conveniences.
 
+        These are:
+
+        * Setting `request.params` to a `MultiDict` instance of POSTed form
+          parameters, or `None` if the body content was not a multipart form.
+
+        * Passing `request.match_info` as keyword arguments into the handler.
+          For example, if a route like "/foo/{bar}" is matched by a path
+          "/foo/thing", the handler will be called with bar="thing".
+
+        * Objects returned from `handler` that are not proper responses are
+          rendered as JSON.
+
+        """
         async def wrapper(request):
             # For convenience, read in all multipart parameters.
             assert not hasattr(request, "params")
-            request.params = await _get_multipart_params(request)
+            if request.content_type == "multipart/form-data":
+                request.params = await _get_multipart_params(request)
+            else:
+                request.params = None
             response = await handler(request, **request.match_info)
             # For convenience, assume non-Responses are meant as JSON.
             if not isinstance(response, aiohttp.web.Response):
@@ -71,20 +138,34 @@ class ApplicationBuilder:
 
     @staticmethod
     def _view_name(action):
+        """Return the view name for an API action, e.g. "Version.read"."""
         return "%s.%s" % (action.resource["name"], action.name)
 
-    def _discover_version_and_base_path(self):
+    def _discover_version_and_paths(self):
+        """Return the root path, the API path, and the API version string.
+
+        As an example, given an API description document containing references
+        to "/MAAS/api/2.0/foo/bar", this function will return:
+
+          ("/MAAS", "/MAAS/api/2.0", "2.0")
+
+        """
         for resource in self._description:
             path = urlparse(resource["uri"]).path
-            match = re.match("(.*/api/([0-9.]+))/", path)
+            match = re.match("((.*)/api/([0-9.]+))/", path)
             if match is not None:
-                base, version = match.groups()
-                return base, version
+                base, root, version = match.groups()
+                return root, base, version
         else:
             raise ValueError(
-                "Could not discover version or base path.")
+                "Could not discover version or paths.")
 
     def _wire_up_description(self):
+        """Arrange for the API description document to be served.
+
+        This publishes only endpoints for which handlers have been registered
+        using `handle`.
+        """
         path = "%s/describe/" % self._basepath
 
         def describe(request):
@@ -98,6 +179,11 @@ class ApplicationBuilder:
         self._application.router.add_get(path, describe)
 
     def _render_description(self, base):
+        """Render an API description document for this application.
+
+        This renders only endpoints for which handlers have been registered
+        using `handle`.
+        """
         by_resource = defaultdict(list)
         for action in self._actions.values():
             by_resource[action.resource].append(action)
@@ -143,6 +229,11 @@ class ApplicationBuilder:
         }
 
     def _resolve_action(self, action_name):
+        """Find information on the given action.
+
+        For example, given "anon:Version.read" it would return a `desc.Action`
+        instance describing the anonymous "read" action on "VersionHandler".
+        """
         match = re.match(r"^(anon|auth):(\w+[.]\w+)$", action_name)
         if match is None:
             raise ValueError(
@@ -161,6 +252,7 @@ class ApplicationBuilder:
 
 
 class ApplicationView:
+    """A meta-handler that mimics the behaviour of MAAS's Web API handlers."""
 
     def __init__(self):
         super(ApplicationView, self).__init__()
@@ -198,6 +290,7 @@ class ApplicationView:
 
 
 class ApplicationRunner:
+    """An asynchronous context manager that starts and stops an application."""
 
     def __init__(self, application, basepath):
         super(ApplicationRunner, self).__init__()
