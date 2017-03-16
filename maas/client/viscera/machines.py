@@ -67,9 +67,13 @@ class MachinesType(ObjectType):
         else:
             return cls._object(data)
 
-    async def get_power_parameters(
+    async def get_power_parameters_for(
             cls, *, system_ids: typing.Sequence[str]=[]):
         """
+        Get a list of power parameters for specified systems.
+        *WARNING*: This method is considered 'alpha' and may be modified
+        in future.
+
         :param system_ids: The system IDs to get power parameters for
         """
         data = await cls._handler.power_parameters(id=system_ids)

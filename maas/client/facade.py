@@ -139,7 +139,8 @@ class Client:
             "allocate": origin.Machines.allocate,
             "get": origin.Machine.read,
             "list": origin.Machines.read,
-            "get_power_parameters": origin.Machines.get_power_parameters,
+            "get_power_parameters_for":
+                origin.Machines.get_power_parameters_for,
         }
 
     @facade

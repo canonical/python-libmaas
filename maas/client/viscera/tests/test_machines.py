@@ -120,22 +120,24 @@ class TestMachines(TestCase):
             not_tags=['baz'],
         )
 
-    def test__get_power_parameters(self):
+    def test__get_power_parameters_for(self):
         Machines = make_origin().Machines
         power_parameters = make_power_params()
         Machines._handler.power_parameters.return_value = power_parameters
         self.assertThat(
-            Machines.get_power_parameters(),
+            Machines.get_power_parameters_for(),
             Equals(power_parameters)
         )
         Machines._handler.power_parameters.assert_called_once_with(id=[])
 
-    def test__get_power_parameters_with_system_ids(self):
+    def test__get_power_parameters_for_with_system_ids(self):
         power_parameters = make_power_params(quantity=3)
         Machines = make_origin().Machines
         Machines._handler.power_parameters.return_value = power_parameters
         self.assertThat(
-            Machines.get_power_parameters(system_ids=power_parameters.keys()),
+            Machines.get_power_parameters_for(
+                system_ids=power_parameters.keys()
+            ),
             Equals(power_parameters)
         )
         Machines._handler.power_parameters.assert_called_once_with(
