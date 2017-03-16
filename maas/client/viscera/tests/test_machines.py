@@ -24,16 +24,6 @@ def make_origin():
     return bind(machines.Machines, machines.Machine)
 
 
-def make_power_params(quantity=1):
-    # Create dummy power parameters for testing
-    return {
-        make_name_without_spaces("system_id"): {
-            "key": make_name_without_spaces("value")
-        }
-        for _ in range(quantity)
-    }
-
-
 class TestMachine(TestCase):
 
     def test__string_representation_includes_only_system_id_and_hostname(self):
@@ -120,18 +110,20 @@ class TestMachines(TestCase):
             not_tags=['baz'],
         )
 
-    def test__get_power_parameters_for(self):
+    def test__get_power_parameters_for_with_empty_list(self):
         Machines = make_origin().Machines
-        power_parameters = make_power_params()
-        Machines._handler.power_parameters.return_value = power_parameters
         self.assertThat(
-            Machines.get_power_parameters_for(),
-            Equals(power_parameters)
+            Machines.get_power_parameters_for(system_ids=[]),
+            Equals({}),
         )
-        Machines._handler.power_parameters.assert_called_once_with(id=[])
 
     def test__get_power_parameters_for_with_system_ids(self):
-        power_parameters = make_power_params(quantity=3)
+        power_parameters = {
+            make_name_without_spaces("system_id"): {
+                "key": make_name_without_spaces("value")
+            }
+            for _ in range(3)
+        }
         Machines = make_origin().Machines
         Machines._handler.power_parameters.return_value = power_parameters
         self.assertThat(
