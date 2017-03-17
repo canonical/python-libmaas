@@ -76,7 +76,7 @@ class MachinesType(ObjectType):
 
         :param system_ids: The system IDs to get power parameters for
         """
-        if system_ids == []:
+        if len(system_ids) == 0:
             return {}
         data = await cls._handler.power_parameters(id=system_ids)
         return data
