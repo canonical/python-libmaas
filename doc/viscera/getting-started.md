@@ -15,7 +15,7 @@ $ maas shell
 This will provide you with a pre-prepared `origin` object that points to
 `foo` from above. This is the root object of the API.
 
-You can also log-in programmatically:
+If you have MAAS 2.2 or later you can also log-in programmatically:
 
 ```pycon
 >>> profile, origin = Origin.login(
