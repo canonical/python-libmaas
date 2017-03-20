@@ -22,7 +22,10 @@ setup(
         'Topic :: Software Development :: Libraries',
     ],
     namespace_packages=['maas'],
-    packages=find_packages(),
+    packages=find_packages(
+        include={"maas", "maas.*"},
+        exclude={"*.tests", "*.testing"},
+    ),
     package_data={
         'maas.client.bones.testing': ['*.json'],
     },

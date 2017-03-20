@@ -5,6 +5,9 @@
         make clean
         make test
 
+1. If you didn't `make clean` just now, do it! Without it the [PyPI][]
+   uploads may be built incorrectly.
+
 1. Bump version in ``setup.py``, merge to _master_.
 
 1. Tag _master_:
