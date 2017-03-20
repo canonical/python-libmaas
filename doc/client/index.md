@@ -1,8 +1,9 @@
 <h1>The Web API client</h1>
 
-Calling ``maas.client.login`` or ``maas.client.connect`` will return a
-``maas.client.facade.Client`` instance. This provides an easy to
-understand starting point for working with MAAS's Web API.
+Calling ``maas.client.connect`` or ``maas.client.login`` (MAAS 2.2+
+only) will return a ``maas.client.facade.Client`` instance. This
+provides an easy to understand starting point for working with MAAS's
+Web API.
 
 
 ## An example
@@ -10,12 +11,12 @@ understand starting point for working with MAAS's Web API.
 ```python
 #!/usr/bin/env python3.5
 
-from maas.client import login
+from maas.client import connect
 
-client = login(
-    "http://localhost:5240/MAAS/",
-    username="foo", password="bar",
-)
+# Replace … with an API key previously obtained by hand from
+# http://$host:$port/MAAS/account/prefs/.
+client = maas.client.connect(
+    "http://localhost:5240/MAAS/", apikey="…")
 
 # Get a reference to self.
 myself = client.users.whoami()
@@ -35,6 +36,20 @@ client.maas.set_http_proxy("http://localhost:3128")
 # Allocate and deploy a machine.
 machine = client.machines.allocate()
 machine.deploy()
+```
+
+
+### Using `login`
+
+Alternatively, a client can be obtained from a username and password,
+replacing the call to `connect` above. This only works in MAAS 2.2 and
+above; below that a `LoginNotSupported` exception will be raised.
+
+```python
+client = login(
+    "http://localhost:5240/MAAS/",
+    username="foo", password="bar",
+)
 ```
 
 

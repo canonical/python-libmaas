@@ -15,9 +15,10 @@ from http import HTTPStatus
 from pprint import pprint
 from maas.client import bones
 
-profile, session = bones.SessionAPI.login(
-    "http://localhost:5240/MAAS/", username="alice",
-    password="wonderland")
+# Replace "a:b:c" with an API key obtained from the UI at
+# http://$host:$port/MAAS/account/prefs/.
+profile, session = bones.SessionAPI.connect(
+    "http://localhost:5240/MAAS/", apikey="a:b:c")
 
 # Create a tag if it doesn't exist.
 tag_name = "gryphon"

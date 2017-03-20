@@ -21,6 +21,7 @@ import aiohttp.errors
 from . import helpers
 from .. import utils
 from ..utils import profiles
+from ..utils.async import asynchronous
 
 
 class SessionError(Exception):
@@ -31,6 +32,7 @@ class SessionAPI:
     """Represents an API session with a remote MAAS installation."""
 
     @classmethod
+    @asynchronous
     async def fromURL(
             cls, url, *, credentials=None, insecure=False):
         """Return a `SessionAPI` for a given MAAS instance."""
@@ -63,6 +65,7 @@ class SessionAPI:
             return cls.fromProfile(config.load(name))
 
     @classmethod
+    @asynchronous
     async def login(
             cls, url, *, username=None, password=None, insecure=False):
         """Make a `SessionAPI` by logging-in with a username and password.
@@ -78,6 +81,7 @@ class SessionAPI:
         return profile, session
 
     @classmethod
+    @asynchronous
     async def connect(
             cls, url, *, apikey=None, insecure=False):
         """Make a `SessionAPI` by connecting with an apikey.
@@ -275,6 +279,7 @@ class ActionAPI:
         """
         return CallAPI(params, self)
 
+    @asynchronous
     async def __call__(self, **data):
         """Convenience method to do ``this.bind(**params).call(**data).data``.
 
@@ -418,6 +423,7 @@ class CallAPI:
 
         return uri, body, headers
 
+    @asynchronous
     async def dispatch(self, uri, body, headers):
         """Dispatch the call via HTTP.
 
