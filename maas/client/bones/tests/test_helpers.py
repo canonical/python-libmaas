@@ -6,10 +6,13 @@ from urllib.parse import (
     urlsplit,
 )
 
+import aiohttp.web
+from testtools import ExpectedException
 from testtools.matchers import (
     Equals,
     Is,
     IsInstance,
+    MatchesDict,
 )
 
 from .. import (
@@ -27,6 +30,8 @@ from ...utils import (
     profiles,
 )
 from ...utils.testing import make_Credentials
+from ..testing import api_descriptions
+from ..testing.server import ApplicationBuilder
 
 
 class TestFetchAPIDescription(TestCase):
@@ -160,7 +165,7 @@ class TestLogin(TestCase):
     def setUp(self):
         super(TestLogin, self).setUp()
         self.patch(
-            helpers, "_obtain_token",
+            helpers, "authenticate",
             AsyncCallableMock(return_value=None))
         self.patch(
             helpers, "fetch_api_description",
@@ -170,7 +175,7 @@ class TestLogin(TestCase):
         # Log-in without a user-name or a password.
         profile = helpers.login("http://example.org:5240/MAAS/")
         # No token was obtained, but the description was fetched.
-        helpers._obtain_token.assert_not_called()
+        helpers.authenticate.assert_not_called()
         helpers.fetch_api_description.assert_called_once_with(
             urlparse("http://example.org:5240/MAAS/api/2.0/"),
             None, False)
@@ -180,11 +185,11 @@ class TestLogin(TestCase):
 
     def test__authenticated_when_username_and_password_provided(self):
         credentials = make_Credentials()
-        helpers._obtain_token.return_value = credentials
+        helpers.authenticate.return_value = credentials
         # Log-in with a user-name and a password.
         profile = helpers.login("http://foo:bar@example.org:5240/MAAS/")
         # A token was obtained, and the description was fetched.
-        helpers._obtain_token.assert_called_once_with(
+        helpers.authenticate.assert_called_once_with(
             "http://example.org:5240/MAAS/api/2.0/",
             "foo", "bar", insecure=False)
         helpers.fetch_api_description.assert_called_once_with(
@@ -242,7 +247,7 @@ class TestLogin(TestCase):
 
     def test__API_token_is_fetched_insecurely_if_requested(self):
         helpers.login("http://foo:bar@example.org:5240/MAAS/", insecure=True)
-        helpers._obtain_token.assert_called_once_with(
+        helpers.authenticate.assert_called_once_with(
             "http://example.org:5240/MAAS/api/2.0/",
             "foo", "bar", insecure=True)
 
@@ -254,18 +259,88 @@ class TestLogin(TestCase):
 
     def test__uses_username_from_URL_if_set(self):
         helpers.login("http://foo@maas.io/", password="bar")
-        helpers._obtain_token.assert_called_once_with(
+        helpers.authenticate.assert_called_once_with(
             "http://maas.io/api/2.0/", "foo", "bar", insecure=False)
 
     def test__uses_username_and_password_from_URL_if_set(self):
         helpers.login("http://foo:bar@maas.io/")
-        helpers._obtain_token.assert_called_once_with(
+        helpers.authenticate.assert_called_once_with(
             "http://maas.io/api/2.0/", "foo", "bar", insecure=False)
 
     def test__uses_empty_username_and_password_in_URL_if_set(self):
         helpers.login("http://:@maas.io/")
-        helpers._obtain_token.assert_called_once_with(
+        helpers.authenticate.assert_called_once_with(
             "http://maas.io/api/2.0/", "", "", insecure=False)
+
+
+class TestAuthenticate(TestCase):
+    """Tests for `authenticate`."""
+
+    scenarios = tuple(
+        (name, dict(version=version, description=description))
+        for name, version, description in api_descriptions)
+
+    async def test__obtains_credentials_from_server(self):
+        builder = ApplicationBuilder(self.description)
+
+        @builder.handle("anon:Version.read")
+        async def version(request):
+            return {"capabilities": ["authenticate-api"]}
+
+        credentials = make_Credentials()
+        parameters = None
+
+        @builder.route("POST", "/accounts/authenticate/")
+        async def deploy(request):
+            nonlocal parameters
+            parameters = await request.post()
+            return {
+                "consumer_key": credentials.consumer_key,
+                "token_key": credentials.token_key,
+                "token_secret": credentials.token_secret,
+            }
+
+        username = make_name_without_spaces("username")
+        password = make_name_without_spaces("password")
+
+        async with builder.serve() as baseurl:
+            credentials_observed = await helpers.authenticate(
+                baseurl, username, password)
+
+        self.assertThat(
+            credentials_observed, Equals(credentials))
+        self.assertThat(
+            parameters, MatchesDict({
+                "username": Equals(username),
+                "password": Equals(password),
+                "consumer": IsInstance(str),
+            }))
+
+    async def test__raises_error_when_server_does_not_support_authn(self):
+        builder = ApplicationBuilder(self.description)
+
+        @builder.handle("anon:Version.read")
+        async def version(request):
+            return {"capabilities": []}
+
+        async with builder.serve() as baseurl:
+            with ExpectedException(helpers.LoginNotSupported):
+                await helpers.authenticate(baseurl, "username", "password")
+
+    async def test__raises_error_when_server_rejects_credentials(self):
+        builder = ApplicationBuilder(self.description)
+
+        @builder.handle("anon:Version.read")
+        async def version(request):
+            return {"capabilities": ["authenticate-api"]}
+
+        @builder.route("POST", "/accounts/authenticate/")
+        async def deploy(request):
+            raise aiohttp.web.HTTPForbidden()
+
+        async with builder.serve() as baseurl:
+            with ExpectedException(helpers.RemoteError):
+                await helpers.authenticate(baseurl, "username", "password")
 
 
 class TestDeriveResourceName(TestCase):
