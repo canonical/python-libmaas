@@ -18,7 +18,7 @@ integrate: bin/tox
 	@bin/tox -e integrate
 
 lint: bin/tox
-	@bin/tox -e lint
+	@bin/tox -e lint,imports
 
 clean:
 	$(RM) -r bin build dist include lib local share

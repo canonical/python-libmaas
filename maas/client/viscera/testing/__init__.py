@@ -8,8 +8,8 @@ from collections import Mapping
 from itertools import chain
 from unittest.mock import Mock
 
-from . import OriginBase
-from ..testing import AsyncCallableMock
+from .. import OriginBase
+from ...testing import AsyncCallableMock
 
 
 def bind(*objects, session=None):
