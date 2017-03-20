@@ -29,8 +29,8 @@ class TestSessionAPI(TestCase):
     def test__fromURL_raises_SessionError_when_request_fails(self):
         fixture = self.useFixture(testing.DescriptionServer(b"bogus"))
         error = self.assertRaises(
-            bones.SessionError, self.loop.run_until_complete,
-            bones.SessionAPI.fromURL(fixture.url + "bogus/"))
+            bones.SessionError, bones.SessionAPI.fromURL,
+            fixture.url + "bogus/")
         self.assertEqual(
             fixture.url + "bogus/ -> 404 Not Found",
             str(error))
@@ -39,24 +39,23 @@ class TestSessionAPI(TestCase):
         fixture = self.useFixture(testing.DescriptionServer())
         fixture.handler.content_type = "text/json"
         error = self.assertRaises(
-            bones.SessionError, self.loop.run_until_complete,
-            bones.SessionAPI.fromURL(fixture.url))
+            bones.SessionError, bones.SessionAPI.fromURL, fixture.url)
         self.assertEqual(
             "Expected application/json, got: text/json",
             str(error))
 
-    def test__fromURL_sets_credentials_on_session(self):
+    async def test__fromURL_sets_credentials_on_session(self):
         fixture = self.useFixture(testing.DescriptionServer())
         credentials = make_Credentials()
-        session = self.loop.run_until_complete(
-            bones.SessionAPI.fromURL(fixture.url, credentials=credentials))
+        session = await bones.SessionAPI.fromURL(
+            fixture.url, credentials=credentials)
         self.assertIs(credentials, session.credentials)
 
-    def test__fromURL_sets_insecure_on_session(self):
+    async def test__fromURL_sets_insecure_on_session(self):
         insecure = random.choice((True, False))
         fixture = self.useFixture(testing.DescriptionServer())
-        session = self.loop.run_until_complete(
-            bones.SessionAPI.fromURL(fixture.url, insecure=insecure))
+        session = await bones.SessionAPI.fromURL(
+            fixture.url, insecure=insecure)
         self.assertThat(session.insecure, Is(insecure))
 
 
@@ -68,11 +67,10 @@ class TestSessionAPI_APIVersions(TestCase):
         for name, version, path in testing.list_api_descriptions()
     )
 
-    def test__fromURL_downloads_description(self):
+    async def test__fromURL_downloads_description(self):
         description = self.path.read_bytes()
         fixture = self.useFixture(testing.DescriptionServer(description))
-        session = self.loop.run_until_complete(
-            bones.SessionAPI.fromURL(fixture.url))
+        session = await bones.SessionAPI.fromURL(fixture.url)
         self.assertEqual(
             json.loads(description.decode("utf-8")),
             session.description)
