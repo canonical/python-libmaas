@@ -4,6 +4,7 @@ __all__ = [
     "ApplicationBuilder",
 ]
 
+import asyncio
 from collections import defaultdict
 from functools import partial
 import json
@@ -295,11 +296,12 @@ class ApplicationRunner:
     def __init__(self, application, basepath):
         super(ApplicationRunner, self).__init__()
         self._application = application
-        self._loop = application.loop
         self._basepath = basepath
 
     async def __aenter__(self):
-        self._handler = self._application.make_handler()
+        self._loop = asyncio.get_event_loop()
+        self._handler = self._application.make_handler(loop=self._loop)
+        await self._application.startup()
         self._server = await self._loop.create_server(
             self._handler, host="0.0.0.0", port=0)
         return "http://%s:%d/%s/" % (

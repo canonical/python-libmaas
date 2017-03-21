@@ -26,7 +26,6 @@ from urllib.parse import (
 )
 
 import aiohttp
-import aiohttp.errors
 
 from ..utils import api_url
 from ..utils.async import asynchronous
