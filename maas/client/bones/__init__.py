@@ -16,7 +16,6 @@ from collections import (
 import json
 
 import aiohttp
-import aiohttp.errors
 
 from . import helpers
 from .. import utils
