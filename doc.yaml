@@ -25,3 +25,4 @@ pages:
       - Others: viscera/other.md
   - Development:
     - Release checklist: development/releasing.md
+    - Adding an object: development/adding-an-object.md
