@@ -68,7 +68,7 @@ class MachinesType(ObjectType):
             return cls._object(data)
 
     async def get_power_parameters_for(
-            cls, *, system_ids: typing.Sequence[str]):
+            cls, system_ids: typing.Sequence[str]):
         """
         Get a list of power parameters for specified systems.
         *WARNING*: This method is considered 'alpha' and may be modified
