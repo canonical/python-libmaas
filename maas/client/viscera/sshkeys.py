@@ -5,8 +5,6 @@ __all__ = [
     "SSHKey",
 ]
 
-import typing
-
 from . import (
     check,
     check_optional,
