@@ -67,11 +67,17 @@ class MachinesType(ObjectType):
         else:
             return cls._object(data)
 
-    async def get_power_parameters(
-            cls, *, system_ids: typing.Sequence[str]=[]):
+    async def get_power_parameters_for(
+            cls, system_ids: typing.Sequence[str]):
         """
+        Get a list of power parameters for specified systems.
+        *WARNING*: This method is considered 'alpha' and may be modified
+        in future.
+
         :param system_ids: The system IDs to get power parameters for
         """
+        if len(system_ids) == 0:
+            return {}
         data = await cls._handler.power_parameters(id=system_ids)
         return data
 
@@ -192,6 +198,10 @@ class Machine(Object, metaclass=MachineType):
             params["comment"] = comment
         data = await self._handler.release(**params)
         return type(self)(data)
+
+    async def get_power_parameters(self):
+        data = await self._handler.power_parameters(system_id=self.system_id)
+        return data
 
     def __repr__(self):
         return super(Machine, self).__repr__(
