@@ -643,6 +643,7 @@ class Origin(OriginBase, metaclass=OriginType):
             ".files",
             ".maas",
             ".machines",
+            ".sshkeys",
             ".tags",
             ".users",
             ".version",

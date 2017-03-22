@@ -158,6 +158,14 @@ class Client:
         }
 
     @facade
+    def ssh_keys(origin):
+        return {
+            "create": origin.SSHKeys.create,
+            "get": origin.SSHKey.read,
+            "list": origin.SSHKeys.read,
+        }
+
+    @facade
     def tags(origin):
         return {
             "create": origin.Tags.create,
