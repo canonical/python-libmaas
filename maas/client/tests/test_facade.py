@@ -110,9 +110,9 @@ class TestClient(TestCase):
             ),
         ))
 
-    def test__client_maps_sshkeys(self):
+    def test__client_maps_ssh_keys(self):
         self.assertThat(self.client, MatchesClient(
-            sshkeys=MatchesFacade(
+            ssh_keys=MatchesFacade(
                 create=self.origin.SSHKeys.create,
                 get=self.origin.SSHKey.read,
                 list=self.origin.SSHKeys.read,
