@@ -115,6 +115,15 @@ class Client:
         return namespace
 
     @facade
+    def fabrics(origin):
+        return {
+            "create": origin.Fabrics.create,
+            "get": origin.Fabric.read,
+            "get_default_fabric": origin.Fabric.get_default_fabric,
+            "list": origin.Fabrics.read,
+        }
+
+    @facade
     def files(origin):
         return {
             "list": origin.Files.read,
