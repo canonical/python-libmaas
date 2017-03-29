@@ -119,7 +119,7 @@ class Client:
         return {
             "create": origin.Fabrics.create,
             "get": origin.Fabric.read,
-            "get_default_fabric": origin.Fabric.get_default_fabric,
+            "get_default": origin.Fabric.get_default,
             "list": origin.Fabrics.read,
         }
 

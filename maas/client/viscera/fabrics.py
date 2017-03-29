@@ -42,27 +42,22 @@ class FabricsType(ObjectType):
         ))
 
 
-
 class Fabrics(ObjectSet, metaclass=FabricsType):
     """The set of Fabrics stored in MAAS."""
 
 
 class FabricType(ObjectType):
 
-    async def read(cls, id: int):
-        """Get a `Fabric` by its `id`."""
-        data = await cls._handler.read(id=id)
-        return cls(data)
-
-    async def delete(cls, id: int):
-        """Delete a `Fabric`"""
-        await cls._handler.delete(id=id)
-
-    async def get_default_fabric(cls):
+    async def get_default(cls):
         """
         Get the 'default' Fabric for the MAAS.
         """
         data = await cls._handler.read(id=0)
+        return cls(data)
+
+    async def read(cls, id: int):
+        """Get a `Fabric` by its `id`."""
+        data = await cls._handler.read(id=id)
         return cls(data)
 
 
@@ -81,3 +76,7 @@ class Fabric(Object, metaclass=FabricType):
     class_type = ObjectField.Checked(
         "class_type", check_optional(str), readonly=True
     )
+
+    async def delete(self):
+        """Delete this Fabric."""
+        await self._handler.delete(id=self.id)
