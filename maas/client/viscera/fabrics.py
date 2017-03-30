@@ -27,11 +27,12 @@ class FabricsType(ObjectType):
         """
         Create a `Fabric` in MAAS.
 
-        :param name: The name of the `Fabric`.
+        :param name: The name of the `Fabric` (optional, will be given a
+        default value if not specified).
         :type name: `str`
-        :param description: A description of the `Fabric`.
+        :param description: A description of the `Fabric` (optional).
         :type description: `str`
-        :param class_type: The class type of the `Fabric`.
+        :param class_type: The class type of the `Fabric` (optional).
         :type class_type: `str`
         :returns: The created Fabric
         :rtype: `Fabric`
