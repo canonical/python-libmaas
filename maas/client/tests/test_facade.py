@@ -78,6 +78,16 @@ class TestClient(TestCase):
             ),
         ))
 
+    def test__client_maps_fabrics(self):
+        self.assertThat(self.client, MatchesClient(
+            fabrics=MatchesFacade(
+                create=origin.Fabrics.create,
+                get=origin.Fabric.read,
+                get_default=origin.Fabric.get_default,
+                list=origin.Fabrics.read,
+            )
+        ))
+
     def test__client_maps_files(self):
         self.assertThat(self.client, MatchesClient(
             files=MatchesFacade(

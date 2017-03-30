@@ -22,7 +22,8 @@ class FabricsType(ObjectType):
         data = await cls._handler.read()
         return cls(map(cls._object, data))
 
-    async def create(cls, name: str, description: str, class_type: str):
+    async def create(cls, *, name: str=None,
+                     description: str=None, class_type: str=None):
         """
         Create a `Fabric` in MAAS.
 
@@ -35,11 +36,14 @@ class FabricsType(ObjectType):
         :returns: The created Fabric
         :rtype: `Fabric`
         """
-        return cls._object(await cls._handler.create(
-            name=name,
-            description=description,
-            class_type=class_type,
-        ))
+        params = {}
+        if name is not None:
+            params["name"] = name
+        if description is not None:
+            params["description"] = description
+        if class_type is not None:
+            params["class_type"] = class_type
+        return cls._object(await cls._handler.create(**params))
 
 
 class Fabrics(ObjectSet, metaclass=FabricsType):
