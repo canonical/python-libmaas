@@ -640,6 +640,7 @@ class Origin(OriginBase, metaclass=OriginType):
             ".controllers",
             ".devices",
             ".events",
+            ".fabrics",
             ".files",
             ".maas",
             ".machines",
