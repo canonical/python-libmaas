@@ -53,11 +53,13 @@ class Fabrics(ObjectSet, metaclass=FabricsType):
 
 class FabricType(ObjectType):
 
+    _default_fabric_id = 0
+
     async def get_default(cls):
         """
         Get the 'default' Fabric for the MAAS.
         """
-        data = await cls._handler.read(id=0)
+        data = await cls._handler.read(id=cls._default_fabric_id)
         return cls(data)
 
     async def read(cls, id: int):
@@ -84,4 +86,10 @@ class Fabric(Object, metaclass=FabricType):
 
     async def delete(self):
         """Delete this Fabric."""
+        if self.id == self._origin.Fabric._default_fabric_id:
+            raise DeleteDefaultFabric("Cannot delete default fabric.")
         await self._handler.delete(id=self.id)
+
+
+class DeleteDefaultFabric(Exception):
+    """Default fabric cannot be deleted."""

@@ -4,7 +4,11 @@ import random
 
 from testtools.matchers import Equals
 
-from .. import fabrics
+from ..fabrics import (
+    DeleteDefaultFabric,
+    Fabric,
+    Fabrics,
+)
 
 from .. testing import bind
 from ...testing import (
@@ -18,7 +22,7 @@ def make_origin():
     Create a new origin with Fabrics and Fabric. The former
     refers to the latter via the origin, hence why it must be bound.
     """
-    return bind(fabrics.Fabrics, fabrics.Fabric)
+    return bind(Fabrics, Fabric)
 
 
 class TestFabrics(TestCase):
@@ -88,7 +92,7 @@ class TestFabric(TestCase):
 
     def test__fabric_delete(self):
         Fabric = make_origin().Fabric
-        fabric_id = random.randint(0, 100)
+        fabric_id = random.randint(1, 100)
         fabric = Fabric({
             "id": fabric_id,
             "name": make_string_without_spaces(),
@@ -96,3 +100,12 @@ class TestFabric(TestCase):
         })
         fabric.delete()
         Fabric._handler.delete.assert_called_once_with(id=fabric_id)
+
+    def test__fabric_delete_default(self):
+        Fabric = make_origin().Fabric
+        fabric = Fabric({
+            "id": 0,
+            "name": make_string_without_spaces(),
+            "class_type": make_string_without_spaces(),
+        })
+        self.assertRaises(DeleteDefaultFabric, fabric.delete)

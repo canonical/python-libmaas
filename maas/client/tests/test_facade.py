@@ -81,10 +81,10 @@ class TestClient(TestCase):
     def test__client_maps_fabrics(self):
         self.assertThat(self.client, MatchesClient(
             fabrics=MatchesFacade(
-                create=origin.Fabrics.create,
-                get=origin.Fabric.read,
-                get_default=origin.Fabric.get_default,
-                list=origin.Fabrics.read,
+                create=self.origin.Fabrics.create,
+                get=self.origin.Fabric.read,
+                get_default=self.origin.Fabric.get_default,
+                list=self.origin.Fabrics.read,
             )
         ))
 
