@@ -53,6 +53,9 @@ class ZoneType(ObjectType):
 class Zone(Object, metaclass=ZoneType):
     """A zone stored in MAAS."""
 
+    id = ObjectField.Checked(
+        "id", check(int), readonly=True)
+
     name = ObjectField.Checked(
         "name", check(str), check(str))
     description = ObjectField.Checked(

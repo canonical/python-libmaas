@@ -2,7 +2,11 @@
 
 import random
 
-from testtools.matchers import Equals
+from testtools.matchers import (
+    Equals,
+    IsInstance,
+    MatchesStructure,
+)
 
 from .. import zones
 
@@ -24,22 +28,44 @@ def make_origin():
 class TestZones(TestCase):
 
     def test__zones_create(self):
-        Zones = make_origin().Zones
+        origin = make_origin()
+        zone_id = random.randint(0, 100)
         name = make_string_without_spaces()
         description = make_string_without_spaces()
-        Zones._handler.create.return_value = {
-            "id": 1,
+        origin.Zones._handler.create.return_value = {
+            "id": zone_id,
             "name": name,
             "description": description,
         }
-        Zones.create(
+        zone = origin.Zones.create(
             name=name,
             description=description,
         )
-        Zones._handler.create.assert_called_once_with(
+        origin.Zones._handler.create.assert_called_once_with(
             name=name,
             description=description,
         )
+        self.assertThat(zone, IsInstance(origin.Zone))
+        self.assertThat(zone, MatchesStructure.byEquality(
+            id=zone_id, name=name, description=description
+        ))
+
+    def test__zones_create_without_description(self):
+        origin = make_origin()
+        zone_id = random.randint(0, 100)
+        name = make_string_without_spaces()
+        description = ""
+        origin.Zones._handler.create.return_value = {
+            "id": zone_id,
+            "name": name,
+            "description": description,
+        }
+        zone = origin.Zones.create(name=name)
+        origin.Zones._handler.create.assert_called_once_with(name=name)
+        self.assertThat(zone, IsInstance(origin.Zone))
+        self.assertThat(zone, MatchesStructure.byEquality(
+            id=zone_id, name=name, description=description
+        ))
 
     def test__zones_read(self):
         """Zones.read() returns a list of Zones."""
