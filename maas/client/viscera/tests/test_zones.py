@@ -23,23 +23,22 @@ def make_origin():
 
 class TestZones(TestCase):
 
-    def test__zones_create(self):
+    def _assert_create_zone(self, **kwargs):
         Zones = make_origin().Zones
-        name = make_string_without_spaces()
-        description = make_string_without_spaces()
-        Zones._handler.create.return_value = {
-            "id": 1,
-            "name": name,
-            "description": description,
-        }
-        Zones.create(
-            name=name,
-            description=description,
+        zone = {"id": random.randint(0, 100)}
+        zone.update(kwargs)
+        Zones._handler.create.return_value = zone
+        Zones.create(**kwargs)
+        Zones._handler.create.assert_called_once_with(**kwargs)
+
+    def test__zones_create(self):
+        self._assert_create_zone(
+            name=make_string_without_spaces(),
+            description=make_string_without_spaces(),
         )
-        Zones._handler.create.assert_called_once_with(
-            name=name,
-            description=description,
-        )
+
+    def test__zones_create_no_description(self):
+        self._assert_create_zone(name=make_string_without_spaces())
 
     def test__zones_read(self):
         """Zones.read() returns a list of Zones."""
@@ -62,6 +61,7 @@ class TestZone(TestCase):
     def test__zone_read(self):
         Zone = make_origin().Zone
         zone = {
+            "id": random.randint(0, 100),
             "name": make_string_without_spaces(),
             "description": make_string_without_spaces(),
         }
@@ -73,6 +73,7 @@ class TestZone(TestCase):
         Zone = make_origin().Zone
         zone_name = make_string_without_spaces()
         zone = Zone({
+            "id": random.randint(0, 100),
             "name": zone_name,
             "description": make_string_without_spaces(),
         })
