@@ -88,6 +88,7 @@ class TestZone(TestCase):
     def test__zone_read(self):
         Zone = make_origin().Zone
         zone = {
+            "id": random.randint(0, 100),
             "name": make_string_without_spaces(),
             "description": make_string_without_spaces(),
         }
@@ -99,6 +100,7 @@ class TestZone(TestCase):
         Zone = make_origin().Zone
         zone_name = make_string_without_spaces()
         zone = Zone({
+            "id": random.randint(0, 100),
             "name": zone_name,
             "description": make_string_without_spaces(),
         })
