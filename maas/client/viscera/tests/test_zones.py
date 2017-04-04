@@ -60,7 +60,21 @@ class TestZones(TestCase):
 class TestZone(TestCase):
 
     def test__zone_read(self):
-        assert False
+        Zone = make_origin().Zone
+        zone = {
+            "name": make_string_without_spaces(),
+            "description": make_string_without_spaces(),
+        }
+        Zone._handler.read.return_value = zone
+        self.assertThat(Zone.read(name=zone["name"]), Equals(Zone(zone)))
+        Zone._handler.read.assert_called_once_with(name=zone["name"])
 
     def test__zone_delete(self):
-        assert False
+        Zone = make_origin().Zone
+        zone_name = make_string_without_spaces()
+        zone = Zone({
+            "name": zone_name,
+            "description": make_string_without_spaces(),
+        })
+        zone.delete()
+        Zone._handler.delete.assert_called_once_with(name=zone_name)
