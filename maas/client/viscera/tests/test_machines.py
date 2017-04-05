@@ -52,6 +52,12 @@ class TestMachine(TestCase):
             system_id=machine.system_id
         )
 
+    def test__enter_rescue_mode(self):
+        assert False
+
+    def test__exit_rescue_mode(self):
+        assert False
+
 
 class TestMachine_APIVersion(TestCase):
 
