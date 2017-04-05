@@ -22,6 +22,22 @@ class ZonesType(ObjectType):
         data = await cls._handler.read()
         return cls(map(cls._object, data))
 
+    async def create(cls, name: str, description: str=None):
+        """
+        Create a `Zone` in MAAS.
+
+        :param name: The name of the `Zone`.
+        :type name: `str`
+        :param description: A description of the `Zone`.
+        :type description: `str`
+        :returns: The create `Zone`
+        :rtype: `Fabric`
+        """
+        params = {'name': name}
+        if description is not None:
+            params['description'] = description
+        return cls._object(await cls._handler.create(**params))
+
 
 class Zones(ObjectSet, metaclass=ZonesType):
     """The set of zones stored in MAAS."""
@@ -37,6 +53,9 @@ class ZoneType(ObjectType):
 class Zone(Object, metaclass=ZoneType):
     """A zone stored in MAAS."""
 
+    id = ObjectField.Checked(
+        "id", check(int), readonly=True)
+
     name = ObjectField.Checked(
         "name", check(str), check(str))
     description = ObjectField.Checked(
@@ -45,6 +64,12 @@ class Zone(Object, metaclass=ZoneType):
     def __repr__(self):
         return super(Zone, self).__repr__(
             fields={"name", "description"})
+
+    async def delete(self):
+        """
+        Deletes the `Fabric` from MAAS.
+        """
+        return await self._handler.delete(name=self.name)
 
 
 class ZoneField(ObjectField):

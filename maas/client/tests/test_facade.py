@@ -156,6 +156,7 @@ class TestClient(TestCase):
     def test__client_maps_zones(self):
         self.assertThat(self.client, MatchesClient(
             zones=MatchesFacade(
+                create=self.origin.Zones.create,
                 get=self.origin.Zone.read,
                 list=self.origin.Zones.read,
             ),

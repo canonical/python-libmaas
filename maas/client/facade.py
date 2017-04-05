@@ -198,6 +198,7 @@ class Client:
     @facade
     def zones(origin):
         return {
+            "create": origin.Zones.create,
             "get": origin.Zone.read,
             "list": origin.Zones.read,
         }
