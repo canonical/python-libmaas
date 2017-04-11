@@ -36,6 +36,29 @@ class TestMachine(TestCase):
             "<Machine hostname=%(hostname)r system_id=%(system_id)r>"
             % machine._data))
 
+    def test__deploy_with_wait(self):
+        system_id = make_name_without_spaces("system-id")
+        hostname = make_name_without_spaces("hostname")
+        data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "status": NodeStatus.DEPLOYING,
+        }
+        deployed_data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "status": NodeStatus.DEPLOYED,
+        }
+        machine = make_origin().Machine(data)
+        deployed_machine = make_origin().Machine(deployed_data)
+        machine._handler.deploy.return_value = data
+        machine._handler.read.return_value = deployed_data
+        result = machine.deploy(wait=0.1)
+        self.assertThat(result.status, Equals(deployed_machine.status))
+        machine._handler.deploy.assert_called_once_with(
+            system_id=machine.system_id
+        )
+
     def test__get_power_parameters(self):
         machine = make_origin().Machine({
             "system_id": make_name_without_spaces("system-id"),
