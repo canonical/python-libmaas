@@ -5,6 +5,7 @@ __all__ = [
     "Machines",
 ]
 
+import asyncio
 import base64
 from collections import Sequence
 from http import HTTPStatus
@@ -20,6 +21,7 @@ from . import (
     zones,
 )
 from ..bones import CallError
+from ..enum import NodeStatus
 
 
 class MachinesType(ObjectType):
@@ -163,7 +165,8 @@ class Machine(Object, metaclass=MachineType):
 
     async def deploy(
             self, user_data: typing.Union[bytes, str]=None,
-            distro_series: str=None, hwe_kernel: str=None, comment: str=None):
+            distro_series: str=None, hwe_kernel: str=None, comment: str=None,
+            wait: int=None):
         """Deploy this machine.
 
         :param user_data: User-data to provide to the machine when booting. If
@@ -174,6 +177,8 @@ class Machine(Object, metaclass=MachineType):
         :param hwe_kernel: The HWE kernel to deploy. Probably only relevant
             when deploying Ubuntu.
         :param comment: A comment for the event log.
+        :param wait: If specified, wait until the deploy is complete, polling
+            at the specified frequency.
         """
         params = {"system_id": self.system_id}
         if user_data is not None:
@@ -190,18 +195,70 @@ class Machine(Object, metaclass=MachineType):
         if comment is not None:
             params["comment"] = comment
         data = await self._handler.deploy(**params)
-        return type(self)(data)
-
-    async def release(self, comment: str=None):
-        params = {"system_id": self.system_id}
-        if comment is not None:
-            params["comment"] = comment
-        data = await self._handler.release(**params)
-        return type(self)(data)
+        if wait is None:
+            return type(self)(data)
+        else:
+            # Wait for the machine to be fully deployed
+            machine = type(self)(data)
+            while machine.status == NodeStatus.DEPLOYING:
+                await asyncio.sleep(wait)
+                data = await self._handler.read(system_id=self.system_id)
+                machine = type(self)(data)
+            return machine
 
     async def get_power_parameters(self):
         data = await self._handler.power_parameters(system_id=self.system_id)
         return data
+
+    async def release(self, comment: str=None, wait: int=None):
+        params = {"system_id": self.system_id}
+        if comment is not None:
+            params["comment"] = comment
+        data = await self._handler.release(**params)
+        if wait is None:
+            return type(self)(data)
+        else:
+            # Wait for machine to be released
+            machine = type(self)(data)
+            while machine.status == NodeStatus.RELEASING:
+                await asyncio.sleep(wait)
+                data = await self._handler.read(system_id=self.system_id)
+                machine = type(self)(data)
+            return machine
+
+    async def enter_rescue_mode(self, wait: int=None):
+        """
+        Send this machine into 'rescue mode'.
+        """
+        data = await self._handler.rescue_mode(system_id=self.system_id)
+        # TODO: Handle the user not having permission to do this (403)
+        if wait is None:
+            return type(self)(data)
+        else:
+            # Wait for machine to finish entering rescue mode
+            machine = type(self)(data)
+            while machine.status == NodeStatus.ENTERING_RESCUE_MODE:
+                await asyncio.sleep(wait)
+                data = await self._handler.read(system_id=self.system_id)
+                machine = type(self)(data)
+            return machine
+
+    async def exit_rescue_mode(self, wait: int=None):
+        """
+        Exit rescue mode.
+        """
+        data = await self._handler.exit_rescue_mode(system_id=self.system_id)
+        # TODO: Handle the user not having permission to do this (403)
+        if wait is None:
+            return type(self)(data)
+        else:
+            # Wait for machine to finish exiting rescue mode
+            machine = type(self)(data)
+            while machine.status == NodeStatus.EXITING_RESCUE_MODE:
+                await asyncio.sleep(wait)
+                data = await self._handler.read(system_id=self.system_id)
+                machine = type(self)(data)
+            return machine
 
     def __repr__(self):
         return super(Machine, self).__repr__(

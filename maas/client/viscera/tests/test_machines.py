@@ -16,6 +16,7 @@ from ...testing import (
     TestCase,
 )
 from ..testing import bind
+from ...enum import NodeStatus
 
 
 def make_origin():
@@ -53,10 +54,82 @@ class TestMachine(TestCase):
         )
 
     def test__enter_rescue_mode(self):
-        assert False
+        rescue_mode_machine = {
+            "system_id": make_name_without_spaces("system-id"),
+            "hostname": make_name_without_spaces("hostname"),
+            "status": NodeStatus.ENTERING_RESCUE_MODE,
+        }
+        machine = make_origin().Machine(rescue_mode_machine)
+        machine._handler.rescue_mode.return_value = rescue_mode_machine
+        self.assertThat(
+            machine.enter_rescue_mode(),
+            Equals(machine),
+        )
+        machine._handler.rescue_mode.assert_called_once_with(
+            system_id=machine.system_id
+        )
+
+    def test__enter_rescue_mode_with_wait(self):
+        system_id = make_name_without_spaces("system-id")
+        hostname = make_name_without_spaces("hostname")
+        rm_data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "status": NodeStatus.ENTERING_RESCUE_MODE,
+        }
+        erm_data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "status": NodeStatus.RESCUE_MODE,
+        }
+        rm_machine = make_origin().Machine(rm_data)
+        erm_machine = make_origin().Machine(erm_data)
+        rm_machine._handler.rescue_mode.return_value = rm_data
+        rm_machine._handler.read.return_value = erm_data
+        result = rm_machine.enter_rescue_mode(wait=0.1)
+        self.assertThat(result.status, Equals(erm_machine.status))
+        rm_machine._handler.rescue_mode.assert_called_once_with(
+            system_id=rm_machine.system_id
+        )
 
     def test__exit_rescue_mode(self):
-        assert False
+        exit_machine = {
+            "system_id": make_name_without_spaces("system-id"),
+            "hostname": make_name_without_spaces("hostname"),
+            "status": NodeStatus.EXITING_RESCUE_MODE,
+        }
+        machine = make_origin().Machine(exit_machine)
+        machine._handler.exit_rescue_mode.return_value = exit_machine
+        self.assertThat(
+            machine.exit_rescue_mode(),
+            Equals(machine),
+        )
+        machine._handler.exit_rescue_mode.assert_called_once_with(
+            system_id=machine.system_id
+        )
+
+    def test__exit_rescue_mode_with_wait(self):
+        system_id = make_name_without_spaces("system-id")
+        hostname = make_name_without_spaces("hostname")
+        data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "status": NodeStatus.EXITING_RESCUE_MODE,
+        }
+        deployed_data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "status": NodeStatus.DEPLOYED,
+        }
+        machine = make_origin().Machine(data)
+        deployed_machine = make_origin().Machine(deployed_data)
+        machine._handler.exit_rescue_mode.return_value = data
+        machine._handler.read.return_value = deployed_data
+        result = machine.exit_rescue_mode(wait=0.1)
+        self.assertThat(result.status, Equals(deployed_machine.status))
+        machine._handler.exit_rescue_mode.assert_called_once_with(
+            system_id=machine.system_id
+        )
 
 
 class TestMachine_APIVersion(TestCase):
