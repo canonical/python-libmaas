@@ -154,6 +154,29 @@ class TestMachine(TestCase):
             system_id=machine.system_id
         )
 
+    def test__release_with_wait(self):
+        system_id = make_name_without_spaces("system-id")
+        hostname = make_name_without_spaces("hostname")
+        data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "status": NodeStatus.RELEASING,
+        }
+        allocated_data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "status": NodeStatus.ALLOCATED,
+        }
+        machine = make_origin().Machine(data)
+        allocated_machine = make_origin().Machine(allocated_data)
+        machine._handler.release.return_value = data
+        machine._handler.read.return_value = allocated_data
+        result = machine.release(wait=0.1)
+        self.assertThat(result.status, Equals(allocated_machine.status))
+        machine._handler.release.assert_called_once_with(
+            system_id=machine.system_id
+        )
+
 
 class TestMachine_APIVersion(TestCase):
 
