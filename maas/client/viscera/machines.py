@@ -89,6 +89,14 @@ class MachineNotFound(Exception):
     """Machine was not found."""
 
 
+class RescueModeFailure(Exception):
+    """Machine failed to perform a Rescue mode transition."""
+
+
+class FailedDeployment(Exception):
+    """Machine failed to Deploy."""
+
+
 class Machines(ObjectSet, metaclass=MachinesType):
     """The set of machines stored in MAAS."""
 
@@ -205,6 +213,11 @@ class Machine(Object, metaclass=MachineType):
                 await asyncio.sleep(wait)
                 data = await self._handler.read(system_id=self.system_id)
                 machine = type(self)(data)
+            if machine.status == NodeStatus.FAILED_DEPLOYMENT:
+                msg = "{system_id} failed to Deploy.".format(
+                    system_id=machine.system_id
+                )
+                raise FailedDeployment(msg)
             return machine
 
     async def get_power_parameters(self):
@@ -249,6 +262,11 @@ class Machine(Object, metaclass=MachineType):
                 await asyncio.sleep(wait)
                 data = await self._handler.read(system_id=self.system_id)
                 machine = type(self)(data)
+            if machine.status == NodeStatus.FAILED_ENTERING_RESCUE_MODE:
+                msg = "{system_id} failed to enter Rescue Mode.".format(
+                    system_id=machine.system_id
+                )
+                raise RescueModeFailure(msg)
             return machine
 
     async def exit_rescue_mode(self, wait: int=None):
@@ -274,6 +292,11 @@ class Machine(Object, metaclass=MachineType):
                 await asyncio.sleep(wait)
                 data = await self._handler.read(system_id=self.system_id)
                 machine = type(self)(data)
+            if machine.status == NodeStatus.FAILED_EXITING_RESCUE_MODE:
+                msg = "{system_id} failed to exit Rescue Mode.".format(
+                    system_id=machine.system_id
+                )
+                raise RescueModeFailure(msg)
             return machine
 
     def __repr__(self):
