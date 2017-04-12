@@ -22,6 +22,7 @@ from . import (
 )
 from ..bones import CallError
 from ..enum import NodeStatus
+from ..errors import OperationNotAllowed
 
 
 class MachinesType(ObjectType):
@@ -230,8 +231,15 @@ class Machine(Object, metaclass=MachineType):
         """
         Send this machine into 'rescue mode'.
         """
-        data = await self._handler.rescue_mode(system_id=self.system_id)
-        # TODO: Handle the user not having permission to do this (403)
+        try:
+            data = await self._handler.rescue_mode(system_id=self.system_id)
+        except CallError as error:
+            if error.status == HTTPStatus.FORBIDDEN:
+                message = "Not allowed to enter rescue mode"
+                raise OperationNotAllowed(message) from error
+            else:
+                raise
+
         if wait is None:
             return type(self)(data)
         else:
@@ -247,8 +255,16 @@ class Machine(Object, metaclass=MachineType):
         """
         Exit rescue mode.
         """
-        data = await self._handler.exit_rescue_mode(system_id=self.system_id)
-        # TODO: Handle the user not having permission to do this (403)
+        try:
+            data = await self._handler.exit_rescue_mode(
+                system_id=self.system_id
+            )
+        except CallError as error:
+            if error.status == HTTPStatus.FORBIDDEN:
+                message = "Not allowed to exit rescue mode."
+                raise OperationNotAllowed(message) from error
+            else:
+                raise
         if wait is None:
             return type(self)(data)
         else:

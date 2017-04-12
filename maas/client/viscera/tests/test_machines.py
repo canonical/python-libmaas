@@ -1,5 +1,8 @@
 """Test for `maas.client.viscera.machines`."""
 
+from http import HTTPStatus
+from unittest.mock import Mock
+
 from maas.client.bones.testing.server import ApplicationBuilder
 from maas.client.utils.testing import make_Credentials
 from maas.client.viscera import Origin
@@ -10,7 +13,9 @@ from testtools.matchers import (
 )
 
 from .. import machines
+from ...bones import CallError
 from ...bones.testing import api_descriptions
+from ...errors import OperationNotAllowed
 from ...testing import (
     make_name_without_spaces,
     TestCase,
@@ -92,6 +97,22 @@ class TestMachine(TestCase):
             system_id=machine.system_id
         )
 
+    def test__enter_rescue_mode_operation_not_allowed(self):
+        machine = make_origin().Machine({
+            "system_id": make_name_without_spaces("system-id"),
+            "hostname": make_name_without_spaces("hostname"),
+        })
+        # Mock the call to content.decode in the CallError constructor
+        content = Mock()
+        content.decode = Mock(return_value='')
+        machine._handler.rescue_mode.side_effect = CallError(
+            request={"method": "GET", "uri": "www.example.com"},
+            response=Mock(status=HTTPStatus.FORBIDDEN),
+            content=content,
+            call='',
+        )
+        self.assertRaises(OperationNotAllowed, machine.enter_rescue_mode)
+
     def test__enter_rescue_mode_with_wait(self):
         system_id = make_name_without_spaces("system-id")
         hostname = make_name_without_spaces("hostname")
@@ -130,6 +151,22 @@ class TestMachine(TestCase):
         machine._handler.exit_rescue_mode.assert_called_once_with(
             system_id=machine.system_id
         )
+
+    def test__exit_rescue_mode_operation_not_allowed(self):
+        machine = make_origin().Machine({
+            "system_id": make_name_without_spaces("system-id"),
+            "hostname": make_name_without_spaces("hostname"),
+        })
+        # Mock the call to content.decode in the CallError constructor
+        content = Mock()
+        content.decode = Mock(return_value='')
+        machine._handler.exit_rescue_mode.side_effect = CallError(
+            request={"method": "GET", "uri": "www.example.com"},
+            response=Mock(status=HTTPStatus.FORBIDDEN),
+            content=content,
+            call='',
+        )
+        self.assertRaises(OperationNotAllowed, machine.exit_rescue_mode)
 
     def test__exit_rescue_mode_with_wait(self):
         system_id = make_name_without_spaces("system-id")
