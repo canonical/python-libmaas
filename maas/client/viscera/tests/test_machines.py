@@ -274,6 +274,24 @@ class TestMachine(TestCase):
             system_id=machine.system_id
         )
 
+    def test__release_with_wait_failed(self):
+        system_id = make_name_without_spaces("system-id")
+        hostname = make_name_without_spaces("hostname")
+        data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "status": NodeStatus.RELEASING,
+        }
+        failed_release_data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "status": NodeStatus.FAILED_RELEASING,
+        }
+        machine = make_origin().Machine(data)
+        machine._handler.release.return_value = data
+        machine._handler.read.return_value = failed_release_data
+        self.assertRaises(machines.FailedReleasing, machine.release, wait=0.1)
+
 
 class TestMachine_APIVersion(TestCase):
 

@@ -97,6 +97,10 @@ class FailedDeployment(Exception):
     """Machine failed to Deploy."""
 
 
+class FailedReleasing(Exception):
+    """Machine failed to Release."""
+
+
 class Machines(ObjectSet, metaclass=MachinesType):
     """The set of machines stored in MAAS."""
 
@@ -234,10 +238,16 @@ class Machine(Object, metaclass=MachineType):
         else:
             # Wait for machine to be released
             machine = type(self)(data)
-            while machine.status == NodeStatus.RELEASING:
+            while (machine.status == NodeStatus.RELEASING or
+                   machine.status == NodeStatus.DISK_ERASING):
                 await asyncio.sleep(wait)
                 data = await self._handler.read(system_id=self.system_id)
                 machine = type(self)(data)
+            if machine.status == NodeStatus.FAILED_RELEASING:
+                msg = "{system_id} failed to be Released.".format(
+                    system_id=machine.system_id
+                )
+                raise FailedReleasing(msg)
             return machine
 
     async def enter_rescue_mode(self, wait: int=None):
