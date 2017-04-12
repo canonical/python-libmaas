@@ -58,7 +58,7 @@ class TestMachine(TestCase):
         deployed_machine = make_origin().Machine(deployed_data)
         machine._handler.deploy.return_value = data
         machine._handler.read.return_value = deployed_data
-        result = machine.deploy(wait=0.1)
+        result = machine.deploy(wait=True, wait_interval=0.1)
         self.assertThat(result.status, Equals(deployed_machine.status))
         machine._handler.deploy.assert_called_once_with(
             system_id=machine.system_id
@@ -80,7 +80,8 @@ class TestMachine(TestCase):
         machine = make_origin().Machine(data)
         machine._handler.deploy.return_value = data
         machine._handler.read.return_value = failed_deploy_data
-        self.assertRaises(machines.FailedDeployment, machine.deploy, wait=0.1)
+        self.assertRaises(machines.FailedDeployment, machine.deploy,
+                          wait=True, wait_interval=0.1)
 
     def test__get_power_parameters(self):
         machine = make_origin().Machine({
@@ -148,7 +149,7 @@ class TestMachine(TestCase):
         erm_machine = make_origin().Machine(erm_data)
         rm_machine._handler.rescue_mode.return_value = rm_data
         rm_machine._handler.read.return_value = erm_data
-        result = rm_machine.enter_rescue_mode(wait=0.1)
+        result = rm_machine.enter_rescue_mode(wait=True, wait_interval=0.1)
         self.assertThat(result.status, Equals(erm_machine.status))
         rm_machine._handler.rescue_mode.assert_called_once_with(
             system_id=rm_machine.system_id
@@ -172,7 +173,7 @@ class TestMachine(TestCase):
         machine._handler.read.return_value = failed_enter_rescue_mode_data
         self.assertRaises(
             machines.RescueModeFailure,
-            machine.enter_rescue_mode, wait=0.1
+            machine.enter_rescue_mode, wait=True, wait_interval=0.1
         )
 
     def test__exit_rescue_mode(self):
@@ -224,7 +225,7 @@ class TestMachine(TestCase):
         deployed_machine = make_origin().Machine(deployed_data)
         machine._handler.exit_rescue_mode.return_value = data
         machine._handler.read.return_value = deployed_data
-        result = machine.exit_rescue_mode(wait=0.1)
+        result = machine.exit_rescue_mode(wait=True, wait_interval=0.1)
         self.assertThat(result.status, Equals(deployed_machine.status))
         machine._handler.exit_rescue_mode.assert_called_once_with(
             system_id=machine.system_id
@@ -248,7 +249,7 @@ class TestMachine(TestCase):
         machine._handler.read.return_value = failed_exit_rescue_mode_data
         self.assertRaises(
             machines.RescueModeFailure,
-            machine.exit_rescue_mode, wait=0.1
+            machine.exit_rescue_mode, wait=True, wait_interval=0.1
         )
 
     def test__release_with_wait(self):
@@ -268,7 +269,7 @@ class TestMachine(TestCase):
         allocated_machine = make_origin().Machine(allocated_data)
         machine._handler.release.return_value = data
         machine._handler.read.return_value = allocated_data
-        result = machine.release(wait=0.1)
+        result = machine.release(wait=True, wait_interval=0.1)
         self.assertThat(result.status, Equals(allocated_machine.status))
         machine._handler.release.assert_called_once_with(
             system_id=machine.system_id
@@ -290,7 +291,12 @@ class TestMachine(TestCase):
         machine = make_origin().Machine(data)
         machine._handler.release.return_value = data
         machine._handler.read.return_value = failed_release_data
-        self.assertRaises(machines.FailedReleasing, machine.release, wait=0.1)
+        self.assertRaises(
+            machines.FailedReleasing,
+            machine.release,
+            wait=True,
+            wait_interval=0.1
+        )
 
 
 class TestMachine_APIVersion(TestCase):

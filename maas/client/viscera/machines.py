@@ -179,7 +179,7 @@ class Machine(Object, metaclass=MachineType):
     async def deploy(
             self, user_data: typing.Union[bytes, str]=None,
             distro_series: str=None, hwe_kernel: str=None, comment: str=None,
-            wait: int=None):
+            wait: bool=False, wait_interval: int=5):
         """Deploy this machine.
 
         :param user_data: User-data to provide to the machine when booting. If
@@ -208,13 +208,13 @@ class Machine(Object, metaclass=MachineType):
         if comment is not None:
             params["comment"] = comment
         data = await self._handler.deploy(**params)
-        if wait is None:
+        if not wait:
             return type(self)(data)
         else:
             # Wait for the machine to be fully deployed
             machine = type(self)(data)
             while machine.status == NodeStatus.DEPLOYING:
-                await asyncio.sleep(wait)
+                await asyncio.sleep(wait_interval)
                 data = await self._handler.read(system_id=self.system_id)
                 machine = type(self)(data)
             if machine.status == NodeStatus.FAILED_DEPLOYMENT:
@@ -228,19 +228,20 @@ class Machine(Object, metaclass=MachineType):
         data = await self._handler.power_parameters(system_id=self.system_id)
         return data
 
-    async def release(self, comment: str=None, wait: int=None):
+    async def release(self, comment: str=None, wait: bool=False,
+                      wait_interval: int=5):
         params = {"system_id": self.system_id}
         if comment is not None:
             params["comment"] = comment
         data = await self._handler.release(**params)
-        if wait is None:
+        if not wait:
             return type(self)(data)
         else:
             # Wait for machine to be released
             machine = type(self)(data)
             while (machine.status == NodeStatus.RELEASING or
                    machine.status == NodeStatus.DISK_ERASING):
-                await asyncio.sleep(wait)
+                await asyncio.sleep(wait_interval)
                 data = await self._handler.read(system_id=self.system_id)
                 machine = type(self)(data)
             if machine.status == NodeStatus.FAILED_RELEASING:
@@ -250,7 +251,7 @@ class Machine(Object, metaclass=MachineType):
                 raise FailedReleasing(msg)
             return machine
 
-    async def enter_rescue_mode(self, wait: int=None):
+    async def enter_rescue_mode(self, wait: bool=False, wait_interval: int=5):
         """
         Send this machine into 'rescue mode'.
         """
@@ -263,7 +264,7 @@ class Machine(Object, metaclass=MachineType):
             else:
                 raise
 
-        if wait is None:
+        if not wait:
             return type(self)(data)
         else:
             # Wait for machine to finish entering rescue mode
@@ -279,7 +280,7 @@ class Machine(Object, metaclass=MachineType):
                 raise RescueModeFailure(msg)
             return machine
 
-    async def exit_rescue_mode(self, wait: int=None):
+    async def exit_rescue_mode(self, wait: bool=False, wait_interval: int=5):
         """
         Exit rescue mode.
         """
@@ -293,13 +294,13 @@ class Machine(Object, metaclass=MachineType):
                 raise OperationNotAllowed(message) from error
             else:
                 raise
-        if wait is None:
+        if not wait:
             return type(self)(data)
         else:
             # Wait for machine to finish exiting rescue mode
             machine = type(self)(data)
             while machine.status == NodeStatus.EXITING_RESCUE_MODE:
-                await asyncio.sleep(wait)
+                await asyncio.sleep(wait_interval)
                 data = await self._handler.read(system_id=self.system_id)
                 machine = type(self)(data)
             if machine.status == NodeStatus.FAILED_EXITING_RESCUE_MODE:
