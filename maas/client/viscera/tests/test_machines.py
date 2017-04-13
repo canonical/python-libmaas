@@ -298,6 +298,29 @@ class TestMachine(TestCase):
             wait_interval=0.1
         )
 
+    def test__release_with_wait_failed_disk_erasing(self):
+        system_id = make_name_without_spaces("system-id")
+        hostname = make_name_without_spaces("hostname")
+        data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "status": NodeStatus.RELEASING,
+        }
+        failed_disk_erase_data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "status": NodeStatus.FAILED_DISK_ERASING,
+        }
+        machine = make_origin().Machine(data)
+        machine._handler.release.return_value = data
+        machine._handler.read.return_value = failed_disk_erase_data
+        self.assertRaises(
+            machines.FailedDiskErasing,
+            machine.release,
+            wait=True,
+            wait_interval=0.1
+        )
+
 
 class TestMachine_APIVersion(TestCase):
 

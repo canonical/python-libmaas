@@ -101,6 +101,10 @@ class FailedReleasing(Exception):
     """Machine failed to Release."""
 
 
+class FailedDiskErasing(Exception):
+    """Machine failed to erase disk when releasing."""
+
+
 class Machines(ObjectSet, metaclass=MachinesType):
     """The set of machines stored in MAAS."""
 
@@ -190,8 +194,8 @@ class Machine(Object, metaclass=MachineType):
         :param hwe_kernel: The HWE kernel to deploy. Probably only relevant
             when deploying Ubuntu.
         :param comment: A comment for the event log.
-        :param wait: If specified, wait until the deploy is complete, polling
-            at the specified frequency.
+        :param wait: If specified, wait until the deploy is complete.
+        :param wait_interval: How often to poll, defaults to 5 seconds
         """
         params = {"system_id": self.system_id}
         if user_data is not None:
@@ -230,6 +234,12 @@ class Machine(Object, metaclass=MachineType):
 
     async def release(self, comment: str=None, wait: bool=False,
                       wait_interval: int=5):
+        """
+        Release the machine.
+
+        :param wait: If specified, wait until the deploy is complete.
+        :param wait_interval: How often to poll, defaults to 5 seconds
+        """
         params = {"system_id": self.system_id}
         if comment is not None:
             params["comment"] = comment
@@ -249,11 +259,19 @@ class Machine(Object, metaclass=MachineType):
                     system_id=machine.system_id
                 )
                 raise FailedReleasing(msg)
+            elif machine.status == NodeStatus.FAILED_DISK_ERASING:
+                msg = "{system_id} failed to erase disk.".format(
+                    system_id=machine.system_id
+                )
+                raise FailedDiskErasing(msg)
             return machine
 
     async def enter_rescue_mode(self, wait: bool=False, wait_interval: int=5):
         """
         Send this machine into 'rescue mode'.
+
+        :param wait: If specified, wait until the deploy is complete.
+        :param wait_interval: How often to poll, defaults to 5 seconds
         """
         try:
             data = await self._handler.rescue_mode(system_id=self.system_id)
@@ -283,6 +301,9 @@ class Machine(Object, metaclass=MachineType):
     async def exit_rescue_mode(self, wait: bool=False, wait_interval: int=5):
         """
         Exit rescue mode.
+
+        :param wait: If specified, wait until the deploy is complete.
+        :param wait_interval: How often to poll, defaults to 5 seconds
         """
         try:
             data = await self._handler.exit_rescue_mode(
