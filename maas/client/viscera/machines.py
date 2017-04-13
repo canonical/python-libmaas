@@ -22,7 +22,10 @@ from . import (
 )
 from ..bones import CallError
 from ..enum import NodeStatus
-from ..errors import OperationNotAllowed
+from ..errors import (
+    MAASException,
+    OperationNotAllowed
+)
 
 
 class MachinesType(ObjectType):
@@ -86,22 +89,27 @@ class MachinesType(ObjectType):
 
 
 class MachineNotFound(Exception):
-    """Machine was not found."""
+    """
+    Machine was not found.
+
+    Not a MAASException because this doesn't occur in the context of
+    a specific object.
+    """
 
 
-class RescueModeFailure(Exception):
+class RescueModeFailure(MAASException):
     """Machine failed to perform a Rescue mode transition."""
 
 
-class FailedDeployment(Exception):
+class FailedDeployment(MAASException):
     """Machine failed to Deploy."""
 
 
-class FailedReleasing(Exception):
+class FailedReleasing(MAASException):
     """Machine failed to Release."""
 
 
-class FailedDiskErasing(Exception):
+class FailedDiskErasing(MAASException):
     """Machine failed to erase disk when releasing."""
 
 
@@ -225,7 +233,7 @@ class Machine(Object, metaclass=MachineType):
                 msg = "{system_id} failed to Deploy.".format(
                     system_id=machine.system_id
                 )
-                raise FailedDeployment(msg)
+                raise FailedDeployment(msg, machine)
             return machine
 
     async def get_power_parameters(self):
@@ -258,12 +266,12 @@ class Machine(Object, metaclass=MachineType):
                 msg = "{system_id} failed to be Released.".format(
                     system_id=machine.system_id
                 )
-                raise FailedReleasing(msg)
+                raise FailedReleasing(msg, machine)
             elif machine.status == NodeStatus.FAILED_DISK_ERASING:
                 msg = "{system_id} failed to erase disk.".format(
                     system_id=machine.system_id
                 )
-                raise FailedDiskErasing(msg)
+                raise FailedDiskErasing(msg, machine)
             return machine
 
     async def enter_rescue_mode(self, wait: bool=False, wait_interval: int=5):
@@ -295,7 +303,7 @@ class Machine(Object, metaclass=MachineType):
                 msg = "{system_id} failed to enter Rescue Mode.".format(
                     system_id=machine.system_id
                 )
-                raise RescueModeFailure(msg)
+                raise RescueModeFailure(msg, machine)
             return machine
 
     async def exit_rescue_mode(self, wait: bool=False, wait_interval: int=5):
@@ -328,7 +336,7 @@ class Machine(Object, metaclass=MachineType):
                 msg = "{system_id} failed to exit Rescue Mode.".format(
                     system_id=machine.system_id
                 )
-                raise RescueModeFailure(msg)
+                raise RescueModeFailure(msg, machine)
             return machine
 
     def __repr__(self):
