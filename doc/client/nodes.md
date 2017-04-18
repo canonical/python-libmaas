@@ -14,8 +14,8 @@ client.region_controllers.list()
 ## Some examples
 
 ```pycon
->>> for machine in client.machines.read():
-...     print(repr(node))
+>>> for machine in client.machines.list():
+...     print(repr(machine))
 <Machine hostname='botswana' system_id='pncys4'>
 ```
 
