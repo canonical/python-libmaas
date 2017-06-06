@@ -11,6 +11,7 @@ from . import (
     check,
     Object,
     ObjectField,
+    ObjectFieldRelated,
     ObjectSet,
     ObjectType,
 )
@@ -42,13 +43,17 @@ class BootSourceSelectionsType(ObjectType):
 
     async def read(cls, boot_source):
         """Get list of `BootSourceSelection`'s."""
-        if not isinstance(boot_source, BootSource):
+        if isinstance(boot_source, int):
+            boot_source_id = boot_source
+        elif isinstance(boot_source, BootSource):
+            boot_source_id = boot_source.id
+        else:
             raise TypeError(
-                "boot_source must be a BootSource, not %s"
+                "boot_source must be a BootSource or int, not %s"
                 % type(boot_source).__name__)
-        data = await cls._handler.read(boot_source_id=boot_source.id)
+        data = await cls._handler.read(boot_source_id=boot_source_id)
         return cls(
-            cls._object(item, local_data={"boot_source_id": boot_source.id})
+            cls._object(item, local_data={'boot_source_id': boot_source_id})
             for item in data)
 
 
@@ -60,12 +65,16 @@ class BootSourceSelectionType(ObjectType):
 
     async def read(cls, boot_source, id):
         """Get `BootSourceSelection` by `id`."""
-        if not isinstance(boot_source, BootSource):
+        if isinstance(boot_source, int):
+            boot_source_id = boot_source
+        elif isinstance(boot_source, BootSource):
+            boot_source_id = boot_source.id
+        else:
             raise TypeError(
-                "boot_source must be a BootSource, not %s"
+                "boot_source must be a BootSource or int, not %s"
                 % type(boot_source).__name__)
-        data = await cls._handler.read(boot_source_id=boot_source.id, id=id)
-        return cls(data, {"boot_source_id": boot_source.id})
+        data = await cls._handler.read(boot_source_id=boot_source_id, id=id)
+        return cls(data, {"boot_source_id": boot_source_id})
 
 
 class BootSourceSelection(Object, metaclass=BootSourceSelectionType):
@@ -73,11 +82,11 @@ class BootSourceSelection(Object, metaclass=BootSourceSelectionType):
 
     # Only client-side. Classes in this file place `boot_source_id` on
     # the object using `local_data`.
-    boot_source_id = ObjectField.Checked(
-        "boot_source_id", check(int), readonly=True)
+    boot_source = ObjectFieldRelated(
+        "boot_source_id", "BootSource", readonly=True, pk=0)
 
     id = ObjectField.Checked(
-        "id", check(int), readonly=True)
+        "id", check(int), readonly=True, pk=1)
     os = ObjectField.Checked(
         "os", check(str), check(str))
     release = ObjectField.Checked(
@@ -96,4 +105,4 @@ class BootSourceSelection(Object, metaclass=BootSourceSelectionType):
     async def delete(self):
         """Delete boot source selection."""
         await self._handler.delete(
-            boot_source_id=self.boot_source_id, id=self.id)
+            boot_source_id=self.boot_source.id, id=self.id)

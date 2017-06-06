@@ -91,7 +91,7 @@ connects to a MAAS server using a previously obtained API key, and the
 latter logs-in to MAAS with your username and password. These returns a
 ``Client`` object that has convenient attributes for working with MAAS.
 
-For example, this prints out a few recent events:
+For example, this prints out all interfaces on all machines:
 
 ```python
 from maas.client import login
@@ -99,12 +99,10 @@ client = login(
     "http://localhost:5240/MAAS/",
     username="my_user", password="my_pass",
 )
-tmpl = (
-    "{0.created:%Y-%m-%d %H:%M:%S} "
-    "{0.level.name} {0.description_short}"
-)
-for event in client.events.query():
-    print(tmpl.format(event))
+tmpl = "{0.hostname} {1.name} {1.mac_address}"
+for machine in client.machines.list():
+    for interface in machine.interfaces:
+        print(tmpl.format(machine, interface))
 ```
 
 Learn more about the [client](client/index.md).

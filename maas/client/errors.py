@@ -15,3 +15,11 @@ class MAASException(Exception):
 
 class OperationNotAllowed(Exception):
     """ MAAS says this operation cannot be performed. """
+
+
+class ObjectNotLoaded(Exception):
+    """ Object is not loaded. """
+
+
+class CannotDelete(Exception):
+    """ Object cannot be deleted. """

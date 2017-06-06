@@ -1,7 +1,11 @@
 """Tests for `maas.client.viscera`."""
 
-from random import randrange
-from unittest.mock import sentinel
+from random import randrange, randint
+from unittest.mock import (
+    call,
+    Mock,
+    sentinel,
+)
 
 from testtools.matchers import (
     Contains,
@@ -15,12 +19,15 @@ from testtools.matchers import (
 )
 
 from .. import (
+    check,
     dir_class,
     dir_instance,
     Disabled,
     Object,
     ObjectBasics,
     ObjectField,
+    ObjectFieldRelated,
+    ObjectFieldRelatedSet,
     ObjectMethod,
     ObjectSet,
     ObjectType,
@@ -30,7 +37,9 @@ from ... import (
     bones,
     viscera,
 )
+from ...errors import ObjectNotLoaded
 from ...testing import (
+    AsyncCallableMock,
     make_name,
     make_name_without_spaces,
     TestCase,
@@ -258,18 +267,134 @@ class TestObject(TestCase):
     def test__defines_slots(self):
         self.assertThat(
             Object.__slots__,
-            Equals(("__weakref__", "_data")))
+            Equals(("__weakref__", "_data", "_loaded")))
 
     def test__inherits_ObjectBasics(self):
         self.assertThat(Object.__mro__, Contains(ObjectBasics))
 
-    def test__init_sets__data(self):
+    def test__init_sets__data_and_loaded(self):
         data = {"alice": make_name_without_spaces("alice")}
         self.assertThat(Object(data)._data, Equals(data))
+        self.assertTrue(Object(data)._loaded)
 
-    def test__init_insists_on_mapping(self):
+    def test__init_insists_on_mapping_when_no_pk(self):
         error = self.assertRaises(TypeError, Object, ["some", "items"])
         self.assertThat(str(error), Equals("data must be a mapping, not list"))
+
+    def test__init_takes_pk_when_defined(self):
+        object_type = type(
+            "PKObject", (Object,), {"pk": ObjectField("pk_d", pk=True)})
+        object_pk = randint(0, 20)
+        object_a = object_type(object_pk)
+        self.assertThat(object_a._data, Equals({"pk_d": object_pk}))
+        self.assertThat(object_a.pk, Equals(object_pk))
+        self.assertFalse(object_a._loaded)
+
+    def test__init_validates_pk_when_defined(self):
+        object_type = type(
+            "PKObject", (Object,), {
+                "pk": ObjectField.Checked("pk_d", check(int), pk=True),
+            })
+        error = self.assertRaises(TypeError, object_type, "not int")
+        self.assertThat(
+            str(error), Equals("'not int' is not of type %r" % int))
+
+    def test__init_doesnt_allow_multiple_pk_True(self):
+        object_type = type(
+            "PKObject", (Object,), {
+                "pk1": ObjectField.Checked("pk_1", check(int), pk=True),
+                "pk2": ObjectField.Checked("pk_2", check(int), pk=True),
+            })
+        error = self.assertRaises(AttributeError, object_type, [0, 1])
+        self.assertThat(
+            str(error),
+            Equals(
+                "more than one field is marked as unique "
+                "primary key: pk1, pk2"))
+
+    def test__init_allows_sequence_when_multiple_pks(self):
+        object_type = type(
+            "PKObject", (Object,), {
+                "pk1": ObjectField.Checked("pk_1", check(int), pk=0),
+                "pk2": ObjectField.Checked("pk_2", check(int), pk=1),
+            })
+        object_pk_1 = randint(0, 20)
+        object_pk_2 = randint(0, 20)
+        object_a = object_type([object_pk_1, object_pk_2])
+        self.assertThat(object_a._data, Equals({
+            "pk_1": object_pk_1,
+            "pk_2": object_pk_2,
+        }))
+        self.assertThat(object_a.pk1, Equals(object_pk_1))
+        self.assertThat(object_a.pk2, Equals(object_pk_2))
+        self.assertFalse(object_a._loaded)
+
+    def test__init_requires_sequence_when_multiple_pks(self):
+        object_type = type(
+            "PKObject", (Object,), {
+                "pk1": ObjectField.Checked("pk_1", check(int), pk=0),
+                "pk2": ObjectField.Checked("pk_2", check(int), pk=1),
+            })
+        error = self.assertRaises(TypeError, object_type, 0)
+        self.assertThat(
+            str(error), Equals("data must be a sequence, not int"))
+
+    def test__init_validates_property_when_multiple_pks(self):
+        object_type = type(
+            "PKObject", (Object,), {
+                "pk1": ObjectField.Checked("pk_1", check(int), pk=0),
+                "pk2": ObjectField.Checked("pk_2", check(int), pk=1),
+            })
+        error = self.assertRaises(TypeError, object_type, [0, "bad"])
+        self.assertThat(
+            str(error), Equals("'bad' is not of type %r" % int))
+
+    def test__loaded(self):
+        object_a = Object({})
+        self.assertTrue(object_a.loaded)
+        object_a._loaded = False
+        self.assertFalse(object_a.loaded)
+
+    def test__cannot_access_attributes_when_unloaded(self):
+        object_type = type(
+            "PKObject", (Object,), {
+                "pk": ObjectField("pk_d", pk=True),
+                "name": ObjectField("name"),
+            })
+        object_pk = randint(0, 20)
+        object_a = object_type(object_pk)
+        object_a._data['name'] = make_name("name")
+        self.assertFalse(object_a.loaded)
+        error = self.assertRaises(ObjectNotLoaded, getattr, object_a, 'name')
+        self.assertThat(
+            str(error),
+            Equals("cannot access attribute 'name' of object 'PKObject'"))
+
+    def test__can_access_pk_attributes_when_unloaded(self):
+        object_type = type(
+            "PKObject", (Object,), {
+                "pk": ObjectField("pk_d", pk=True),
+                "name": ObjectField("name"),
+            })
+        object_pk = randint(0, 20)
+        object_a = object_type(object_pk)
+        self.assertFalse(object_a.loaded)
+        self.assertEquals(object_pk, object_a.pk)
+
+    def test__can_access_attributes_when_loaded(self):
+        object_type = type(
+            "PKObject", (Object,), {
+                "pk": ObjectField("pk_d", pk=True),
+                "name": ObjectField("name"),
+            })
+        object_pk = randint(0, 20)
+        object_name = make_name("name")
+        object_a = object_type({
+            "pk_d": object_pk,
+            "name": object_name,
+        })
+        self.assertTrue(object_a.loaded)
+        self.assertEquals(object_name, object_a.name)
 
     def test__equal_when_data_matches(self):
         data = {"key": make_name("value")}
@@ -320,6 +445,77 @@ class TestObject(TestCase):
         self.assertThat(
             example.__repr__(fields=["bob", "alice"]), Equals(
                 "<Example alice=%(alice)r bob=%(bob)r>" % example._data))
+
+    def test_refresh_raises_AttributeError_when_no_read_defined(self):
+        object_a = Object({})
+        error = self.assertRaises(AttributeError, object_a.refresh)
+        self.assertThat(
+            str(error), Equals("'Object' object doesn't support refresh."))
+
+    def test_refresh_with_one_pk(self):
+        object_type = type(
+            "PKObject", (Object,), {"pk": ObjectField("pk_d", pk=True)})
+        object_pk = randint(0, 20)
+        new_data = {
+            'pk_d': object_pk,
+            'other': randint(0, 20),
+        }
+        mock_read = AsyncCallableMock(return_value=object_type(new_data))
+        self.patch(object_type, 'read', mock_read)
+        object_a = object_type(object_pk)
+        self.assertFalse(object_a.loaded)
+        object_a.refresh()
+        self.assertTrue(object_a.loaded)
+        self.assertThat(object_a._data, Equals(new_data))
+        self.assertThat(mock_read.call_args_list, Equals([call(object_pk)]))
+
+    def test_refresh_with_multiple_pk(self):
+        object_type = type(
+            "PKObject", (Object,), {
+                "pk1": ObjectField("pk_1", pk=0),
+                "pk2": ObjectField("pk_2", pk=1),
+            })
+        object_pk_1 = randint(0, 20)
+        object_pk_2 = randint(0, 20)
+        new_data = {
+            'pk_1': object_pk_1,
+            'pk_2': object_pk_2,
+            'other': randint(0, 20),
+        }
+        mock_read = AsyncCallableMock(return_value=object_type(new_data))
+        self.patch(object_type, 'read', mock_read)
+        object_a = object_type([object_pk_1, object_pk_2])
+        self.assertFalse(object_a.loaded)
+        object_a.refresh()
+        self.assertTrue(object_a.loaded)
+        self.assertThat(object_a._data, Equals(new_data))
+        self.assertThat(
+            mock_read.call_args_list,
+            Equals([call(object_pk_1, object_pk_2)]))
+
+    def test_refresh_raises_AttributeError_when_no_pk_fields(self):
+        object_type = type(
+            "PKObject", (Object,), {})
+        mock_read = AsyncCallableMock(return_value=object_type({}))
+        self.patch(object_type, 'read', mock_read)
+        object_a = object_type({})
+        error = self.assertRaises(AttributeError, object_a.refresh)
+        self.assertThat(
+            str(error),
+            Equals(
+                "unable to perform 'refresh' no primary key fields defined."))
+
+    def test_refresh_raises_TypeError_on_mismatch(self):
+        object_type = type(
+            "PKObject", (Object,), {"pk": ObjectField("pk_d", pk=True)})
+        mock_read = AsyncCallableMock(return_value=Object({}))
+        self.patch(object_type, 'read', mock_read)
+        object_a = object_type({"pk_d": 0})
+        error = self.assertRaises(TypeError, object_a.refresh)
+        self.assertThat(
+            str(error),
+            Equals(
+                "result of 'PKObject.read' must be 'PKObject', not 'Object'"))
 
 
 class TestObjectSet(TestCase):
@@ -576,6 +772,161 @@ class TestObjectFieldChecked(TestCase):
         # datum_to_value_delta is added to the datum in the object's _data
         # dict before being returned to us.
         self.assertThat(example.alice, Equals(5))
+
+
+class TestObjectFieldRelated(TestCase):
+    """Tests for `ObjectFieldRelated`."""
+
+    def test__init__requires_str_or_Object_class(self):
+        self.assertRaises(TypeError, ObjectFieldRelated, "name", 0)
+        self.assertRaises(TypeError, ObjectFieldRelated, "name", object)
+        # Doesn't raise error.
+        ObjectFieldRelated("name", "class")
+        ObjectFieldRelated("name", Object)
+
+    def test_datum_to_value_returns_None_on_None(self):
+        self.assertIsNone(
+            ObjectFieldRelated("name", "class").datum_to_value(object(), None))
+
+    def test_datum_to_value_converts_to_bound_class(self):
+        rel_object_type = type("RelObject", (Object,), {
+            "pk": ObjectField("pk_d", pk=True)
+        })
+        origin = Mock()
+        origin.RelObject = rel_object_type
+        instance = type("InstObject", (Object,), {"_origin": origin})({})
+        field = ObjectFieldRelated("related_id", "RelObject")
+        rel_id = randint(0, 20)
+        rel_object = field.datum_to_value(instance, rel_id)
+        self.assertIsInstance(rel_object, rel_object_type)
+        self.assertFalse(rel_object.loaded)
+        self.assertThat(rel_object._data, Equals({
+            "instobject": instance,
+            "pk_d": rel_id,
+        }))
+
+    def test_datum_to_value_uses_reverse_name(self):
+        rel_object_type = type("RelObject", (Object,), {
+            "pk": ObjectField("pk_d", pk=True)
+        })
+        origin = Mock()
+        origin.RelObject = rel_object_type
+        instance = type("Object", (Object,), {"_origin": origin})({})
+        field = ObjectFieldRelated(
+            "related_id", "RelObject", reverse="reverse")
+        rel_id = randint(0, 20)
+        rel_object = field.datum_to_value(instance, rel_id)
+        self.assertIsInstance(rel_object, rel_object_type)
+        self.assertFalse(rel_object.loaded)
+        self.assertThat(rel_object._data, Equals({
+            "reverse": instance,
+            "pk_d": rel_id,
+        }))
+
+    def test_datum_to_value_doesnt_include_reverse(self):
+        rel_object_type = type("RelObject", (Object,), {
+            "pk": ObjectField("pk_d", pk=True)
+        })
+        origin = Mock()
+        origin.RelObject = rel_object_type
+        instance = type("Object", (Object,), {"_origin": origin})({})
+        field = ObjectFieldRelated(
+            "related_id", "RelObject", reverse=None)
+        rel_id = randint(0, 20)
+        rel_object = field.datum_to_value(instance, rel_id)
+        self.assertIsInstance(rel_object, rel_object_type)
+        self.assertFalse(rel_object.loaded)
+        self.assertThat(rel_object._data, Equals({
+            "pk_d": rel_id,
+        }))
+
+
+class TestObjectFieldRelatedSet(TestCase):
+    """Tests for `ObjectFieldRelatedSet`."""
+
+    def test__init__requires_str_or_Object_class(self):
+        self.assertRaises(TypeError, ObjectFieldRelatedSet, "name", 0)
+        self.assertRaises(TypeError, ObjectFieldRelatedSet, "name", object)
+        # Doesn't raise error.
+        ObjectFieldRelatedSet("name", "class")
+        ObjectFieldRelatedSet("name", ObjectSet)
+
+    def test_datum_to_value_returns_empty_list_on_None(self):
+        self.assertEquals(
+            ObjectFieldRelatedSet(
+                "name", "class").datum_to_value(object(), None),
+            [])
+
+    def test_datum_must_be_a_sequence(self):
+        field = ObjectFieldRelatedSet("name", "class")
+        error = self.assertRaises(
+            TypeError, field.datum_to_value, object(), 0)
+        self.assertThat(
+            str(error), Equals("datum must be a sequence, not int"))
+
+    def test_datum_to_value_converts_to_set_of_bound_class(self):
+        rel_object_type = type("RelObject", (Object,), {
+            "pk": ObjectField("pk_d", pk=True)
+        })
+        rel_object_set_type = type("RelObjectSet", (ObjectSet,), {
+            "_object": rel_object_type
+        })
+        origin = Mock()
+        origin.RelObjectSet = rel_object_set_type
+        instance = type("InstObject", (Object,), {"_origin": origin})({})
+        field = ObjectFieldRelatedSet("related_ids", "RelObjectSet")
+        rel_ids = range(5)
+        rel_object_set = field.datum_to_value(instance, rel_ids)
+        self.assertEquals(5, len(rel_object_set))
+        self.assertIsInstance(rel_object_set[0], rel_object_type)
+        self.assertFalse(rel_object_set[0].loaded)
+        self.assertThat(rel_object_set[0]._data, Equals({
+            "instobject": instance,
+            "pk_d": rel_ids[0],
+        }))
+
+    def test_datum_to_value_uses_reverse_name(self):
+        rel_object_type = type("RelObject", (Object,), {
+            "pk": ObjectField("pk_d", pk=True)
+        })
+        rel_object_set_type = type("RelObjectSet", (ObjectSet,), {
+            "_object": rel_object_type
+        })
+        origin = Mock()
+        origin.RelObjectSet = rel_object_set_type
+        instance = type("InstObject", (Object,), {"_origin": origin})({})
+        field = ObjectFieldRelatedSet(
+            "related_ids", "RelObjectSet", reverse="reverse")
+        rel_ids = range(5)
+        rel_object_set = field.datum_to_value(instance, rel_ids)
+        self.assertEquals(5, len(rel_object_set))
+        self.assertIsInstance(rel_object_set[0], rel_object_type)
+        self.assertFalse(rel_object_set[0].loaded)
+        self.assertThat(rel_object_set[0]._data, Equals({
+            "reverse": instance,
+            "pk_d": rel_ids[0],
+        }))
+
+    def test_datum_to_value_doesnt_include_reverse(self):
+        rel_object_type = type("RelObject", (Object,), {
+            "pk": ObjectField("pk_d", pk=True)
+        })
+        rel_object_set_type = type("RelObjectSet", (ObjectSet,), {
+            "_object": rel_object_type
+        })
+        origin = Mock()
+        origin.RelObjectSet = rel_object_set_type
+        instance = type("InstObject", (Object,), {"_origin": origin})({})
+        field = ObjectFieldRelatedSet(
+            "related_ids", "RelObjectSet", reverse=None)
+        rel_ids = range(5)
+        rel_object_set = field.datum_to_value(instance, rel_ids)
+        self.assertEquals(5, len(rel_object_set))
+        self.assertIsInstance(rel_object_set[0], rel_object_type)
+        self.assertFalse(rel_object_set[0].loaded)
+        self.assertThat(rel_object_set[0]._data, Equals({
+            "pk_d": rel_ids[0],
+        }))
 
 
 class TestOriginBase(TestCase):
