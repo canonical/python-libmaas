@@ -7,12 +7,13 @@ __all__ = [
 
 from . import (
     check,
-    check_optional,
     Object,
     ObjectField,
+    ObjectFieldRelatedSet,
     ObjectSet,
     ObjectType,
 )
+from ..errors import CannotDelete
 
 
 class FabricsType(ObjectType):
@@ -52,6 +53,7 @@ class Fabrics(ObjectSet, metaclass=FabricsType):
 
 
 class FabricType(ObjectType):
+    """Metaclass for `Fabric`."""
 
     _default_fabric_id = 0
 
@@ -70,26 +72,15 @@ class FabricType(ObjectType):
 
 class Fabric(Object, metaclass=FabricType):
     """A Fabric."""
+
     id = ObjectField.Checked(
-        "id", check(int), readonly=True
-    )
+        "id", check(int), readonly=True, pk=True)
     name = ObjectField.Checked(
-        "name", check(str), readonly=True
-    )
-    """
-    description is allowed in the create call and displayed in the UI
-    but never returned by the API
-    """
-    class_type = ObjectField.Checked(
-        "class_type", check_optional(str), readonly=True
-    )
+        "name", check(str), readonly=True)
+    vlans = ObjectFieldRelatedSet("vlans", "VLANs")
 
     async def delete(self):
         """Delete this Fabric."""
         if self.id == self._origin.Fabric._default_fabric_id:
-            raise DeleteDefaultFabric("Cannot delete default fabric.")
+            raise CannotDelete("Default fabric cannot be deleted.")
         await self._handler.delete(id=self.id)
-
-
-class DeleteDefaultFabric(Exception):
-    """Default fabric cannot be deleted."""

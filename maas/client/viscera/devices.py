@@ -11,6 +11,7 @@ from . import (
     check,
     Object,
     ObjectField,
+    ObjectFieldRelatedSet,
     ObjectSet,
     ObjectType,
     zones,
@@ -41,6 +42,7 @@ class Device(Object, metaclass=DeviceType):
 
     hostname = ObjectField.Checked(
         "hostname", check(str), check(str))
+    interfaces = ObjectFieldRelatedSet("interface_set", "Interfaces")
     ip_addresses = ObjectField.Checked(  # List[str]
         "ip_addresses", check(Sequence), readonly=True)
 
@@ -48,7 +50,7 @@ class Device(Object, metaclass=DeviceType):
     # resource_uri
 
     system_id = ObjectField.Checked(
-        "system_id", check(str), readonly=True)
+        "system_id", check(str), readonly=True, pk=True)
     tags = ObjectField.Checked(  # List[str]
         "tag_names", check(Sequence), readonly=True)
     zone = zones.ZoneField(

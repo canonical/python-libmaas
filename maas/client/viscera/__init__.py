@@ -37,6 +37,7 @@ from types import MethodType
 import pytz
 
 from .. import bones
+from ..errors import ObjectNotLoaded
 from ..utils import (
     get_all_subclasses,
     vars_class,
@@ -174,19 +175,76 @@ class ObjectBasics:
         return self.__class__.__qualname__
 
 
+def is_pk_descriptor(descriptor):
+    """Return true if `descriptor` is a primary key."""
+    return descriptor.pk is True or type(descriptor.pk) is int
+
+
+def get_pk_descriptors(cls):
+    """Return tuple of tuples with attribute name and descriptor on the
+    `c;s` that is defined as the primary keys."""
+    pk_fields = {
+        name: descriptor
+        for name, descriptor in vars_class(cls).items()
+        if isinstance(descriptor, ObjectField) and is_pk_descriptor(descriptor)
+    }
+    if len(pk_fields) == 1:
+        return (pk_fields.popitem(),)
+    elif len(pk_fields) > 1:
+        unique_pk_fields = {
+            name: descriptor
+            for name, descriptor in pk_fields.items()
+            if descriptor.pk is True
+        }
+        if unique_pk_fields:
+            raise AttributeError(
+                "more than one field is marked as unique primary key: %s" % (
+                    ', '.join(pk_fields)))
+        else:
+            return tuple(sorted((
+                (name, descriptor)
+                for name, descriptor in pk_fields.items()
+            ), key=lambda item: item[0].pk))
+    else:
+        return tuple()
+
+
 class Object(ObjectBasics, metaclass=ObjectType):
     """An object in a MAAS installation."""
 
-    __slots__ = "__weakref__", "_data"
+    __slots__ = "__weakref__", "_data", "_loaded"
 
     def __init__(self, data, local_data=None):
         super(Object, self).__init__()
+        self._loaded = False
         if isinstance(data, Mapping):
             self._data = data
+            self._loaded = True
         else:
-            raise TypeError(
-                "data must be a mapping, not %s"
-                % type(data).__name__)
+            descriptors = get_pk_descriptors(type(self))
+            if len(descriptors) == 1:
+                self._data = {
+                    descriptors[0][1].name: data
+                }
+                # Validate that the primary key is correct and
+                # can be converted to the python value.
+                getattr(self, descriptors[0][0])
+            elif len(descriptors) > 1:
+                if isinstance(data, Sequence):
+                    self._data = {}
+                    for idx, (name, descriptor) in enumerate(descriptors):
+                        self._data[descriptor.name] = data[idx]
+                        # Validate that the primary key is correct and
+                        # can be converted to the python value.
+                        getattr(self, name)
+                else:
+                    raise TypeError(
+                        "data must be a sequence, not %s" % (
+                            type(data).__name__))
+            else:
+                raise TypeError(
+                    "data must be a mapping, not %s"
+                    % type(data).__name__)
         if local_data is not None:
             if isinstance(local_data, Mapping):
                 self._data.update(local_data)
@@ -194,6 +252,26 @@ class Object(ObjectBasics, metaclass=ObjectType):
                 raise TypeError(
                     "local_data must be a mapping, not %s"
                     % type(data).__name__)
+
+    def __getattribute__(self, name):
+        """Prevent access to fields that are not defined as primary keys on
+        the object when its not loaded."""
+        fields = {
+            name: descriptor
+            for name, descriptor in vars_class(type(self)).items()
+            if isinstance(descriptor, ObjectField)
+        }
+        if name in fields:
+            if self.loaded:
+                return super(Object, self).__getattribute__(name)
+            elif is_pk_descriptor(fields[name]):
+                return super(Object, self).__getattribute__(name)
+            else:
+                raise ObjectNotLoaded(
+                    "cannot access attribute '%s' of object '%s'" % (
+                        name, type(self).__name__))
+        else:
+            return super(Object, self).__getattribute__(name)
 
     def __eq__(self, other):
         """Strict equality check.
@@ -206,6 +284,14 @@ class Object(ObjectBasics, metaclass=ObjectType):
     def __repr__(self, *, name=None, fields=None):
         if name is None:
             name = self.__class__.__name__
+        unloaded = ""
+        if not self.loaded:
+            unloaded = " (unloaded)"
+            descriptors = get_pk_descriptors(type(self))
+            if descriptors:
+                fields = [name for name, _ in descriptors]
+            else:
+                fields = []
         if fields is None:
             fields = sorted(
                 name for name, value in vars_class(type(self)).items()
@@ -216,9 +302,46 @@ class Object(ObjectBasics, metaclass=ObjectType):
         pairs = starmap("{0}={1!r}".format, zip(fields, values))
         desc = " ".join(pairs)
         if len(desc) == 0:
-            return "<%s>" % (name, )
+            return "<%s%s>" % (name, unloaded)
         else:
-            return "<%s %s>" % (name, desc)
+            return "<%s %s%s>" % (name, desc, unloaded)
+
+    @property
+    def loaded(self):
+        """True when the object is loaded.
+
+        Accessing any attribute (expected for the primary keys) of an unloaded
+        object will raise an `ObjectNotLoaded` exception.
+        """
+        return self._loaded
+
+    async def refresh(self):
+        """Refresh the object from MAAS."""
+        cls = type(self)
+        if hasattr(cls, 'read'):
+            descriptors = get_pk_descriptors(cls)
+            if len(descriptors) == 1:
+                obj = await cls.read(getattr(self, descriptors[0][0]))
+            elif len(descriptors) > 1:
+                args = [
+                    getattr(self, name)
+                    for name, _ in descriptors
+                ]
+                obj = await cls.read(*args)
+            else:
+                raise AttributeError(
+                    "unable to perform 'refresh' no primary key "
+                    "fields defined.")
+            if type(obj) is cls:
+                self._data = obj._data
+                self._loaded = True
+            else:
+                raise TypeError(
+                    "result of '%s.read' must be '%s', not '%s'" % (
+                        cls.__name__, cls.__name__, type(obj).__name__))
+        else:
+            raise AttributeError(
+                "'%s' object doesn't support refresh." % cls.__name__)
 
 
 class ObjectSet(ObjectBasics, metaclass=ObjectType):
@@ -355,7 +478,7 @@ class ObjectField:
         cls = type("%s.Checked#%s" % (cls.__name__, name), (cls,), attrs)
         return cls(name, **other)
 
-    def __init__(self, name, *, default=undefined, readonly=False):
+    def __init__(self, name, *, default=undefined, readonly=False, pk=False):
         """Create a `ObjectField` with an optional default.
 
         :param name: The name of the field. This is the name that's used to
@@ -363,11 +486,23 @@ class ObjectField:
         :param default: A default value to return when `name` is not found in
             the MAAS-side data dictionary.
         :param readonly: If true, prevent setting or deleting of this field.
+        :param pk: If true marks the field as the unique primary key for the
+            object it is defined on. If an integer then it define its place
+            in the tuple of values that makes the object uniquely identified.
         """
         super(ObjectField, self).__init__()
         self.name = name
         self.default = default
-        self.readonly = readonly
+        if not isinstance(readonly, bool):
+            raise ValueError(
+                'readonly must be a bool, not %s' % type(readonly).__name__)
+        else:
+            self.readonly = readonly
+        if not isinstance(pk, (bool, int)):
+            raise ValueError(
+                'pk must be a bool or an int, not %s' % type(pk).__name__)
+        else:
+            self.pk = pk
 
     def datum_to_value(self, instance, datum):
         """Convert a given MAAS-side datum to a Python-side value.
@@ -422,6 +557,119 @@ class ObjectField:
             del instance._data[self.name]
         else:
             pass  # Nothing to do.
+
+
+class ObjectFieldRelated(ObjectField):
+
+    def __init__(
+            self, name, cls, *,
+            reverse=undefined, default=undefined, readonly=False, pk=False):
+        """Create a `ObjectFieldRelated` with `cls`.
+
+        :param name: The name of the field. This is the name that's used to
+            store the datum in the MAAS-side data dictionary.
+        :param cls: The name of the object class to convert into.
+        :param reverse: The name of the field on the returned instances of
+            `cls` to place this objects instance.
+        :param default: A default value to return when `name` is not found in
+            the MAAS-side data dictionary.
+        :param readonly: If true, prevent setting or deleting of this field.
+        :param pk: If true marks the field as the unique primary key for the
+            object it is defined on. If an integer then it define its place
+            in the tuple of values that makes the object uniquely identified.
+        """
+        super(ObjectFieldRelated, self).__init__(
+            name, default=default, readonly=readonly, pk=pk)
+        self.reverse = reverse
+        if not isinstance(cls, str):
+            if not issubclass(cls, Object):
+                raise TypeError(
+                    "%s is not a subclass of Object" % cls)
+            else:
+                self.cls = cls.__name__
+        else:
+            self.cls = cls
+
+    def datum_to_value(self, instance, datum):
+        """Convert a given MAAS-side datum to a Python-side value.
+
+        :param instance: The `Object` instance on which this field is
+            currently operating. This method should treat it as read-only, for
+            example to perform validation with regards to other fields.
+        :param datum: The MAAS-side datum to validate and convert into a
+            Python-side value.
+        :return: A set of `cls` from the given datum.
+        """
+        if datum is None:
+            return None
+        local_data = None
+        if self.reverse is not None:
+            local_data = {}
+            if self.reverse is undefined:
+                local_data[instance.__class__.__name__.lower()] = instance
+            else:
+                local_data[self.reverse] = instance
+        # Get the class from the bound origin.
+        bound = getattr(instance._origin, self.cls)
+        return bound(datum, local_data=local_data)
+
+
+class ObjectFieldRelatedSet(ObjectField):
+
+    def __init__(self, name, cls, *, reverse=undefined, default=undefined):
+        """Create a `ObjectFieldRelatedSet` with `cls`.
+
+        :param name: The name of the field. This is the name that's used to
+            store the datum in the MAAS-side data dictionary.
+        :param cls: The name of the object class to convert the sequence of
+            data into.
+        :param reverse: The name of the field on the returned instances of
+            `cls` to place this objects instance.
+        :param default: A default value to return when `name` is not found in
+            the MAAS-side data dictionary.
+        """
+        if default is undefined:
+            default = []
+        super(ObjectFieldRelatedSet, self).__init__(
+            name, default=default, readonly=True)
+        self.reverse = reverse
+        if not isinstance(cls, str):
+            if not issubclass(cls, ObjectSet):
+                raise TypeError(
+                    "%s is not a subclass of ObjectSet" % cls)
+            else:
+                self.cls = cls.__name__
+        else:
+            self.cls = cls
+
+    def datum_to_value(self, instance, datum):
+        """Convert a given MAAS-side datum to a Python-side value.
+
+        :param instance: The `Object` instance on which this field is
+            currently operating. This method should treat it as read-only, for
+            example to perform validation with regards to other fields.
+        :param datum: The MAAS-side datum to validate and convert into a
+            Python-side value.
+        :return: A set of `cls` from the given datum.
+        """
+        if datum is None:
+            return []
+        if not isinstance(datum, Sequence):
+            raise TypeError(
+                "%r is not of type %s" % (datum, Sequence))
+        local_data = None
+        if self.reverse is not None:
+            local_data = {}
+            if self.reverse is undefined:
+                local_data[instance.__class__.__name__.lower()] = instance
+            else:
+                local_data[self.reverse] = instance
+        # Get the class from the bound origin.
+        bound = getattr(instance._origin, self.cls)
+        return bound(
+            bound._object(
+                item, local_data=local_data)
+            for item in datum)
 
 
 class ObjectMethod:
@@ -642,12 +890,14 @@ class Origin(OriginBase, metaclass=OriginType):
             ".events",
             ".fabrics",
             ".files",
+            ".interfaces",
             ".maas",
             ".machines",
             ".sshkeys",
             ".tags",
             ".users",
             ".version",
+            ".vlans",
             ".zones",
         }
         super(Origin, self).__init__(

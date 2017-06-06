@@ -258,7 +258,7 @@ class TestObject(TestCase):
     def test__defines_slots(self):
         self.assertThat(
             Object.__slots__,
-            Equals(("__weakref__", "_data")))
+            Equals(("__weakref__", "_data", "_loaded")))
 
     def test__inherits_ObjectBasics(self):
         self.assertThat(Object.__mro__, Contains(ObjectBasics))

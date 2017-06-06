@@ -239,7 +239,7 @@ class BootResource(Object, metaclass=BootResourceType):
     """A boot resource."""
 
     id = ObjectField.Checked(
-        "id", check(int), readonly=True)
+        "id", check(int), readonly=True, pk=True)
     type = ObjectField.Checked(
         "type", check(str), check(str), readonly=True)
     name = ObjectField.Checked(

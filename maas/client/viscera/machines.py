@@ -16,6 +16,8 @@ from . import (
     check_optional,
     Object,
     ObjectField,
+    ObjectFieldRelated,
+    ObjectFieldRelatedSet,
     ObjectSet,
     ObjectType,
     zones,
@@ -148,8 +150,11 @@ class Machine(Object, metaclass=MachineType):
     min_hwe_kernel = ObjectField.Checked(
         "min_hwe_kernel", check_optional(str), check_optional(str))
 
+    boot_interface = ObjectFieldRelated(
+        "boot_interface", "Interface", readonly=True)
+    interfaces = ObjectFieldRelatedSet("interface_set", "Interfaces")
+
     # blockdevice_set
-    # interface_set
     # macaddress_set
     # netboot
     # osystem
