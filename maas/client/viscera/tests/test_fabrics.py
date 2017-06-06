@@ -4,8 +4,8 @@ import random
 
 from testtools.matchers import Equals
 
+from ...errors import CannotDelete
 from ..fabrics import (
-    DeleteDefaultFabric,
     Fabric,
     Fabrics,
 )
@@ -108,4 +108,4 @@ class TestFabric(TestCase):
             "name": make_string_without_spaces(),
             "class_type": make_string_without_spaces(),
         })
-        self.assertRaises(DeleteDefaultFabric, fabric.delete)
+        self.assertRaises(CannotDelete, fabric.delete)

@@ -14,6 +14,7 @@ from . import (
     check_optional,
     Object,
     ObjectField,
+    ObjectFieldRelatedSet,
     ObjectSet,
     ObjectType,
     zones,
@@ -56,8 +57,7 @@ class RackController(Object, metaclass=RackControllerType):
     hostname = ObjectField.Checked(
         "hostname", check(str), check(str))
 
-    # interface_set
-
+    interfaces = ObjectFieldRelatedSet("interface_set", "Interfaces")
     ip_addresses = ObjectField.Checked(  # List[str]
         "ip_addresses", check(Sequence), readonly=True)
     memory = ObjectField.Checked(
@@ -77,7 +77,7 @@ class RackController(Object, metaclass=RackControllerType):
     # swap_size
 
     system_id = ObjectField.Checked(
-        "system_id", check(str), readonly=True)
+        "system_id", check(str), readonly=True, pk=True)
 
     zone = zones.ZoneField(
         "zone", readonly=True)
@@ -122,9 +122,7 @@ class RegionController(Object, metaclass=RegionControllerType):
         "fqdn", check(str), check(str))
     hostname = ObjectField.Checked(
         "hostname", check(str), check(str))
-
-    # interface_set
-
+    interfaces = ObjectFieldRelatedSet("interface_set", "Interfaces")
     ip_addresses = ObjectField.Checked(  # List[str]
         "ip_addresses", check(Sequence), readonly=True)
     memory = ObjectField.Checked(
@@ -144,7 +142,7 @@ class RegionController(Object, metaclass=RegionControllerType):
     # swap_size
 
     system_id = ObjectField.Checked(
-        "system_id", check(str), readonly=True)
+        "system_id", check(str), readonly=True, pk=True)
 
     zone = zones.ZoneField(
         "zone", readonly=True)

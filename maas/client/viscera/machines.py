@@ -5,6 +5,7 @@ __all__ = [
     "Machines",
 ]
 
+import asyncio
 import base64
 from collections import Sequence
 from http import HTTPStatus
@@ -15,11 +16,18 @@ from . import (
     check_optional,
     Object,
     ObjectField,
+    ObjectFieldRelated,
+    ObjectFieldRelatedSet,
     ObjectSet,
     ObjectType,
     zones,
 )
 from ..bones import CallError
+from ..enum import NodeStatus
+from ..errors import (
+    MAASException,
+    OperationNotAllowed
+)
 
 
 class MachinesType(ObjectType):
@@ -83,7 +91,28 @@ class MachinesType(ObjectType):
 
 
 class MachineNotFound(Exception):
-    """Machine was not found."""
+    """
+    Machine was not found.
+
+    Not a MAASException because this doesn't occur in the context of
+    a specific object.
+    """
+
+
+class RescueModeFailure(MAASException):
+    """Machine failed to perform a Rescue mode transition."""
+
+
+class FailedDeployment(MAASException):
+    """Machine failed to Deploy."""
+
+
+class FailedReleasing(MAASException):
+    """Machine failed to Release."""
+
+
+class FailedDiskErasing(MAASException):
+    """Machine failed to erase disk when releasing."""
 
 
 class Machines(ObjectSet, metaclass=MachinesType):
@@ -121,8 +150,11 @@ class Machine(Object, metaclass=MachineType):
     min_hwe_kernel = ObjectField.Checked(
         "min_hwe_kernel", check_optional(str), check_optional(str))
 
+    boot_interface = ObjectFieldRelated(
+        "boot_interface", "Interface", readonly=True)
+    interfaces = ObjectFieldRelatedSet("interface_set", "Interfaces")
+
     # blockdevice_set
-    # interface_set
     # macaddress_set
     # netboot
     # osystem
@@ -163,7 +195,8 @@ class Machine(Object, metaclass=MachineType):
 
     async def deploy(
             self, user_data: typing.Union[bytes, str]=None,
-            distro_series: str=None, hwe_kernel: str=None, comment: str=None):
+            distro_series: str=None, hwe_kernel: str=None, comment: str=None,
+            wait: bool=False, wait_interval: int=5):
         """Deploy this machine.
 
         :param user_data: User-data to provide to the machine when booting. If
@@ -174,6 +207,8 @@ class Machine(Object, metaclass=MachineType):
         :param hwe_kernel: The HWE kernel to deploy. Probably only relevant
             when deploying Ubuntu.
         :param comment: A comment for the event log.
+        :param wait: If specified, wait until the deploy is complete.
+        :param wait_interval: How often to poll, defaults to 5 seconds
         """
         params = {"system_id": self.system_id}
         if user_data is not None:
@@ -190,18 +225,124 @@ class Machine(Object, metaclass=MachineType):
         if comment is not None:
             params["comment"] = comment
         data = await self._handler.deploy(**params)
-        return type(self)(data)
-
-    async def release(self, comment: str=None):
-        params = {"system_id": self.system_id}
-        if comment is not None:
-            params["comment"] = comment
-        data = await self._handler.release(**params)
-        return type(self)(data)
+        if not wait:
+            return type(self)(data)
+        else:
+            # Wait for the machine to be fully deployed
+            machine = type(self)(data)
+            while machine.status == NodeStatus.DEPLOYING:
+                await asyncio.sleep(wait_interval)
+                data = await self._handler.read(system_id=self.system_id)
+                machine = type(self)(data)
+            if machine.status == NodeStatus.FAILED_DEPLOYMENT:
+                msg = "{system_id} failed to Deploy.".format(
+                    system_id=machine.system_id
+                )
+                raise FailedDeployment(msg, machine)
+            return machine
 
     async def get_power_parameters(self):
         data = await self._handler.power_parameters(system_id=self.system_id)
         return data
+
+    async def release(self, comment: str=None, wait: bool=False,
+                      wait_interval: int=5):
+        """
+        Release the machine.
+
+        :param wait: If specified, wait until the deploy is complete.
+        :param wait_interval: How often to poll, defaults to 5 seconds
+        """
+        params = {"system_id": self.system_id}
+        if comment is not None:
+            params["comment"] = comment
+        data = await self._handler.release(**params)
+        if not wait:
+            return type(self)(data)
+        else:
+            # Wait for machine to be released
+            machine = type(self)(data)
+            while (machine.status == NodeStatus.RELEASING or
+                   machine.status == NodeStatus.DISK_ERASING):
+                await asyncio.sleep(wait_interval)
+                data = await self._handler.read(system_id=self.system_id)
+                machine = type(self)(data)
+            if machine.status == NodeStatus.FAILED_RELEASING:
+                msg = "{system_id} failed to be Released.".format(
+                    system_id=machine.system_id
+                )
+                raise FailedReleasing(msg, machine)
+            elif machine.status == NodeStatus.FAILED_DISK_ERASING:
+                msg = "{system_id} failed to erase disk.".format(
+                    system_id=machine.system_id
+                )
+                raise FailedDiskErasing(msg, machine)
+            return machine
+
+    async def enter_rescue_mode(self, wait: bool=False, wait_interval: int=5):
+        """
+        Send this machine into 'rescue mode'.
+
+        :param wait: If specified, wait until the deploy is complete.
+        :param wait_interval: How often to poll, defaults to 5 seconds
+        """
+        try:
+            data = await self._handler.rescue_mode(system_id=self.system_id)
+        except CallError as error:
+            if error.status == HTTPStatus.FORBIDDEN:
+                message = "Not allowed to enter rescue mode"
+                raise OperationNotAllowed(message) from error
+            else:
+                raise
+
+        if not wait:
+            return type(self)(data)
+        else:
+            # Wait for machine to finish entering rescue mode
+            machine = type(self)(data)
+            while machine.status == NodeStatus.ENTERING_RESCUE_MODE:
+                await asyncio.sleep(wait)
+                data = await self._handler.read(system_id=self.system_id)
+                machine = type(self)(data)
+            if machine.status == NodeStatus.FAILED_ENTERING_RESCUE_MODE:
+                msg = "{system_id} failed to enter Rescue Mode.".format(
+                    system_id=machine.system_id
+                )
+                raise RescueModeFailure(msg, machine)
+            return machine
+
+    async def exit_rescue_mode(self, wait: bool=False, wait_interval: int=5):
+        """
+        Exit rescue mode.
+
+        :param wait: If specified, wait until the deploy is complete.
+        :param wait_interval: How often to poll, defaults to 5 seconds
+        """
+        try:
+            data = await self._handler.exit_rescue_mode(
+                system_id=self.system_id
+            )
+        except CallError as error:
+            if error.status == HTTPStatus.FORBIDDEN:
+                message = "Not allowed to exit rescue mode."
+                raise OperationNotAllowed(message) from error
+            else:
+                raise
+        if not wait:
+            return type(self)(data)
+        else:
+            # Wait for machine to finish exiting rescue mode
+            machine = type(self)(data)
+            while machine.status == NodeStatus.EXITING_RESCUE_MODE:
+                await asyncio.sleep(wait_interval)
+                data = await self._handler.read(system_id=self.system_id)
+                machine = type(self)(data)
+            if machine.status == NodeStatus.FAILED_EXITING_RESCUE_MODE:
+                msg = "{system_id} failed to exit Rescue Mode.".format(
+                    system_id=machine.system_id
+                )
+                raise RescueModeFailure(msg, machine)
+            return machine
 
     def __repr__(self):
         return super(Machine, self).__repr__(

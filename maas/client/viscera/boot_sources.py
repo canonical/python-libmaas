@@ -55,7 +55,7 @@ class BootSource(Object, metaclass=BootSourceType):
     """A boot source."""
 
     id = ObjectField.Checked(
-        "id", check(int), readonly=True)
+        "id", check(int), readonly=True, pk=True)
     url = ObjectField.Checked(
         "url", check(str), check(str))
     keyring_filename = ObjectField.Checked(

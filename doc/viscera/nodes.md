@@ -46,6 +46,10 @@ attributes:
 'amd64/generic'
 >>> machine.cpus
 4
+>>> for interface in machine.interfaces:
+...     print(repr(Interface))
+<Interface name='eth0' mac_address='00:11:22:33:44:55'>
+<Interface name='eth1' mac_address='00:11:22:33:44:66'>
 ```
 
 Don't forget to try using tab-completion — the objects have been

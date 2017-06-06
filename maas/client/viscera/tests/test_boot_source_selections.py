@@ -24,7 +24,8 @@ def make_origin():
     # bound.
     return bind(
         boot_source_selections.BootSourceSelections,
-        boot_source_selections.BootSourceSelection)
+        boot_source_selections.BootSourceSelection,
+        boot_sources.BootSource)
 
 
 def make_boot_source():
@@ -54,12 +55,6 @@ class TestBootSourceSelection(TestCase):
             "os=%(os)r release=%(release)r subarches=%(subarches)r>" % (
                 selection._data)))
 
-    def test__read_raises_TypeError_when_no_BootSource(self):
-        BootSourceSelection = make_origin().BootSourceSelection
-        self.assertRaises(
-            TypeError, BootSourceSelection.read,
-            random.randint(0, 100), random.randint(0, 100))
-
     def test__read(self):
         source = make_boot_source()
         selection_id = random.randint(0, 100)
@@ -69,7 +64,8 @@ class TestBootSourceSelection(TestCase):
         subarches = [make_name_without_spaces("subarches")]
         labels = [make_name_without_spaces("labels")]
 
-        BootSourceSelection = make_origin().BootSourceSelection
+        origin = make_origin()
+        BootSourceSelection = origin.BootSourceSelection
         BootSourceSelection._handler.read.return_value = {
             "id": selection_id, "os": os, "release": release,
             "arches": arches, "subarches": subarches, "labels": labels}
@@ -78,7 +74,10 @@ class TestBootSourceSelection(TestCase):
         BootSourceSelection._handler.read.assert_called_once_with(
             boot_source_id=source.id, id=selection_id)
         self.assertThat(selection, MatchesStructure.byEquality(
-            id=selection_id, boot_source_id=source.id, os=os, release=release,
+            id=selection_id,
+            boot_source=origin.BootSource(
+                source.id, {'bootsourceselection': selection}),
+            os=os, release=release,
             arches=arches, subarches=subarches, labels=labels))
 
     def test__delete(self):
@@ -110,7 +109,8 @@ class TestBootSources(TestCase):
 
     def test__read(self):
         source = make_boot_source()
-        BootSourceSelections = make_origin().BootSourceSelections
+        origin = make_origin()
+        BootSourceSelections = origin.BootSourceSelections
         BootSourceSelections._handler.read.return_value = [
             {
                 "id": random.randint(0, 9),
@@ -122,8 +122,14 @@ class TestBootSources(TestCase):
 
         selections = BootSourceSelections.read(source)
         self.assertEquals(2, len(selections))
-        self.assertEquals(source.id, selections[0].boot_source_id)
-        self.assertEquals(source.id, selections[1].boot_source_id)
+        self.assertEquals(
+            origin.BootSource(
+                source.id, {'bootsourceselection': selections[0]}),
+            selections[0].boot_source)
+        self.assertEquals(
+            origin.BootSource(
+                source.id, {'bootsourceselection': selections[1]}),
+            selections[1].boot_source)
 
     def test__create_raises_TypeError_when_no_BootSource(self):
         os = make_name_without_spaces("os")
@@ -141,7 +147,8 @@ class TestBootSources(TestCase):
         os = make_name_without_spaces("os")
         release = make_name_without_spaces("release")
 
-        BootSourceSelections = make_origin().BootSourceSelections
+        origin = make_origin()
+        BootSourceSelections = origin.BootSourceSelections
         BootSourceSelections._handler.create.return_value = {
             "id": selection_id, "os": os, "release": release,
             "arches": ["*"], "subarches": ["*"], "labels": ["*"]}
@@ -151,7 +158,10 @@ class TestBootSources(TestCase):
             boot_source_id=source.id, os=os, release=release,
             arches=["*"], subarches=["*"], labels=["*"])
         self.assertThat(selection, MatchesStructure.byEquality(
-            id=selection_id, boot_source_id=source.id, os=os, release=release,
+            id=selection_id,
+            boot_source=origin.BootSource(
+                source.id, {'bootsourceselection': selection}),
+            os=os, release=release,
             arches=["*"], subarches=["*"], labels=["*"]))
 
     def test__create__with_kwargs(self):
@@ -163,7 +173,8 @@ class TestBootSources(TestCase):
         subarches = [make_name_without_spaces("subarches")]
         labels = [make_name_without_spaces("labels")]
 
-        BootSourceSelections = make_origin().BootSourceSelections
+        origin = make_origin()
+        BootSourceSelections = origin.BootSourceSelections
         BootSourceSelections._handler.create.return_value = {
             "id": selection_id, "os": os, "release": release,
             "arches": arches, "subarches": subarches, "labels": labels}
@@ -175,5 +186,8 @@ class TestBootSources(TestCase):
             boot_source_id=source.id, os=os, release=release,
             arches=arches, subarches=subarches, labels=labels)
         self.assertThat(selection, MatchesStructure.byEquality(
-            id=selection_id, boot_source_id=source.id, os=os, release=release,
+            id=selection_id,
+            boot_source=origin.BootSource(
+                source.id, {'bootsourceselection': selection}),
+            os=os, release=release,
             arches=arches, subarches=subarches, labels=labels))
