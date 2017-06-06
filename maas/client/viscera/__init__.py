@@ -199,12 +199,12 @@ def get_pk_descriptors(cls):
         if unique_pk_fields:
             raise AttributeError(
                 "more than one field is marked as unique primary key: %s" % (
-                    ', '.join(pk_fields)))
+                    ', '.join(sorted(pk_fields))))
         else:
             return tuple(sorted((
                 (name, descriptor)
                 for name, descriptor in pk_fields.items()
-            ), key=lambda item: item[0].pk))
+            ), key=lambda item: item[1].pk))
     else:
         return tuple()
 

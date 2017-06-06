@@ -1,7 +1,10 @@
 """Tests for `maas.client.viscera`."""
 
-from random import randrange
-from unittest.mock import sentinel
+from random import randrange, randint
+from unittest.mock import (
+    call,
+    sentinel,
+)
 
 from testtools.matchers import (
     Contains,
@@ -15,6 +18,7 @@ from testtools.matchers import (
 )
 
 from .. import (
+    check,
     dir_class,
     dir_instance,
     Disabled,
@@ -31,6 +35,7 @@ from ... import (
     viscera,
 )
 from ...testing import (
+    AsyncCallableMock,
     make_name,
     make_name_without_spaces,
     TestCase,
@@ -263,13 +268,88 @@ class TestObject(TestCase):
     def test__inherits_ObjectBasics(self):
         self.assertThat(Object.__mro__, Contains(ObjectBasics))
 
-    def test__init_sets__data(self):
+    def test__init_sets__data_and_loaded(self):
         data = {"alice": make_name_without_spaces("alice")}
         self.assertThat(Object(data)._data, Equals(data))
+        self.assertTrue(Object(data)._loaded)
 
-    def test__init_insists_on_mapping(self):
+    def test__init_insists_on_mapping_when_no_pk(self):
         error = self.assertRaises(TypeError, Object, ["some", "items"])
         self.assertThat(str(error), Equals("data must be a mapping, not list"))
+
+    def test__init_takes_pk_when_defined(self):
+        object_type = type(
+            "PKObject", (Object,), {"pk": ObjectField("pk_d", pk=True)})
+        object_pk = randint(0, 20)
+        object_a = object_type(object_pk)
+        self.assertThat(object_a._data, Equals({"pk_d": object_pk}))
+        self.assertThat(object_a.pk, Equals(object_pk))
+        self.assertFalse(object_a._loaded)
+
+    def test__init_validates_pk_when_defined(self):
+        object_type = type(
+            "PKObject", (Object,), {
+                "pk": ObjectField.Checked("pk_d", check(int), pk=True),
+            })
+        error = self.assertRaises(TypeError, object_type, "not int")
+        self.assertThat(
+            str(error), Equals("'not int' is not of type %r" % int))
+
+    def test__init_doesnt_allow_multiple_pk_True(self):
+        object_type = type(
+            "PKObject", (Object,), {
+                "pk1": ObjectField.Checked("pk_1", check(int), pk=True),
+                "pk2": ObjectField.Checked("pk_2", check(int), pk=True),
+            })
+        error = self.assertRaises(AttributeError, object_type, [0, 1])
+        self.assertThat(
+            str(error),
+            Equals(
+                "more than one field is marked as unique "
+                "primary key: pk1, pk2"))
+
+    def test__init_allows_sequence_when_multiple_pks(self):
+        object_type = type(
+            "PKObject", (Object,), {
+                "pk1": ObjectField.Checked("pk_1", check(int), pk=0),
+                "pk2": ObjectField.Checked("pk_2", check(int), pk=1),
+            })
+        object_pk_1 = randint(0, 20)
+        object_pk_2 = randint(0, 20)
+        object_a = object_type([object_pk_1, object_pk_2])
+        self.assertThat(object_a._data, Equals({
+            "pk_1": object_pk_1,
+            "pk_2": object_pk_2,
+        }))
+        self.assertThat(object_a.pk1, Equals(object_pk_1))
+        self.assertThat(object_a.pk2, Equals(object_pk_2))
+        self.assertFalse(object_a._loaded)
+
+    def test__init_requires_sequence_when_multiple_pks(self):
+        object_type = type(
+            "PKObject", (Object,), {
+                "pk1": ObjectField.Checked("pk_1", check(int), pk=0),
+                "pk2": ObjectField.Checked("pk_2", check(int), pk=1),
+            })
+        error = self.assertRaises(TypeError, object_type, 0)
+        self.assertThat(
+            str(error), Equals("data must be a sequence, not int"))
+
+    def test__init_validates_property_when_multiple_pks(self):
+        object_type = type(
+            "PKObject", (Object,), {
+                "pk1": ObjectField.Checked("pk_1", check(int), pk=0),
+                "pk2": ObjectField.Checked("pk_2", check(int), pk=1),
+            })
+        error = self.assertRaises(TypeError, object_type, [0, "bad"])
+        self.assertThat(
+            str(error), Equals("'bad' is not of type %r" % int))
+
+    def test__loaded(self):
+        object_a = Object({})
+        self.assertTrue(object_a.loaded)
+        object_a._loaded = False
+        self.assertFalse(object_a.loaded)
 
     def test__equal_when_data_matches(self):
         data = {"key": make_name("value")}
@@ -320,6 +400,77 @@ class TestObject(TestCase):
         self.assertThat(
             example.__repr__(fields=["bob", "alice"]), Equals(
                 "<Example alice=%(alice)r bob=%(bob)r>" % example._data))
+
+    def test_refresh_raises_AttributeError_when_no_read_defined(self):
+        object_a = Object({})
+        error = self.assertRaises(AttributeError, object_a.refresh)
+        self.assertThat(
+            str(error), Equals("'Object' object doesn't support refresh."))
+
+    def test_refresh_with_one_pk(self):
+        object_type = type(
+            "PKObject", (Object,), {"pk": ObjectField("pk_d", pk=True)})
+        object_pk = randint(0, 20)
+        new_data = {
+            'pk_d': object_pk,
+            'other': randint(0, 20),
+        }
+        mock_read = AsyncCallableMock(return_value=object_type(new_data))
+        self.patch(object_type, 'read', mock_read)
+        object_a = object_type(object_pk)
+        self.assertFalse(object_a.loaded)
+        object_a.refresh()
+        self.assertTrue(object_a.loaded)
+        self.assertThat(object_a._data, Equals(new_data))
+        self.assertThat(mock_read.call_args_list, Equals([call(object_pk)]))
+
+    def test_refresh_with_multiple_pk(self):
+        object_type = type(
+            "PKObject", (Object,), {
+                "pk1": ObjectField("pk_1", pk=0),
+                "pk2": ObjectField("pk_2", pk=1),
+            })
+        object_pk_1 = randint(0, 20)
+        object_pk_2 = randint(0, 20)
+        new_data = {
+            'pk_1': object_pk_1,
+            'pk_2': object_pk_2,
+            'other': randint(0, 20),
+        }
+        mock_read = AsyncCallableMock(return_value=object_type(new_data))
+        self.patch(object_type, 'read', mock_read)
+        object_a = object_type([object_pk_1, object_pk_2])
+        self.assertFalse(object_a.loaded)
+        object_a.refresh()
+        self.assertTrue(object_a.loaded)
+        self.assertThat(object_a._data, Equals(new_data))
+        self.assertThat(
+            mock_read.call_args_list,
+            Equals([call(object_pk_1, object_pk_2)]))
+
+    def test_refresh_raises_AttributeError_when_no_pk_fields(self):
+        object_type = type(
+            "PKObject", (Object,), {})
+        mock_read = AsyncCallableMock(return_value=object_type({}))
+        self.patch(object_type, 'read', mock_read)
+        object_a = object_type({})
+        error = self.assertRaises(AttributeError, object_a.refresh)
+        self.assertThat(
+            str(error),
+            Equals(
+                "unable to perform 'refresh' no primary key fields defined."))
+
+    def test_refresh_raises_TypeError_on_mismatch(self):
+        object_type = type(
+            "PKObject", (Object,), {"pk": ObjectField("pk_d", pk=True)})
+        mock_read = AsyncCallableMock(return_value=Object({}))
+        self.patch(object_type, 'read', mock_read)
+        object_a = object_type({"pk_d": 0})
+        error = self.assertRaises(TypeError, object_a.refresh)
+        self.assertThat(
+            str(error),
+            Equals(
+                "result of 'PKObject.read' must be 'PKObject', not 'Object'"))
 
 
 class TestObjectSet(TestCase):
