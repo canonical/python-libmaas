@@ -563,20 +563,20 @@ class ObjectFieldRelated(ObjectField):
 
     def __init__(
             self, name, cls, *,
-            reverse=undefined, default=undefined, readonly=False, pk=False):
+            default=undefined, readonly=False, pk=False, reverse=undefined):
         """Create a `ObjectFieldRelated` with `cls`.
 
         :param name: The name of the field. This is the name that's used to
             store the datum in the MAAS-side data dictionary.
         :param cls: The name of the object class to convert into.
-        :param reverse: The name of the field on the returned instances of
-            `cls` to place this objects instance.
         :param default: A default value to return when `name` is not found in
             the MAAS-side data dictionary.
         :param readonly: If true, prevent setting or deleting of this field.
         :param pk: If true marks the field as the unique primary key for the
             object it is defined on. If an integer then it define its place
             in the tuple of values that makes the object uniquely identified.
+        :param reverse: The name of the field on the returned instances of
+            `cls` to place this objects instance.
         """
         super(ObjectFieldRelated, self).__init__(
             name, default=default, readonly=readonly, pk=pk)
@@ -656,7 +656,7 @@ class ObjectFieldRelatedSet(ObjectField):
             return []
         if not isinstance(datum, Sequence):
             raise TypeError(
-                "%r is not of type %s" % (datum, Sequence))
+                "datum must be a sequence, not %s" % type(datum).__name__)
         local_data = None
         if self.reverse is not None:
             local_data = {}
