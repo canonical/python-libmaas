@@ -30,7 +30,7 @@ class InterfacesType(ObjectType):
             system_id = node
         elif isinstance(
                 node, (Device, Machine, RackController, RegionController)):
-            system_id = node.id
+            system_id = node.system_id
         else:
             raise TypeError(
                 "node must be a Machine or str, not %s"
@@ -55,7 +55,7 @@ class InterfaceType(ObjectType):
             system_id = node
         elif isinstance(
                 node, (Device, Machine, RackController, RegionController)):
-            system_id = node.id
+            system_id = node.system_id
         else:
             raise TypeError(
                 "node must be a Machine or str, not %s"
