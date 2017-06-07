@@ -12,6 +12,7 @@ from .. import zones
 
 from ..testing import bind
 from ...testing import (
+    make_name,
     make_string_without_spaces,
     TestCase,
 )
@@ -84,6 +85,13 @@ class TestZones(TestCase):
 
 
 class TestZone(TestCase):
+
+    def test__zone_unloaded(self):
+        Zone = make_origin().Zone
+        name = make_name("zone")
+        zone = Zone(name)
+        self.assertFalse(zone.loaded)
+        self.assertEqual(name, zone.name)
 
     def test__zone_read(self):
         Zone = make_origin().Zone

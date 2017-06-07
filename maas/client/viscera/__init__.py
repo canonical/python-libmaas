@@ -182,7 +182,7 @@ def is_pk_descriptor(descriptor):
 
 def get_pk_descriptors(cls):
     """Return tuple of tuples with attribute name and descriptor on the
-    `c;s` that is defined as the primary keys."""
+    `cls` that is defined as the primary keys."""
     pk_fields = {
         name: descriptor
         for name, descriptor in vars_class(cls).items()
@@ -212,10 +212,12 @@ def get_pk_descriptors(cls):
 class Object(ObjectBasics, metaclass=ObjectType):
     """An object in a MAAS installation."""
 
-    __slots__ = "__weakref__", "_data", "_loaded"
+    __slots__ = (
+        "__weakref__", "_data", "_orig_data", "_changed_data", "_loaded")
 
     def __init__(self, data, local_data=None):
         super(Object, self).__init__()
+        self._changed_data = {}
         self._loaded = False
         if isinstance(data, Mapping):
             self._data = data
@@ -245,6 +247,7 @@ class Object(ObjectBasics, metaclass=ObjectType):
                 raise TypeError(
                     "data must be a mapping, not %s"
                     % type(data).__name__)
+        self._orig_data = dict(self._data)
         if local_data is not None:
             if isinstance(local_data, Mapping):
                 self._data.update(local_data)
@@ -334,6 +337,8 @@ class Object(ObjectBasics, metaclass=ObjectType):
                     "fields defined.")
             if type(obj) is cls:
                 self._data = obj._data
+                self._orig_data = dict(obj._data)
+                self._changed_data = {}
                 self._loaded = True
             else:
                 raise TypeError(
@@ -342,6 +347,22 @@ class Object(ObjectBasics, metaclass=ObjectType):
         else:
             raise AttributeError(
                 "'%s' object doesn't support refresh." % cls.__name__)
+
+    async def save(self):
+        """Save the object in MAAS."""
+        if hasattr(self._handler, "update"):
+            if self._changed_data:
+                update_data = dict(self._changed_data)
+                update_data.update({
+                    key: self._orig_data[key]
+                    for key in self._handler.params
+                })
+                self._data = await self._handler.update(**update_data)
+                self._orig_data = dict(self._data)
+                self._changed_data = {}
+        else:
+            raise AttributeError(
+                "'%s' object doesn't support save." % type(self).__name__)
 
 
 class ObjectSet(ObjectBasics, metaclass=ObjectType):
@@ -548,6 +569,20 @@ class ObjectField:
         else:
             datum = self.value_to_datum(instance, value)
             instance._data[self.name] = datum
+            if self.name in instance._orig_data:
+                orig_datum = instance._orig_data[self.name]
+                if self.name in instance._changed_data:
+                    if orig_datum == datum:
+                        # Value set back to original value.
+                        del instance._changed_data[self.name]
+                    else:
+                        # Value changed still update to new value.
+                        instance._changed_data[self.name] = datum
+                elif orig_datum != datum:
+                    # New value changed.
+                    instance._changed_data[self.name] = datum
+            else:
+                instance._changed_data[self.name] = datum
 
     def __delete__(self, instance):
         """Standard Python descriptor method."""
@@ -555,6 +590,8 @@ class ObjectField:
             raise AttributeError("%s is read-only" % self.name)
         elif self.name in instance._data:
             del instance._data[self.name]
+            # Mark the field as deleted.
+            instance._changed_data[self.name] = None
         else:
             pass  # Nothing to do.
 

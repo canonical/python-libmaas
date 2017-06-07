@@ -267,7 +267,9 @@ class TestObject(TestCase):
     def test__defines_slots(self):
         self.assertThat(
             Object.__slots__,
-            Equals(("__weakref__", "_data", "_loaded")))
+            Equals((
+                "__weakref__", "_data", "_orig_data",
+                "_changed_data", "_loaded")))
 
     def test__inherits_ObjectBasics(self):
         self.assertThat(Object.__mro__, Contains(ObjectBasics))
@@ -467,6 +469,9 @@ class TestObject(TestCase):
         object_a.refresh()
         self.assertTrue(object_a.loaded)
         self.assertThat(object_a._data, Equals(new_data))
+        self.assertThat(object_a._orig_data, Equals(new_data))
+        self.assertThat(object_a._orig_data, Not(Is(object_a._data)))
+        self.assertThat(object_a._changed_data, Equals({}))
         self.assertThat(mock_read.call_args_list, Equals([call(object_pk)]))
 
     def test_refresh_with_multiple_pk(self):
@@ -489,6 +494,9 @@ class TestObject(TestCase):
         object_a.refresh()
         self.assertTrue(object_a.loaded)
         self.assertThat(object_a._data, Equals(new_data))
+        self.assertThat(object_a._orig_data, Equals(new_data))
+        self.assertThat(object_a._orig_data, Not(Is(new_data)))
+        self.assertThat(object_a._changed_data, Equals({}))
         self.assertThat(
             mock_read.call_args_list,
             Equals([call(object_pk_1, object_pk_2)]))
@@ -516,6 +524,56 @@ class TestObject(TestCase):
             str(error),
             Equals(
                 "result of 'PKObject.read' must be 'PKObject', not 'Object'"))
+
+    def test_save_raises_AttributeError_when_handler_has_no_update(self):
+        object_type = type(
+            "NotSaveableObject", (Object,), {"_handler": object()})
+        error = self.assertRaises(AttributeError, object_type({}).save)
+        self.assertThat(
+            str(error),
+            Equals("'NotSaveableObject' object doesn't support save."))
+
+    def test_save_does_nothing_when_nothing_changed(self):
+        handler = Mock()
+        handler.update = AsyncCallableMock(return_value={})
+        object_type = type(
+            "SaveableObject", (Object,), {
+                "_handler": handler,
+                "name": ObjectField("name")
+            })
+        object_a = object_type({})
+        object_a.save()
+        self.assertThat(
+            handler.update.call_count, Equals(0))
+
+    def test_save_calls_update_on_handler_with_params(self):
+        object_id = randint(0, 10)
+        saved_name = make_name("name")
+        updated_data = {
+            "id": object_id,
+            "name": saved_name,
+        }
+        handler = Mock()
+        handler.params = ['id']
+        handler.update = AsyncCallableMock(return_value=updated_data)
+        object_type = type(
+            "SaveableObject", (Object,), {
+                "_handler": handler,
+                "name": ObjectField("name")
+            })
+        object_a = object_type({
+            "id": object_id,
+        })
+        new_name = make_name("new")
+        object_a.name = new_name
+        object_a.save()
+        self.assertThat(
+            handler.update.call_args_list,
+            Equals([call(id=object_id, name=new_name)]))
+        self.assertThat(object_a._data, Equals(updated_data))
+        self.assertThat(object_a._orig_data, Equals(updated_data))
+        self.assertThat(object_a._orig_data, Not(Is(object_a._data)))
+        self.assertThat(object_a._changed_data, Equals({}))
 
 
 class TestObjectSet(TestCase):
@@ -728,6 +786,115 @@ class TestObjectField(TestCase):
         # MAAS-side datum, so is not passed through datum_to_value (or
         # value_to_datum for that matter).
         self.assertThat(example.alice, Is(sentinel.alice_default))
+
+    def test__set_new_value_is_set_in_changed(self):
+
+        class AliceField(ObjectField):
+            """Another most peculiar field."""
+
+        class Example(Object):
+            alice = AliceField("alice")
+
+        example = Example({})
+
+        example.alice = sentinel.alice
+        self.assertThat(example._changed_data, Equals({
+            'alice': sentinel.alice
+        }))
+
+    def test__set_update_value_is_set_in_changed(self):
+
+        class AliceField(ObjectField):
+            """Another most peculiar field."""
+
+        class Example(Object):
+            alice = AliceField("alice")
+
+        example = Example({
+            'alice': sentinel.alice
+        })
+
+        example.alice = sentinel.new_alice
+        self.assertThat(example._changed_data, Equals({
+            'alice': sentinel.new_alice
+        }))
+
+    def test__set_update_value_replaces_changed(self):
+
+        class AliceField(ObjectField):
+            """Another most peculiar field."""
+
+        class Example(Object):
+            alice = AliceField("alice")
+
+        example = Example({
+            'alice': sentinel.alice
+        })
+
+        example.alice = sentinel.new_alice
+        self.assertThat(example._changed_data, Equals({
+            'alice': sentinel.new_alice
+        }))
+        example.alice = sentinel.newer_alice
+        self.assertThat(example._changed_data, Equals({
+            'alice': sentinel.newer_alice
+        }))
+
+    def test__set_update_value_to_orig_removes_from_changed(self):
+
+        class AliceField(ObjectField):
+            """Another most peculiar field."""
+
+        class Example(Object):
+            alice = AliceField("alice")
+
+        example = Example({
+            'alice': sentinel.alice
+        })
+
+        example.alice = sentinel.new_alice
+        self.assertThat(example._changed_data, Equals({
+            'alice': sentinel.new_alice
+        }))
+        example.alice = sentinel.alice
+        self.assertThat(example._changed_data, Equals({}))
+
+    def test__delete_marks_field_deleted(self):
+
+        class AliceField(ObjectField):
+            """Another most peculiar field."""
+
+        class Example(Object):
+            alice = AliceField("alice")
+
+        example = Example({
+            'alice': sentinel.alice
+        })
+
+        del example.alice
+        self.assertThat(example._changed_data, Equals({
+            'alice': None
+        }))
+
+    def test__set_deleted_field_sets_changed(self):
+
+        class AliceField(ObjectField):
+            """Another most peculiar field."""
+
+        class Example(Object):
+            alice = AliceField("alice")
+
+        example = Example({
+            'alice': sentinel.alice
+        })
+
+        del example.alice
+        example.alice = sentinel.new_alice
+        self.assertThat(example._changed_data, Equals({
+            'alice': sentinel.new_alice
+        }))
+        example.alice = sentinel.alice
+        self.assertThat(example._changed_data, Equals({}))
 
 
 class TestObjectFieldChecked(TestCase):
