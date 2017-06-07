@@ -14,10 +14,10 @@ from . import (
     check_optional,
     Object,
     ObjectField,
+    ObjectFieldRelated,
     ObjectFieldRelatedSet,
     ObjectSet,
     ObjectType,
-    zones,
 )
 
 
@@ -79,8 +79,7 @@ class RackController(Object, metaclass=RackControllerType):
     system_id = ObjectField.Checked(
         "system_id", check(str), readonly=True, pk=True)
 
-    zone = zones.ZoneField(
-        "zone", readonly=True)
+    zone = ObjectFieldRelated("zone", "Zone")
 
     def __repr__(self):
         return super(RackController, self).__repr__(
@@ -144,8 +143,7 @@ class RegionController(Object, metaclass=RegionControllerType):
     system_id = ObjectField.Checked(
         "system_id", check(str), readonly=True, pk=True)
 
-    zone = zones.ZoneField(
-        "zone", readonly=True)
+    zone = ObjectFieldRelated("zone", "Zone")
 
     def __repr__(self):
         return super(RegionController, self).__repr__(

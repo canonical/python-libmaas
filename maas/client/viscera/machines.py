@@ -20,7 +20,6 @@ from . import (
     ObjectFieldRelatedSet,
     ObjectSet,
     ObjectType,
-    zones,
 )
 from ..bones import CallError
 from ..enum import NodeStatus
@@ -190,8 +189,7 @@ class Machine(Object, metaclass=MachineType):
 
     # virtualblockdevice_set
 
-    zone = zones.ZoneField(
-        "zone", readonly=True)
+    zone = ObjectFieldRelated("zone", "Zone")
 
     async def deploy(
             self, user_data: typing.Union[bytes, str]=None,

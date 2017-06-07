@@ -2,7 +2,6 @@
 
 __all__ = [
     "Zone",
-    "ZoneField",
     "Zones",
 ]
 
@@ -31,7 +30,7 @@ class ZonesType(ObjectType):
         :param description: A description of the `Zone`.
         :type description: `str`
         :returns: The create `Zone`
-        :rtype: `Fabric`
+        :rtype: `Zone`
         """
         params = {'name': name}
         if description is not None:
@@ -57,7 +56,7 @@ class Zone(Object, metaclass=ZoneType):
         "id", check(int), readonly=True)
 
     name = ObjectField.Checked(
-        "name", check(str), check(str))
+        "name", check(str), check(str), pk=True)
     description = ObjectField.Checked(
         "description", check(str), check(str))
 
@@ -67,13 +66,6 @@ class Zone(Object, metaclass=ZoneType):
 
     async def delete(self):
         """
-        Deletes the `Fabric` from MAAS.
+        Deletes the `Zone` from MAAS.
         """
         return await self._handler.delete(name=self.name)
-
-
-class ZoneField(ObjectField):
-    """An object field for a `Zone`."""
-
-    def datum_to_value(self, instance, datum):
-        return instance._origin.Zone(datum)

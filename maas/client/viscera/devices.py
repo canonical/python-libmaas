@@ -11,10 +11,10 @@ from . import (
     check,
     Object,
     ObjectField,
+    ObjectFieldRelated,
     ObjectFieldRelatedSet,
     ObjectSet,
     ObjectType,
-    zones,
 )
 
 
@@ -53,8 +53,7 @@ class Device(Object, metaclass=DeviceType):
         "system_id", check(str), readonly=True, pk=True)
     tags = ObjectField.Checked(  # List[str]
         "tag_names", check(Sequence), readonly=True)
-    zone = zones.ZoneField(
-        "zone", readonly=True)
+    zone = ObjectFieldRelated("zone", "Zone")
 
     def __repr__(self):
         return super(Device, self).__repr__(
