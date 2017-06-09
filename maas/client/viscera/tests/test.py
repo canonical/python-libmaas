@@ -1007,6 +1007,71 @@ class TestObjectFieldRelated(TestCase):
             "pk_d": rel_id,
         }))
 
+    def test_value_to_datum_returns_None_on_None(self):
+        self.assertIsNone(
+            ObjectFieldRelated("name", "class").value_to_datum(object(), None))
+
+    def test_value_to_datum_requires_same_class(self):
+        rel_object_type = type("RelObject", (Object,), {
+            "pk": ObjectField("pk_d", pk=True)
+        })
+        origin = Mock()
+        origin.RelObject = rel_object_type
+        instance = type("Object", (Object,), {"_origin": origin})({})
+        field = ObjectFieldRelated("related_id", "RelObject")
+        error = self.assertRaises(
+            TypeError, field.value_to_datum, instance, object())
+        self.assertThat(
+            str(error), Equals("must be RelObject, not object"))
+
+    def test_value_to_datum_with_one_primary_key(self):
+        rel_object_type = type("RelObject", (Object,), {
+            "pk": ObjectField("pk_d", pk=True)
+        })
+        origin = Mock()
+        origin.RelObject = rel_object_type
+        instance = type("Object", (Object,), {"_origin": origin})({})
+        field = ObjectFieldRelated("related_id", "RelObject")
+        rel_id = randint(0, 20)
+        rel_object = rel_object_type(rel_id)
+        self.assertThat(
+            field.value_to_datum(instance, rel_object), Equals(rel_id))
+
+    def test_value_to_datum_with_multiple_primary_keys(self):
+        rel_object_type = type("RelObject", (Object,), {
+            "pk1": ObjectField("pk_1", pk=0),
+            "pk2": ObjectField("pk_2", pk=1),
+        })
+        origin = Mock()
+        origin.RelObject = rel_object_type
+        instance = type("Object", (Object,), {"_origin": origin})({})
+        field = ObjectFieldRelated("related", "RelObject")
+        rel_1 = randint(0, 20)
+        rel_2 = randint(0, 20)
+        rel_object = rel_object_type((rel_1, rel_2))
+        self.assertThat(
+            field.value_to_datum(instance, rel_object), Equals((rel_1, rel_2)))
+
+    def test_value_to_datum_raises_error_when_no_primary_keys(self):
+        rel_object_type = type("RelObject", (Object,), {
+            "pk": ObjectField("pk_d")
+        })
+        origin = Mock()
+        origin.RelObject = rel_object_type
+        instance = type("Object", (Object,), {"_origin": origin})({})
+        field = ObjectFieldRelated("related_id", "RelObject")
+        rel_id = randint(0, 20)
+        rel_object = rel_object_type({
+            "pk_d": rel_id,
+        })
+        error = self.assertRaises(
+            AttributeError, field.value_to_datum, instance, rel_object)
+        self.assertThat(
+            str(error),
+            Equals(
+                "unable to perform set object no primary key "
+                "fields defined for RelObject"))
+
 
 class TestObjectFieldRelatedSet(TestCase):
     """Tests for `ObjectFieldRelatedSet`."""
