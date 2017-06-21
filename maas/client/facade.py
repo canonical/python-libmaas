@@ -124,6 +124,15 @@ class Client:
         }
 
     @facade
+    def spaces(origin):
+        return {
+            "create": origin.Spaces.create,
+            "get": origin.Space.read,
+            "get_default": origin.Space.get_default,
+            "list": origin.Spaces.read,
+        }
+
+    @facade
     def files(origin):
         return {
             "list": origin.Files.read,

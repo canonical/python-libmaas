@@ -926,6 +926,7 @@ class Origin(OriginBase, metaclass=OriginType):
             ".devices",
             ".events",
             ".fabrics",
+            ".spaces",
             ".files",
             ".interfaces",
             ".maas",
