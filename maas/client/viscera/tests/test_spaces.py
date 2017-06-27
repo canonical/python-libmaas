@@ -31,22 +31,18 @@ class TestSpaces(TestCase):
         Spaces = make_origin().Spaces
         name = make_string_without_spaces()
         description = make_string_without_spaces()
-        class_type = make_string_without_spaces()
         Spaces._handler.create.return_value = {
             "id": 1,
             "name": name,
             "description": description,
-            "class_type": class_type,
         }
         Spaces.create(
             name=name,
             description=description,
-            class_type=class_type,
         )
         Spaces._handler.create.assert_called_once_with(
             name=name,
             description=description,
-            class_type=class_type,
         )
 
     def test__spaces_read(self):
@@ -56,7 +52,6 @@ class TestSpaces(TestCase):
             {
                 "id": random.randint(0, 100),
                 "name": make_string_without_spaces(),
-                "class_type": make_string_without_spaces(),
             }
             for _ in range(3)
         ]
@@ -72,7 +67,6 @@ class TestSpace(TestCase):
         Space._handler.read.return_value = {
             "id": 0,
             "name": make_string_without_spaces(),
-            "class_type": make_string_without_spaces(),
         }
         Space.get_default()
         Space._handler.read.assert_called_once_with(
@@ -84,7 +78,6 @@ class TestSpace(TestCase):
         space = {
             "id": random.randint(0, 100),
             "name": make_string_without_spaces(),
-            "class_type": make_string_without_spaces(),
         }
         Space._handler.read.return_value = space
         self.assertThat(Space.read(id=space["id"]), Equals(Space(space)))
@@ -96,7 +89,6 @@ class TestSpace(TestCase):
         space = Space({
             "id": space_id,
             "name": make_string_without_spaces(),
-            "class_type": make_string_without_spaces()
         })
         space.delete()
         Space._handler.delete.assert_called_once_with(id=space_id)
@@ -106,6 +98,5 @@ class TestSpace(TestCase):
         space = Space({
             "id": 0,
             "name": make_string_without_spaces(),
-            "class_type": make_string_without_spaces(),
         })
         self.assertRaises(DeleteDefaultSpace, space.delete)

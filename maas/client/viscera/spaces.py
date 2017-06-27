@@ -22,7 +22,7 @@ class SpacesType(ObjectType):
         return cls(map(cls._object, data))
 
     async def create(cls, *, name: str=None,
-                     description: str=None, class_type: str=None):
+                     description: str=None):
         """
         Create a `Space` in MAAS.
 
@@ -31,8 +31,6 @@ class SpacesType(ObjectType):
         :type name: `str`
         :param description: A description of the `Space` (optional).
         :type description: `str`
-        :param class_type: The class type of the `Space` (optional).
-        :type class_type: `str`
         :returns: The created Space
         :rtype: `Space`
         """
@@ -41,8 +39,6 @@ class SpacesType(ObjectType):
             params["name"] = name
         if description is not None:
             params["description"] = description
-        if class_type is not None:
-            params["class_type"] = class_type
         return cls._object(await cls._handler.create(**params))
 
 
