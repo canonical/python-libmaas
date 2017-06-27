@@ -88,6 +88,15 @@ class TestClient(TestCase):
             )
         ))
 
+    def test__client_maps_subnets(self):
+        self.assertThat(self.client, MatchesClient(
+            subnets=MatchesFacade(
+                create=self.origin.Subnets.create,
+                get=self.origin.Subnet.read,
+                list=self.origin.Subnets.read,
+            )
+        ))
+
     def test__client_maps_files(self):
         self.assertThat(self.client, MatchesClient(
             files=MatchesFacade(

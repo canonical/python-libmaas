@@ -124,6 +124,14 @@ class Client:
         }
 
     @facade
+    def subnets(origin):
+        return {
+            "create": origin.Subnets.create,
+            "get": origin.Subnet.read,
+            "list": origin.Subnets.read,
+        }
+
+    @facade
     def files(origin):
         return {
             "list": origin.Files.read,
