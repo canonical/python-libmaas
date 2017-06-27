@@ -132,7 +132,8 @@ class OriginObjectRef:
 
     def __get__(self, instance, owner):
         if self.name is None:
-            return getattr(owner._origin, owner.__name__.rstrip("s"))
+            name = owner.__name__.split('.')[0]
+            return getattr(owner._origin, name.rstrip("s"))
         else:
             return getattr(owner._origin, self.name)
 
@@ -326,10 +327,10 @@ class Object(ObjectBasics, metaclass=ObjectType):
             if len(descriptors) == 1:
                 obj = await cls.read(getattr(self, descriptors[0][0]))
             elif len(descriptors) > 1:
-                args = [
+                args = (
                     getattr(self, name)
                     for name, _ in descriptors
-                ]
+                )
                 obj = await cls.read(*args)
             else:
                 raise AttributeError(
@@ -365,12 +366,66 @@ class Object(ObjectBasics, metaclass=ObjectType):
                 "'%s' object doesn't support save." % type(self).__name__)
 
 
+def ManagedCreate(super_cls):
+    """Dynamically creates a `create` method for a `ObjectSet.Managed` class
+    that calls the `super_cls.create`.
+
+    The first positional argument that is passed to the `super_cls.create` is
+    the `_manager` that was set using `ObjectSet.Managed`. The created object
+    is added to the `ObjectSet.Managed` also placed in the correct
+    `_data[field]` and `_orig_data[field]` for the `_manager` object.
+    """
+
+    @wraps(super_cls.create)
+    async def _create(self, *args, **kwargs):
+        cls = type(self)
+        manager = getattr(cls, '_manager', None)
+        manager_field = getattr(cls, '_manager_field', None)
+        if manager is not None and manager_field is not None:
+            args = (manager,) + args
+            new_obj = await super_cls.create(*args, **kwargs)
+            self._items = self._items + [new_obj]
+            manager._data[manager_field.name] = (
+                manager._data[manager_field.name] +
+                [new_obj._data])
+            manager._orig_data[manager_field.name] = (
+                manager._orig_data[manager_field.name] +
+                [new_obj._data])
+            return new_obj
+        else:
+            raise AttributeError(
+                'create is not supported; %s is not a managed set' % (
+                    super_cls.__name__))
+    return _create
+
+
 class ObjectSet(ObjectBasics, metaclass=ObjectType):
     """A set of objects in a MAAS installation."""
 
     __slots__ = "__weakref__", "_items"
 
     _object = OriginObjectRef()
+
+    @classmethod
+    def Managed(cls, manager, field, items):
+        """Create a custom `ObjectSet` that is managed by a related `Object.`
+
+        :param manager: The manager of the `ObjectSet`. This is the `Object`
+            that manages this set of objects.
+        :param field: The field on the `manager` that created this managed
+            `ObjectSet`.
+        :param items: The items in the `ObjectSet`.
+        """
+        attrs = {
+            "_manager": manager,
+            "_manager_field": field,
+        }
+        if hasattr(cls, "create"):
+            attrs['create'] = ManagedCreate(cls)
+        cls = type(
+            "%s.Managed#%s" % (
+                cls.__name__, manager.__class__.__name__), (cls,), attrs)
+        return cls(items)
 
     def __init__(self, items):
         super(ObjectSet, self).__init__()
@@ -650,6 +705,37 @@ class ObjectFieldRelated(ObjectField):
         bound = getattr(instance._origin, self.cls)
         return bound(datum, local_data=local_data)
 
+    def value_to_datum(self, instance, value):
+        """Convert a given Python-side value to a MAAS-side datum.
+
+        :param instance: The `Object` instance on which this field is
+            currently operating. This method should treat it as read-only, for
+            example to perform validation with regards to other fields.
+        :param datum: The Python-side value to validate and convert into a
+            MAAS-side datum.
+        :return: A datum derived from the given value.
+        """
+        if value is None:
+            return None
+        bound = getattr(instance._origin, self.cls)
+        if type(value) is bound:
+            # Use the primary keys to set the value.
+            descriptors = get_pk_descriptors(bound)
+            if len(descriptors) == 1:
+                return getattr(value, descriptors[0][0])
+            elif len(descriptors) > 1:
+                return tuple(
+                    getattr(value, name)
+                    for name, _ in descriptors
+                )
+            else:
+                raise AttributeError(
+                    "unable to perform set object no primary key "
+                    "fields defined for %s" % self.cls)
+        else:
+            raise TypeError(
+                "must be %s, not %s" % (self.cls, type(value).__name__))
+
 
 class ObjectFieldRelatedSet(ObjectField):
 
@@ -703,10 +789,12 @@ class ObjectFieldRelatedSet(ObjectField):
                 local_data[self.reverse] = instance
         # Get the class from the bound origin.
         bound = getattr(instance._origin, self.cls)
-        return bound(
-            bound._object(
-                item, local_data=local_data)
-            for item in datum)
+        return bound.Managed(
+            instance, self,
+            (
+                bound._object(item, local_data=local_data)
+                for item in datum
+            ))
 
 
 class ObjectMethod:
