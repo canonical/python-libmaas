@@ -21,31 +21,33 @@ from . import (
 class SubnetsType(ObjectType):
     """Metaclass for `Subnets`."""
 
-#     async def read(cls):
-#         data = await cls._handler.read()
-#         return cls(map(cls._object, data))
-# 
-#     async def create(cls, *, cidr: str, name: str=None,
-#                      description: str=None):
-#         """
-#         Create a `Subnet` in MAAS.
-# 
-#         :param cidr: The cidr of the `Subnet` (required).
-#         :type cidr: `str`
-#         :param name: The name of the `Subnet` (optional, will be given a
-#         default value if not specified).
-#         :type name: `str`
-#         :param description: A description of the `Subnet` (optional).
-#         :type description: `str`
-#         :returns: The created Subnet
-#         :rtype: `Subnet`
-#         """
-#         params = {}
-#         if name is not None:
-#             params["name"] = name
-#         if description is not None:
-#             params["description"] = description
-#         return cls._object(await cls._handler.create(**params))
+    async def read(cls):
+        data = await cls._handler.read()
+        return cls(map(cls._object, data))
+
+    async def create(cls, *, cidr: str, name: str=None,
+                     description: str=None):
+        """
+        Create a `Subnet` in MAAS.
+
+        :param cidr: The cidr of the `Subnet` (required).
+        :type cidr: `str`
+        :param name: The name of the `Subnet` (optional, will be given a
+        default value if not specified).
+        :type name: `str`
+        :param description: A description of the `Subnet` (optional).
+        :type description: `str`
+        :returns: The created Subnet
+        :rtype: `Subnet`
+        """
+        params = {
+            "cidr": cidr
+        }
+        if name is not None:
+            params["name"] = name
+        if description is not None:
+            params["description"] = description
+        return cls._object(await cls._handler.create(**params))
 
 
 class Subnets(ObjectSet, metaclass=SubnetsType):
@@ -54,6 +56,10 @@ class Subnets(ObjectSet, metaclass=SubnetsType):
 
 class SubnetType(ObjectType):
     """Metaclass for `Subnet`"""
+    async def read(cls):
+        """Get a `Subnet`."""
+        data = await cls._handler.read()
+        return cls(data)
 
 
 class Subnet(Object, metaclass=SubnetType):
@@ -68,14 +74,14 @@ class Subnet(Object, metaclass=SubnetType):
     description is allowed in the create call and displayed in the UI
     but never returned by the API
     """
-    vlan = ObjectFieldRelated.Checked(
+    vlan = ObjectFieldRelated(
         "vlan", "Vlan")
-    fabric = ObjectFieldRelated.Checked(
+    fabric = ObjectFieldRelated(
         "fabric", "Fabric")
     name = ObjectField.Checked(
         "vid", check_optional(int)
     )
-    space = ObjectFieldRelated.Checked(
+    space = ObjectFieldRelated(
         "space", "Space")
     gateway_ip = ObjectField.Checked(
         "gateway_ip", check(str),
