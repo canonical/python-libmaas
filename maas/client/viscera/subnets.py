@@ -17,8 +17,8 @@ from . import (
     ObjectType,
 )
 from .fabrics import Fabric
-from .space import Space
-from .vlan import Vlan
+from .spaces import Space
+from .vlans import Vlan
 
 
 class SubnetsType(ObjectType):
@@ -31,8 +31,7 @@ class SubnetsType(ObjectType):
     async def create(cls, *, cidr: str, name: str=None, description: str=None,
                      fabric: Union[Fabric, int]=None,
                      vlan: Union[Vlan, int]=None,
-                     vid: int=None, space: Union[Space, int]=None,
-                     gateway_ip: str=None, rdns_mode: str=None,
+                     vid: int=None, gateway_ip: str=None, rdns_mode: str=None,
                      dns_servers: str=None):
         """
         Create a `Subnet` in MAAS.
@@ -54,26 +53,18 @@ class SubnetsType(ObjectType):
             params["fabric"] = fabric
         elif isinstance(fabric, Fabric):
             params["fabric"] = fabric.id
-        else:
+        elif fabric is not None:
             raise TypeError(
                 "fabric must be Fabric or int, not %s" % (
                     type(fabric).__class__))
         if isinstance(vlan, int):
             params["vlan"] = vlan
-        elif isinstance(vlan, vlan):
+        elif isinstance(vlan, Vlan):
             params["vlan"] = vlan.id
-        else:
+        elif vlan is not None:
             raise TypeError(
                 "vlan must be Vlan or int, not %s" % (
                     type(vlan).__class__))
-        if isinstance(space, int):
-            params["space"] = space
-        elif isinstance(space, space):
-            params["space"] = space.id
-        else:
-            raise TypeError(
-                "space must be space or int, not %s" % (
-                    type(space).__class__))
 
         if vid is not None:
             assert(vlan is None)
@@ -120,7 +111,7 @@ class Subnet(Object, metaclass=SubnetType):
     name = ObjectField.Checked(
         "vid", check_optional(int)
     )
-    space = ObjectFieldRelated("space", "Space")
+    space = ObjectFieldRelated("space", "Space", readonly=True)
     gateway_ip = ObjectField.Checked(
         "gateway_ip", check(str),
     )
