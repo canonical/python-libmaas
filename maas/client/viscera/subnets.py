@@ -5,8 +5,6 @@ __all__ = [
     "Subnet",
 ]
 
-from typing import Union
-
 from . import (
     check,
     check_optional,
