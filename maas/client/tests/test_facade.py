@@ -97,6 +97,16 @@ class TestClient(TestCase):
             )
         ))
 
+    def test__client_maps_spaces(self):
+        self.assertThat(self.client, MatchesClient(
+            spaces=MatchesFacade(
+                create=self.origin.Spaces.create,
+                get=self.origin.Space.read,
+                get_default=self.origin.Space.get_default,
+                list=self.origin.Spaces.read,
+            )
+        ))
+
     def test__client_maps_files(self):
         self.assertThat(self.client, MatchesClient(
             files=MatchesFacade(

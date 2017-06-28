@@ -1015,6 +1015,7 @@ class Origin(OriginBase, metaclass=OriginType):
             ".events",
             ".subnets",
             ".fabrics",
+            ".spaces",
             ".files",
             ".interfaces",
             ".maas",

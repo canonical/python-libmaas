@@ -59,6 +59,8 @@ class Vlan(Object, metaclass=VlanType):
         "name", check_optional(str), check_optional(str))
     mtu = ObjectField.Checked(
         "mtu", check(int), check(int))
+    space = ObjectFieldRelated(
+        "space", "Space")
 
     relay_vlan = ObjectFieldRelated("relay_vlan", "Vlan")
     dhcp_on = ObjectField.Checked(
