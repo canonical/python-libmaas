@@ -24,7 +24,7 @@ from .fabrics import Fabric
 class VlanType(ObjectType):
     """Metaclass for `Vlan`."""
 
-    async def read(cls, fabric: Union[Fabric,int], vid: int):
+    async def read(cls, fabric: Union[Fabric, int], vid: int):
         """Get `Vlan` by `vid`.
 
         :param fabric: Fabric to get the VLAN from.
@@ -87,7 +87,7 @@ class Vlan(Object, metaclass=VlanType):
 class VlansType(ObjectType):
     """Metaclass for `Vlans`."""
 
-    async def read(cls, fabric: Union[Fabric,int]):
+    async def read(cls, fabric: Union[Fabric, int]):
         """Get list of `Vlan`'s for `fabric`.
 
         :param fabric: Fabric to get all VLAN's for.
@@ -108,11 +108,11 @@ class VlansType(ObjectType):
             for item in data)
 
     async def create(
-            cls, fabric: Union[Fabric,int], vid: int, *,
+            cls, fabric: Union[Fabric, int], vid: int, *,
             name: str=None, description: str=None, mtu: int=None,
-            relay_vlan: Union[Vlan,int]=None, dhcp_on: bool=False,
-            primary_rack: Union[RackController,str]=None,
-            secondary_rack: Union[RackController,str]=None):
+            relay_vlan: Union[Vlan, int]=None, dhcp_on: bool=False,
+            primary_rack: Union[RackController, str]=None,
+            secondary_rack: Union[RackController, str]=None):
         """
         Create a `Vlan` in MAAS.
 

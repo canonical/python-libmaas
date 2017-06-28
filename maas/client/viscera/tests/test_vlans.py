@@ -6,7 +6,7 @@ from testtools.matchers import Equals
 
 from ...errors import CannotDelete
 from ..controllers import RackController
-from ..fabrics import Fabric
+from ..fabrics import Fabric, Fabrics
 from ..vlans import (
     Vlan,
     Vlans,
@@ -24,7 +24,7 @@ def make_origin():
     Create a new origin with Vlans, Vlan, Fabric and RackController. The former
     refers to the latter via the origin, hence why it must be bound.
     """
-    return bind(Vlans, Vlan, Fabric, RackController)
+    return bind(Vlans, Vlan, Fabric, Fabrics, RackController)
 
 
 class TestVlans(TestCase):
