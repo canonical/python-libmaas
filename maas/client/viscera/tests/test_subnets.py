@@ -29,17 +29,21 @@ class TestSubnets(TestCase):
     def test__subnets_create(self):
         Subnets = make_origin().Subnets
         name = make_string_without_spaces()
+        cidr = make_string_without_spaces()
         description = make_string_without_spaces()
         Subnets._handler.create.return_value = {
             "id": 1,
+            "cidr": cidr,
             "name": name,
             "description": description,
         }
         Subnets.create(
+            cidr=cidr,
             name=name,
             description=description,
         )
         Subnets._handler.create.assert_called_once_with(
+            cidr=cidr,
             name=name,
             description=description,
         )
@@ -60,17 +64,6 @@ class TestSubnets(TestCase):
 
 
 class TestSubnet(TestCase):
-
-    def test__subnet_get_default(self):
-        Subnet = make_origin().Subnet
-        Subnet._handler.read.return_value = {
-            "id": 0,
-            "name": make_string_without_spaces(),
-        }
-        Subnet.get_default()
-        Subnet._handler.read.assert_called_once_with(
-            id=0
-        )
 
     def test__subnet_read(self):
         Subnet = make_origin().Subnet

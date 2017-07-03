@@ -9,7 +9,6 @@ from typing import Union
 
 from . import (
     check,
-    check_optional,
     Object,
     ObjectField,
     ObjectFieldRelated,
@@ -17,7 +16,6 @@ from . import (
     ObjectType,
 )
 from .fabrics import Fabric
-from .spaces import Space
 from .vlans import Vlan
 
 
@@ -88,9 +86,9 @@ class Subnets(ObjectSet, metaclass=SubnetsType):
 
 class SubnetType(ObjectType):
     """Metaclass for `Subnet`"""
-    async def read(cls):
-        """Get a `Subnet`."""
-        data = await cls._handler.read()
+    async def read(cls, id: int):
+        """Get a `Subnet` by its `id`."""
+        data = await cls._handler.read(id=id)
         return cls(data)
 
 
@@ -109,11 +107,18 @@ class Subnet(Object, metaclass=SubnetType):
     but never returned by the API
     """
     vlan = ObjectFieldRelated("vlan", "Vlan")
-    fabric = ObjectFieldRelated("fabric", "Fabric")
-    name = ObjectField.Checked(
-        "vid", check_optional(int)
+    space = ObjectField.Checked(
+        "space", check(str),
     )
-    space = ObjectFieldRelated("space", "Space", readonly=True)
+    active_discovery = ObjectField.Checked(
+        "active_discovery", check(bool),
+    )
+    allow_proxy = ObjectField.Checked(
+        "allow_proxy", check(bool),
+    )
+    managed = ObjectField.Checked(
+        "managed", check(bool),
+    )
     gateway_ip = ObjectField.Checked(
         "gateway_ip", check(str),
     )
@@ -121,7 +126,7 @@ class Subnet(Object, metaclass=SubnetType):
         "rdns_mode", check(int),
     )
     dns_servers = ObjectField.Checked(
-        "dns_servers", check(str),
+        "dns_servers", check(list),
     )
 
     async def delete(self):
