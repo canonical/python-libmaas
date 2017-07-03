@@ -96,6 +96,8 @@ class SubnetType(ObjectType):
 
 class Subnet(Object, metaclass=SubnetType):
     """A Subnet."""
+    id = ObjectField.Checked(
+        "id", check(int), readonly=True, pk=True)
     cidr = ObjectField.Checked(
         "cidr", check(str), readonly=True
     )
@@ -121,3 +123,7 @@ class Subnet(Object, metaclass=SubnetType):
     dns_servers = ObjectField.Checked(
         "dns_servers", check(str),
     )
+
+    async def delete(self):
+        """Delete this Subnet."""
+        await self._handler.delete(id=self.id)
