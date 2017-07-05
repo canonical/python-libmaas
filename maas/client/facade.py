@@ -155,6 +155,14 @@ class Client:
         }
 
     @facade
+    def ipranges(origin):
+        return {
+            "create": origin.IPRanges.create,
+            "get": origin.IPRange.read,
+            "list": origin.IPRanges.read,
+        }
+
+    @facade
     def maas(origin):
         attrs = (
             (name, getattr(origin.MAAS, name))
