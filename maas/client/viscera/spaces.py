@@ -66,7 +66,7 @@ class SpaceType(ObjectType):
 class Space(Object, metaclass=SpaceType):
     """A Space."""
     id = ObjectField.Checked(
-        "id", check(int), readonly=True
+        "id", check(int), readonly=True, pk=True
     )
     name = ObjectField.Checked(
         "name", check(str), readonly=True
