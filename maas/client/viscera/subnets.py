@@ -9,6 +9,7 @@ from typing import Union
 
 from . import (
     check,
+    check_optional,
     Object,
     ObjectField,
     ObjectFieldRelated,
@@ -120,7 +121,7 @@ class Subnet(Object, metaclass=SubnetType):
         "managed", check(bool),
     )
     gateway_ip = ObjectField.Checked(
-        "gateway_ip", check(str),
+        "gateway_ip", check_optional(str),
     )
     rdns_mode = ObjectField.Checked(
         "rdns_mode", check(int),
