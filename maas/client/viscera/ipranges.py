@@ -7,7 +7,6 @@ __all__ = [
 
 from . import (
     check,
-    check_optional,
     Object,
     ObjectField,
     ObjectFieldRelated,

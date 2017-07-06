@@ -107,6 +107,15 @@ class TestClient(TestCase):
             )
         ))
 
+    def test__client_maps_ipranges(self):
+        self.assertThat(self.client, MatchesClient(
+            ipranges=MatchesFacade(
+                create=self.origin.IPRanges.create,
+                get=self.origin.IPRange.read,
+                list=self.origin.IPRanges.read,
+            )
+        ))
+
     def test__client_maps_files(self):
         self.assertThat(self.client, MatchesClient(
             files=MatchesFacade(
