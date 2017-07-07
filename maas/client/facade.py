@@ -124,6 +124,14 @@ class Client:
         }
 
     @facade
+    def static_routes(origin):
+        return {
+            "create": origin.StaticRoutes.create,
+            "get": origin.StaticRoute.read,
+            "list": origin.StaticRoutes.read,
+        }
+
+    @facade
     def subnets(origin):
         return {
             "create": origin.Subnets.create,

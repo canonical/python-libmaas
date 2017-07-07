@@ -1021,6 +1021,7 @@ class Origin(OriginBase, metaclass=OriginType):
             ".machines",
             ".spaces",
             ".sshkeys",
+            ".static_routes",
             ".subnets",
             ".tags",
             ".users",
