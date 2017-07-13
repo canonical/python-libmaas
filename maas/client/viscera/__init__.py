@@ -935,6 +935,7 @@ class Origin(OriginBase, metaclass=OriginType):
             ".users",
             ".version",
             ".vlans",
+            ".subnets",
             ".zones",
         }
         super(Origin, self).__init__(
