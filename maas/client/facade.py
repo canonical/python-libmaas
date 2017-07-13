@@ -209,3 +209,10 @@ class Client:
             "get": origin.Subnet.read,
             "list": origin.Subnets.read,
         }
+
+    @facade
+    def spaces(origin):
+        return {
+            "get": origin.Space.read,
+            "list": origin.Spaces.read,
+        }

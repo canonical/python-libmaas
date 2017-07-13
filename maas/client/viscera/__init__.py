@@ -934,6 +934,7 @@ class Origin(OriginBase, metaclass=OriginType):
             ".tags",
             ".users",
             ".version",
+            ".spaces",
             ".vlans",
             ".subnets",
             ".zones",

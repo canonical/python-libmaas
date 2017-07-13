@@ -170,6 +170,15 @@ class TestClient(TestCase):
             ),
         ))
 
+    def test__client_maps_spaces(self):
+        self.assertThat(self.client, MatchesClient(
+            spaces=MatchesFacade(
+                get=self.origin.Space.read,
+                list=self.origin.Spaces.read,
+            ),
+        ))
+
+
 def MatchesClient(**facades):
     """Matches a `facade.Client` with the given facades."""
     return MatchesAll(
