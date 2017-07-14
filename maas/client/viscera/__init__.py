@@ -310,6 +310,14 @@ class Object(ObjectBasics, metaclass=ObjectType):
         else:
             return "<%s %s%s>" % (name, desc, unloaded)
 
+    def __hash__(self):
+        name = str(self.__class__.__name__)
+        if hasattr(self, 'id'):
+            return hash((name, self.id))
+        if hasattr(self, 'system_id'):
+            return hash((name, self.system_id))
+        return None
+
     @property
     def loaded(self):
         """True when the object is loaded.
