@@ -124,6 +124,31 @@ class Client:
         }
 
     @facade
+    def subnets(origin):
+        return {
+            "create": origin.Subnets.create,
+            "get": origin.Subnet.read,
+            "list": origin.Subnets.read,
+        }
+
+    @facade
+    def vlans(origin):
+        return {
+            "create": origin.Vlans.create,
+            "get": origin.Vlan.read,
+            "list": origin.Vlans.read,
+        }
+
+    @facade
+    def spaces(origin):
+        return {
+            "create": origin.Spaces.create,
+            "get": origin.Space.read,
+            "get_default": origin.Space.get_default,
+            "list": origin.Spaces.read,
+        }
+
+    @facade
     def files(origin):
         return {
             "list": origin.Files.read,

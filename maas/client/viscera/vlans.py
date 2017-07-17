@@ -19,6 +19,7 @@ from . import (
 )
 from .controllers import RackController
 from .fabrics import Fabric
+from .spaces import Space
 
 
 class VlanType(ObjectType):
@@ -59,6 +60,7 @@ class Vlan(Object, metaclass=VlanType):
         "name", check_optional(str), check_optional(str))
     mtu = ObjectField.Checked(
         "mtu", check(int), check(int))
+    space = ObjectFieldRelated("space", "Space")
 
     relay_vlan = ObjectFieldRelated("relay_vlan", "Vlan")
     dhcp_on = ObjectField.Checked(
@@ -68,8 +70,6 @@ class Vlan(Object, metaclass=VlanType):
 
     external_dhcp = ObjectField.Checked(
         "external_dhcp", check_optional(str), readonly=True)
-
-    # space
 
     def __repr__(self):
         return super(Vlan, self).__repr__(
@@ -112,7 +112,8 @@ class VlansType(ObjectType):
             name: str=None, description: str=None, mtu: int=None,
             relay_vlan: Union[Vlan, int]=None, dhcp_on: bool=False,
             primary_rack: Union[RackController, str]=None,
-            secondary_rack: Union[RackController, str]=None):
+            secondary_rack: Union[RackController, str]=None,
+            space: Union[Space, int]=None):
         """
         Create a `Vlan` in MAAS.
 
@@ -184,6 +185,16 @@ class VlansType(ObjectType):
                 raise TypeError(
                     "secondary_rack must be RackController or str, not %s" % (
                         type(secondary_rack).__class__))
+        if space is not None:
+            if isinstance(space, int):
+                params['space'] = space
+            elif isinstance(space, Space):
+                params['space'] = space.id
+            else:
+                raise TypeError(
+                    "space must be Space or int, not %s" % (
+                        type(space).__class__))
+
         return cls._object(await cls._handler.create(**params))
 
 
