@@ -57,3 +57,12 @@ class NodeStatus(enum.IntEnum):
     TESTING = 21
     #: Testing has failed
     FAILED_TESTING = 22
+
+
+class RDNSMode(enum.IntEnum):
+    #: Do not generate reverse DNS for this Subnet.
+    DISABLED = 0
+    #: Generate reverse DNS only for the CIDR.
+    ENABLED = 1
+    #: Generate RFC2317 glue if needed (Subnet is too small for its own zone.)
+    RFC2317 = 2
