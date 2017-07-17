@@ -2,14 +2,25 @@
 
 import random
 
-from testtools.matchers import Equals
+from testtools.matchers import (
+    Equals,
+    IsInstance,
+    MatchesAll,
+    MatchesStructure,
+)
 
 from ..subnets import (
     Subnet,
     Subnets,
 )
 
-from .. testing import bind
+from ..vlans import (
+    Vlan,
+    Vlans,
+)
+
+from ..testing import bind
+from ...enum import RDNSMode
 from ...testing import (
     make_string_without_spaces,
     TestCase,
@@ -18,35 +29,30 @@ from ...testing import (
 
 def make_origin():
     """
-    Create a new origin with Subnets and Subnet. The former
-    refers to the latter via the origin, hence why it must be bound.
+    Create a new origin with Subnets, Subnet, Vlans, Vlan.
     """
-    return bind(Subnets, Subnet)
+    return bind(Subnets, Subnet, Vlans, Vlan)
 
 
 class TestSubnets(TestCase):
 
     def test__subnets_create(self):
         Subnets = make_origin().Subnets
-        name = make_string_without_spaces()
         cidr = make_string_without_spaces()
+        vlan = random.randint(5000, 8000)
+        name = make_string_without_spaces()
         description = make_string_without_spaces()
         Subnets._handler.create.return_value = {
             "id": 1,
             "cidr": cidr,
+            "vlan": vlan,
             "name": name,
             "description": description,
         }
-        Subnets.create(
-            cidr=cidr,
-            name=name,
-            description=description,
-        )
+        Subnets.create(cidr, vlan, name=name, description=description)
         Subnets._handler.create.assert_called_once_with(
-            cidr=cidr,
-            name=name,
-            description=description,
-        )
+            cidr=cidr, vlan=vlan,
+            name=name, description=description)
 
     def test__subnets_read(self):
         """Subnets.read() returns a list of Subnets."""
@@ -67,12 +73,21 @@ class TestSubnet(TestCase):
 
     def test__subnet_read(self):
         Subnet = make_origin().Subnet
+        vlan_id = random.randint(5000, 8000)
         subnet = {
             "id": random.randint(0, 100),
             "name": make_string_without_spaces(),
+            "vlan": {
+                "id": vlan_id,
+            },
+            "rdns_mode": 2,
         }
         Subnet._handler.read.return_value = subnet
         self.assertThat(Subnet.read(id=subnet["id"]), Equals(Subnet(subnet)))
+        self.assertThat(
+            Subnet(subnet).vlan, MatchesAll(
+                IsInstance(Vlan), MatchesStructure.byEquality(id=vlan_id)))
+        self.assertThat(Subnet(subnet).rdns_mode, Equals(RDNSMode.RFC2317))
         Subnet._handler.read.assert_called_once_with(id=subnet["id"])
 
     def test__subnet_delete(self):

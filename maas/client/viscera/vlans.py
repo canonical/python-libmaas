@@ -49,19 +49,18 @@ class Vlan(Object, metaclass=VlanType):
     """A VLAN in a fabric."""
 
     id = ObjectField.Checked(
-        "id", check(int), readonly=True, pk=0)
+        "id", check(int), readonly=True)
 
     fabric = ObjectFieldRelated(
-        "fabric_id", "Fabric", readonly=True)
+        "fabric_id", "Fabric", readonly=True, pk=0)
     vid = ObjectField.Checked(
-        "vid", check(int), check(int))
+        "vid", check(int), check(int), pk=1)
 
     name = ObjectField.Checked(
         "name", check_optional(str), check_optional(str))
     mtu = ObjectField.Checked(
         "mtu", check(int), check(int))
-    space = ObjectFieldRelated(
-        "space", "Space", reverse=None)
+    space = ObjectFieldRelated("space", "Space")
 
     relay_vlan = ObjectFieldRelated("relay_vlan", "Vlan")
     dhcp_on = ObjectField.Checked(

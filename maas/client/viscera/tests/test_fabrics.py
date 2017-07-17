@@ -2,12 +2,22 @@
 
 import random
 
-from testtools.matchers import Equals
+from testtools.matchers import (
+    Equals,
+    IsInstance,
+    MatchesAll,
+    MatchesSetwise,
+    MatchesStructure,
+)
 
 from ...errors import CannotDelete
 from ..fabrics import (
     Fabric,
     Fabrics,
+)
+from ..vlans import (
+    Vlan,
+    Vlans,
 )
 
 from .. testing import bind
@@ -19,10 +29,9 @@ from ...testing import (
 
 def make_origin():
     """
-    Create a new origin with Fabrics and Fabric. The former
-    refers to the latter via the origin, hence why it must be bound.
+    Create a new origin with Fabrics, Fabric, Vlans, and Vlan.
     """
-    return bind(Fabrics, Fabric)
+    return bind(Fabrics, Fabric, Vlans, Vlan)
 
 
 class TestFabrics(TestCase):
@@ -85,10 +94,19 @@ class TestFabric(TestCase):
             "id": random.randint(0, 100),
             "name": make_string_without_spaces(),
             "class_type": make_string_without_spaces(),
+            "vlans": [{
+                "id": 1,
+            }, {
+                "id": 2,
+            }]
         }
         Fabric._handler.read.return_value = fabric
         self.assertThat(Fabric.read(id=fabric["id"]), Equals(Fabric(fabric)))
         Fabric._handler.read.assert_called_once_with(id=fabric["id"])
+        self.assertThat(Fabric(fabric).vlans, MatchesSetwise(
+            MatchesAll(IsInstance(Vlan), MatchesStructure.byEquality(id=1)),
+            MatchesAll(IsInstance(Vlan), MatchesStructure.byEquality(id=2)),
+        ))
 
     def test__fabric_delete(self):
         Fabric = make_origin().Fabric

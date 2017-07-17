@@ -84,10 +84,42 @@ class TestMultiPart(TestCase):
         # The encode_multipart_data() function should take a list of
         # parameters and files and encode them into a MIME
         # multipart/form-data suitable for posting to the MAAS server.
-        params = {"op": "add", "foo": "bar\u1234"}
+        params = {
+            "op": {
+                "value": "add",
+                "output": "add",
+            },
+            "foo": {
+                "value": "bar\u1234",
+                "output": "bar\u1234",
+            },
+            "none": {
+                "value": None,
+                "output": "",
+            },
+            "true": {
+                "value": True,
+                "output": "true",
+            },
+            "false": {
+                "value": False,
+                "output": "false",
+            },
+            "int": {
+                "value": 1,
+                "output": "1",
+            },
+            "bytes": {
+                "value": b"bytes",
+                "output": "bytes",
+            },
+        }
         random_data = urandom(32)
         files = {"baz": BytesIO(random_data)}
-        body, headers = encode_multipart_data(params, files)
+        body, headers = encode_multipart_data({
+            key: value["value"]
+            for key, value in params.items()
+        }, files)
         self.assertEqual("%s" % len(body), headers["Content-Length"])
         self.assertThat(
             headers["Content-Type"],
@@ -95,7 +127,7 @@ class TestMultiPart(TestCase):
         # Round-trip through Django's multipart code.
         post, files = parse_headers_and_body_with_django(headers, body)
         self.assertEqual(
-            {name: [value] for name, value in params.items()}, post,
+            {name: [value["output"]] for name, value in params.items()}, post,
             ahem_django_ahem)
         self.assertSetEqual({"baz"}, set(files))
         self.assertEqual(

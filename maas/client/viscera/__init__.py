@@ -892,6 +892,12 @@ class OriginBase:
 #
 
 
+def to(cls):
+    def to_cls(value):
+        return cls(value)
+    return to_cls
+
+
 def check(expected):
     def checker(value):
         if issubclass(type(value), expected):
@@ -1021,7 +1027,9 @@ class Origin(OriginBase, metaclass=OriginType):
             ".controllers",
             ".devices",
             ".events",
+            ".subnets",
             ".fabrics",
+            ".spaces",
             ".files",
             ".interfaces",
             ".ipranges",
