@@ -21,8 +21,8 @@ class SpacesType(ObjectType):
         data = await cls._handler.read()
         return cls(map(cls._object, data))
 
-    async def create(cls, *, name: str=None,
-                     description: str=None):
+    async def create(
+            cls, *, name: str=None, description: str=None):
         """
         Create a `Space` in MAAS.
 
@@ -51,9 +51,7 @@ class SpaceType(ObjectType):
     _default_space_id = 0
 
     async def get_default(cls):
-        """
-        Get the 'default' Space for the MAAS.
-        """
+        """Get the 'default' Space for the MAAS."""
         data = await cls._handler.read(id=cls._default_space_id)
         return cls(data)
 
@@ -65,16 +63,12 @@ class SpaceType(ObjectType):
 
 class Space(Object, metaclass=SpaceType):
     """A Space."""
-    id = ObjectField.Checked(
-        "id", check(int), readonly=True, pk=True
-    )
-    name = ObjectField.Checked(
-        "name", check(str), readonly=True
-    )
-    """
-    description is allowed in the create call and displayed in the UI
-    but never returned by the API
-    """
+
+    id = ObjectField.Checked("id", check(int), readonly=True, pk=True)
+    name = ObjectField.Checked("name", check(str), readonly=True)
+
+    # description is allowed in the create call and displayed in the UI
+    # but never returned by the API.
 
     async def delete(self):
         """Delete this Space."""
