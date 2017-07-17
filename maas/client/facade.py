@@ -202,3 +202,17 @@ class Client:
             "get": origin.Zone.read,
             "list": origin.Zones.read,
         }
+
+    @facade
+    def subnets(origin):
+        return {
+            "get": origin.Subnet.read,
+            "list": origin.Subnets.read,
+        }
+
+    @facade
+    def spaces(origin):
+        return {
+            "get": origin.Space.read,
+            "list": origin.Spaces.read,
+        }

@@ -162,6 +162,22 @@ class TestClient(TestCase):
             ),
         ))
 
+    def test__client_maps_subnets(self):
+        self.assertThat(self.client, MatchesClient(
+            subnets=MatchesFacade(
+                get=self.origin.Subnet.read,
+                list=self.origin.Subnets.read,
+            ),
+        ))
+
+    def test__client_maps_spaces(self):
+        self.assertThat(self.client, MatchesClient(
+            spaces=MatchesFacade(
+                get=self.origin.Space.read,
+                list=self.origin.Spaces.read,
+            ),
+        ))
+
 
 def MatchesClient(**facades):
     """Matches a `facade.Client` with the given facades."""
