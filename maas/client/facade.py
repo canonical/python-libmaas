@@ -230,6 +230,14 @@ class Client:
         }
 
     @facade
+    def vlans(origin):
+        return {
+            "create": origin.Vlans.create,
+            "get": origin.Vlan.read,
+            "list": origin.Vlans.read,
+        }
+
+    @facade
     def zones(origin):
         return {
             "create": origin.Zones.create,
