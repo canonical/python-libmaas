@@ -191,6 +191,15 @@ class TestClient(TestCase):
             ),
         ))
 
+    def test__client_maps_vlans(self):
+        self.assertThat(self.client, MatchesClient(
+            vlans=MatchesFacade(
+                create=self.origin.Vlans.create,
+                get=self.origin.Vlan.read,
+                list=self.origin.Vlans.read,
+            ),
+        ))
+
     def test__client_maps_zones(self):
         self.assertThat(self.client, MatchesClient(
             zones=MatchesFacade(
