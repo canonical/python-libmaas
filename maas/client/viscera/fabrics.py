@@ -76,8 +76,8 @@ class Fabric(Object, metaclass=FabricType):
     id = ObjectField.Checked(
         "id", check(int), readonly=True, pk=True)
     name = ObjectField.Checked(
-        "name", check(str), readonly=True)
-    vlans = ObjectFieldRelatedSet("vlans", "VLANs")
+        "name", check(str), check(str))
+    vlans = ObjectFieldRelatedSet("vlans", "Vlans")
 
     async def delete(self):
         """Delete this Fabric."""

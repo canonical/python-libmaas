@@ -76,7 +76,16 @@ def make_payloads(name, content):
 
     This raises `AssertionError` if it encounters anything else.
     """
-    if isinstance(content, bytes):
+    if content is None:
+        yield make_bytes_payload(name, b"")
+    elif isinstance(content, bool):
+        if content:
+            yield make_bytes_payload(name, b"true")
+        else:
+            yield make_bytes_payload(name, b"false")
+    elif isinstance(content, int):
+        yield make_bytes_payload(name, b"%d" % content)
+    elif isinstance(content, bytes):
         yield make_bytes_payload(name, content)
     elif isinstance(content, str):
         yield make_string_payload(name, content)

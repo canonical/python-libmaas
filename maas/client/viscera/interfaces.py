@@ -80,7 +80,7 @@ class Interface(Object, metaclass=InterfaceType):
     effective_mtu = ObjectField.Checked(
         "effective_mtu", check(int), readonly=True)
 
-    vlan = ObjectFieldRelated("vlan", "VLAN", reverse=None)
+    vlan = ObjectFieldRelated("vlan", "Vlan", reverse=None)
 
     # parents
     # links
