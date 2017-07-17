@@ -1160,6 +1160,28 @@ class TestObjectFieldRelatedSet(TestCase):
             "pk_d": rel_ids[0],
         }))
 
+    def test_datum_to_value_wraps_managed_create(self):
+        rel_object_type = type("RelObject", (Object,), {
+            "pk": ObjectField("pk_d", pk=True),
+        })
+        create_mock = AsyncCallableMock(return_value=rel_object_type({}))
+        rel_object_set_type = type("RelObjectSet", (ObjectSet,), {
+            "_object": rel_object_type,
+            "create": create_mock,
+        })
+        origin = Mock()
+        origin.RelObjectSet = rel_object_set_type
+        instance = type("InstObject", (Object,), {"_origin": origin})({
+            "related_ids": [],
+        })
+        field = ObjectFieldRelatedSet("related_ids", "RelObjectSet")
+        rel_ids = range(5)
+        rel_object_set = field.datum_to_value(instance, rel_ids)
+        rel_object_set.create()
+        self.assertEquals(
+            'RelObjectSet.Managed#InstObject', type(rel_object_set).__name__)
+        self.assertThat(create_mock.call_args_list, Equals([call(instance)]))
+
 
 class TestOriginBase(TestCase):
     """Tests for `OriginBase`."""
