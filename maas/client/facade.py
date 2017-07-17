@@ -211,6 +211,7 @@ class Client:
     def tags(origin):
         return {
             "create": origin.Tags.create,
+            "get": origin.Tag.read,
             "list": origin.Tags.read,
         }
 
