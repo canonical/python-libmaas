@@ -124,6 +124,14 @@ class Client:
         }
 
     @facade
+    def static_routes(origin):
+        return {
+            "create": origin.StaticRoutes.create,
+            "get": origin.StaticRoute.read,
+            "list": origin.StaticRoutes.read,
+        }
+
+    @facade
     def subnets(origin):
         return {
             "create": origin.Subnets.create,
@@ -144,6 +152,14 @@ class Client:
     def files(origin):
         return {
             "list": origin.Files.read,
+        }
+
+    @facade
+    def ipranges(origin):
+        return {
+            "create": origin.IPRanges.create,
+            "get": origin.IPRange.read,
+            "list": origin.IPRanges.read,
         }
 
     @facade

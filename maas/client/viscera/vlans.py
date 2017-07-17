@@ -71,6 +71,8 @@ class Vlan(Object, metaclass=VlanType):
     external_dhcp = ObjectField.Checked(
         "external_dhcp", check_optional(str), readonly=True)
 
+    # space
+
     def __repr__(self):
         return super(Vlan, self).__repr__(
             fields={"name", "vid"})
@@ -194,7 +196,6 @@ class VlansType(ObjectType):
                 raise TypeError(
                     "space must be Space or int, not %s" % (
                         type(space).__class__))
-
         return cls._object(await cls._handler.create(**params))
 
 

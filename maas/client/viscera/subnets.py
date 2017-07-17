@@ -61,6 +61,7 @@ class SubnetsType(ObjectType):
         params = {
             "cidr": cidr
         }
+
         if isinstance(vlan, int):
             params["vlan"] = vlan
         elif isinstance(vlan, Vlan):
