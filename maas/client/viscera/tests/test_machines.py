@@ -9,6 +9,7 @@ from maas.client.viscera import Origin
 from testtools.matchers import (
     ContainsDict,
     Equals,
+    IsInstance,
     MatchesStructure,
 )
 
@@ -358,6 +359,29 @@ class TestMachine_APIVersion(TestCase):
 
 
 class TestMachines(TestCase):
+
+    def test__create(self):
+        origin = make_origin()
+        Machines, Machine = origin.Machines, origin.Machine
+        Machines._handler.create.return_value = {}
+        observed = Machines.create(
+            'amd64',
+            ['00:11:22:33:44:55', '00:11:22:33:44:AA'],
+            'ipmi',
+            {'power_address': 'localhost', 'power_user': 'root'},
+            subarchitecture='generic', min_hwe_kernel='hwe-x',
+            hostname='new-machine', domain='maas')
+        self.assertThat(observed, IsInstance(Machine))
+        Machines._handler.create.assert_called_once_with(
+            architecture='amd64',
+            mac_addresses=['00:11:22:33:44:55', '00:11:22:33:44:AA'],
+            power_type='ipmi',
+            power_parameters={
+                'power_address': 'localhost', 'power_user': 'root'},
+            subarchitecture='generic',
+            min_hwe_kernel='hwe-x',
+            hostname='new-machine',
+            domain='maas')
 
     def test__allocate(self):
         Machines = make_origin().Machines

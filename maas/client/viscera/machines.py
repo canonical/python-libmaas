@@ -20,6 +20,7 @@ from . import (
     ObjectFieldRelatedSet,
     ObjectSet,
     ObjectType,
+    to,
 )
 from ..bones import CallError
 from ..enum import NodeStatus
@@ -36,10 +37,56 @@ class MachinesType(ObjectType):
         data = await cls._handler.read()
         return cls(map(cls._object, data))
 
+    async def create(
+            cls, architecture: str, mac_addresses: typing.Sequence[str],
+            power_type: str,
+            power_parameters: typing.Mapping[str, typing.Any]=None, *,
+            subarchitecture: str=None, min_hwe_kernel: str=None,
+            hostname: str=None, domain: typing.Union[int, str]=None):
+        """
+        Create a new machine.
+
+        :param architecture: The architecture of the machine (required).
+        :type architecture: `str`
+        :param mac_addresses: The MAC address of the machine (required).
+        :type mac_addresses: sequence of `str`
+        :param power_type: The power type of the machine (required).
+        :type power_type: `str`
+        :param power_parameters: The power parameters for the machine
+            (optional).
+        :type power_parameters: mapping of `str` to any value.
+        :param subarchitecture: The subarchitecture of the machine (optional).
+        :type subarchitecture: `str`
+        :param min_hwe_kernel: The minimal HWE kernel for the machine
+            (optional).
+        :param hostname: The hostname for the machine (optional).
+        :type hostname: `str`
+        :param domain: The domain for the machine (optional).
+        :type domain: `int` or `str`
+        """
+        params = {
+            "architecture": architecture,
+            "mac_addresses": mac_addresses,
+            "power_type": power_type,
+        }
+        if power_parameters is not None:
+            params["power_parameters"] = power_parameters
+        if subarchitecture is not None:
+            params["subarchitecture"] = subarchitecture
+        if min_hwe_kernel is not None:
+            params["min_hwe_kernel"] = min_hwe_kernel
+        if hostname is not None:
+            params["hostname"] = hostname
+        if domain is not None:
+            params["domain"] = domain
+        return cls._object(await cls._handler.create(**params))
+
     async def allocate(
             cls, *, hostname: str=None, architecture: str=None, cpus: int=None,
             memory: float=None, tags: typing.Sequence[str]=None):
         """
+        Allocate a machine.
+
         :param hostname: The hostname to match.
         :param architecture: The architecture to match, e.g. "amd64".
         :param cpus: The minimum number of CPUs to match.
@@ -172,7 +219,7 @@ class Machine(Object, metaclass=MachineType):
     # storage
 
     status = ObjectField.Checked(
-        "status", check(int), readonly=True)
+        "status", to(NodeStatus), readonly=True)
     status_action = ObjectField.Checked(
         "status_action", check_optional(str), readonly=True)
     status_message = ObjectField.Checked(
