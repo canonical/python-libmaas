@@ -7,6 +7,7 @@ __all__ = [
 
 import asyncio
 import base64
+import bson
 from collections import Sequence
 from http import HTTPStatus
 import typing
@@ -454,6 +455,10 @@ class Machine(Object, metaclass=MachineType):
                 )
                 raise RescueModeFailure(msg, self)
             return self
+
+    async def get_details(self):
+        data = await self._handler.details(system_id=self.system_id)
+        return bson.loads(data)
 
     def __repr__(self):
         return super(Machine, self).__repr__(
