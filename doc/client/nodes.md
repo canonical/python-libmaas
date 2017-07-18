@@ -86,6 +86,14 @@ Updating a machine is as simple as modifying the attribute and saving.
 >>> machine.save()
 ```
 
+## Deleting nodes
+
+Delete a machine is simple as calling delete on the machine object.
+
+```pycon
+>>> machine.delete()
+```
+
 ## Allocating and deploying
 
 ```pycon
