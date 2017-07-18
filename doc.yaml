@@ -12,7 +12,7 @@ pages:
   - Home: index.md
   - Client:
     - Introduction: client/index.md
-    - Machines, devices, racks, and regions: client/nodes.md
+    - Nodes: client/nodes.md
     - Events: client/events.md
     - Others: client/other.md
   - Internals:

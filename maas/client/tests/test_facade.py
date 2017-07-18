@@ -136,6 +136,7 @@ class TestClient(TestCase):
         self.assertThat(self.client, MatchesClient(
             machines=MatchesFacade(
                 allocate=self.origin.Machines.allocate,
+                create=self.origin.Machines.create,
                 get=self.origin.Machine.read,
                 list=self.origin.Machines.read,
             ),

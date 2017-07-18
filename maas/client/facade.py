@@ -179,6 +179,7 @@ class Client:
     def machines(origin):
         return {
             "allocate": origin.Machines.allocate,
+            "create": origin.Machines.create,
             "get": origin.Machine.read,
             "list": origin.Machines.read,
             "get_power_parameters_for":
