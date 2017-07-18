@@ -45,111 +45,90 @@
 
       <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
 	<ul class="current">
+	  
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../../index.html">Home</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="../../index.html">Home</a>
+	    </li>
           
-            <li>
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Client</span>
     <ul class="subnav">
-    <li><span>Client</span></li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../client/index.html">Introduction</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../client/nodes/index.html">Machines, devices, racks, and regions</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../client/events/index.html">Events</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../client/other/index.html">Others</a>
-        
-    </li>
-
-        
+                <li class="">
+                    
+    <a class="" href="../../client/index.html">Introduction</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../client/nodes/index.html">Nodes</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../client/events/index.html">Events</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../client/other/index.html">Others</a>
+                </li>
     </ul>
-<li>
+	    </li>
           
-            <li>
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Internals</span>
     <ul class="subnav">
-    <li><span>Internals</span></li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../bones/index.html">Bones</a>
-        
-    </li>
-
-        
-            
+                <li class="">
+                    
+    <a class="" href="../../bones/index.html">Bones</a>
+                </li>
+                <li class=" current">
+                    
+    <span class="caption-text">Viscera</span>
     <ul class="subnav">
-    <li><span>Viscera</span></li>
-
-        
+                <li class="toctree-l3">
+                    
+    <a class="" href="../index.html">Introduction</a>
+                </li>
+                <li class="toctree-l3">
+                    
+    <a class="" href="../getting-started/index.html">Getting started</a>
+                </li>
+                <li class="toctree-l3">
+                    
+    <a class="" href="../nodes/index.html">Nodes</a>
+                </li>
+                <li class="toctree-l3 current">
+                    
+    <a class="current" href="index.html">Events</a>
+    <ul class="subnav">
             
-    <li class="toctree-l1 ">
-        <a class="" href="../index.html">Introduction</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../getting-started/index.html">Getting started</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../nodes/index.html">Nodes</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 current">
-        <a class="current" href="index.html">Events</a>
-        
-            <ul>
-            
-            </ul>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../other/index.html">Others</a>
-        
-    </li>
-
-        
     </ul>
-
-        
+                </li>
+                <li class="toctree-l3">
+                    
+    <a class="" href="../other/index.html">Others</a>
+                </li>
     </ul>
-<li>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Development</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../../development/releasing/index.html">Release checklist</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../development/adding-an-object/index.html">Adding an object</a>
+                </li>
+    </ul>
+	    </li>
           
         </ul>
       </div>
@@ -198,28 +177,25 @@
 
 <p>Events are similar to other <em>viscera</em> objects&hellip; but a little different
 too. The only way to get events is by the <code>query</code> method:</p>
-<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">events</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">query</span><span class="p">()</span>
-</pre></div>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; events = origin.Events.query()</code></pre>
 
 
 <p>This accepts a plethora of optional arguments to narrow down the results:</p>
-<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">events</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">hostnames</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;foo&quot;</span><span class="p">,</span> <span class="s2">&quot;bar&quot;</span><span class="p">})</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">events</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">domains</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;example.com&quot;</span><span class="p">,</span> <span class="s2">&quot;maas.io&quot;</span><span class="p">})</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">events</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">zones</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="s2">&quot;blue&quot;</span><span class="p">])</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">events</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">macs</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;12:34:56:78:90:ab&quot;</span><span class="p">,</span> <span class="p">))</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">events</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">system_ids</span><span class="o">=</span><span class="err">…</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">events</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">agent_name</span><span class="o">=</span><span class="err">…</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">events</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="err">…</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">events</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">after</span><span class="o">=</span><span class="err">…</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="err">…</span><span class="p">)</span>
-</pre></div>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; events = origin.Events.query(hostnames={&quot;foo&quot;, &quot;bar&quot;})
+&gt;&gt;&gt; events = origin.Events.query(domains={&quot;example.com&quot;, &quot;maas.io&quot;})
+&gt;&gt;&gt; events = origin.Events.query(zones=[&quot;red&quot;, &quot;blue&quot;])
+&gt;&gt;&gt; events = origin.Events.query(macs=(&quot;12:34:56:78:90:ab&quot;, ))
+&gt;&gt;&gt; events = origin.Events.query(system_ids=…)
+&gt;&gt;&gt; events = origin.Events.query(agent_name=…)
+&gt;&gt;&gt; events = origin.Events.query(level=…)
+&gt;&gt;&gt; events = origin.Events.query(after=…, limit=…)</code></pre>
 
 
 <p>These arguments can be combined to narrow the results even further.</p>
 <p>The <code>level</code> argument is a little special. It&rsquo;s a choice from a
 predefined set. For convenience, those choices are defined in the
 <code>Level</code> enum:</p>
-<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">events</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">origin</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">Level</span><span class="o">.</span><span class="n">ERROR</span><span class="p">)</span>
-</pre></div>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; events = origin.Events.query(level=origin.Events.Level.ERROR)</code></pre>
 
 
 <p>but you can also pass in the string &ldquo;ERROR&rdquo; or the number 40.</p>
@@ -258,7 +234,7 @@ predefined set. For convenience, those choices are defined in the
   <div class="rst-versions" role="note" style="cursor: pointer">
     <span class="rst-current-version" data-toggle="rst-current-version">
       
-          <a href="https://github.com/maas/python-libmaas" class="icon icon-github" style="float: left; color: #fcfcfc"> GitHub</a>
+          <a href="https://github.com/maas/python-libmaas" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
       
       
         <span><a href="../nodes/index.html" style="color: #fcfcfc;">&laquo; Previous</a></span>

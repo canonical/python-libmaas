@@ -45,117 +45,96 @@
 
       <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
 	<ul class="current">
+	  
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../../index.html">Home</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="../../index.html">Home</a>
+	    </li>
           
-            <li>
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Client</span>
     <ul class="subnav">
-    <li><span>Client</span></li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../client/index.html">Introduction</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../client/nodes/index.html">Machines, devices, racks, and regions</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../client/events/index.html">Events</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../client/other/index.html">Others</a>
-        
-    </li>
-
-        
+                <li class="">
+                    
+    <a class="" href="../../client/index.html">Introduction</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../client/nodes/index.html">Nodes</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../client/events/index.html">Events</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../client/other/index.html">Others</a>
+                </li>
     </ul>
-<li>
+	    </li>
           
-            <li>
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Internals</span>
     <ul class="subnav">
-    <li><span>Internals</span></li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../bones/index.html">Bones</a>
-        
-    </li>
-
-        
-            
+                <li class="">
+                    
+    <a class="" href="../../bones/index.html">Bones</a>
+                </li>
+                <li class=" current">
+                    
+    <span class="caption-text">Viscera</span>
     <ul class="subnav">
-    <li><span>Viscera</span></li>
+                <li class="toctree-l3">
+                    
+    <a class="" href="../index.html">Introduction</a>
+                </li>
+                <li class="toctree-l3">
+                    
+    <a class="" href="../getting-started/index.html">Getting started</a>
+                </li>
+                <li class="toctree-l3 current">
+                    
+    <a class="current" href="index.html">Nodes</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l4"><a href="#an-example">An example</a></li>
+    
 
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../index.html">Introduction</a>
-        
-    </li>
+    <li class="toctree-l4"><a href="#allocating-and-deploying">Allocating and deploying</a></li>
+    
 
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../getting-started/index.html">Getting started</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 current">
-        <a class="current" href="index.html">Nodes</a>
-        
-            <ul>
-            
-                <li class="toctree-l3"><a href="#an-example">An example</a></li>
-                
-            
-                <li class="toctree-l3"><a href="#allocating-and-deploying">Allocating and deploying</a></li>
-                
-            
-            </ul>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../events/index.html">Events</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../other/index.html">Others</a>
-        
-    </li>
-
-        
     </ul>
-
-        
+                </li>
+                <li class="toctree-l3">
+                    
+    <a class="" href="../events/index.html">Events</a>
+                </li>
+                <li class="toctree-l3">
+                    
+    <a class="" href="../other/index.html">Others</a>
+                </li>
     </ul>
-<li>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Development</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../../development/releasing/index.html">Release checklist</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../development/adding-an-object/index.html">Adding an object</a>
+                </li>
+    </ul>
+	    </li>
           
         </ul>
       </div>
@@ -204,45 +183,45 @@
 
 <p>Given an <code>Origin</code> instance bound to your MAAS server, you can
 interrogate your nodes with:</p>
-<div class="codehilite"><pre><span></span><span class="n">origin</span><span class="o">.</span><span class="n">Machines</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-  <span class="c1"># returns an origin.Machines instance, a</span>
-  <span class="c1"># sequence of origin.Machine instances.</span>
+<pre class="codehilite"><code class="language-python">origin.Machines.read()
+  # returns an origin.Machines instance, a
+  # sequence of origin.Machine instances.
 
-<span class="n">origin</span><span class="o">.</span><span class="n">Devices</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-  <span class="c1"># returns an origin.Devices instance, a</span>
-  <span class="c1"># sequence of origin.Device instances.</span>
+origin.Devices.read()
+  # returns an origin.Devices instance, a
+  # sequence of origin.Device instances.
 
-<span class="n">origin</span><span class="o">.</span><span class="n">RackControllers</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-  <span class="c1"># returns an origin.RackControllers instance, a</span>
-  <span class="c1"># sequence of origin.RackController instances.</span>
+origin.RackControllers.read()
+  # returns an origin.RackControllers instance, a
+  # sequence of origin.RackController instances.
 
-<span class="n">origin</span><span class="o">.</span><span class="n">RegionControllers</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-  <span class="c1"># returns an origin.RegionControllers instance, a</span>
-  <span class="c1"># sequence of origin.RegionController instances.</span>
-</pre></div>
+origin.RegionControllers.read()
+  # returns an origin.RegionControllers instance, a
+  # sequence of origin.RegionController instances.</code></pre>
 
 
 <h2 id="an-example">An example</h2>
-<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">machine</span> <span class="ow">in</span> <span class="n">origin</span><span class="o">.</span><span class="n">Machines</span><span class="o">.</span><span class="n">read</span><span class="p">():</span>
-<span class="gp">... </span>    <span class="k">print</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">node</span><span class="p">))</span>
-<span class="go">&lt;Machine hostname=&#39;botswana&#39; system_id=&#39;pncys4&#39;&gt;</span>
-</pre></div>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; for machine in origin.Machines.read():
+...     print(repr(node))
+&lt;Machine hostname='botswana' system_id='pncys4'&gt;</code></pre>
 
 
 <p>Individual nodes can be read from the Web API.</p>
-<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">machine</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Machine</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">system_id</span><span class="o">=</span><span class="s2">&quot;pncys4&quot;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">machine</span>
-<span class="go">&lt;Machine hostname=&#39;botswana&#39; system_id=&#39;pncys4&#39;&gt;</span>
-</pre></div>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; machine = origin.Machine.read(system_id=&quot;pncys4&quot;)
+&gt;&gt;&gt; machine
+&lt;Machine hostname='botswana' system_id='pncys4'&gt;</code></pre>
 
 
 <p>Machines — and devices, racks, and regions — have many useful
 attributes:</p>
-<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">machine</span><span class="o">.</span><span class="n">architecture</span>
-<span class="go">&#39;amd64/generic&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">machine</span><span class="o">.</span><span class="n">cpus</span>
-<span class="go">4</span>
-</pre></div>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; machine.architecture
+'amd64/generic'
+&gt;&gt;&gt; machine.cpus
+4
+&gt;&gt;&gt; for interface in machine.interfaces:
+...     print(repr(Interface))
+&lt;Interface name='eth0' mac_address='00:11:22:33:44:55'&gt;
+&lt;Interface name='eth1' mac_address='00:11:22:33:44:66'&gt;</code></pre>
 
 
 <p>Don&rsquo;t forget to try using tab-completion — the objects have been
@@ -251,27 +230,26 @@ designed to be particularly friendly for interactive use — or
 available.</p>
 <p><strong>TODO</strong>: Updating nodes.</p>
 <h2 id="allocating-and-deploying">Allocating and deploying</h2>
-<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">help</span><span class="p">(</span><span class="n">origin</span><span class="o">.</span><span class="n">Machines</span><span class="o">.</span><span class="n">allocate</span><span class="p">)</span>
-<span class="go">Help on method allocate in module maas.client.viscera.machines:</span>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; help(origin.Machines.allocate)
+Help on method allocate in module maas.client.viscera.machines:
 
-<span class="go">allocate(</span>
-<span class="go">    *, hostname:str=None, architecture:str=None, cpus:int=None,</span>
-<span class="go">    memory:float=None, tags:typing.Sequence=None)</span>
-<span class="go">  method of maas.client.viscera.machines.MachinesType instance</span>
-<span class="go">    :param hostname: The hostname to match.</span>
-<span class="go">    :param architecture: The architecture to match, e.g. &quot;amd64&quot;.</span>
-<span class="go">    :param cpus: The minimum number of CPUs to match.</span>
-<span class="go">    :param memory: The minimum amount of RAM to match.</span>
-<span class="go">    :param tags: The tags to match, as a sequence. Each tag may be</span>
-<span class="go">        prefixed with a hyphen to denote that the given tag should NOT be</span>
-<span class="go">        associated with a matched machine.</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">machine</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Machines</span><span class="o">.</span><span class="n">allocate</span><span class="p">(</span><span class="n">tags</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;foo&quot;</span><span class="p">,</span> <span class="s2">&quot;-bar&quot;</span><span class="p">))</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span><span class="p">(</span><span class="n">machine</span><span class="o">.</span><span class="n">status_name</span><span class="p">)</span>
-<span class="go">Acquired</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">machine</span><span class="o">.</span><span class="n">deploy</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span><span class="p">(</span><span class="n">machine</span><span class="o">.</span><span class="n">status_name</span><span class="p">)</span>
-<span class="go">Deploying</span>
-</pre></div>
+allocate(
+    *, hostname:str=None, architecture:str=None, cpus:int=None,
+    memory:float=None, tags:typing.Sequence=None)
+  method of maas.client.viscera.machines.MachinesType instance
+    :param hostname: The hostname to match.
+    :param architecture: The architecture to match, e.g. &quot;amd64&quot;.
+    :param cpus: The minimum number of CPUs to match.
+    :param memory: The minimum amount of RAM to match.
+    :param tags: The tags to match, as a sequence. Each tag may be
+        prefixed with a hyphen to denote that the given tag should NOT be
+        associated with a matched machine.
+&gt;&gt;&gt; machine = origin.Machines.allocate(tags=(&quot;foo&quot;, &quot;-bar&quot;))
+&gt;&gt;&gt; print(machine.status_name)
+Acquired
+&gt;&gt;&gt; machine.deploy()
+&gt;&gt;&gt; print(machine.status_name)
+Deploying</code></pre>
               
             </div>
           </div>
@@ -307,7 +285,7 @@ available.</p>
   <div class="rst-versions" role="note" style="cursor: pointer">
     <span class="rst-current-version" data-toggle="rst-current-version">
       
-          <a href="https://github.com/maas/python-libmaas" class="icon icon-github" style="float: left; color: #fcfcfc"> GitHub</a>
+          <a href="https://github.com/maas/python-libmaas" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
       
       
         <span><a href="../getting-started/index.html" style="color: #fcfcfc;">&laquo; Previous</a></span>

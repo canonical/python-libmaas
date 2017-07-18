@@ -45,116 +45,101 @@
 
       <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
 	<ul class="current">
+	  
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../index.html">Home</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="../index.html">Home</a>
+	    </li>
           
-            <li>
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Client</span>
     <ul class="subnav">
-    <li><span>Client</span></li>
+                <li class=" current">
+                    
+    <a class="current" href="index.html">Introduction</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l3"><a href="#an-example">An example</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l4" href="#using-login">Using login</a></li>
+        
+            <li><a class="toctree-l4" href="#again-but-asynchronous">Again, but asynchronous</a></li>
+        
+        </ul>
+    
 
-        
-            
-    <li class="toctree-l1 current">
-        <a class="current" href="index.html">Introduction</a>
-        
-            <ul>
-            
-                <li class="toctree-l3"><a href="#an-example">An example</a></li>
-                
-                    <li><a class="toctree-l4" href="#again-but-asynchronous">Again, but asynchronous</a></li>
-                
-            
-            </ul>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="nodes/index.html">Machines, devices, racks, and regions</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="events/index.html">Events</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="other/index.html">Others</a>
-        
-    </li>
-
-        
     </ul>
-<li>
+                </li>
+                <li class="">
+                    
+    <a class="" href="nodes/index.html">Nodes</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="events/index.html">Events</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="other/index.html">Others</a>
+                </li>
+    </ul>
+	    </li>
           
-            <li>
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Internals</span>
     <ul class="subnav">
-    <li><span>Internals</span></li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../bones/index.html">Bones</a>
-        
-    </li>
-
-        
-            
+                <li class="">
+                    
+    <a class="" href="../bones/index.html">Bones</a>
+                </li>
+                <li class="">
+                    
+    <span class="caption-text">Viscera</span>
     <ul class="subnav">
-    <li><span>Viscera</span></li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../viscera/index.html">Introduction</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../viscera/getting-started/index.html">Getting started</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../viscera/nodes/index.html">Nodes</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../viscera/events/index.html">Events</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../viscera/other/index.html">Others</a>
-        
-    </li>
-
-        
+                <li class="toctree-l3">
+                    
+    <a class="" href="../viscera/index.html">Introduction</a>
+                </li>
+                <li class="toctree-l3">
+                    
+    <a class="" href="../viscera/getting-started/index.html">Getting started</a>
+                </li>
+                <li class="toctree-l3">
+                    
+    <a class="" href="../viscera/nodes/index.html">Nodes</a>
+                </li>
+                <li class="toctree-l3">
+                    
+    <a class="" href="../viscera/events/index.html">Events</a>
+                </li>
+                <li class="toctree-l3">
+                    
+    <a class="" href="../viscera/other/index.html">Others</a>
+                </li>
     </ul>
-
-        
+                </li>
     </ul>
-<li>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Development</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../development/releasing/index.html">Release checklist</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../development/adding-an-object/index.html">Adding an object</a>
+                </li>
+    </ul>
+	    </li>
           
         </ul>
       </div>
@@ -197,38 +182,48 @@
               
                 <h1>The Web API client</h1>
 
-<p>Calling <code>maas.client.login</code> or <code>maas.client.connect</code> will return a
-<code>maas.client.facade.Client</code> instance. This provides an easy to
-understand starting point for working with MAAS&rsquo;s Web API.</p>
+<p>Calling <code>maas.client.connect</code> or <code>maas.client.login</code> (MAAS 2.2+
+only) will return a <code>maas.client.facade.Client</code> instance. This
+provides an easy to understand starting point for working with MAAS&rsquo;s
+Web API.</p>
 <h2 id="an-example">An example</h2>
-<div class="codehilite"><pre><span></span><span class="ch">#!/usr/bin/env python3.5</span>
+<pre class="codehilite"><code class="language-python">#!/usr/bin/env python3.5
 
-<span class="kn">from</span> <span class="nn">maas.client</span> <span class="kn">import</span> <span class="n">login</span>
+from maas.client import connect
 
-<span class="n">client</span> <span class="o">=</span> <span class="n">login</span><span class="p">(</span>
-    <span class="s2">&quot;http://localhost:5240/MAAS/&quot;</span><span class="p">,</span>
-    <span class="n">username</span><span class="o">=</span><span class="s2">&quot;foo&quot;</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="s2">&quot;bar&quot;</span><span class="p">,</span>
-<span class="p">)</span>
+# Replace … with an API key previously obtained by hand from
+# http://$host:$port/MAAS/account/prefs/.
+client = maas.client.connect(
+    &quot;http://localhost:5240/MAAS/&quot;, apikey=&quot;…&quot;)
 
-<span class="c1"># Get a reference to self.</span>
-<span class="n">myself</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">users</span><span class="o">.</span><span class="n">whoami</span><span class="p">()</span>
-<span class="k">assert</span> <span class="n">myself</span><span class="o">.</span><span class="n">is_admin</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> is not an admin&quot;</span> <span class="o">%</span> <span class="n">myself</span><span class="o">.</span><span class="n">username</span>
+# Get a reference to self.
+myself = client.users.whoami()
+assert myself.is_admin, &quot;%s is not an admin&quot; % myself.username
 
-<span class="c1"># Check for a MAAS server capability.</span>
-<span class="n">version</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">version</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
-<span class="k">assert</span> <span class="s2">&quot;devices-management&quot;</span> <span class="ow">in</span> <span class="n">version</span><span class="o">.</span><span class="n">capabilities</span>
+# Check for a MAAS server capability.
+version = client.version.get()
+assert &quot;devices-management&quot; in version.capabilities
 
-<span class="c1"># Check the default OS and distro series for deployments.</span>
-<span class="k">print</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">maas</span><span class="o">.</span><span class="n">get_default_os</span><span class="p">())</span>
-<span class="k">print</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">maas</span><span class="o">.</span><span class="n">get_default_distro_series</span><span class="p">())</span>
+# Check the default OS and distro series for deployments.
+print(client.maas.get_default_os())
+print(client.maas.get_default_distro_series())
 
-<span class="c1"># Set the HTTP proxy.</span>
-<span class="n">client</span><span class="o">.</span><span class="n">maas</span><span class="o">.</span><span class="n">set_http_proxy</span><span class="p">(</span><span class="s2">&quot;http://localhost:3128&quot;</span><span class="p">)</span>
+# Set the HTTP proxy.
+client.maas.set_http_proxy(&quot;http://localhost:3128&quot;)
 
-<span class="c1"># Allocate and deploy a machine.</span>
-<span class="n">machine</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">machines</span><span class="o">.</span><span class="n">allocate</span><span class="p">()</span>
-<span class="n">machine</span><span class="o">.</span><span class="n">deploy</span><span class="p">()</span>
-</pre></div>
+# Allocate and deploy a machine.
+machine = client.machines.allocate()
+machine.deploy()</code></pre>
+
+
+<h3 id="using-login">Using <code>login</code></h3>
+<p>Alternatively, a client can be obtained from a username and password,
+replacing the call to <code>connect</code> above. This only works in MAAS 2.2 and
+above; below that a <code>LoginNotSupported</code> exception will be raised.</p>
+<pre class="codehilite"><code class="language-python">client = login(
+    &quot;http://localhost:5240/MAAS/&quot;,
+    username=&quot;foo&quot;, password=&quot;bar&quot;,
+)</code></pre>
 
 
 <h3 id="again-but-asynchronous">Again, but asynchronous</h3>
@@ -246,38 +241,37 @@ non-blocking application.</p>
 style. Note the use of the <code>asynchronous</code> decorator: this is used
 heavily in <em>python-libmaas</em> — along with the <code>Asynchronous</code> metaclass
 — to create the automatic blocking/not-blocking behaviour.</p>
-<div class="codehilite"><pre><span></span><span class="ch">#!/usr/bin/env python3.5</span>
+<pre class="codehilite"><code class="language-python">#!/usr/bin/env python3.5
 
-<span class="kn">from</span> <span class="nn">maas.client</span> <span class="kn">import</span> <span class="n">login</span>
-<span class="kn">from</span> <span class="nn">maas.client.utils.async</span> <span class="kn">import</span> <span class="n">asynchronous</span>
+from maas.client import login
+from maas.client.utils.async import asynchronous
 
-<span class="nd">@asynchronous</span>
-<span class="n">async</span> <span class="k">def</span> <span class="nf">work_with_maas</span><span class="p">():</span>
-    <span class="n">client</span> <span class="o">=</span> <span class="n">await</span> <span class="n">login</span><span class="p">(</span>
-        <span class="s2">&quot;http://eucula.local:5240/MAAS/&quot;</span><span class="p">,</span>
-        <span class="n">username</span><span class="o">=</span><span class="s2">&quot;gavin&quot;</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="s2">&quot;f00b4r&quot;</span><span class="p">)</span>
+@asynchronous
+async def work_with_maas():
+    client = await login(
+        &quot;http://eucula.local:5240/MAAS/&quot;,
+        username=&quot;gavin&quot;, password=&quot;f00b4r&quot;)
 
-    <span class="c1"># Get a reference to self.</span>
-    <span class="n">myself</span> <span class="o">=</span> <span class="n">await</span> <span class="n">client</span><span class="o">.</span><span class="n">users</span><span class="o">.</span><span class="n">whoami</span><span class="p">()</span>
-    <span class="k">assert</span> <span class="n">myself</span><span class="o">.</span><span class="n">is_admin</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> is not an admin&quot;</span> <span class="o">%</span> <span class="n">myself</span><span class="o">.</span><span class="n">username</span>
+    # Get a reference to self.
+    myself = await client.users.whoami()
+    assert myself.is_admin, &quot;%s is not an admin&quot; % myself.username
 
-    <span class="c1"># Check for a MAAS server capability.</span>
-    <span class="n">version</span> <span class="o">=</span> <span class="n">await</span> <span class="n">client</span><span class="o">.</span><span class="n">version</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
-    <span class="k">assert</span> <span class="s2">&quot;devices-management&quot;</span> <span class="ow">in</span> <span class="n">version</span><span class="o">.</span><span class="n">capabilities</span>
+    # Check for a MAAS server capability.
+    version = await client.version.get()
+    assert &quot;devices-management&quot; in version.capabilities
 
-    <span class="c1"># Check the default OS and distro series for deployments.</span>
-    <span class="k">print</span><span class="p">(</span><span class="n">await</span> <span class="n">client</span><span class="o">.</span><span class="n">maas</span><span class="o">.</span><span class="n">get_default_os</span><span class="p">())</span>
-    <span class="k">print</span><span class="p">(</span><span class="n">await</span> <span class="n">client</span><span class="o">.</span><span class="n">maas</span><span class="o">.</span><span class="n">get_default_distro_series</span><span class="p">())</span>
+    # Check the default OS and distro series for deployments.
+    print(await client.maas.get_default_os())
+    print(await client.maas.get_default_distro_series())
 
-    <span class="c1"># Set the HTTP proxy.</span>
-    <span class="n">await</span> <span class="n">client</span><span class="o">.</span><span class="n">maas</span><span class="o">.</span><span class="n">set_http_proxy</span><span class="p">(</span><span class="s2">&quot;http://localhost:3128&quot;</span><span class="p">)</span>
+    # Set the HTTP proxy.
+    await client.maas.set_http_proxy(&quot;http://localhost:3128&quot;)
 
-    <span class="c1"># Allocate and deploy a machine.</span>
-    <span class="n">machine</span> <span class="o">=</span> <span class="n">await</span> <span class="n">client</span><span class="o">.</span><span class="n">machines</span><span class="o">.</span><span class="n">allocate</span><span class="p">()</span>
-    <span class="n">await</span> <span class="n">machine</span><span class="o">.</span><span class="n">deploy</span><span class="p">()</span>
+    # Allocate and deploy a machine.
+    machine = await client.machines.allocate()
+    await machine.deploy()
 
-<span class="n">work_with_maas</span><span class="p">()</span>
-</pre></div>
+work_with_maas()</code></pre>
               
             </div>
           </div>
@@ -285,7 +279,7 @@ heavily in <em>python-libmaas</em> — along with the <code>Asynchronous</code> 
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="nodes/index.html" class="btn btn-neutral float-right" title="Machines, devices, racks, and regions">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="nodes/index.html" class="btn btn-neutral float-right" title="Nodes">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
         <a href="../index.html" class="btn btn-neutral" title="Home"><span class="icon icon-circle-arrow-left"></span> Previous</a>
@@ -313,7 +307,7 @@ heavily in <em>python-libmaas</em> — along with the <code>Asynchronous</code> 
   <div class="rst-versions" role="note" style="cursor: pointer">
     <span class="rst-current-version" data-toggle="rst-current-version">
       
-          <a href="https://github.com/maas/python-libmaas" class="icon icon-github" style="float: left; color: #fcfcfc"> GitHub</a>
+          <a href="https://github.com/maas/python-libmaas" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
       
       
         <span><a href="../index.html" style="color: #fcfcfc;">&laquo; Previous</a></span>

@@ -45,114 +45,93 @@
 
       <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
 	<ul class="current">
+	  
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../../index.html">Home</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="../../index.html">Home</a>
+	    </li>
           
-            <li>
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Client</span>
     <ul class="subnav">
-    <li><span>Client</span></li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../client/index.html">Introduction</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../client/nodes/index.html">Machines, devices, racks, and regions</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../client/events/index.html">Events</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../client/other/index.html">Others</a>
-        
-    </li>
-
-        
+                <li class="">
+                    
+    <a class="" href="../../client/index.html">Introduction</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../client/nodes/index.html">Nodes</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../client/events/index.html">Events</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../client/other/index.html">Others</a>
+                </li>
     </ul>
-<li>
+	    </li>
           
-            <li>
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Internals</span>
     <ul class="subnav">
-    <li><span>Internals</span></li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../bones/index.html">Bones</a>
-        
-    </li>
-
-        
-            
+                <li class="">
+                    
+    <a class="" href="../../bones/index.html">Bones</a>
+                </li>
+                <li class=" current">
+                    
+    <span class="caption-text">Viscera</span>
     <ul class="subnav">
-    <li><span>Viscera</span></li>
+                <li class="toctree-l3">
+                    
+    <a class="" href="../index.html">Introduction</a>
+                </li>
+                <li class="toctree-l3">
+                    
+    <a class="" href="../getting-started/index.html">Getting started</a>
+                </li>
+                <li class="toctree-l3">
+                    
+    <a class="" href="../nodes/index.html">Nodes</a>
+                </li>
+                <li class="toctree-l3">
+                    
+    <a class="" href="../events/index.html">Events</a>
+                </li>
+                <li class="toctree-l3 current">
+                    
+    <a class="current" href="index.html">Others</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l4"><a href="#files-users-tags">Files, users, tags</a></li>
+    
 
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../index.html">Introduction</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../getting-started/index.html">Getting started</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../nodes/index.html">Nodes</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../events/index.html">Events</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 current">
-        <a class="current" href="index.html">Others</a>
-        
-            <ul>
-            
-                <li class="toctree-l3"><a href="#files-users-tags">Files, users, tags</a></li>
-                
-            
-            </ul>
-        
-    </li>
-
-        
     </ul>
-
-        
+                </li>
     </ul>
-<li>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Development</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../../development/releasing/index.html">Release checklist</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../development/adding-an-object/index.html">Adding an object</a>
+                </li>
+    </ul>
+	    </li>
           
         </ul>
       </div>
@@ -204,37 +183,36 @@
 code; we&rsquo;ve tried to keep it readable.</p>
 <h2 id="files-users-tags">Files, users, tags</h2>
 <p>Similarly to nodes, these sets of objects can be fetched:</p>
-<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">tags</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Tags</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">files</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Files</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">users</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Users</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-</pre></div>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; tags = origin.Tags.read()
+&gt;&gt;&gt; files = origin.Files.read()
+&gt;&gt;&gt; users = origin.Users.read()</code></pre>
 
 
 <p>When reading from collections, as above, the returned object is
 list-like:</p>
-<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">tags</span><span class="p">)</span>
-<span class="go">5</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">tags</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
-<span class="go">&lt;Tag comment=&quot;Foo&#39;s stuff&quot; definition=&#39;&#39; kernel_opts=&#39;&#39; name=&#39;foo&#39;&gt;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">tags</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="ow">in</span> <span class="n">tags</span>
-<span class="go">True</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">not_foo</span> <span class="o">=</span> <span class="p">[</span><span class="n">tag</span> <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">tags</span> <span class="k">if</span> <span class="n">tag</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="s1">&#39;foo&#39;</span><span class="p">]</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">not_foo</span><span class="p">)</span>
-<span class="go">4</span>
-</pre></div>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; len(tags)
+5
+&gt;&gt;&gt; tags[3]
+&lt;Tag comment=&quot;Foo's stuff&quot; definition='' kernel_opts='' name='foo'&gt;
+&gt;&gt;&gt; tags[3] in tags
+True
+&gt;&gt;&gt; not_foo = [tag for tag in tags if tag.name != 'foo']
+&gt;&gt;&gt; len(not_foo)
+4</code></pre>
 
 
 <p>However, it&rsquo;s read-only:</p>
-<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">tags</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;bob&quot;</span>
-<span class="go">…</span>
-<span class="go">TypeError: &#39;Tags&#39; object does not support item assignment</span>
-</pre></div>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; tags[0] = &quot;bob&quot;
+…
+TypeError: 'Tags' object does not support item assignment</code></pre>
               
             </div>
           </div>
           <footer>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../../development/releasing/index.html" class="btn btn-neutral float-right" title="Release checklist">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
         <a href="../events/index.html" class="btn btn-neutral" title="Events"><span class="icon icon-circle-arrow-left"></span> Previous</a>
@@ -262,11 +240,13 @@ list-like:</p>
   <div class="rst-versions" role="note" style="cursor: pointer">
     <span class="rst-current-version" data-toggle="rst-current-version">
       
-          <a href="https://github.com/maas/python-libmaas" class="icon icon-github" style="float: left; color: #fcfcfc"> GitHub</a>
+          <a href="https://github.com/maas/python-libmaas" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
       
       
         <span><a href="../events/index.html" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
+      
+        <span style="margin-left: 15px"><a href="../../development/releasing/index.html" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

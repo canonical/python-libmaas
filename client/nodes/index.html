@@ -8,7 +8,7 @@
   
   
   <link rel="shortcut icon" href="../../img/favicon.ico">
-  <title>Machines, devices, racks, and regions - MAAS Client Library & CLI</title>
+  <title>Nodes - MAAS Client Library & CLI</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
   <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
@@ -17,7 +17,7 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "Machines, devices, racks, and regions";
+    var mkdocs_page_name = "Nodes";
     var mkdocs_page_input_path = "client/nodes.md";
     var mkdocs_page_url = "/client/nodes/index.html";
   </script>
@@ -45,117 +45,105 @@
 
       <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
 	<ul class="current">
+	  
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../../index.html">Home</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="../../index.html">Home</a>
+	    </li>
           
-            <li>
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Client</span>
     <ul class="subnav">
-    <li><span>Client</span></li>
+                <li class="">
+                    
+    <a class="" href="../index.html">Introduction</a>
+                </li>
+                <li class=" current">
+                    
+    <a class="current" href="index.html">Nodes</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l3"><a href="#read-nodes">Read nodes</a></li>
+    
 
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../index.html">Introduction</a>
-        
-    </li>
+    <li class="toctree-l3"><a href="#create-nodes">Create nodes</a></li>
+    
 
-        
-            
-    <li class="toctree-l1 current">
-        <a class="current" href="index.html">Machines, devices, racks, and regions</a>
-        
-            <ul>
-            
-                <li class="toctree-l3"><a href="#some-examples">Some examples</a></li>
-                
-            
-                <li class="toctree-l3"><a href="#allocating-and-deploying">Allocating and deploying</a></li>
-                
-            
-            </ul>
-        
-    </li>
+    <li class="toctree-l3"><a href="#updating-nodes">Updating nodes</a></li>
+    
 
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../events/index.html">Events</a>
-        
-    </li>
+    <li class="toctree-l3"><a href="#deleting-nodes">Deleting nodes</a></li>
+    
 
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../other/index.html">Others</a>
-        
-    </li>
+    <li class="toctree-l3"><a href="#allocating-and-deploying">Allocating and deploying</a></li>
+    
 
-        
     </ul>
-<li>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../events/index.html">Events</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../other/index.html">Others</a>
+                </li>
+    </ul>
+	    </li>
           
-            <li>
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Internals</span>
     <ul class="subnav">
-    <li><span>Internals</span></li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../bones/index.html">Bones</a>
-        
-    </li>
-
-        
-            
+                <li class="">
+                    
+    <a class="" href="../../bones/index.html">Bones</a>
+                </li>
+                <li class="">
+                    
+    <span class="caption-text">Viscera</span>
     <ul class="subnav">
-    <li><span>Viscera</span></li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../viscera/index.html">Introduction</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../viscera/getting-started/index.html">Getting started</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../viscera/nodes/index.html">Nodes</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../viscera/events/index.html">Events</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../viscera/other/index.html">Others</a>
-        
-    </li>
-
-        
+                <li class="toctree-l3">
+                    
+    <a class="" href="../../viscera/index.html">Introduction</a>
+                </li>
+                <li class="toctree-l3">
+                    
+    <a class="" href="../../viscera/getting-started/index.html">Getting started</a>
+                </li>
+                <li class="toctree-l3">
+                    
+    <a class="" href="../../viscera/nodes/index.html">Nodes</a>
+                </li>
+                <li class="toctree-l3">
+                    
+    <a class="" href="../../viscera/events/index.html">Events</a>
+                </li>
+                <li class="toctree-l3">
+                    
+    <a class="" href="../../viscera/other/index.html">Others</a>
+                </li>
     </ul>
-
-        
+                </li>
     </ul>
-<li>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Development</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../../development/releasing/index.html">Release checklist</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../development/adding-an-object/index.html">Adding an object</a>
+                </li>
+    </ul>
+	    </li>
           
         </ul>
       </div>
@@ -183,7 +171,7 @@
         
       
     
-    <li>Machines, devices, racks, and regions</li>
+    <li>Nodes</li>
     <li class="wy-breadcrumbs-aside">
       
         <a href="https://github.com/maas/python-libmaas/edit/master/docs/client/nodes.md"
@@ -199,64 +187,100 @@
                 <h1>Machines, devices, racks, and regions</h1>
 
 <p>Given a <code>Client</code> instance bound to your MAAS server, you can
-interrogate your nodes with:</p>
-<div class="codehilite"><pre><span></span><span class="n">client</span><span class="o">.</span><span class="n">machines</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
-<span class="n">client</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
-<span class="n">client</span><span class="o">.</span><span class="n">rack_controllers</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
-<span class="n">client</span><span class="o">.</span><span class="n">region_controllers</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
-</pre></div>
+interrogate your nodes.</p>
+<h2 id="read-nodes">Read nodes</h2>
+<p>Each node type exists on the client: <code>machines</code>, <code>devices</code>,
+<code>rack_controllers</code>, <code>region_controllers</code>.</p>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; client.machines.list()
+&lt;Machines length=1 items=[&lt;Machine hostname='wanted-falcon' system_id='ekgqwd'&gt;]&gt;
+&gt;&gt;&gt; client.devices.list()
+&lt;Devices length=0 items=[]&gt;
+&gt;&gt;&gt; client.rack_controllers.list()
+&lt;RackControllers length=1 items=[&lt;RackController hostname='maas-ctrl' system_id='efw3c4'&gt;]&gt;
+&gt;&gt;&gt; client.region_controllers.list()
+&lt;RegionControllers length=1 items=[&lt;RegionController hostname='maas-ctrl' system_id='efw3c4'&gt;]&gt;</code></pre>
 
 
-<h2 id="some-examples">Some examples</h2>
-<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">machine</span> <span class="ow">in</span> <span class="n">client</span><span class="o">.</span><span class="n">machines</span><span class="o">.</span><span class="n">read</span><span class="p">():</span>
-<span class="gp">... </span>    <span class="k">print</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">node</span><span class="p">))</span>
-<span class="go">&lt;Machine hostname=&#39;botswana&#39; system_id=&#39;pncys4&#39;&gt;</span>
-</pre></div>
+<p>Easily iterate through the machines.</p>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; for machine in client.machines.list():
+...     print(repr(machine))
+&lt;Machine hostname='botswana' system_id='pncys4'&gt;</code></pre>
 
 
-<p>Individual nodes can be read from the Web API.</p>
-<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">machine</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">machines</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">system_id</span><span class="o">=</span><span class="s2">&quot;pncys4&quot;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">machine</span>
-<span class="go">&lt;Machine hostname=&#39;botswana&#39; system_id=&#39;pncys4&#39;&gt;</span>
-</pre></div>
+<p>Get a machine from its system_id.</p>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; machine = client.machines.get(system_id=&quot;pncys4&quot;)
+&gt;&gt;&gt; machine
+&lt;Machine hostname='botswana' system_id='pncys4'&gt;</code></pre>
 
 
 <p>Machines — and devices, racks, and regions — have many useful
 attributes:</p>
-<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">machine</span><span class="o">.</span><span class="n">architecture</span>
-<span class="go">&#39;amd64/generic&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">machine</span><span class="o">.</span><span class="n">cpus</span>
-<span class="go">4</span>
-</pre></div>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; machine.architecture
+'amd64/generic'
+&gt;&gt;&gt; machine.cpus
+4</code></pre>
 
 
 <p>Don&rsquo;t forget to try using tab-completion — the objects have been
 designed to be particularly friendly for interactive use — or
 <code>dir(machine)</code> to find out what other fields and methods are
 available.</p>
-<p><strong>TODO</strong>: Updating nodes.</p>
-<h2 id="allocating-and-deploying">Allocating and deploying</h2>
-<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">help</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">machines</span><span class="o">.</span><span class="n">allocate</span><span class="p">)</span>
-<span class="go">Help on method allocate in module maas.client.viscera.machines:</span>
+<h2 id="create-nodes">Create nodes</h2>
+<p>Create a machine in MAAS. The architecture, MAC addresses, and power type are
+required fields.</p>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; machine = client.machines.create(
+...     &quot;amd64&quot;, [&quot;00:11:22:33:44:55&quot;, &quot;AA:BB:CC:DD:EE:FF&quot;], &quot;manual&quot;)
+&lt;Machine hostname='wanted-falcon' system_id='ekgqwd'&gt;</code></pre>
 
-<span class="go">allocate(</span>
-<span class="go">    *, hostname:str=None, architecture:str=None, cpus:int=None,</span>
-<span class="go">    memory:float=None, tags:typing.Sequence=None)</span>
-<span class="go">  method of maas.client.viscera.machines.MachinesType instance</span>
-<span class="go">    :param hostname: The hostname to match.</span>
-<span class="go">    :param architecture: The architecture to match, e.g. &quot;amd64&quot;.</span>
-<span class="go">    :param cpus: The minimum number of CPUs to match.</span>
-<span class="go">    :param memory: The minimum amount of RAM to match.</span>
-<span class="go">    :param tags: The tags to match, as a sequence. Each tag may be</span>
-<span class="go">        prefixed with a hyphen to denote that the given tag should NOT be</span>
-<span class="go">        associated with a matched machine.</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">machine</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">machines</span><span class="o">.</span><span class="n">allocate</span><span class="p">(</span><span class="n">tags</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;foo&quot;</span><span class="p">,</span> <span class="s2">&quot;-bar&quot;</span><span class="p">))</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span><span class="p">(</span><span class="n">machine</span><span class="o">.</span><span class="n">status_name</span><span class="p">)</span>
-<span class="go">Acquired</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">machine</span><span class="o">.</span><span class="n">deploy</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span><span class="p">(</span><span class="n">machine</span><span class="o">.</span><span class="n">status_name</span><span class="p">)</span>
-<span class="go">Deploying</span>
-</pre></div>
+
+<p>Normally you need to pass in power parameter so MAAS can talk to the BMC.</p>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; machine = client.machines.create(
+...     &quot;amd64&quot;, [&quot;00:11:22:33:44:55&quot;, &quot;AA:BB:CC:DD:EE:FF&quot;], &quot;ipmi&quot;, {
+...         &quot;power_address&quot;: &quot;10.245.0.10&quot;,
+...         &quot;power_user&quot;: &quot;root&quot;,
+...         &quot;power_pass&quot;: &quot;calvin&quot;,
+...     })
+&gt;&gt;&gt; machine
+&lt;Machine hostname='wanted-falcon' system_id='ekgqwd'&gt;
+&gt;&gt;&gt; machine.status
+&lt;NodeStatus.COMMISSIONING: 1&gt;</code></pre>
+
+
+<h2 id="updating-nodes">Updating nodes</h2>
+<p>Updating a machine is as simple as modifying the attribute and saving.</p>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; machine.hostname = 'my-machine'
+&gt;&gt;&gt; machine.architecture = 'i386/generic'
+&gt;&gt;&gt; machine.save()</code></pre>
+
+
+<h2 id="deleting-nodes">Deleting nodes</h2>
+<p>Delete a machine is simple as calling delete on the machine object.</p>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; machine.delete()</code></pre>
+
+
+<h2 id="allocating-and-deploying">Allocating and deploying</h2>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; help(client.machines.allocate)
+Help on method allocate in module maas.client.viscera.machines:
+
+allocate(
+    *, hostname:str=None, architecture:str=None, cpus:int=None,
+    memory:float=None, tags:typing.Sequence=None)
+  method of maas.client.viscera.machines.MachinesType instance
+    Allocate a machine.
+
+    :param hostname: The hostname to match.
+    :param architecture: The architecture to match, e.g. &quot;amd64&quot;.
+    :param cpus: The minimum number of CPUs to match.
+    :param memory: The minimum amount of RAM to match.
+    :param tags: The tags to match, as a sequence. Each tag may be
+        prefixed with a hyphen to denote that the given tag should NOT be
+        associated with a matched machine.
+&gt;&gt;&gt; machine = client.machines.allocate(tags=(&quot;foo&quot;, &quot;-bar&quot;))
+&gt;&gt;&gt; print(machine.status)
+NodeStatus.COMMISSIONING
+&gt;&gt;&gt; machine.deploy()
+&gt;&gt;&gt; print(machine.status)
+NodeStatus.DEPLOYING</code></pre>
               
             </div>
           </div>
@@ -292,7 +316,7 @@ available.</p>
   <div class="rst-versions" role="note" style="cursor: pointer">
     <span class="rst-current-version" data-toggle="rst-current-version">
       
-          <a href="https://github.com/maas/python-libmaas" class="icon icon-github" style="float: left; color: #fcfcfc"> GitHub</a>
+          <a href="https://github.com/maas/python-libmaas" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
       
       
         <span><a href="../index.html" style="color: #fcfcfc;">&laquo; Previous</a></span>

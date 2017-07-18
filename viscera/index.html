@@ -45,114 +45,93 @@
 
       <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
 	<ul class="current">
+	  
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../index.html">Home</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="../index.html">Home</a>
+	    </li>
           
-            <li>
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Client</span>
     <ul class="subnav">
-    <li><span>Client</span></li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../client/index.html">Introduction</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../client/nodes/index.html">Machines, devices, racks, and regions</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../client/events/index.html">Events</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../client/other/index.html">Others</a>
-        
-    </li>
-
-        
+                <li class="">
+                    
+    <a class="" href="../client/index.html">Introduction</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../client/nodes/index.html">Nodes</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../client/events/index.html">Events</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../client/other/index.html">Others</a>
+                </li>
     </ul>
-<li>
+	    </li>
           
-            <li>
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Internals</span>
     <ul class="subnav">
-    <li><span>Internals</span></li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../bones/index.html">Bones</a>
-        
-    </li>
-
-        
-            
+                <li class="">
+                    
+    <a class="" href="../bones/index.html">Bones</a>
+                </li>
+                <li class=" current">
+                    
+    <span class="caption-text">Viscera</span>
     <ul class="subnav">
-    <li><span>Viscera</span></li>
+                <li class="toctree-l3 current">
+                    
+    <a class="current" href="index.html">Introduction</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l4"><a href="#some-example-code">Some example code</a></li>
+    
 
-        
-            
-    <li class="toctree-l1 current">
-        <a class="current" href="index.html">Introduction</a>
-        
-            <ul>
-            
-                <li class="toctree-l3"><a href="#some-example-code">Some example code</a></li>
-                
-            
-            </ul>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="getting-started/index.html">Getting started</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="nodes/index.html">Nodes</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="events/index.html">Events</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="other/index.html">Others</a>
-        
-    </li>
-
-        
     </ul>
-
-        
+                </li>
+                <li class="toctree-l3">
+                    
+    <a class="" href="getting-started/index.html">Getting started</a>
+                </li>
+                <li class="toctree-l3">
+                    
+    <a class="" href="nodes/index.html">Nodes</a>
+                </li>
+                <li class="toctree-l3">
+                    
+    <a class="" href="events/index.html">Events</a>
+                </li>
+                <li class="toctree-l3">
+                    
+    <a class="" href="other/index.html">Others</a>
+                </li>
     </ul>
-<li>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Development</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../development/releasing/index.html">Release checklist</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../development/adding-an-object/index.html">Adding an object</a>
+                </li>
+    </ul>
+	    </li>
           
         </ul>
       </div>
@@ -200,23 +179,22 @@
                 <h1><em>viscera</em> &mdash; High-level Python client API</h1>
 
 <h2 id="some-example-code">Some example code</h2>
-<div class="codehilite"><pre><span></span><span class="ch">#!/usr/bin/env python3.5</span>
+<pre class="codehilite"><code class="language-python">#!/usr/bin/env python3.5
 
-<span class="kn">from</span> <span class="nn">pprint</span> <span class="kn">import</span> <span class="n">pprint</span>
-<span class="kn">from</span> <span class="nn">maas.client</span> <span class="kn">import</span> <span class="n">viscera</span>
+from pprint import pprint
+from maas.client import viscera
 
-<span class="n">profile</span><span class="p">,</span> <span class="n">origin</span> <span class="o">=</span> <span class="n">viscera</span><span class="o">.</span><span class="n">Origin</span><span class="o">.</span><span class="n">login</span><span class="p">(</span>
-    <span class="s2">&quot;http://localhost:5240/MAAS/&quot;</span><span class="p">,</span> <span class="n">username</span><span class="o">=</span><span class="s2">&quot;alice&quot;</span><span class="p">,</span>
-    <span class="n">password</span><span class="o">=</span><span class="s2">&quot;wonderland&quot;</span><span class="p">)</span>
+profile, origin = viscera.Origin.login(
+    &quot;http://localhost:5240/MAAS/&quot;, username=&quot;alice&quot;,
+    password=&quot;wonderland&quot;)
 
-<span class="c1"># List all the tags.</span>
-<span class="k">print</span><span class="p">(</span><span class="s2">&quot;&gt;&gt;&gt; origin.Tags.read()&quot;</span><span class="p">)</span>
-<span class="n">pprint</span><span class="p">(</span><span class="n">origin</span><span class="o">.</span><span class="n">Tags</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+# List all the tags.
+print(&quot;&gt;&gt;&gt; origin.Tags.read()&quot;)
+pprint(origin.Tags.read())
 
-<span class="c1"># List all machines.</span>
-<span class="k">print</span><span class="p">(</span><span class="s2">&quot;&gt;&gt;&gt; origin.Machines.read()&quot;</span><span class="p">)</span>
-<span class="n">pprint</span><span class="p">(</span><span class="n">origin</span><span class="o">.</span><span class="n">Machines</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
-</pre></div>
+# List all machines.
+print(&quot;&gt;&gt;&gt; origin.Machines.read()&quot;)
+pprint(origin.Machines.read())</code></pre>
               
             </div>
           </div>
@@ -252,7 +230,7 @@
   <div class="rst-versions" role="note" style="cursor: pointer">
     <span class="rst-current-version" data-toggle="rst-current-version">
       
-          <a href="https://github.com/maas/python-libmaas" class="icon icon-github" style="float: left; color: #fcfcfc"> GitHub</a>
+          <a href="https://github.com/maas/python-libmaas" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
       
       
         <span><a href="../bones/index.html" style="color: #fcfcfc;">&laquo; Previous</a></span>
