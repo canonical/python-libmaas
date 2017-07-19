@@ -97,7 +97,7 @@ Delete a machine is simple as calling delete on the machine object.
 ## Commissioning and testing
 
 Easily commission a machine and wait until it successfully completes. By
-default `commission` method waits until commissioning succeeds.
+default the `commission` method waits until commissioning succeeds.
 
 ```pycon
 >>> machine.commission()
