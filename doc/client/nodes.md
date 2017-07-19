@@ -94,6 +94,82 @@ Delete a machine is simple as calling delete on the machine object.
 >>> machine.delete()
 ```
 
+## Commissioning and testing
+
+Easily commission a machine and wait until it successfully completes. By
+default the `commission` method waits until commissioning succeeds.
+
+```pycon
+>>> machine.commission()
+>>> machine.status
+NodeStatus.READY
+```
+
+A more advanced asyncio based script that runs commissioning with extra scripts
+and waits until all machines have successfully commissioned.
+
+```python
+#!/usr/bin/env python3.5
+
+import asyncio
+
+from maas.client import login
+from maas.client.enum import NodeStatus
+from maas.client.utils.async import asynchronous
+
+
+@asynchronous
+async def commission_all_machines():
+    client = await login(
+        "http://eucula.local:5240/MAAS/",
+        username="gavin", password="f00b4r")
+
+    # Get all machines that are in the NEW status.
+    all_machines = await client.machines.list()
+    new_machines = [
+        machine
+        for machine in all_machines
+        if machine.status == NodeStatus.NEW
+    ]
+
+    # Run commissioning with a custom commissioning script on all new machines.
+    for machine in new_machines:
+        machine.commission(
+            commissioning_scripts=['clear_hardware_raid'], wait=False)
+
+    # Wait until all machines are ready.
+    failed_machines = []
+    completed_machines = []
+    while len(new_machines) > 0:
+        await asyncio.sleep(5)
+        for machine in list(new_machines):
+            await machine.refresh()
+            if machine.status in [
+                    NodeStatus.COMMISSIONING, NodeStatus.TESTING]:
+                # Machine is still commissioning or testing.
+                continue
+            elif machine.status == NodeStatus.READY:
+                # Machine is complete.
+                completed_machines.append(machine)
+                new_machines.remove(machine)
+            else:
+                # Machine has failed commissioning.
+                failed_machines.append(machine)
+                new_machines.remove(machine)
+
+    # Print message if any machines failed to commission.
+    if len(failed_machines) > 0:
+        for machine in failed_machines:
+            print("%s: transitioned to unexpected status - %s" % (
+                machine.hostname, machine.status_name))
+    else:
+        print("Successfully commissioned %d machines." % len(
+            completed_machines))
+
+
+commission_all_machines()
+```
+
 ## Allocating and deploying
 
 ```pycon

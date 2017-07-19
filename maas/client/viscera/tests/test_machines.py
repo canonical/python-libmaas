@@ -42,6 +42,110 @@ class TestMachine(TestCase):
             "<Machine hostname=%(hostname)r system_id=%(system_id)r>"
             % machine._data))
 
+    def test__get_power_parameters(self):
+        machine = make_origin().Machine({
+            "system_id": make_name_without_spaces("system-id"),
+            "hostname": make_name_without_spaces("hostname"),
+        })
+        power_parameters = {
+            "key": make_name_without_spaces("value"),
+        }
+        machine._handler.power_parameters.return_value = power_parameters
+        self.assertThat(
+            machine.get_power_parameters(),
+            Equals(power_parameters),
+        )
+        machine._handler.power_parameters.assert_called_once_with(
+            system_id=machine.system_id
+        )
+
+    def test__commissioning_without_wait(self):
+        system_id = make_name_without_spaces("system-id")
+        hostname = make_name_without_spaces("hostname")
+        data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "status": NodeStatus.COMMISSIONING,
+        }
+        machine = make_origin().Machine(data)
+        machine._handler.commission.return_value = data
+        machine.commission()
+        self.assertThat(machine.status, Equals(NodeStatus.COMMISSIONING))
+        machine._handler.commission.assert_called_once_with(
+            system_id=machine.system_id
+        )
+
+    def test__commissioning_with_wait(self):
+        system_id = make_name_without_spaces("system-id")
+        hostname = make_name_without_spaces("hostname")
+        data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "status": NodeStatus.COMMISSIONING,
+        }
+        ready_data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "status": NodeStatus.READY,
+        }
+        machine = make_origin().Machine(data)
+        machine._handler.commission.return_value = data
+        machine._handler.read.return_value = ready_data
+        machine.commission(wait=True, wait_interval=0.1)
+        self.assertThat(machine.status, Equals(NodeStatus.READY))
+        machine._handler.commission.assert_called_once_with(
+            system_id=machine.system_id
+        )
+
+    def test__commissioning_and_testing_with_wait(self):
+        system_id = make_name_without_spaces("system-id")
+        hostname = make_name_without_spaces("hostname")
+        data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "status": NodeStatus.COMMISSIONING,
+        }
+        testing_data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "status": NodeStatus.TESTING,
+        }
+        ready_data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "status": NodeStatus.READY,
+        }
+        machine = make_origin().Machine(data)
+        machine._handler.commission.return_value = data
+        machine._handler.read.side_effect = [
+            testing_data,
+            ready_data,
+        ]
+        machine.commission(wait=True, wait_interval=0.1)
+        self.assertThat(machine.status, Equals(NodeStatus.READY))
+        machine._handler.commission.assert_called_once_with(
+            system_id=machine.system_id
+        )
+
+    def test__commission_with_wait_failed(self):
+        system_id = make_name_without_spaces("system-id")
+        hostname = make_name_without_spaces("hostname")
+        data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "status": NodeStatus.COMMISSIONING,
+        }
+        failed_commissioning_data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "status": NodeStatus.FAILED_COMMISSIONING,
+        }
+        machine = make_origin().Machine(data)
+        machine._handler.commission.return_value = data
+        machine._handler.read.return_value = failed_commissioning_data
+        self.assertRaises(machines.FailedCommissioning, machine.commission,
+                          wait=True, wait_interval=0.1)
+
     def test__deploy_with_wait(self):
         system_id = make_name_without_spaces("system-id")
         hostname = make_name_without_spaces("hostname")
@@ -56,11 +160,10 @@ class TestMachine(TestCase):
             "status": NodeStatus.DEPLOYED,
         }
         machine = make_origin().Machine(data)
-        deployed_machine = make_origin().Machine(deployed_data)
         machine._handler.deploy.return_value = data
         machine._handler.read.return_value = deployed_data
-        result = machine.deploy(wait=True, wait_interval=0.1)
-        self.assertThat(result.status, Equals(deployed_machine.status))
+        machine.deploy(wait=True, wait_interval=0.1)
+        self.assertThat(machine.status, Equals(NodeStatus.DEPLOYED))
         machine._handler.deploy.assert_called_once_with(
             system_id=machine.system_id
         )
@@ -83,23 +186,6 @@ class TestMachine(TestCase):
         machine._handler.read.return_value = failed_deploy_data
         self.assertRaises(machines.FailedDeployment, machine.deploy,
                           wait=True, wait_interval=0.1)
-
-    def test__get_power_parameters(self):
-        machine = make_origin().Machine({
-            "system_id": make_name_without_spaces("system-id"),
-            "hostname": make_name_without_spaces("hostname"),
-        })
-        power_parameters = {
-            "key": make_name_without_spaces("value"),
-        }
-        machine._handler.power_parameters.return_value = power_parameters
-        self.assertThat(
-            machine.get_power_parameters(),
-            Equals(power_parameters),
-        )
-        machine._handler.power_parameters.assert_called_once_with(
-            system_id=machine.system_id
-        )
 
     def test__enter_rescue_mode(self):
         rescue_mode_machine = {
