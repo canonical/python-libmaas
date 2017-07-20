@@ -125,6 +125,10 @@ class Subnet(Object, metaclass=SubnetType):
     rdns_mode = ObjectField.Checked("rdns_mode", to(RDNSMode))
     dns_servers = ObjectField.Checked("dns_servers", check(list))
 
+    def __repr__(self):
+        return super(Subnet, self).__repr__(
+            fields={"cidr", "name", "vlan"})
+
     async def delete(self):
         """Delete this Subnet."""
         await self._handler.delete(id=self.id)

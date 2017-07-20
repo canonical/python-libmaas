@@ -66,3 +66,10 @@ class RDNSMode(enum.IntEnum):
     ENABLED = 1
     #: Generate RFC2317 glue if needed (Subnet is too small for its own zone.)
     RFC2317 = 2
+
+
+class IPRangeType(enum.Enum):
+    # Dynamic IP Range.
+    DYNAMIC = 'dynamic'
+    # Reserved for exclusive use by MAAS or user.
+    RESERVED = 'reserved'

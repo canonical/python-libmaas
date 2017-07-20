@@ -107,9 +107,9 @@ class TestClient(TestCase):
             )
         ))
 
-    def test__client_maps_ipranges(self):
+    def test__client_maps_ip_ranges(self):
         self.assertThat(self.client, MatchesClient(
-            ipranges=MatchesFacade(
+            ip_ranges=MatchesFacade(
                 create=self.origin.IPRanges.create,
                 get=self.origin.IPRange.read,
                 list=self.origin.IPRanges.read,

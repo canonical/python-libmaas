@@ -12,8 +12,10 @@ from . import (
     ObjectFieldRelated,
     ObjectSet,
     ObjectType,
+    to,
 )
 from .subnets import Subnet
+from ..enum import IPRangeType
 from typing import Union
 
 TYPE = type
@@ -26,18 +28,25 @@ class IPRangesType(ObjectType):
         data = await cls._handler.read()
         return cls(map(cls._object, data))
 
-    async def create(cls, *, start_ip: str, end_ip: str, type: str,
-                     comment: str=None, subnet: Union[int, Subnet]=None):
+    async def create(
+            cls, start_ip: str, end_ip: str, *,
+            type: IPRangeType=IPRangeType.RESERVED,
+            comment: str=None, subnet: Union[Subnet, int]=None):
         """
         Create a `IPRange` in MAAS.
 
-        :param name: The name of the `IPRange` (optional, will be given a
-        default value if not specified).
-        :type name: `str`
-        :param description: A description of the `IPRange` (optional).
-        :type description: `str`
-        :param class_type: The class type of the `IPRange` (optional).
-        :type class_type: `str`
+        :param start_ip: First IP address in the range (required).
+        :type start_ip: `str`
+        :parma end_ip: Last IP address in the range (required).
+        :type end_ip: `str`
+        :param type: Type of IP address range (optional).
+        :type type: `IPRangeType`
+        :param comment: Reason for the IP address range (optional).
+        :type comment: `str`
+        :param subnet: Subnet the IP address range should be created on
+            (optional). By default MAAS will calculate the correct subnet
+            based on the `start_ip` and `end_ip`.
+        :type subnet: `Subnet` or `int`
         :returns: The created IPRange
         :rtype: `IPRange`
         """
@@ -83,7 +92,7 @@ class IPRange(Object, metaclass=IPRangeType):
     end_ip = ObjectField.Checked(
         "end_ip", check(str))
     type = ObjectField.Checked(
-        "type", check(str), readonly=True)
+        "type", to(IPRangeType), readonly=True)
     comment = ObjectField.Checked(
         "comment", check(str))
     subnet = ObjectFieldRelated("subnet", "Subnet", readonly=True, pk=0)

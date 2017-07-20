@@ -13,6 +13,7 @@ pages:
   - Client:
     - Introduction: client/index.md
     - Nodes: client/nodes.md
+    - Networking: client/networking.md
     - Events: client/events.md
     - Others: client/other.md
   - Internals:
