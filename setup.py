@@ -37,6 +37,7 @@ setup(
         "pytz >= 2014.10",
         "PyYAML >= 3.11",
         "terminaltables >= 2.1.0",
+        "bson == 0.4.8",
     },
     test_suite="maas.client",
     tests_require={

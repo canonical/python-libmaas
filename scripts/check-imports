@@ -552,6 +552,7 @@ checks = [
             Allow("maas.client|maas.client.**"),
             Allow("oauthlib.oauth1"),
             Allow("pytz"),
+            Allow("bson"),
             Allow(StandardLibraries),
             # Don't let non-flesh code import flesh.
             Deny("maas.client.flesh|maas.client.flesh.**"),
