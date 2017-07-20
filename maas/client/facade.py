@@ -155,7 +155,7 @@ class Client:
         }
 
     @facade
-    def ipranges(origin):
+    def ip_ranges(origin):
         return {
             "create": origin.IPRanges.create,
             "get": origin.IPRange.read,
