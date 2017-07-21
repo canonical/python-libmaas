@@ -178,9 +178,8 @@
 <ol>
 <li>
 <p>Clean and test:</p>
-<div class="codehilite"><pre><span></span>make clean
-make test
-</pre></div>
+<pre class="codehilite"><code>make clean
+make test</code></pre>
 
 
 </li>
@@ -193,23 +192,20 @@ make test
 </li>
 <li>
 <p>Tag <em>master</em>:</p>
-<div class="codehilite"><pre><span></span>git tag --sign <span class="cp">${</span><span class="n">version</span><span class="cp">}</span> --message &quot;Release <span class="cp">${</span><span class="n">version</span><span class="cp">}</span>.&quot;
-git push origin --tags
-</pre></div>
+<pre class="codehilite"><code>git tag --sign ${version} --message &quot;Release ${version}.&quot;
+git push origin --tags</code></pre>
 
 
 </li>
 <li>
 <p>Build and push docs to <a href="http://maas.github.io/python-libmaas/">GitHub</a>:</p>
-<div class="codehilite"><pre><span></span>make docs-to-github
-</pre></div>
+<pre class="codehilite"><code>make docs-to-github</code></pre>
 
 
 </li>
 <li>
 <p>Build and push source and wheel to <a href="https://pypi.python.org/pypi/python-libmaas">PyPI</a>:</p>
-<div class="codehilite"><pre><span></span>make upload
-</pre></div>
+<pre class="codehilite"><code>make upload</code></pre>
 
 
 </li>

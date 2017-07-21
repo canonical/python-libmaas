@@ -191,61 +191,54 @@
 <h2 id="logging-in">Logging-in</h2>
 <p>Log-in using the command-line tool and start an interactive Python
 shell:</p>
-<div class="codehilite"><pre><span></span><span class="gp">$</span> maas profiles login foo http://example.com:5240/MAAS/ admin
-<span class="go">Password: …</span>
-<span class="gp">$</span> maas shell
-</pre></div>
+<pre class="codehilite"><code class="language-console">$ maas profiles login foo http://example.com:5240/MAAS/ admin
+Password: …
+$ maas shell</code></pre>
 
 
 <p>This will provide you with a pre-prepared <code>origin</code> object that points to
 <code>foo</code> from above. This is the root object of the API.</p>
 <p>If you have MAAS 2.2 or later you can also log-in programmatically:</p>
-<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">profile</span><span class="p">,</span> <span class="n">origin</span> <span class="o">=</span> <span class="n">Origin</span><span class="o">.</span><span class="n">login</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="s2">&quot;http://example.com:5240/MAAS/&quot;</span><span class="p">,</span> <span class="n">username</span><span class="o">=</span><span class="s2">&quot;admin&quot;</span><span class="p">,</span>
-<span class="gp">... </span>    <span class="n">password</span><span class="o">=</span><span class="s2">&quot;…&quot;</span><span class="p">)</span>
-</pre></div>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; profile, origin = Origin.login(
+...     &quot;http://example.com:5240/MAAS/&quot;, username=&quot;admin&quot;,
+...     password=&quot;…&quot;)</code></pre>
 
 
 <p>The <code>profile</code> has not been saved, but it&rsquo;s easy to do so:</p>
-<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">profile</span> <span class="o">=</span> <span class="n">profile</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;foo&quot;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">ProfileStore</span><span class="o">.</span><span class="n">open</span><span class="p">()</span> <span class="k">as</span> <span class="n">store</span><span class="p">:</span>
-<span class="gp">... </span>    <span class="n">store</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">profile</span><span class="p">)</span>
-<span class="gp">... </span>    <span class="n">store</span><span class="o">.</span><span class="n">default</span> <span class="o">=</span> <span class="n">profile</span>
-</pre></div>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; profile = profile.replace(name=&quot;foo&quot;)
+&gt;&gt;&gt; with ProfileStore.open() as store:
+...     store.save(profile)
+...     store.default = profile</code></pre>
 
 
 <p>This does the same as the <code>maas profiles login</code> command.</p>
 <p>But there&rsquo;s no need! There&rsquo;s a command built in to do it for you:</p>
-<div class="codehilite"><pre><span></span><span class="gp">$</span> bin/maas shell
-<span class="go">Welcome to the MAAS shell.</span>
+<pre class="codehilite"><code class="language-console">$ bin/maas shell
+Welcome to the MAAS shell.
 
-<span class="go">Predefined variables:</span>
+Predefined variables:
 
-<span class="go">    origin: A `viscera` origin, configured for foo.</span>
-<span class="go">   session: A `bones` session, configured for foo.</span>
+    origin: A `viscera` origin, configured for foo.
+   session: A `bones` session, configured for foo.
 
-<span class="gp">&gt;</span>&gt;&gt;
-</pre></div>
+&gt;&gt;&gt;</code></pre>
 
 
 <h2 id="logging-out">Logging-out</h2>
 <p>Log-out using the command-line tool:</p>
-<div class="codehilite"><pre><span></span><span class="gp">$</span> bin/maas profiles remove foo
-</pre></div>
+<pre class="codehilite"><code class="language-console">$ bin/maas profiles remove foo</code></pre>
 
 
 <p>or, programmatically:</p>
-<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">ProfileStore</span><span class="o">.</span><span class="n">open</span><span class="p">()</span> <span class="k">as</span> <span class="n">store</span><span class="p">:</span>
-<span class="gp">... </span>    <span class="n">store</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="s2">&quot;foo&quot;</span><span class="p">)</span>
-</pre></div>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; with ProfileStore.open() as store:
+...     store.delete(&quot;foo&quot;)</code></pre>
 
 
 <h2 id="dir-help-and-tab-completion"><code>dir()</code>, <code>help()</code>, and tab-completion</h2>
 <p>The <em>viscera</em> API has been designed to be very discoverable using
 tab-completion, <code>dir()</code>, <code>help()</code>, and so on. Start with that:</p>
-<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">origin</span><span class="o">.&lt;</span><span class="n">tab</span><span class="o">&gt;</span>
-<span class="go">…</span>
-</pre></div>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; origin.&lt;tab&gt;
+…</code></pre>
 
 
 <p>This works best when you&rsquo;ve got <a href="https://ipython.org/">IPython</a>

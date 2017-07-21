@@ -181,28 +181,25 @@
 
 <p>Events are similar to other <em>viscera</em> objects&hellip; but a little different
 too. The only way to get events is by the <code>query</code> method:</p>
-<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">events</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">query</span><span class="p">()</span>
-</pre></div>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; events = origin.Events.query()</code></pre>
 
 
 <p>This accepts a plethora of optional arguments to narrow down the results:</p>
-<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">events</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">hostnames</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;foo&quot;</span><span class="p">,</span> <span class="s2">&quot;bar&quot;</span><span class="p">})</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">events</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">domains</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;example.com&quot;</span><span class="p">,</span> <span class="s2">&quot;maas.io&quot;</span><span class="p">})</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">events</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">zones</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="s2">&quot;blue&quot;</span><span class="p">])</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">events</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">macs</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;12:34:56:78:90:ab&quot;</span><span class="p">,</span> <span class="p">))</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">events</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">system_ids</span><span class="o">=</span><span class="err">…</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">events</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">agent_name</span><span class="o">=</span><span class="err">…</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">events</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="err">…</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">events</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">after</span><span class="o">=</span><span class="err">…</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="err">…</span><span class="p">)</span>
-</pre></div>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; events = origin.Events.query(hostnames={&quot;foo&quot;, &quot;bar&quot;})
+&gt;&gt;&gt; events = origin.Events.query(domains={&quot;example.com&quot;, &quot;maas.io&quot;})
+&gt;&gt;&gt; events = origin.Events.query(zones=[&quot;red&quot;, &quot;blue&quot;])
+&gt;&gt;&gt; events = origin.Events.query(macs=(&quot;12:34:56:78:90:ab&quot;, ))
+&gt;&gt;&gt; events = origin.Events.query(system_ids=…)
+&gt;&gt;&gt; events = origin.Events.query(agent_name=…)
+&gt;&gt;&gt; events = origin.Events.query(level=…)
+&gt;&gt;&gt; events = origin.Events.query(after=…, limit=…)</code></pre>
 
 
 <p>These arguments can be combined to narrow the results even further.</p>
 <p>The <code>level</code> argument is a little special. It&rsquo;s a choice from a
 predefined set. For convenience, those choices are defined in the
 <code>Level</code> enum:</p>
-<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">events</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">origin</span><span class="o">.</span><span class="n">Events</span><span class="o">.</span><span class="n">Level</span><span class="o">.</span><span class="n">ERROR</span><span class="p">)</span>
-</pre></div>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; events = origin.Events.query(level=origin.Events.Level.ERROR)</code></pre>
 
 
 <p>but you can also pass in the string &ldquo;ERROR&rdquo; or the number 40.</p>

@@ -199,111 +199,103 @@ interrogate your entire networking configuration.</p>
 <p><code>fabrics</code>, <code>subnets</code>, <code>spaces</code>, <code>ip_ranges</code>, and <code>static_routes</code> is
 exposed directly on your <code>Client</code> instance. <code>vlans</code> are nested under each
 <code>Fabric</code>.</p>
-<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">fabrics</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">fabrics</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">fabrics</span><span class="p">)</span>
-<span class="go">1</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">default_fabric</span> <span class="o">=</span> <span class="n">fabrics</span><span class="o">.</span><span class="n">get_default</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">default_fabric</span><span class="o">.</span><span class="n">name</span>
-<span class="go">&#39;fabric-0&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">default_fabric</span><span class="o">.</span><span class="n">vlans</span>
-<span class="go">&lt;Vlans.Managed#Fabric length=1 items=[&lt;Vlan name=&#39;untagged&#39; vid=0&gt;]&gt;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">vlan</span> <span class="ow">in</span> <span class="n">default_fabric</span><span class="o">.</span><span class="n">vlans</span><span class="p">:</span>
-<span class="gp">... </span>    <span class="k">print</span><span class="p">(</span><span class="n">vlan</span><span class="p">)</span>
-<span class="gp">...</span>
-<span class="go">&lt;Vlan name=&#39;untagged&#39; vid=0&gt;</span>
-<span class="go">&gt;&gt;&gt;</span>
-</pre></div>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; fabrics = client.fabrics.list()
+&gt;&gt;&gt; len(fabrics)
+1
+&gt;&gt;&gt; default_fabric = fabrics.get_default()
+&gt;&gt;&gt; default_fabric.name
+'fabric-0'
+&gt;&gt;&gt; default_fabric.vlans
+&lt;Vlans.Managed#Fabric length=1 items=[&lt;Vlan name='untagged' vid=0&gt;]&gt;
+&gt;&gt;&gt; for vlan in default_fabric.vlans:
+...     print(vlan)
+...
+&lt;Vlan name='untagged' vid=0&gt;
+&gt;&gt;&gt;</code></pre>
 
 
 <p>Get a specific subnet and view the <code>Vlan</code> and <code>Fabric</code> that it is
 assigned to. Going up the tree from <code>Vlan</code> to <code>Fabric</code> results in an
 unloaded <code>Fabric</code>. Calling <code>refresh</code> on <code>Fabric</code> will load the object
 from MAAS.</p>
-<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">vm_subnet</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">subnets</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;192.168.122.0/24&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">vm_subnet</span><span class="o">.</span><span class="n">cidr</span>
-<span class="go">&#39;192.168.122.0/24&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">vm_subnet</span><span class="o">.</span><span class="n">vlan</span>
-<span class="go">&lt;Vlan name=&#39;untagged&#39; vid=0&gt;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">fabric</span> <span class="o">=</span> <span class="n">vm_subnet</span><span class="o">.</span><span class="n">vlan</span><span class="o">.</span><span class="n">fabric</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">fabric</span>
-<span class="go">&lt;Fabric id=20 (unloaded)&gt;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">fabric</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">fabric</span><span class="o">.</span><span class="n">vlans</span>
-<span class="gt">Traceback (most recent call last):</span>
-<span class="c">...</span>
-<span class="gr">ObjectNotLoaded</span>: <span class="n">cannot access attribute &#39;vlans&#39; of object &#39;Fabric&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">fabric</span><span class="o">.</span><span class="n">is_loaded</span>
-<span class="go">False</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">fabric</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">fabric</span><span class="o">.</span><span class="n">is_loaded</span>
-<span class="go">True</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">fabric</span><span class="o">.</span><span class="n">vlans</span>
-<span class="go">&lt;Vlans.Managed#Fabric length=1 items=[&lt;Vlan name=&#39;untagged&#39; vid=0&gt;]&gt;</span>
-</pre></div>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; vm_subnet = client.subnets.get('192.168.122.0/24')
+&gt;&gt;&gt; vm_subnet.cidr
+'192.168.122.0/24'
+&gt;&gt;&gt; vm_subnet.vlan
+&lt;Vlan name='untagged' vid=0&gt;
+&gt;&gt;&gt; fabric = vm_subnet.vlan.fabric
+&gt;&gt;&gt; fabric
+&lt;Fabric id=20 (unloaded)&gt;
+&gt;&gt;&gt; fabric.refresh()
+&gt;&gt;&gt; fabric.vlans
+Traceback (most recent call last):
+...
+ObjectNotLoaded: cannot access attribute 'vlans' of object 'Fabric'
+&gt;&gt;&gt; fabric.is_loaded
+False
+&gt;&gt;&gt; fabric.refresh()
+&gt;&gt;&gt; fabric.is_loaded
+True
+&gt;&gt;&gt; fabric.vlans
+&lt;Vlans.Managed#Fabric length=1 items=[&lt;Vlan name='untagged' vid=0&gt;]&gt;</code></pre>
 
 
 <p>Access to <code>spaces</code>, <code>ip_ranges</code>, and <code>static_routes</code> works similarly.</p>
-<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">client</span><span class="o">.</span><span class="n">spaces</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">client</span><span class="o">.</span><span class="n">ip_ranges</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">client</span><span class="o">.</span><span class="n">static_routes</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
-</pre></div>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; client.spaces.list()
+&gt;&gt;&gt; client.ip_ranges.list()
+&gt;&gt;&gt; client.static_routes.list()</code></pre>
 
 
 <h2 id="create-fabric-vlan">Create fabric &amp; vlan</h2>
 <p>Creating a new fabric and vlan is done directly from each set of objects on
 the <code>Client</code> respectively.</p>
-<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">new_fabric</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">fabrics</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">new_fabric</span><span class="o">.</span><span class="n">name</span>
-<span class="go">&#39;fabric-2&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">new_vlan</span> <span class="o">=</span> <span class="n">new_fabric</span><span class="o">.</span><span class="n">vlans</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">new_vlan</span>
-<span class="go">&lt;Vlan name=&#39;&#39; vid=20&gt;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">new_vlan</span><span class="o">.</span><span class="n">fabric</span>
-<span class="go">&lt;Fabric id=2 (unloaded)&gt;</span>
-</pre></div>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; new_fabric = client.fabrics.create()
+&gt;&gt;&gt; new_fabric.name
+'fabric-2'
+&gt;&gt;&gt; new_vlan = new_fabric.vlans.create(20)
+&gt;&gt;&gt; new_vlan
+&lt;Vlan name='' vid=20&gt;
+&gt;&gt;&gt; new_vlan.fabric
+&lt;Fabric id=2 (unloaded)&gt;</code></pre>
 
 
 <h2 id="create-subnet">Create subnet</h2>
 <p>Create a new subnet and assign it to an existing vlan.</p>
-<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">new_subnet</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">subnets</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="s1">&#39;192.168.128.0/24&#39;</span><span class="p">,</span> <span class="n">new_vlan</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">new_subnet</span><span class="o">.</span><span class="n">cidr</span>
-<span class="go">&#39;192.168.128.0/24&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">new_subnet</span><span class="o">.</span><span class="n">vlan</span>
-<span class="go">&lt;Vlan name=&#39;&#39; vid=20&gt;</span>
-</pre></div>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; new_subnet = client.subnets.create('192.168.128.0/24', new_vlan)
+&gt;&gt;&gt; new_subnet.cidr
+'192.168.128.0/24'
+&gt;&gt;&gt; new_subnet.vlan
+&lt;Vlan name='' vid=20&gt;</code></pre>
 
 
 <h2 id="update-subnet">Update subnet</h2>
 <p>Quickly move the newly created subnet from vlan to default fabric
 untagged vlan.</p>
-<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">default_fabric</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">fabrics</span><span class="o">.</span><span class="n">get_default</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">untagged</span> <span class="o">=</span> <span class="n">default_fabric</span><span class="o">.</span><span class="n">vlans</span><span class="o">.</span><span class="n">get_default</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">new_subnet</span><span class="o">.</span><span class="n">vlan</span> <span class="o">=</span> <span class="n">untagged</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">new_subnet</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">new_subnet</span><span class="o">.</span><span class="n">vlan</span>
-<span class="go">&lt;Vlan name=&#39;untagged&#39; vid=0&gt;</span>
-</pre></div>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; default_fabric = client.fabrics.get_default()
+&gt;&gt;&gt; untagged = default_fabric.vlans.get_default()
+&gt;&gt;&gt; new_subnet.vlan = untagged
+&gt;&gt;&gt; new_subnet.save()
+&gt;&gt;&gt; new_subnet.vlan
+&lt;Vlan name='untagged' vid=0&gt;</code></pre>
 
 
 <h2 id="delete-subnet">Delete subnet</h2>
 <p><code>delete</code> exists directly on the <code>Subnet</code> object so deletion is simple.</p>
-<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">new_subnet</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
-<span class="go">&gt;&gt;&gt;</span>
-</pre></div>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; new_subnet.delete()
+&gt;&gt;&gt;</code></pre>
 
 
 <h2 id="enable-dhcp">Enable DHCP</h2>
 <p>Create a new dynamic IP range and turn DHCP on the selected
 rack controller.</p>
-<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">fabric</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">fabrics</span><span class="o">.</span><span class="n">get_default</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">untagged</span> <span class="o">=</span> <span class="n">fabric</span><span class="o">.</span><span class="n">vlans</span><span class="o">.</span><span class="n">get_default</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">new_range</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">ip_ranges</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="s1">&#39;192.168.122.100&#39;</span><span class="p">,</span> <span class="s1">&#39;192.168.122.200&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">IPRangeType</span><span class="o">.</span><span class="n">DYNAMIC</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">rack</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">rack_controllers</span><span class="o">.</span><span class="n">list</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">untagged</span><span class="o">.</span><span class="n">dhcp_on</span> <span class="o">=</span> <span class="bp">True</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">untagged</span><span class="o">.</span><span class="n">primary_rack</span> <span class="o">=</span> <span class="n">rack</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">untagged</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
-</pre></div>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; fabric = client.fabrics.get_default()
+&gt;&gt;&gt; untagged = fabric.vlans.get_default()
+&gt;&gt;&gt; new_range = client.ip_ranges.create(
+...     '192.168.122.100', '192.168.122.200', type=IPRangeType.DYNAMIC)
+&gt;&gt;&gt; rack = client.rack_controllers.list()[0]
+&gt;&gt;&gt; untagged.dhcp_on = True
+&gt;&gt;&gt; untagged.primary_rack = rack
+&gt;&gt;&gt; untagged.save()</code></pre>
               
             </div>
           </div>
