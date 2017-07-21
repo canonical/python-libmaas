@@ -252,6 +252,26 @@ class Machine(Object, metaclass=MachineType):
         data = await self._handler.power_parameters(system_id=self.system_id)
         return data
 
+    async def abort(self, *, comment: str=None):
+        """Abort the current action.
+
+        :param comment: Reason for aborting the action.
+        :param type: `str`
+        """
+        params = {
+            "system_id": self.system_id
+        }
+        if comment:
+            params["comment"] = comment
+        self._data = await self._handler.abort(**params)
+        return self
+
+    async def clear_default_gateways(self):
+        """Clear default gateways."""
+        self._data = await self._handler.clear_default_gateways(
+            system_id=self.system_id)
+        return self
+
     async def commission(
             self, *, enable_ssh: bool=None, skip_networking: bool=None,
             skip_storage: bool=None,
@@ -362,38 +382,6 @@ class Machine(Object, metaclass=MachineType):
                 raise FailedDeployment(msg, self)
             return self
 
-    async def release(
-            self, comment: str=None, wait: bool=False, wait_interval: int=5):
-        """
-        Release the machine.
-
-        :param wait: If specified, wait until the deploy is complete.
-        :param wait_interval: How often to poll, defaults to 5 seconds
-        """
-        params = {"system_id": self.system_id}
-        if comment is not None:
-            params["comment"] = comment
-        self._data = await self._handler.release(**params)
-        if not wait:
-            return self
-        else:
-            # Wait for machine to be released
-            while self.status in [
-                    NodeStatus.RELEASING, NodeStatus.DISK_ERASING]:
-                await asyncio.sleep(wait_interval)
-                self._data = await self._handler.read(system_id=self.system_id)
-            if self.status == NodeStatus.FAILED_RELEASING:
-                msg = "{system_id} failed to be released.".format(
-                    system_id=self.system_id
-                )
-                raise FailedReleasing(msg, self)
-            elif self.status == NodeStatus.FAILED_DISK_ERASING:
-                msg = "{system_id} failed to erase disk.".format(
-                    system_id=self.system_id
-                )
-                raise FailedDiskErasing(msg, self)
-            return self
-
     async def enter_rescue_mode(self, wait: bool=False, wait_interval: int=5):
         """
         Send this machine into 'rescue mode'.
@@ -456,9 +444,81 @@ class Machine(Object, metaclass=MachineType):
                 raise RescueModeFailure(msg, self)
             return self
 
+    async def get_curtin_config(self):
+        """Get the curtin configuration.
+
+        :returns: Curtin configuration
+        :rtype: `str`
+        """
+        return self._handler.get_curtin_config(system_id=self.system_id)
+
     async def get_details(self):
+        """Get machine details information.
+
+        :returns: Mapping of hardware details.
+        """
         data = await self._handler.details(system_id=self.system_id)
         return bson.loads(data)
+
+    async def mark_broken(self, *, comment: str=None):
+        """Mark broken.
+
+        :param comment: Reason machine is broken.
+        :type comment: `str`
+        """
+        params = {
+            "system_id": self.system_id
+        }
+        if comment:
+            params["comment"] = comment
+        self._data = await self._handler.mark_broken(**params)
+        return self
+
+    async def mark_fixed(self, *, comment: str=None):
+        """Mark fixes.
+
+        :param comment: Reason machine is fixed.
+        :type comment: `str`
+        """
+        params = {
+            "system_id": self.system_id
+        }
+        if comment:
+            params["comment"] = comment
+        self._data = await self._handler.mark_fixed(**params)
+        return self
+
+    async def release(
+            self, comment: str=None, wait: bool=False, wait_interval: int=5):
+        """
+        Release the machine.
+
+        :param wait: If specified, wait until the deploy is complete.
+        :param wait_interval: How often to poll, defaults to 5 seconds
+        """
+        params = {"system_id": self.system_id}
+        if comment is not None:
+            params["comment"] = comment
+        self._data = await self._handler.release(**params)
+        if not wait:
+            return self
+        else:
+            # Wait for machine to be released
+            while self.status in [
+                    NodeStatus.RELEASING, NodeStatus.DISK_ERASING]:
+                await asyncio.sleep(wait_interval)
+                self._data = await self._handler.read(system_id=self.system_id)
+            if self.status == NodeStatus.FAILED_RELEASING:
+                msg = "{system_id} failed to be released.".format(
+                    system_id=self.system_id
+                )
+                raise FailedReleasing(msg, self)
+            elif self.status == NodeStatus.FAILED_DISK_ERASING:
+                msg = "{system_id} failed to erase disk.".format(
+                    system_id=self.system_id
+                )
+                raise FailedDiskErasing(msg, self)
+            return self
 
     def __repr__(self):
         return super(Machine, self).__repr__(

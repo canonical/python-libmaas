@@ -196,3 +196,40 @@ NodeStatus.COMMISSIONING
 >>> print(machine.status)
 NodeStatus.DEPLOYING
 ```
+
+## Abort
+
+If an action is performed on a machine and it needs to be aborted before it
+finishes ``abort`` can be used.
+
+```pycon
+>>> machine.commission(wait=False)
+>>> machine.status
+NodeStatus.COMMISSIONING
+>>> machine.abort()
+>>> machine.status
+NodeStatus.NEW
+```
+
+## Rescue mode
+
+Boot the machine into rescue mode and then exit.
+
+```pycon
+>>> machine.enter_rescue_mode()
+>>> machine.exit_rescue_mode()
+```
+
+## Broken & Fixed
+
+When a machine is identified as broken you can easily mark it broken and then
+fixed once the issue is resolved.
+
+```pycon
+>>> machine.mark_broken()
+>>> machine.status
+NodeStatus.BROKEN
+>>> machine.mark_fixed()
+>>> machine.status
+NodeStatus.READY
+```
