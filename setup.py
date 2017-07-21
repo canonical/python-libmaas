@@ -11,7 +11,7 @@ setup(
     author='MAAS Developers',
     author_email='maas-devel@lists.launchpad.net',
     url='https://github.com/maas/python-libmaas',
-    version="0.4.1",
+    version="0.5.0",
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
@@ -32,12 +32,12 @@ setup(
     install_requires={
         "aiohttp >= 2.0.0",
         "argcomplete >= 1.0",
+        "bson >= 0.4.8",
         "colorclass >= 1.2.0",
         "oauthlib >= 1.0.3",
         "pytz >= 2014.10",
         "PyYAML >= 3.11",
         "terminaltables >= 2.1.0",
-        "bson == 0.4.8",
     },
     test_suite="maas.client",
     tests_require={
