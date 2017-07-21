@@ -66,6 +66,35 @@ class TestMachine(TestCase):
             system_id=machine.system_id
         )
 
+    def test__abort(self):
+        data = {
+            "system_id": make_name_without_spaces("system-id"),
+            "hostname": make_name_without_spaces("hostname"),
+        }
+        origin = make_origin()
+        machine = origin.Machine(data)
+        machine._handler.abort.return_value = data
+        comment = make_name_without_spaces("comment")
+        self.assertThat(
+            machine.abort(comment=comment),
+            Equals(origin.Machine(data)))
+        machine._handler.abort.assert_called_once_with(
+            system_id=machine.system_id, comment=comment)
+
+    def test__clear_default_gateways(self):
+        data = {
+            "system_id": make_name_without_spaces("system-id"),
+            "hostname": make_name_without_spaces("hostname"),
+        }
+        origin = make_origin()
+        machine = origin.Machine(data)
+        machine._handler.clear_default_gateways.return_value = data
+        self.assertThat(
+            machine.clear_default_gateways(),
+            Equals(origin.Machine(data)))
+        machine._handler.clear_default_gateways.assert_called_once_with(
+            system_id=machine.system_id)
+
     def test__commissioning_without_wait(self):
         system_id = make_name_without_spaces("system-id")
         hostname = make_name_without_spaces("hostname")
@@ -345,6 +374,51 @@ class TestMachine(TestCase):
             machines.RescueModeFailure,
             machine.exit_rescue_mode, wait=True, wait_interval=0.1
         )
+
+    def test__get_curtin_config(self):
+        data = {
+            "system_id": make_name_without_spaces("system-id"),
+            "hostname": make_name_without_spaces("hostname"),
+        }
+        origin = make_origin()
+        machine = origin.Machine(data)
+        config = make_name_without_spaces("config")
+        machine._handler.get_curtin_config.return_value = config
+        self.assertThat(
+            machine.get_curtin_config(),
+            Equals(config))
+        machine._handler.get_curtin_config.assert_called_once_with(
+            system_id=machine.system_id)
+
+    def test__mark_broken(self):
+        data = {
+            "system_id": make_name_without_spaces("system-id"),
+            "hostname": make_name_without_spaces("hostname"),
+        }
+        origin = make_origin()
+        machine = origin.Machine(data)
+        machine._handler.mark_broken.return_value = data
+        comment = make_name_without_spaces("comment")
+        self.assertThat(
+            machine.mark_broken(comment=comment),
+            Equals(origin.Machine(data)))
+        machine._handler.mark_broken.assert_called_once_with(
+            system_id=machine.system_id, comment=comment)
+
+    def test__mark_fixed(self):
+        data = {
+            "system_id": make_name_without_spaces("system-id"),
+            "hostname": make_name_without_spaces("hostname"),
+        }
+        origin = make_origin()
+        machine = origin.Machine(data)
+        machine._handler.mark_fixed.return_value = data
+        comment = make_name_without_spaces("comment")
+        self.assertThat(
+            machine.mark_fixed(comment=comment),
+            Equals(origin.Machine(data)))
+        machine._handler.mark_fixed.assert_called_once_with(
+            system_id=machine.system_id, comment=comment)
 
     def test__release_with_wait(self):
         system_id = make_name_without_spaces("system-id")
