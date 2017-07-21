@@ -66,6 +66,10 @@
                 </li>
                 <li class="">
                     
+    <a class="" href="../../client/networking/index.html">Networking</a>
+                </li>
+                <li class="">
+                    
     <a class="" href="../../client/events/index.html">Events</a>
                 </li>
                 <li class="">
@@ -200,61 +204,64 @@ developer, but <em>viscera</em> itself keeps the two separate for cleanliness
 of implementation.</p>
 </blockquote>
 <p>Create a skeleton for <em>Space</em> and <em>Spaces</em>:</p>
-<pre class="codehilite"><code class="language-python">&quot;&quot;&quot;Objects for spaces.&quot;&quot;&quot;
+<div class="codehilite"><pre><span></span><span class="sd">&quot;&quot;&quot;Objects for spaces.&quot;&quot;&quot;</span>
 
-__all__ = [
-    &quot;Space&quot;,
-    &quot;Spaces&quot;,
-]
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;Space&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Spaces&quot;</span><span class="p">,</span>
+<span class="p">]</span>
 
-from . import (
-    Object,
-    ObjectSet,
-    ObjectType,
-)
-
-
-class SpacesType(ObjectType):
-    &quot;&quot;&quot;Metaclass for `Spaces`.&quot;&quot;&quot;
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Object</span><span class="p">,</span>
+    <span class="n">ObjectSet</span><span class="p">,</span>
+    <span class="n">ObjectType</span><span class="p">,</span>
+<span class="p">)</span>
 
 
-class Spaces(ObjectSet, metaclass=SpacesType):
-    &quot;&quot;&quot;The set of spaces.&quot;&quot;&quot;
+<span class="k">class</span> <span class="nc">SpacesType</span><span class="p">(</span><span class="n">ObjectType</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Metaclass for `Spaces`.&quot;&quot;&quot;</span>
 
 
-class SpaceType(ObjectType):
-    &quot;&quot;&quot;Metaclass for `Space`.&quot;&quot;&quot;
+<span class="k">class</span> <span class="nc">Spaces</span><span class="p">(</span><span class="n">ObjectSet</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">SpacesType</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The set of spaces.&quot;&quot;&quot;</span>
 
 
-class Space(Object, metaclass=SpaceType):
-    &quot;&quot;&quot;A space.&quot;&quot;&quot;</code></pre>
+<span class="k">class</span> <span class="nc">SpaceType</span><span class="p">(</span><span class="n">ObjectType</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Metaclass for `Space`.&quot;&quot;&quot;</span>
+
+
+<span class="k">class</span> <span class="nc">Space</span><span class="p">(</span><span class="n">Object</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">SpaceType</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A space.&quot;&quot;&quot;</span>
+</pre></div>
 
 
 <p>We create explicit type classes as a place to put class-specific
 information and methods. Most interestingly, methods created on the type
 classes are <em>class</em> methods on instances of the type. For example:</p>
-<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; class FooType(type):
-...    def hello(cls):
-...        return &quot;Hello, %s&quot; % cls
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">FooType</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
+<span class="gp">... </span>   <span class="k">def</span> <span class="nf">hello</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+<span class="gp">... </span>       <span class="k">return</span> <span class="s2">&quot;Hello, </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">cls</span>
 
-&gt;&gt;&gt; class Foo(metaclass=FooType):
-...    def goodbye(self):
-...        return &quot;Goodbye, %s&quot; % self
+<span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">Foo</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">FooType</span><span class="p">):</span>
+<span class="gp">... </span>   <span class="k">def</span> <span class="nf">goodbye</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="gp">... </span>       <span class="k">return</span> <span class="s2">&quot;Goodbye, </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span>
 
-&gt;&gt;&gt; Foo.hello()
-&quot;Hello, &lt;class '__main__.Foo'&gt;&quot;
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Foo</span><span class="o">.</span><span class="n">hello</span><span class="p">()</span>
+<span class="go">&quot;Hello, &lt;class &#39;__main__.Foo&#39;&gt;&quot;</span>
 
-&gt;&gt;&gt; foo = Foo()
-&gt;&gt;&gt; foo.goodbye()
-'Goodbye, &lt;__main__.Foo object at ...&gt;'</code></pre>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">foo</span> <span class="o">=</span> <span class="n">Foo</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">foo</span><span class="o">.</span><span class="n">goodbye</span><span class="p">()</span>
+<span class="go">&#39;Goodbye, &lt;__main__.Foo object at ...&gt;&#39;</span>
+</pre></div>
 
 
 <p>The difference between using <code>@classmethod</code> and this is that those class
 methods are not available on instances:</p>
-<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; foo.hello()
-Traceback (most recent call last):
-...
-AttributeError: 'Foo' object has no attribute 'hello'</code></pre>
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">foo</span><span class="o">.</span><span class="n">hello</span><span class="p">()</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">AttributeError</span>: <span class="n">&#39;Foo&#39; object has no attribute &#39;hello&#39;</span>
+</pre></div>
 
 
 <p>This keeps the namespace uncluttered, which is good for interactive,
@@ -265,99 +272,104 @@ exploratory development, and it keeps code cleaner too: a class method
 loads object definitions, like those above, and <em>binds</em> them to a
 particular server. More about that later, but for now you need to add
 <code>".spaces"</code> to <code>Origin.__init__</code>:</p>
-<pre class="codehilite"><code class="language-diff">             &quot;.files&quot;,
+<div class="codehilite"><pre><span></span>             &quot;.files&quot;,
              &quot;.maas&quot;,
              &quot;.machines&quot;,
-+            &quot;.spaces&quot;,
+<span class="gi">+            &quot;.spaces&quot;,</span>
              &quot;.tags&quot;,
              &quot;.users&quot;,
-             &quot;.version&quot;,</code></pre>
+             &quot;.version&quot;,
+</pre></div>
 
 
 <h2 id="basic-accessors">Basic accessors</h2>
 <p>Add the following basic accessor method to <code>SpacesType</code>:</p>
-<pre class="codehilite"><code class="language-python">class SpacesType(ObjectType):
+<div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">SpacesType</span><span class="p">(</span><span class="n">ObjectType</span><span class="p">):</span>
 
-    async def read(cls):
-        data = await cls._handler.read()
-        return cls(map(cls._object, data))</code></pre>
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_handler</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_object</span><span class="p">,</span> <span class="n">data</span><span class="p">))</span>
+</pre></div>
 
 
 <p>Let&rsquo;s start working against a real MAAS server:</p>
-<pre class="codehilite"><code class="language-console">$ bin/maas login my-server http://.../MAAS username p4ssw0rd
-$ bin/pip install -IU IPython  # Don't leave home without it.
-$ bin/maas shell --viscera
-Welcome to the MAAS shell.
+<div class="codehilite"><pre><span></span><span class="gp">$</span> bin/maas login my-server http://.../MAAS username p4ssw0rd
+<span class="gp">$</span> bin/pip install -IU IPython  <span class="c1"># Don&#39;t leave home without it.</span>
+<span class="gp">$</span> bin/maas shell --viscera
+<span class="go">Welcome to the MAAS shell.</span>
 
-Predefined objects:
+<span class="go">Predefined objects:</span>
 
-  client:
-    A pre-canned client for 'madagascar'.
+<span class="go">  client:</span>
+<span class="go">    A pre-canned client for &#39;madagascar&#39;.</span>
 
-  origin:
-    A pre-canned `viscera` origin for 'madagascar'.</code></pre>
+<span class="go">  origin:</span>
+<span class="go">    A pre-canned `viscera` origin for &#39;madagascar&#39;.</span>
+</pre></div>
 
 
-<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; origin.Spaces.read()
-&lt;Spaces length=2 items=[&lt;Space&gt;, &lt;Space&gt;]&gt;
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">origin</span><span class="o">.</span><span class="n">Spaces</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+<span class="go">&lt;Spaces length=2 items=[&lt;Space&gt;, &lt;Space&gt;]&gt;</span>
 
-&gt;&gt;&gt; origin.Spaces._handler
-&lt;Handler Spaces http://.../MAAS/api/2.0/spaces/&gt;
+<span class="gp">&gt;&gt;&gt; </span><span class="n">origin</span><span class="o">.</span><span class="n">Spaces</span><span class="o">.</span><span class="n">_handler</span>
+<span class="go">&lt;Handler Spaces http://.../MAAS/api/2.0/spaces/&gt;</span>
 
-&gt;&gt;&gt; origin.Spaces._origin
-&lt;maas.client.viscera.Origin at ...&gt;</code></pre>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">origin</span><span class="o">.</span><span class="n">Spaces</span><span class="o">.</span><span class="n">_origin</span>
+<span class="go">&lt;maas.client.viscera.Origin at ...&gt;</span>
+</pre></div>
 
 
 <p>The <code>_handler</code> attribute is the <em>bones</em> handler for spaces. We named the
 class &ldquo;Spaces&rdquo; and <code>Origin</code> paired that up with the <em>bones</em> handler of
 the same name. This let us call the lower-level <code>read()</code> method. Try
 calling it now:</p>
-<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; origin.Spaces._handler.read()
-[{'id': 0,
-  'name': 'space-0',
-  'resource_uri': '/MAAS/api/2.0/spaces/0/',
-  'subnets': [],
-  'vlans': []},
- {'id': -1,
-  'name': 'undefined',
-  'resource_uri': '/MAAS/api/2.0/spaces/undefined/',
-  'subnets': [{'active_discovery': False,
-    'allow_proxy': True,
-    'cidr': '192.168.1.0/24',
-    'dns_servers': [],
-    'gateway_ip': '192.168.1.254',
-    'id': 1,
-    'managed': True,
-    'name': '192.168.1.0/24',
-    'rdns_mode': 2,
-    'resource_uri': '/MAAS/api/2.0/subnets/1/',
-    'space': 'undefined',
-    'vlan': {'dhcp_on': True,
-     'external_dhcp': None,
-     'fabric': 'fabric-0',
-     'fabric_id': 0,
-     'id': 5001,
-     'mtu': 1500,
-     'name': 'untagged',
-     'primary_rack': '4y3h7n',
-     'relay_vlan': None,
-     'resource_uri': '/MAAS/api/2.0/vlans/5001/',
-     'secondary_rack': 'xfaxgw',
-     'space': 'undefined',
-     'vid': 0}}],
-  'vlans': [{'dhcp_on': True,
-    'external_dhcp': None,
-    'fabric': 'fabric-0',
-    'fabric_id': 0,
-    'id': 5001,
-    'mtu': 1500,
-    'name': 'untagged',
-    'primary_rack': '4y3h7n',
-    'relay_vlan': None,
-    'resource_uri': '/MAAS/api/2.0/vlans/5001/',
-    'secondary_rack': 'xfaxgw',
-    'space': 'undefined',
-    'vid': 0}]}]</code></pre>
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">origin</span><span class="o">.</span><span class="n">Spaces</span><span class="o">.</span><span class="n">_handler</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+<span class="go">[{&#39;id&#39;: 0,</span>
+<span class="go">  &#39;name&#39;: &#39;space-0&#39;,</span>
+<span class="go">  &#39;resource_uri&#39;: &#39;/MAAS/api/2.0/spaces/0/&#39;,</span>
+<span class="go">  &#39;subnets&#39;: [],</span>
+<span class="go">  &#39;vlans&#39;: []},</span>
+<span class="go"> {&#39;id&#39;: -1,</span>
+<span class="go">  &#39;name&#39;: &#39;undefined&#39;,</span>
+<span class="go">  &#39;resource_uri&#39;: &#39;/MAAS/api/2.0/spaces/undefined/&#39;,</span>
+<span class="go">  &#39;subnets&#39;: [{&#39;active_discovery&#39;: False,</span>
+<span class="go">    &#39;allow_proxy&#39;: True,</span>
+<span class="go">    &#39;cidr&#39;: &#39;192.168.1.0/24&#39;,</span>
+<span class="go">    &#39;dns_servers&#39;: [],</span>
+<span class="go">    &#39;gateway_ip&#39;: &#39;192.168.1.254&#39;,</span>
+<span class="go">    &#39;id&#39;: 1,</span>
+<span class="go">    &#39;managed&#39;: True,</span>
+<span class="go">    &#39;name&#39;: &#39;192.168.1.0/24&#39;,</span>
+<span class="go">    &#39;rdns_mode&#39;: 2,</span>
+<span class="go">    &#39;resource_uri&#39;: &#39;/MAAS/api/2.0/subnets/1/&#39;,</span>
+<span class="go">    &#39;space&#39;: &#39;undefined&#39;,</span>
+<span class="go">    &#39;vlan&#39;: {&#39;dhcp_on&#39;: True,</span>
+<span class="go">     &#39;external_dhcp&#39;: None,</span>
+<span class="go">     &#39;fabric&#39;: &#39;fabric-0&#39;,</span>
+<span class="go">     &#39;fabric_id&#39;: 0,</span>
+<span class="go">     &#39;id&#39;: 5001,</span>
+<span class="go">     &#39;mtu&#39;: 1500,</span>
+<span class="go">     &#39;name&#39;: &#39;untagged&#39;,</span>
+<span class="go">     &#39;primary_rack&#39;: &#39;4y3h7n&#39;,</span>
+<span class="go">     &#39;relay_vlan&#39;: None,</span>
+<span class="go">     &#39;resource_uri&#39;: &#39;/MAAS/api/2.0/vlans/5001/&#39;,</span>
+<span class="go">     &#39;secondary_rack&#39;: &#39;xfaxgw&#39;,</span>
+<span class="go">     &#39;space&#39;: &#39;undefined&#39;,</span>
+<span class="go">     &#39;vid&#39;: 0}}],</span>
+<span class="go">  &#39;vlans&#39;: [{&#39;dhcp_on&#39;: True,</span>
+<span class="go">    &#39;external_dhcp&#39;: None,</span>
+<span class="go">    &#39;fabric&#39;: &#39;fabric-0&#39;,</span>
+<span class="go">    &#39;fabric_id&#39;: 0,</span>
+<span class="go">    &#39;id&#39;: 5001,</span>
+<span class="go">    &#39;mtu&#39;: 1500,</span>
+<span class="go">    &#39;name&#39;: &#39;untagged&#39;,</span>
+<span class="go">    &#39;primary_rack&#39;: &#39;4y3h7n&#39;,</span>
+<span class="go">    &#39;relay_vlan&#39;: None,</span>
+<span class="go">    &#39;resource_uri&#39;: &#39;/MAAS/api/2.0/vlans/5001/&#39;,</span>
+<span class="go">    &#39;secondary_rack&#39;: &#39;xfaxgw&#39;,</span>
+<span class="go">    &#39;space&#39;: &#39;undefined&#39;,</span>
+<span class="go">    &#39;vid&#39;: 0}]}]</span>
+</pre></div>
 
 
 <p>Lots of information!</p>
@@ -370,57 +382,62 @@ outside of an <em>asyncio</em> event-loop, they block, but inside they work
 just the same as any other asynchronous call.</p>
 </blockquote>
 <p>Let&rsquo;s look at those <code>Space</code> objects:</p>
-<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; space, *_ = origin.Spaces.read()
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">space</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Spaces</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
 
-&gt;&gt;&gt; dir(space)
-[..., '_data', '_handler', '_origin']
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">dir</span><span class="p">(</span><span class="n">space</span><span class="p">)</span>
+<span class="go">[..., &#39;_data&#39;, &#39;_handler&#39;, &#39;_origin&#39;]</span>
 
-&gt;&gt;&gt; space._data
-{'id': 0,
- 'name': 'space-0',
- 'resource_uri': '/MAAS/api/2.0/spaces/0/',
- 'subnets': [],
- 'vlans': []}
+<span class="gp">&gt;&gt;&gt; </span><span class="n">space</span><span class="o">.</span><span class="n">_data</span>
+<span class="go">{&#39;id&#39;: 0,</span>
+<span class="go"> &#39;name&#39;: &#39;space-0&#39;,</span>
+<span class="go"> &#39;resource_uri&#39;: &#39;/MAAS/api/2.0/spaces/0/&#39;,</span>
+<span class="go"> &#39;subnets&#39;: [],</span>
+<span class="go"> &#39;vlans&#39;: []}</span>
 
-&gt;&gt;&gt; space._handler
-&lt;Handler Space http://madagascar.local:5240/MAAS/api/2.0/spaces/{space_id}/&gt;
+<span class="gp">&gt;&gt;&gt; </span><span class="n">space</span><span class="o">.</span><span class="n">_handler</span>
+<span class="go">&lt;Handler Space http://madagascar.local:5240/MAAS/api/2.0/spaces/{space_id}/&gt;</span>
 
-&gt;&gt;&gt; space._origin is origin
-True</code></pre>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">space</span><span class="o">.</span><span class="n">_origin</span> <span class="ow">is</span> <span class="n">origin</span>
+<span class="go">True</span>
+</pre></div>
 
 
 <p>The handler has been associated with this object type like it was for
 <code>Spaces</code>, so now&rsquo;s a good time to add another accessor method:</p>
-<pre class="codehilite"><code class="language-python">class SpaceType(ObjectType):
+<div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">SpaceType</span><span class="p">(</span><span class="n">ObjectType</span><span class="p">):</span>
 
-    async def read(cls):
-        data = await cls._handler.read()
-        return cls(data)</code></pre>
+    <span class="n">async</span> <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">await</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_handler</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</pre></div>
 
 
 <p>Try it out:</p>
-<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; space = origin.Space.read(0)
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">space</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Space</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 
-&gt;&gt;&gt; space._data
-{'id': 0,
- 'name': 'space-0',
- 'resource_uri': '/MAAS/api/2.0/spaces/0/',
- 'subnets': [],
- 'vlans': []}</code></pre>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">space</span><span class="o">.</span><span class="n">_data</span>
+<span class="go">{&#39;id&#39;: 0,</span>
+<span class="go"> &#39;name&#39;: &#39;space-0&#39;,</span>
+<span class="go"> &#39;resource_uri&#39;: &#39;/MAAS/api/2.0/spaces/0/&#39;,</span>
+<span class="go"> &#39;subnets&#39;: [],</span>
+<span class="go"> &#39;vlans&#39;: []}</span>
+</pre></div>
 
 
 <h2 id="getting-at-the-data">Getting at the data</h2>
 <p>We don&rsquo;t want to work with that <code>_data</code> dictionary, we want attributes:</p>
-<pre class="codehilite"><code class="language-python">class Space(Object, metaclass=SpaceType):
-    &quot;&quot;&quot;A space.&quot;&quot;&quot;
+<div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">Space</span><span class="p">(</span><span class="n">Object</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">SpaceType</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A space.&quot;&quot;&quot;</span>
 
-    id = ObjectField.Checked(&quot;id&quot;, check(int), readonly=True)
-    name = ObjectField.Checked(&quot;name&quot;, check(str), readonly=True)</code></pre>
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">ObjectField</span><span class="o">.</span><span class="n">Checked</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="n">check</span><span class="p">(</span><span class="nb">int</span><span class="p">),</span> <span class="n">readonly</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">ObjectField</span><span class="o">.</span><span class="n">Checked</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="n">check</span><span class="p">(</span><span class="nb">str</span><span class="p">),</span> <span class="n">readonly</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
 
 
 <p>Try it out in the shell:</p>
-<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; space.id, space, name
-(0, 'space-0')</code></pre>
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">space</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">space</span><span class="p">,</span> <span class="n">name</span>
+<span class="go">(0, &#39;space-0&#39;)</span>
+</pre></div>
 
 
 <h2 id="next-steps">Next steps</h2>

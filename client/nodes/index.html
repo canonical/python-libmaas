@@ -77,10 +77,17 @@
     <li class="toctree-l3"><a href="#deleting-nodes">Deleting nodes</a></li>
     
 
+    <li class="toctree-l3"><a href="#commissioning-and-testing">Commissioning and testing</a></li>
+    
+
     <li class="toctree-l3"><a href="#allocating-and-deploying">Allocating and deploying</a></li>
     
 
     </ul>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../networking/index.html">Networking</a>
                 </li>
                 <li class="">
                     
@@ -191,34 +198,38 @@ interrogate your nodes.</p>
 <h2 id="read-nodes">Read nodes</h2>
 <p>Each node type exists on the client: <code>machines</code>, <code>devices</code>,
 <code>rack_controllers</code>, <code>region_controllers</code>.</p>
-<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; client.machines.list()
-&lt;Machines length=1 items=[&lt;Machine hostname='wanted-falcon' system_id='ekgqwd'&gt;]&gt;
-&gt;&gt;&gt; client.devices.list()
-&lt;Devices length=0 items=[]&gt;
-&gt;&gt;&gt; client.rack_controllers.list()
-&lt;RackControllers length=1 items=[&lt;RackController hostname='maas-ctrl' system_id='efw3c4'&gt;]&gt;
-&gt;&gt;&gt; client.region_controllers.list()
-&lt;RegionControllers length=1 items=[&lt;RegionController hostname='maas-ctrl' system_id='efw3c4'&gt;]&gt;</code></pre>
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">client</span><span class="o">.</span><span class="n">machines</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
+<span class="go">&lt;Machines length=1 items=[&lt;Machine hostname=&#39;wanted-falcon&#39; system_id=&#39;ekgqwd&#39;&gt;]&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">client</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
+<span class="go">&lt;Devices length=0 items=[]&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">client</span><span class="o">.</span><span class="n">rack_controllers</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
+<span class="go">&lt;RackControllers length=1 items=[&lt;RackController hostname=&#39;maas-ctrl&#39; system_id=&#39;efw3c4&#39;&gt;]&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">client</span><span class="o">.</span><span class="n">region_controllers</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
+<span class="go">&lt;RegionControllers length=1 items=[&lt;RegionController hostname=&#39;maas-ctrl&#39; system_id=&#39;efw3c4&#39;&gt;]&gt;</span>
+</pre></div>
 
 
 <p>Easily iterate through the machines.</p>
-<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; for machine in client.machines.list():
-...     print(repr(machine))
-&lt;Machine hostname='botswana' system_id='pncys4'&gt;</code></pre>
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">machine</span> <span class="ow">in</span> <span class="n">client</span><span class="o">.</span><span class="n">machines</span><span class="o">.</span><span class="n">list</span><span class="p">():</span>
+<span class="gp">... </span>    <span class="k">print</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">machine</span><span class="p">))</span>
+<span class="go">&lt;Machine hostname=&#39;botswana&#39; system_id=&#39;pncys4&#39;&gt;</span>
+</pre></div>
 
 
 <p>Get a machine from its system_id.</p>
-<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; machine = client.machines.get(system_id=&quot;pncys4&quot;)
-&gt;&gt;&gt; machine
-&lt;Machine hostname='botswana' system_id='pncys4'&gt;</code></pre>
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">machine</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">machines</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">system_id</span><span class="o">=</span><span class="s2">&quot;pncys4&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">machine</span>
+<span class="go">&lt;Machine hostname=&#39;botswana&#39; system_id=&#39;pncys4&#39;&gt;</span>
+</pre></div>
 
 
 <p>Machines — and devices, racks, and regions — have many useful
 attributes:</p>
-<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; machine.architecture
-'amd64/generic'
-&gt;&gt;&gt; machine.cpus
-4</code></pre>
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">machine</span><span class="o">.</span><span class="n">architecture</span>
+<span class="go">&#39;amd64/generic&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">machine</span><span class="o">.</span><span class="n">cpus</span>
+<span class="go">4</span>
+</pre></div>
 
 
 <p>Don&rsquo;t forget to try using tab-completion — the objects have been
@@ -228,59 +239,137 @@ available.</p>
 <h2 id="create-nodes">Create nodes</h2>
 <p>Create a machine in MAAS. The architecture, MAC addresses, and power type are
 required fields.</p>
-<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; machine = client.machines.create(
-...     &quot;amd64&quot;, [&quot;00:11:22:33:44:55&quot;, &quot;AA:BB:CC:DD:EE:FF&quot;], &quot;manual&quot;)
-&lt;Machine hostname='wanted-falcon' system_id='ekgqwd'&gt;</code></pre>
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">machine</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">machines</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="s2">&quot;amd64&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;00:11:22:33:44:55&quot;</span><span class="p">,</span> <span class="s2">&quot;AA:BB:CC:DD:EE:FF&quot;</span><span class="p">],</span> <span class="s2">&quot;manual&quot;</span><span class="p">)</span>
+<span class="go">&lt;Machine hostname=&#39;wanted-falcon&#39; system_id=&#39;ekgqwd&#39;&gt;</span>
+</pre></div>
 
 
 <p>Normally you need to pass in power parameter so MAAS can talk to the BMC.</p>
-<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; machine = client.machines.create(
-...     &quot;amd64&quot;, [&quot;00:11:22:33:44:55&quot;, &quot;AA:BB:CC:DD:EE:FF&quot;], &quot;ipmi&quot;, {
-...         &quot;power_address&quot;: &quot;10.245.0.10&quot;,
-...         &quot;power_user&quot;: &quot;root&quot;,
-...         &quot;power_pass&quot;: &quot;calvin&quot;,
-...     })
-&gt;&gt;&gt; machine
-&lt;Machine hostname='wanted-falcon' system_id='ekgqwd'&gt;
-&gt;&gt;&gt; machine.status
-&lt;NodeStatus.COMMISSIONING: 1&gt;</code></pre>
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">machine</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">machines</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="s2">&quot;amd64&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;00:11:22:33:44:55&quot;</span><span class="p">,</span> <span class="s2">&quot;AA:BB:CC:DD:EE:FF&quot;</span><span class="p">],</span> <span class="s2">&quot;ipmi&quot;</span><span class="p">,</span> <span class="p">{</span>
+<span class="gp">... </span>        <span class="s2">&quot;power_address&quot;</span><span class="p">:</span> <span class="s2">&quot;10.245.0.10&quot;</span><span class="p">,</span>
+<span class="gp">... </span>        <span class="s2">&quot;power_user&quot;</span><span class="p">:</span> <span class="s2">&quot;root&quot;</span><span class="p">,</span>
+<span class="gp">... </span>        <span class="s2">&quot;power_pass&quot;</span><span class="p">:</span> <span class="s2">&quot;calvin&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">machine</span>
+<span class="go">&lt;Machine hostname=&#39;wanted-falcon&#39; system_id=&#39;ekgqwd&#39;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">machine</span><span class="o">.</span><span class="n">status</span>
+<span class="go">&lt;NodeStatus.COMMISSIONING: 1&gt;</span>
+</pre></div>
 
 
 <h2 id="updating-nodes">Updating nodes</h2>
 <p>Updating a machine is as simple as modifying the attribute and saving.</p>
-<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; machine.hostname = 'my-machine'
-&gt;&gt;&gt; machine.architecture = 'i386/generic'
-&gt;&gt;&gt; machine.save()</code></pre>
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">machine</span><span class="o">.</span><span class="n">hostname</span> <span class="o">=</span> <span class="s1">&#39;my-machine&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">machine</span><span class="o">.</span><span class="n">architecture</span> <span class="o">=</span> <span class="s1">&#39;i386/generic&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">machine</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+</pre></div>
 
 
 <h2 id="deleting-nodes">Deleting nodes</h2>
 <p>Delete a machine is simple as calling delete on the machine object.</p>
-<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; machine.delete()</code></pre>
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">machine</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
+</pre></div>
+
+
+<h2 id="commissioning-and-testing">Commissioning and testing</h2>
+<p>Easily commission a machine and wait until it successfully completes. By
+default the <code>commission</code> method waits until commissioning succeeds.</p>
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">machine</span><span class="o">.</span><span class="n">commission</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">machine</span><span class="o">.</span><span class="n">status</span>
+<span class="go">NodeStatus.READY</span>
+</pre></div>
+
+
+<p>A more advanced asyncio based script that runs commissioning with extra scripts
+and waits until all machines have successfully commissioned.</p>
+<div class="codehilite"><pre><span></span><span class="ch">#!/usr/bin/env python3.5</span>
+
+<span class="kn">import</span> <span class="nn">asyncio</span>
+
+<span class="kn">from</span> <span class="nn">maas.client</span> <span class="kn">import</span> <span class="n">login</span>
+<span class="kn">from</span> <span class="nn">maas.client.enum</span> <span class="kn">import</span> <span class="n">NodeStatus</span>
+<span class="kn">from</span> <span class="nn">maas.client.utils.async</span> <span class="kn">import</span> <span class="n">asynchronous</span>
+
+
+<span class="nd">@asynchronous</span>
+<span class="n">async</span> <span class="k">def</span> <span class="nf">commission_all_machines</span><span class="p">():</span>
+    <span class="n">client</span> <span class="o">=</span> <span class="n">await</span> <span class="n">login</span><span class="p">(</span>
+        <span class="s2">&quot;http://eucula.local:5240/MAAS/&quot;</span><span class="p">,</span>
+        <span class="n">username</span><span class="o">=</span><span class="s2">&quot;gavin&quot;</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="s2">&quot;f00b4r&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Get all machines that are in the NEW status.</span>
+    <span class="n">all_machines</span> <span class="o">=</span> <span class="n">await</span> <span class="n">client</span><span class="o">.</span><span class="n">machines</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
+    <span class="n">new_machines</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">machine</span>
+        <span class="k">for</span> <span class="n">machine</span> <span class="ow">in</span> <span class="n">all_machines</span>
+        <span class="k">if</span> <span class="n">machine</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">NodeStatus</span><span class="o">.</span><span class="n">NEW</span>
+    <span class="p">]</span>
+
+    <span class="c1"># Run commissioning with a custom commissioning script on all new machines.</span>
+    <span class="k">for</span> <span class="n">machine</span> <span class="ow">in</span> <span class="n">new_machines</span><span class="p">:</span>
+        <span class="n">machine</span><span class="o">.</span><span class="n">commission</span><span class="p">(</span>
+            <span class="n">commissioning_scripts</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;clear_hardware_raid&#39;</span><span class="p">],</span> <span class="n">wait</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+    <span class="c1"># Wait until all machines are ready.</span>
+    <span class="n">failed_machines</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">completed_machines</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_machines</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">machine</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">new_machines</span><span class="p">):</span>
+            <span class="n">await</span> <span class="n">machine</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">machine</span><span class="o">.</span><span class="n">status</span> <span class="ow">in</span> <span class="p">[</span>
+                    <span class="n">NodeStatus</span><span class="o">.</span><span class="n">COMMISSIONING</span><span class="p">,</span> <span class="n">NodeStatus</span><span class="o">.</span><span class="n">TESTING</span><span class="p">]:</span>
+                <span class="c1"># Machine is still commissioning or testing.</span>
+                <span class="k">continue</span>
+            <span class="k">elif</span> <span class="n">machine</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">NodeStatus</span><span class="o">.</span><span class="n">READY</span><span class="p">:</span>
+                <span class="c1"># Machine is complete.</span>
+                <span class="n">completed_machines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">machine</span><span class="p">)</span>
+                <span class="n">new_machines</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">machine</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Machine has failed commissioning.</span>
+                <span class="n">failed_machines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">machine</span><span class="p">)</span>
+                <span class="n">new_machines</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">machine</span><span class="p">)</span>
+
+    <span class="c1"># Print message if any machines failed to commission.</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">failed_machines</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">machine</span> <span class="ow">in</span> <span class="n">failed_machines</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: transitioned to unexpected status - </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span>
+                <span class="n">machine</span><span class="o">.</span><span class="n">hostname</span><span class="p">,</span> <span class="n">machine</span><span class="o">.</span><span class="n">status_name</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Successfully commissioned </span><span class="si">%d</span><span class="s2"> machines.&quot;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span>
+            <span class="n">completed_machines</span><span class="p">))</span>
+
+
+<span class="n">commission_all_machines</span><span class="p">()</span>
+</pre></div>
 
 
 <h2 id="allocating-and-deploying">Allocating and deploying</h2>
-<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; help(client.machines.allocate)
-Help on method allocate in module maas.client.viscera.machines:
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">help</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">machines</span><span class="o">.</span><span class="n">allocate</span><span class="p">)</span>
+<span class="go">Help on method allocate in module maas.client.viscera.machines:</span>
 
-allocate(
-    *, hostname:str=None, architecture:str=None, cpus:int=None,
-    memory:float=None, tags:typing.Sequence=None)
-  method of maas.client.viscera.machines.MachinesType instance
-    Allocate a machine.
+<span class="go">allocate(</span>
+<span class="go">    *, hostname:str=None, architecture:str=None, cpus:int=None,</span>
+<span class="go">    memory:float=None, tags:typing.Sequence=None)</span>
+<span class="go">  method of maas.client.viscera.machines.MachinesType instance</span>
+<span class="go">    Allocate a machine.</span>
 
-    :param hostname: The hostname to match.
-    :param architecture: The architecture to match, e.g. &quot;amd64&quot;.
-    :param cpus: The minimum number of CPUs to match.
-    :param memory: The minimum amount of RAM to match.
-    :param tags: The tags to match, as a sequence. Each tag may be
-        prefixed with a hyphen to denote that the given tag should NOT be
-        associated with a matched machine.
-&gt;&gt;&gt; machine = client.machines.allocate(tags=(&quot;foo&quot;, &quot;-bar&quot;))
-&gt;&gt;&gt; print(machine.status)
-NodeStatus.COMMISSIONING
-&gt;&gt;&gt; machine.deploy()
-&gt;&gt;&gt; print(machine.status)
-NodeStatus.DEPLOYING</code></pre>
+<span class="go">    :param hostname: The hostname to match.</span>
+<span class="go">    :param architecture: The architecture to match, e.g. &quot;amd64&quot;.</span>
+<span class="go">    :param cpus: The minimum number of CPUs to match.</span>
+<span class="go">    :param memory: The minimum amount of RAM to match.</span>
+<span class="go">    :param tags: The tags to match, as a sequence. Each tag may be</span>
+<span class="go">        prefixed with a hyphen to denote that the given tag should NOT be</span>
+<span class="go">        associated with a matched machine.</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">machine</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">machines</span><span class="o">.</span><span class="n">allocate</span><span class="p">(</span><span class="n">tags</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;foo&quot;</span><span class="p">,</span> <span class="s2">&quot;-bar&quot;</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span><span class="p">(</span><span class="n">machine</span><span class="o">.</span><span class="n">status</span><span class="p">)</span>
+<span class="go">NodeStatus.COMMISSIONING</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">machine</span><span class="o">.</span><span class="n">deploy</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span><span class="p">(</span><span class="n">machine</span><span class="o">.</span><span class="n">status</span><span class="p">)</span>
+<span class="go">NodeStatus.DEPLOYING</span>
+</pre></div>
               
             </div>
           </div>
@@ -288,7 +377,7 @@ NodeStatus.DEPLOYING</code></pre>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../events/index.html" class="btn btn-neutral float-right" title="Events">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../networking/index.html" class="btn btn-neutral float-right" title="Networking">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
         <a href="../index.html" class="btn btn-neutral" title="Introduction"><span class="icon icon-circle-arrow-left"></span> Previous</a>
@@ -322,7 +411,7 @@ NodeStatus.DEPLOYING</code></pre>
         <span><a href="../index.html" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../events/index.html" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../networking/index.html" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

@@ -66,6 +66,10 @@
                 </li>
                 <li class="">
                     
+    <a class="" href="../networking/index.html">Networking</a>
+                </li>
+                <li class="">
+                    
     <a class="" href="../events/index.html">Events</a>
                 </li>
                 <li class=" current">
@@ -179,28 +183,31 @@
 code; we&rsquo;ve tried to keep it readable.</p>
 <h2 id="files-users-tags">Files, users, tags</h2>
 <p>Similarly to nodes, these sets of objects can be fetched:</p>
-<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; tags = client.tags.list()
-&gt;&gt;&gt; files = client.files.list()
-&gt;&gt;&gt; users = client.users.list()</code></pre>
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">tags</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">tags</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">files</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">files</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">users</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">users</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
+</pre></div>
 
 
 <p>When reading from collections, as above, the returned object is
 list-like:</p>
-<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; len(tags)
-5
-&gt;&gt;&gt; tags[3]
-&lt;Tag comment=&quot;Foo's stuff&quot; definition='' kernel_opts='' name='foo'&gt;
-&gt;&gt;&gt; tags[3] in tags
-True
-&gt;&gt;&gt; not_foo = [tag for tag in tags if tag.name != 'foo']
-&gt;&gt;&gt; len(not_foo)
-4</code></pre>
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">tags</span><span class="p">)</span>
+<span class="go">5</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">tags</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+<span class="go">&lt;Tag comment=&quot;Foo&#39;s stuff&quot; definition=&#39;&#39; kernel_opts=&#39;&#39; name=&#39;foo&#39;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">tags</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="ow">in</span> <span class="n">tags</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">not_foo</span> <span class="o">=</span> <span class="p">[</span><span class="n">tag</span> <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">tags</span> <span class="k">if</span> <span class="n">tag</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="s1">&#39;foo&#39;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">not_foo</span><span class="p">)</span>
+<span class="go">4</span>
+</pre></div>
 
 
 <p>However, it&rsquo;s read-only:</p>
-<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; tags[0] = &quot;bob&quot;
-…
-TypeError: 'Tags' object does not support item assignment</code></pre>
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">tags</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;bob&quot;</span>
+<span class="go">…</span>
+<span class="go">TypeError: &#39;Tags&#39; object does not support item assignment</span>
+</pre></div>
               
             </div>
           </div>

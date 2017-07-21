@@ -66,6 +66,10 @@
                 </li>
                 <li class="">
                     
+    <a class="" href="../client/networking/index.html">Networking</a>
+                </li>
+                <li class="">
+                    
     <a class="" href="../client/events/index.html">Events</a>
                 </li>
                 <li class="">
@@ -179,44 +183,45 @@ but maybe you need to do something that you can&rsquo;t do in <em>viscera</em> y
 (please file a bug!), or you&rsquo;re developing <em>viscera</em> itself (which uses
 <em>bones</em> behind the scenes).</p>
 <h2 id="some-example-code">Some example code</h2>
-<pre class="codehilite"><code class="language-python">#!/usr/bin/env python3.5
+<div class="codehilite"><pre><span></span><span class="ch">#!/usr/bin/env python3.5</span>
 
-from http import HTTPStatus
-from pprint import pprint
-from maas.client import bones
+<span class="kn">from</span> <span class="nn">http</span> <span class="kn">import</span> <span class="n">HTTPStatus</span>
+<span class="kn">from</span> <span class="nn">pprint</span> <span class="kn">import</span> <span class="n">pprint</span>
+<span class="kn">from</span> <span class="nn">maas.client</span> <span class="kn">import</span> <span class="n">bones</span>
 
-# Replace &quot;a:b:c&quot; with an API key obtained from the UI at
-# http://$host:$port/MAAS/account/prefs/.
-profile, session = bones.SessionAPI.connect(
-    &quot;http://localhost:5240/MAAS/&quot;, apikey=&quot;a:b:c&quot;)
+<span class="c1"># Replace &quot;a:b:c&quot; with an API key obtained from the UI at</span>
+<span class="c1"># http://$host:$port/MAAS/account/prefs/.</span>
+<span class="n">profile</span><span class="p">,</span> <span class="n">session</span> <span class="o">=</span> <span class="n">bones</span><span class="o">.</span><span class="n">SessionAPI</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span>
+    <span class="s2">&quot;http://localhost:5240/MAAS/&quot;</span><span class="p">,</span> <span class="n">apikey</span><span class="o">=</span><span class="s2">&quot;a:b:c&quot;</span><span class="p">)</span>
 
-# Create a tag if it doesn't exist.
-tag_name = &quot;gryphon&quot;
-tag_comment = &quot;Gryphon's Stuff&quot;
-try:
-    tag = session.Tag.read(name=tag_name)
-except bones.CallError as error:
-    if error.status == HTTPStatus.NOT_FOUND:
-        tag = session.Tags.new(
-            name=tag_name, comment=tag_comment)
-    else:
-        raise
+<span class="c1"># Create a tag if it doesn&#39;t exist.</span>
+<span class="n">tag_name</span> <span class="o">=</span> <span class="s2">&quot;gryphon&quot;</span>
+<span class="n">tag_comment</span> <span class="o">=</span> <span class="s2">&quot;Gryphon&#39;s Stuff&quot;</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">tag</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">Tag</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">tag_name</span><span class="p">)</span>
+<span class="k">except</span> <span class="n">bones</span><span class="o">.</span><span class="n">CallError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">error</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">HTTPStatus</span><span class="o">.</span><span class="n">NOT_FOUND</span><span class="p">:</span>
+        <span class="n">tag</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">Tags</span><span class="o">.</span><span class="n">new</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">tag_name</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="n">tag_comment</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span>
 
-# List all the tags.
-print(&quot;&gt;&gt;&gt; Tags.list()&quot;)
-pprint(session.Tags.list())
+<span class="c1"># List all the tags.</span>
+<span class="k">print</span><span class="p">(</span><span class="s2">&quot;&gt;&gt;&gt; Tags.list()&quot;</span><span class="p">)</span>
+<span class="n">pprint</span><span class="p">(</span><span class="n">session</span><span class="o">.</span><span class="n">Tags</span><span class="o">.</span><span class="n">list</span><span class="p">())</span>
 
-# Get the system IDs for all nodes.
-print(&quot;&gt;&gt;&gt; Nodes.list()&quot;)
-all_nodes_system_ids = [
-    node[&quot;system_id&quot;] for node in session.Nodes.list()
-]
-pprint(all_nodes_system_ids)
+<span class="c1"># Get the system IDs for all nodes.</span>
+<span class="k">print</span><span class="p">(</span><span class="s2">&quot;&gt;&gt;&gt; Nodes.list()&quot;</span><span class="p">)</span>
+<span class="n">all_nodes_system_ids</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">node</span><span class="p">[</span><span class="s2">&quot;system_id&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">session</span><span class="o">.</span><span class="n">Nodes</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
+<span class="p">]</span>
+<span class="n">pprint</span><span class="p">(</span><span class="n">all_nodes_system_ids</span><span class="p">)</span>
 
-# Associate the tag with all nodes.
-print(&quot;&gt;&gt;&gt; Tag.update_nodes()&quot;)
-pprint(session.Tag.update_nodes(
-    name=tag[&quot;name&quot;], add=all_nodes_system_ids))</code></pre>
+<span class="c1"># Associate the tag with all nodes.</span>
+<span class="k">print</span><span class="p">(</span><span class="s2">&quot;&gt;&gt;&gt; Tag.update_nodes()&quot;</span><span class="p">)</span>
+<span class="n">pprint</span><span class="p">(</span><span class="n">session</span><span class="o">.</span><span class="n">Tag</span><span class="o">.</span><span class="n">update_nodes</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="n">tag</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">],</span> <span class="n">add</span><span class="o">=</span><span class="n">all_nodes_system_ids</span><span class="p">))</span>
+</pre></div>
               
             </div>
           </div>
