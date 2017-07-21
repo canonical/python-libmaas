@@ -108,7 +108,7 @@ class Subnet(Object, metaclass=SubnetType):
     cidr = ObjectField.Checked(
         "cidr", check(str), readonly=True)
     name = ObjectField.Checked(
-        "name", check(str), readonly=True)
+        "name", check(str))
 
     # description is allowed in the create call and displayed in the UI
     # but never returned by the API
