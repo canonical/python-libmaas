@@ -233,3 +233,21 @@ NodeStatus.BROKEN
 >>> machine.status
 NodeStatus.READY
 ```
+
+## Power Control
+
+The power state of a machine can be controlled outside of deploy, releasing, and rescue mode. If you need to control the power of a BMC independently the `power_on`, `power_off` and `query_power_state` can be of help.
+
+
+```pycon
+>>> machine.power_state
+PowerState.ON
+>>> machine.power_off()
+>>> machine.power_state
+PowerState.OFF
+>>> machine.power_on()
+>>> machine.power_state
+PowerState.ON
+>>> machine.query_power_state()
+PowerState.ON
+```
