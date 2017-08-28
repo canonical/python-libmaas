@@ -23,3 +23,7 @@ class ObjectNotLoaded(Exception):
 
 class CannotDelete(Exception):
     """ Object cannot be deleted. """
+
+
+class PowerError(MAASException):
+    """Machine failed to power on or off."""

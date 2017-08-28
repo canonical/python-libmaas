@@ -59,6 +59,24 @@ class NodeStatus(enum.IntEnum):
     FAILED_TESTING = 22
 
 
+class PowerState(enum.Enum):
+    #: On
+    ON = 'on'
+    #: Off
+    OFF = 'off'
+    #: Unknown
+    UNKNOWN = 'unknown'
+    #: Error
+    ERROR = 'error'
+
+
+class PowerStopMode(enum.Enum):
+    #: Perform hard stop.
+    HARD = 'hard'
+    #: Perform soft stop.
+    SOFT = 'soft'
+
+
 class RDNSMode(enum.IntEnum):
     #: Do not generate reverse DNS for this Subnet.
     DISABLED = 0
@@ -69,7 +87,7 @@ class RDNSMode(enum.IntEnum):
 
 
 class IPRangeType(enum.Enum):
-    # Dynamic IP Range.
+    #: Dynamic IP Range.
     DYNAMIC = 'dynamic'
-    # Reserved for exclusive use by MAAS or user.
+    #: Reserved for exclusive use by MAAS or user.
     RESERVED = 'reserved'

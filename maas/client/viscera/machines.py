@@ -24,10 +24,15 @@ from . import (
     to,
 )
 from ..bones import CallError
-from ..enum import NodeStatus
+from ..enum import (
+    NodeStatus,
+    PowerState,
+    PowerStopMode
+)
 from ..errors import (
     MAASException,
-    OperationNotAllowed
+    OperationNotAllowed,
+    PowerError
 )
 
 
@@ -218,7 +223,7 @@ class Machine(Object, metaclass=MachineType):
 
     # TODO: Use an enum here.
     power_state = ObjectField.Checked(
-        "power_state", check(str), readonly=True)
+        "power_state", to(PowerState), readonly=True)
 
     # power_type
     # pxe_mac
@@ -493,8 +498,12 @@ class Machine(Object, metaclass=MachineType):
         """
         Release the machine.
 
+        :param comment: Reason machine was released.
+        :type comment: `str`
         :param wait: If specified, wait until the deploy is complete.
-        :param wait_interval: How often to poll, defaults to 5 seconds
+        :type wait: `bool`
+        :param wait_interval: How often to poll, defaults to 5 seconds.
+        :type wait_interval: `int`
         """
         params = {"system_id": self.system_id}
         if comment is not None:
@@ -519,6 +528,102 @@ class Machine(Object, metaclass=MachineType):
                 )
                 raise FailedDiskErasing(msg, self)
             return self
+
+    async def power_on(
+            self, comment: str=None, wait: bool=False, wait_interval: int=5):
+        """
+        Power on.
+
+        :param comment: Reason machine was powered on.
+        :type comment: `str`
+        :param wait: If specified, wait until the machine is powered on.
+        :type wait: `bool`
+        :param wait_interval: How often to poll, defaults to 5 seconds.
+        :type wait_interval: `int`
+        """
+        params = {"system_id": self.system_id}
+        if comment is not None:
+            params["comment"] = comment
+        try:
+            self._data = await self._handler.power_on(**params)
+        except CallError as error:
+            if error.status == HTTPStatus.FORBIDDEN:
+                message = "Not allowed to power on machine."
+                raise OperationNotAllowed(message) from error
+            else:
+                raise
+        if not wait or self.power_state == PowerState.UNKNOWN:
+            # Don't wait for a machine that always shows power state as
+            # unknown as the driver cannot query the power state.
+            return self
+        else:
+            # Wait for machine to be powered on.
+            while self.power_state == PowerState.OFF:
+                await asyncio.sleep(wait_interval)
+                self._data = await self._handler.read(system_id=self.system_id)
+            if self.power_state == PowerState.ERROR:
+                msg = "{system_id} failed to power on.".format(
+                    system_id=self.system_id
+                )
+                raise PowerError(msg, self)
+            return self
+
+    async def power_off(
+            self, stop_mode: PowerStopMode=PowerStopMode.HARD,
+            comment: str=None, wait: bool=False, wait_interval: int=5):
+        """
+        Power off.
+
+        :param stop_mode: How to perform the power off.
+        :type stop_mode: `PowerStopMode`
+        :param comment: Reason machine was powered on.
+        :type comment: `str`
+        :param wait: If specified, wait until the machine is powered on.
+        :type wait: `bool`
+        :param wait_interval: How often to poll, defaults to 5 seconds.
+        :type wait_interval: `int`
+        """
+        params = {"system_id": self.system_id, 'stop_mode': stop_mode.value}
+        if comment is not None:
+            params["comment"] = comment
+        try:
+            self._data = await self._handler.power_off(**params)
+        except CallError as error:
+            if error.status == HTTPStatus.FORBIDDEN:
+                message = "Not allowed to power off machine."
+                raise OperationNotAllowed(message) from error
+            else:
+                raise
+        if not wait or self.power_state == PowerState.UNKNOWN:
+            # Don't wait for a machine that always shows power state as
+            # unknown as the driver cannot query the power state.
+            return self
+        else:
+            # Wait for machine to be powered off.
+            while self.power_state == PowerState.ON:
+                await asyncio.sleep(wait_interval)
+                self._data = await self._handler.read(system_id=self.system_id)
+            if self.power_state == PowerState.ERROR:
+                msg = "{system_id} failed to power off.".format(
+                    system_id=self.system_id
+                )
+                raise PowerError(msg, self)
+            return self
+
+    async def query_power_state(self):
+        """
+        Query the machine's BMC for the current power state.
+
+        :returns: Current power state.
+        :rtype: `PowerState`
+        """
+        power_data = await self._handler.query_power_state(
+            system_id=self.system_id)
+        # Update the internal state of this object as well, since we have the
+        # updated power state from the BMC directly. MAAS server does this as
+        # well, just do it client side to make it nice for a developer.
+        self._data['power_state'] = power_data['state']
+        return PowerState(power_data['state'])
 
     def __repr__(self):
         return super(Machine, self).__repr__(

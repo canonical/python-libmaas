@@ -15,15 +15,19 @@ from testtools.matchers import (
 )
 
 from .. import machines
+from ..testing import bind
 from ...bones import CallError
 from ...bones.testing import api_descriptions
+from ...enum import (
+    NodeStatus,
+    PowerState,
+    PowerStopMode
+)
 from ...errors import OperationNotAllowed
 from ...testing import (
     make_name_without_spaces,
     TestCase,
 )
-from ..testing import bind
-from ...enum import NodeStatus
 
 
 def make_origin():
@@ -488,6 +492,177 @@ class TestMachine(TestCase):
             wait=True,
             wait_interval=0.1
         )
+
+    def test__power_on_with_wait(self):
+        system_id = make_name_without_spaces("system-id")
+        hostname = make_name_without_spaces("hostname")
+        data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "power_state": PowerState.OFF,
+        }
+        power_data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "power_state": PowerState.ON,
+        }
+        machine = make_origin().Machine(data)
+        powered_machine = make_origin().Machine(power_data)
+        machine._handler.power_on.return_value = data
+        machine._handler.read.return_value = power_data
+        result = machine.power_on(wait=True, wait_interval=0.1)
+        self.assertThat(
+            result.power_state, Equals(powered_machine.power_state))
+        machine._handler.power_on.assert_called_once_with(
+            system_id=machine.system_id
+        )
+
+    def test__power_on_doesnt_wait_for_unknown(self):
+        system_id = make_name_without_spaces("system-id")
+        hostname = make_name_without_spaces("hostname")
+        data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "power_state": PowerState.UNKNOWN,
+        }
+        power_data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "power_state": PowerState.UNKNOWN,
+        }
+        machine = make_origin().Machine(data)
+        powered_machine = make_origin().Machine(power_data)
+        machine._handler.power_on.return_value = data
+        machine._handler.read.return_value = power_data
+        result = machine.power_on(wait=True, wait_interval=0.1)
+        self.assertThat(
+            result.power_state, Equals(powered_machine.power_state))
+        assert machine._handler.read.call_count == 0
+
+    def test__power_on_with_wait_failed(self):
+        system_id = make_name_without_spaces("system-id")
+        hostname = make_name_without_spaces("hostname")
+        data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "power_state": PowerState.OFF,
+        }
+        failed_power_data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "power_state": PowerState.ERROR,
+        }
+        machine = make_origin().Machine(data)
+        machine._handler.power_on.return_value = data
+        machine._handler.read.return_value = failed_power_data
+        self.assertRaises(
+            machines.PowerError,
+            machine.power_on,
+            wait=True,
+            wait_interval=0.1
+        )
+
+    def test__power_off_with_wait(self):
+        system_id = make_name_without_spaces("system-id")
+        hostname = make_name_without_spaces("hostname")
+        data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "power_state": PowerState.ON,
+        }
+        power_data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "power_state": PowerState.OFF,
+        }
+        machine = make_origin().Machine(data)
+        powered_machine = make_origin().Machine(power_data)
+        machine._handler.power_off.return_value = data
+        machine._handler.read.return_value = power_data
+        result = machine.power_off(wait=True, wait_interval=0.1)
+        self.assertThat(
+            result.power_state, Equals(powered_machine.power_state))
+        machine._handler.power_off.assert_called_once_with(
+            system_id=machine.system_id, stop_mode=PowerStopMode.HARD.value,
+        )
+
+    def test__power_off_soft_mode(self):
+        system_id = make_name_without_spaces("system-id")
+        hostname = make_name_without_spaces("hostname")
+        data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "power_state": PowerState.ON,
+        }
+        machine = make_origin().Machine(data)
+        machine._handler.power_off.return_value = data
+        machine.power_off(stop_mode=PowerStopMode.SOFT, wait=False)
+        machine._handler.power_off.assert_called_once_with(
+            system_id=machine.system_id, stop_mode=PowerStopMode.SOFT.value,
+        )
+
+    def test__power_off_doesnt_wait_for_unknown(self):
+        system_id = make_name_without_spaces("system-id")
+        hostname = make_name_without_spaces("hostname")
+        data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "power_state": PowerState.UNKNOWN,
+        }
+        power_data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "power_state": PowerState.UNKNOWN,
+        }
+        machine = make_origin().Machine(data)
+        powered_machine = make_origin().Machine(power_data)
+        machine._handler.power_off.return_value = data
+        machine._handler.read.return_value = power_data
+        result = machine.power_off(wait=True, wait_interval=0.1)
+        self.assertThat(
+            result.power_state, Equals(powered_machine.power_state))
+        assert machine._handler.read.call_count == 0
+
+    def test__power_off_with_wait_failed(self):
+        system_id = make_name_without_spaces("system-id")
+        hostname = make_name_without_spaces("hostname")
+        data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "power_state": PowerState.ON,
+        }
+        failed_power_data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "power_state": PowerState.ERROR,
+        }
+        machine = make_origin().Machine(data)
+        machine._handler.power_off.return_value = data
+        machine._handler.read.return_value = failed_power_data
+        self.assertRaises(
+            machines.PowerError,
+            machine.power_off,
+            wait=True,
+            wait_interval=0.1
+        )
+
+    def test__query_power_state(self):
+        system_id = make_name_without_spaces("system-id")
+        hostname = make_name_without_spaces("hostname")
+        data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "power_state": PowerState.OFF,
+        }
+        query_data = {
+            "state": "on"
+        }
+        machine = make_origin().Machine(data)
+        machine._handler.query_power_state.return_value = query_data
+        result = machine.query_power_state()
+        assert type(result) is PowerState
+        assert result == PowerState.ON
+        assert machine.power_state == PowerState.ON
 
     def test__get_details(self):
         return_val = b'S\x01\x00\x00\x05lshw\x00\xf2\x00\x00\x00\x00<?xml' \
