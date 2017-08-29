@@ -234,6 +234,24 @@ NodeStatus.BROKEN
 NodeStatus.READY
 ```
 
+## Owner Data
+
+Owner data is extra information that you can set on a machine to hold some state information.
+
+**Note:** Once the machine is no longer in your control the information will be lost.
+
+```pycon
+>>> machine.owner_data
+{}
+>>> machine.owner_data['state'] = 'my-state-info'
+>>> machine.save()
+>>> machine.owner_data
+{'state': 'my-state-info'}
+>>> machine.release()
+>>> machine.owner_data
+{}
+```
+
 ## Power Control
 
 The power state of a machine can be controlled outside of deploy, releasing, and rescue mode. If you need to control the power of a BMC independently the `power_on`, `power_off` and `query_power_state` can be of help.
@@ -250,4 +268,16 @@ PowerState.OFF
 PowerState.ON
 >>> machine.query_power_state()
 PowerState.ON
+```
+
+## Reset Configuration
+
+It is possible to restore the machine back to exactly how it was after you completed commissioning. This is helpful when you have made a configuration that you no longer want or you want to start fresh.
+
+```pycon
+>>> machine.restore_default_configuration()
+>>> # Only restore networking.
+>>> machine.restore_networking_configuration()
+>>> # Only restore storage configuration.
+>>> machine.restore_storage_configuration()
 ```

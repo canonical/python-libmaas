@@ -24,7 +24,10 @@ from collections import (
     Mapping,
     Sequence,
 )
-from copy import copy
+from copy import (
+    copy,
+    deepcopy,
+)
 from datetime import datetime
 from functools import wraps
 from importlib import import_module
@@ -248,7 +251,7 @@ class Object(ObjectBasics, metaclass=ObjectType):
                 raise TypeError(
                     "data must be a mapping, not %s"
                     % type(data).__name__)
-        self._orig_data = dict(self._data)
+        self._orig_data = deepcopy(self._data)
         if local_data is not None:
             if isinstance(local_data, Mapping):
                 self._data.update(local_data)
@@ -276,6 +279,18 @@ class Object(ObjectBasics, metaclass=ObjectType):
                         name, type(self).__name__))
         else:
             return super(Object, self).__getattribute__(name)
+
+    def __setattr__(self, name, value):
+        """Handle `_data` being set directly.
+
+        When `_data` is set directly we update the `_orig_data` and
+        `_changed_data`.
+        """
+        ret = super(Object, self).__setattr__(name, value)
+        if name == '_data':
+            self._orig_data = deepcopy(value)
+            self._changed_data = {}
+        return ret
 
     def __eq__(self, other):
         """Strict equality check.
@@ -346,8 +361,6 @@ class Object(ObjectBasics, metaclass=ObjectType):
                     "fields defined.")
             if type(obj) is cls:
                 self._data = obj._data
-                self._orig_data = dict(obj._data)
-                self._changed_data = {}
                 self._loaded = True
             else:
                 raise TypeError(
@@ -367,8 +380,6 @@ class Object(ObjectBasics, metaclass=ObjectType):
                     for key in self._handler.params
                 })
                 self._data = await self._handler.update(**update_data)
-                self._orig_data = dict(self._data)
-                self._changed_data = {}
         else:
             raise AttributeError(
                 "'%s' object doesn't support save." % type(self).__name__)

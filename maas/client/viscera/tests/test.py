@@ -848,15 +848,17 @@ class TestObjectField(TestCase):
         class Example(Object):
             alice = AliceField("alice")
 
+        alice = make_name_without_spaces("alice")
+        new_alice = make_name_without_spaces("alice")
         example = Example({
-            'alice': sentinel.alice
+            'alice': alice
         })
 
-        example.alice = sentinel.new_alice
+        example.alice = new_alice
         self.assertThat(example._changed_data, Equals({
-            'alice': sentinel.new_alice
+            'alice': new_alice
         }))
-        example.alice = sentinel.alice
+        example.alice = alice
         self.assertThat(example._changed_data, Equals({}))
 
     def test__delete_marks_field_deleted(self):
@@ -884,16 +886,18 @@ class TestObjectField(TestCase):
         class Example(Object):
             alice = AliceField("alice")
 
+        alice = make_name_without_spaces('alice')
+        new_alice = make_name_without_spaces('alice')
         example = Example({
-            'alice': sentinel.alice
+            'alice': alice
         })
 
         del example.alice
-        example.alice = sentinel.new_alice
+        example.alice = new_alice
         self.assertThat(example._changed_data, Equals({
-            'alice': sentinel.new_alice
+            'alice': new_alice
         }))
-        example.alice = sentinel.alice
+        example.alice = alice
         self.assertThat(example._changed_data, Equals({}))
 
 
