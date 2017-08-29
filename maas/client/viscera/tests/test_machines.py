@@ -621,7 +621,7 @@ class TestMachine(TestCase):
         result = machine.power_off(wait=True, wait_interval=0.1)
         self.assertThat(
             result.power_state, Equals(powered_machine.power_state))
-        assert machine._handler.read.call_count == 0
+        self.assertThat(machine._handler.read.call_count, Equals(0))
 
     def test__power_off_with_wait_failed(self):
         system_id = make_name_without_spaces("system-id")
@@ -660,9 +660,9 @@ class TestMachine(TestCase):
         machine = make_origin().Machine(data)
         machine._handler.query_power_state.return_value = query_data
         result = machine.query_power_state()
-        assert type(result) is PowerState
-        assert result == PowerState.ON
-        assert machine.power_state == PowerState.ON
+        self.assertIsInstance(result, PowerState)
+        self.assertEquals(PowerState.ON, result)
+        self.assertEqual(PowerState.ON, machine.power_state)
 
     def test__get_details(self):
         return_val = b'S\x01\x00\x00\x05lshw\x00\xf2\x00\x00\x00\x00<?xml' \
@@ -687,6 +687,110 @@ class TestMachine(TestCase):
         lshw = ElementTree.fromstring(data['lshw'])
         assert IsInstance(lldp, ElementTree)
         assert IsInstance(lshw, ElementTree)
+
+    def test__restore_default_configuration(self):
+        system_id = make_name_without_spaces("system-id")
+        hostname = make_name_without_spaces("hostname")
+        data = {
+            "system_id": system_id,
+            "hostname": hostname,
+        }
+        machine = make_origin().Machine(data)
+        machine._handler.restore_default_configuration.return_value = data
+        machine.restore_default_configuration()
+        self.assertEqual(data, machine._data)
+        machine._handler.restore_default_configuration.assert_called_once_with(
+            system_id=machine.system_id)
+
+    def test__restore_networking_configuration(self):
+        system_id = make_name_without_spaces("system-id")
+        hostname = make_name_without_spaces("hostname")
+        data = {
+            "system_id": system_id,
+            "hostname": hostname,
+        }
+        machine = make_origin().Machine(data)
+        mock_restore_networking = (
+            machine._handler.restore_networking_configuration)
+        mock_restore_networking.return_value = data
+        machine.restore_networking_configuration()
+        self.assertEqual(data, machine._data)
+        mock_restore_networking.assert_called_once_with(
+            system_id=machine.system_id)
+
+    def test__restore_storage_configuration(self):
+        system_id = make_name_without_spaces("system-id")
+        hostname = make_name_without_spaces("hostname")
+        data = {
+            "system_id": system_id,
+            "hostname": hostname,
+        }
+        machine = make_origin().Machine(data)
+        mock_restore_storage = (
+            machine._handler.restore_storage_configuration)
+        mock_restore_storage.return_value = data
+        machine.restore_storage_configuration()
+        self.assertEqual(data, machine._data)
+        mock_restore_storage.assert_called_once_with(
+            system_id=machine.system_id)
+
+    def test__save_updates_owner_data(self):
+        system_id = make_name_without_spaces("system-id")
+        hostname = make_name_without_spaces("hostname")
+        data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "owner_data": {
+                "hello": "world",
+                "delete": "me",
+                "keep": "me"
+            }
+        }
+        machine = make_origin().Machine(data)
+        del machine.owner_data['delete']
+        machine.owner_data['hello'] = 'whole new world'
+        machine.owner_data['new'] = 'brand-new'
+        machine._handler.set_owner_data.return_value = {}
+        machine.save()
+        self.assertThat(machine._handler.update.call_count, Equals(0))
+        self.assertThat(machine.owner_data, Equals({
+            'hello': 'whole new world',
+            'new': 'brand-new',
+            'keep': 'me',
+        }))
+        machine._handler.set_owner_data.assert_called_once_with(
+            system_id=machine.system_id, delete='',
+            hello='whole new world', new='brand-new')
+
+    def test__save_updates_owner_data_with_replace(self):
+        system_id = make_name_without_spaces("system-id")
+        hostname = make_name_without_spaces("hostname")
+        data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "owner_data": {
+                "hello": "world",
+                "delete": "me",
+                "keep": "me"
+            }
+        }
+        machine = make_origin().Machine(data)
+        machine.owner_data = {
+            'hello': 'whole new world',
+            'keep': 'me',
+            'new': 'brand-new',
+        }
+        machine._handler.set_owner_data.return_value = {}
+        machine.save()
+        self.assertThat(machine._handler.update.call_count, Equals(0))
+        self.assertThat(machine.owner_data, Equals({
+            'hello': 'whole new world',
+            'new': 'brand-new',
+            'keep': 'me',
+        }))
+        machine._handler.set_owner_data.assert_called_once_with(
+            system_id=machine.system_id, delete='',
+            hello='whole new world', new='brand-new')
 
 
 class TestMachine_APIVersion(TestCase):

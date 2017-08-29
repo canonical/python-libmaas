@@ -36,6 +36,37 @@ from ..errors import (
 )
 
 
+def remove_None(params: dict):
+    """Remove all keys in `params` that have the value of `None`."""
+    return {
+        key: value
+        for key, value in params.items()
+        if value is not None
+    }
+
+
+def calculate_params_diff(old_params: dict, new_params: dict):
+    """Return the parameters based on the difference.
+
+    If a parameter exists in `old_params` but not in `new_params` then
+    parameter will be set to an empty string.
+    """
+    # Ignore all None values as those cannot be saved.
+    old_params = remove_None(old_params)
+    new_params = remove_None(new_params)
+    params_diff = {}
+    for key, value in old_params.items():
+        if key in new_params:
+            if value != new_params[key]:
+                params_diff[key] = new_params[key]
+        else:
+            params_diff[key] = ''
+    for key, value in new_params.items():
+        if key not in old_params:
+            params_diff[key] = value
+    return params_diff
+
+
 class MachinesType(ObjectType):
     """Metaclass for `Machines`."""
 
@@ -209,6 +240,8 @@ class Machine(Object, metaclass=MachineType):
         "memory", check(int), check(int))
     min_hwe_kernel = ObjectField.Checked(
         "min_hwe_kernel", check_optional(str), check_optional(str))
+    owner_data = ObjectField.Checked(
+        "owner_data", check(dict), check(dict))
 
     boot_interface = ObjectFieldRelated(
         "boot_interface", "Interface", readonly=True)
@@ -221,7 +254,6 @@ class Machine(Object, metaclass=MachineType):
     # owner
     # physicalblockdevice_set
 
-    # TODO: Use an enum here.
     power_state = ObjectField.Checked(
         "power_state", to(PowerState), readonly=True)
 
@@ -244,13 +276,25 @@ class Machine(Object, metaclass=MachineType):
     # swap_size
 
     system_id = ObjectField.Checked(
-        "system_id", check(str), readonly=True)
+        "system_id", check(str), readonly=True, pk=True)
     tags = ObjectField.Checked(  # List[str]
         "tag_names", check(Sequence), readonly=True)
 
     # virtualblockdevice_set
 
     zone = ObjectFieldRelated("zone", "Zone")
+
+    async def save(self):
+        """Save the machine in MAAS."""
+        orig_owner_data = self._orig_data['owner_data']
+        new_owner_data = dict(self._data['owner_data'])
+        self._changed_data.pop('owner_data', None)
+        await super(Machine, self).save()
+        params_diff = calculate_params_diff(orig_owner_data, new_owner_data)
+        if len(params_diff) > 0:
+            params_diff['system_id'] = self.system_id
+            await self._handler.set_owner_data(**params_diff)
+            self._data['owner_data'] = self._data['owner_data']
 
     async def get_power_parameters(self):
         """Get the power paramters for this machine."""
@@ -624,6 +668,27 @@ class Machine(Object, metaclass=MachineType):
         # well, just do it client side to make it nice for a developer.
         self._data['power_state'] = power_data['state']
         return PowerState(power_data['state'])
+
+    async def restore_default_configuration(self):
+        """
+        Restore machine's configuration to its initial state.
+        """
+        self._data = await self._handler.restore_default_configuration(
+            system_id=self.system_id)
+
+    async def restore_networking_configuration(self):
+        """
+        Restore machine's networking configuration to its initial state.
+        """
+        self._data = await self._handler.restore_networking_configuration(
+            system_id=self.system_id)
+
+    async def restore_storage_configuration(self):
+        """
+        Restore machine's storage configuration to its initial state.
+        """
+        self._data = await self._handler.restore_storage_configuration(
+            system_id=self.system_id)
 
     def __repr__(self):
         return super(Machine, self).__repr__(
