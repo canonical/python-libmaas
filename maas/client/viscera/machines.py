@@ -8,19 +8,14 @@ __all__ = [
 import asyncio
 import base64
 import bson
-from collections import Sequence
 from http import HTTPStatus
 import typing
 
 from . import (
     check,
     check_optional,
-    Object,
     ObjectField,
     ObjectFieldRelated,
-    ObjectFieldRelatedSet,
-    ObjectSet,
-    ObjectType,
     to,
 )
 from ..bones import CallError
@@ -33,6 +28,12 @@ from ..errors import (
     MAASException,
     OperationNotAllowed,
     PowerError
+)
+from .nodes import (
+    Node,
+    Nodes,
+    NodesType,
+    NodeTypeMeta,
 )
 
 
@@ -67,12 +68,8 @@ def calculate_params_diff(old_params: dict, new_params: dict):
     return params_diff
 
 
-class MachinesType(ObjectType):
+class MachinesType(NodesType):
     """Metaclass for `Machines`."""
-
-    async def read(cls):
-        data = await cls._handler.read()
-        return cls(map(cls._object, data))
 
     async def create(
             cls, architecture: str, mac_addresses: typing.Sequence[str],
@@ -206,18 +203,19 @@ class FailedDiskErasing(MAASException):
     """Machine failed to erase disk when releasing."""
 
 
-class Machines(ObjectSet, metaclass=MachinesType):
+class Machines(Nodes, metaclass=MachinesType):
     """The set of machines stored in MAAS."""
 
 
-class MachineType(ObjectType):
+class MachineType(NodeTypeMeta):
+    """Metaclass for `Machine`."""
 
     async def read(cls, system_id):
         data = await cls._handler.read(system_id=system_id)
         return cls(data)
 
 
-class Machine(Object, metaclass=MachineType):
+class Machine(Node, metaclass=MachineType):
     """A machine stored in MAAS."""
 
     architecture = ObjectField.Checked(
@@ -229,29 +227,24 @@ class Machine(Object, metaclass=MachineType):
     disable_ipv4 = ObjectField.Checked(
         "disable_ipv4", check(bool), check(bool))
     distro_series = ObjectField.Checked(
-        "distro_series", check(str), check(str))
-    hostname = ObjectField.Checked(
-        "hostname", check(str), check(str))
+        "distro_series", check(str), readonly=True)
     hwe_kernel = ObjectField.Checked(
         "hwe_kernel", check_optional(str), check_optional(str))
-    ip_addresses = ObjectField.Checked(  # List[str]
-        "ip_addresses", check(Sequence), readonly=True)
     memory = ObjectField.Checked(
         "memory", check(int), check(int))
     min_hwe_kernel = ObjectField.Checked(
         "min_hwe_kernel", check_optional(str), check_optional(str))
+    osystem = ObjectField.Checked(
+        "osystem", check(str), readonly=True)
     owner_data = ObjectField.Checked(
         "owner_data", check(dict), check(dict))
 
     boot_interface = ObjectFieldRelated(
         "boot_interface", "Interface", readonly=True)
-    interfaces = ObjectFieldRelatedSet("interface_set", "Interfaces")
 
     # blockdevice_set
     # macaddress_set
     # netboot
-    # osystem
-    # owner
     # physicalblockdevice_set
 
     power_state = ObjectField.Checked(
@@ -274,15 +267,7 @@ class Machine(Object, metaclass=MachineType):
         "status_name", check(str), readonly=True)
 
     # swap_size
-
-    system_id = ObjectField.Checked(
-        "system_id", check(str), readonly=True, pk=True)
-    tags = ObjectField.Checked(  # List[str]
-        "tag_names", check(Sequence), readonly=True)
-
     # virtualblockdevice_set
-
-    zone = ObjectFieldRelated("zone", "Zone")
 
     async def save(self):
         """Save the machine in MAAS."""
@@ -689,7 +674,3 @@ class Machine(Object, metaclass=MachineType):
         """
         self._data = await self._handler.restore_storage_configuration(
             system_id=self.system_id)
-
-    def __repr__(self):
-        return super(Machine, self).__repr__(
-            fields={"system_id", "hostname"})

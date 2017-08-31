@@ -59,6 +59,19 @@ class NodeStatus(enum.IntEnum):
     FAILED_TESTING = 22
 
 
+class NodeType(enum.IntEnum):
+    #: Machine
+    MACHINE = 0
+    #: Device
+    DEVICE = 1
+    #: Rack
+    RACK_CONTROLLER = 2
+    #: Region
+    REGION_CONTROLLER = 3
+    #: Region+Rack
+    REGION_AND_RACK_CONTROLLER = 4
+
+
 class PowerState(enum.Enum):
     #: On
     ON = 'on'

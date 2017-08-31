@@ -10,6 +10,7 @@ from . import (
     Object,
     ObjectField,
     ObjectFieldRelated,
+    ObjectFieldRelatedSet,
     ObjectSet,
     ObjectType,
 )
@@ -64,31 +65,53 @@ class InterfaceType(ObjectType):
         return cls(data, {"node_system_id": system_id})
 
 
+def map_nic_name_to_dict(instance, value):
+    """Convert a name of interface into a dictionary.
+
+    `parents` and `children` just hold a list of interface names. This is need
+    so instead they can return a `ObjectSet`.
+
+    '__incomplete__' is set so the object knows that the data passed is
+    incomplete data.
+    """
+    return {
+        'system_id': instance._data['system_id'],
+        'name': value,
+        '__incomplete__': True
+    }
+
+
 class Interface(Object, metaclass=InterfaceType):
     """A interface on a machine."""
 
+    node = ObjectFieldRelated(
+        "system_id", "Node", readonly=True, pk=0)
     id = ObjectField.Checked(
-        "id", check(int), readonly=True)
+        "id", check(int), readonly=True, pk=1)
     type = ObjectField.Checked(
         "type", check(str), readonly=True)
     name = ObjectField.Checked(
-        "name", check(str), check(str))
+        "name", check(str), check(str), alt_pk=1)
     mac_address = ObjectField.Checked(
         "mac_address", check(str), check(str))
     enabled = ObjectField.Checked(
         "enabled", check(bool), check(bool))
     effective_mtu = ObjectField.Checked(
         "effective_mtu", check(int), readonly=True)
-
+    tags = ObjectField.Checked(
+        "tags", check(list), check(list))
+    params = ObjectField.Checked(
+        "params", check(dict), check(dict))
+    parents = ObjectFieldRelatedSet(
+        "parents", "Interfaces", reverse=None,
+        map_func=map_nic_name_to_dict)
+    children = ObjectFieldRelatedSet(
+        "children", "Interfaces", reverse=None,
+        map_func=map_nic_name_to_dict)
     vlan = ObjectFieldRelated("vlan", "Vlan", reverse=None)
 
-    # parents
     # links
-    # vlan
     # discovered
-    # tags
-    # children
-    # params
 
     def __repr__(self):
         return super(Interface, self).__repr__(
