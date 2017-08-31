@@ -339,7 +339,8 @@ class TestObject(TestCase):
             })
         error = self.assertRaises(TypeError, object_type, 0)
         self.assertThat(
-            str(error), Equals("data must be a sequence, not int"))
+            str(error),
+            Equals("data must be a mapping or a sequence, not int"))
 
     def test__init_validates_property_when_multiple_pks(self):
         object_type = type(

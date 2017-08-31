@@ -102,14 +102,13 @@ class Interface(Object, metaclass=InterfaceType):
         "tags", check(list), check(list))
     params = ObjectField.Checked(
         "params", check(dict), check(dict))
-
-    vlan = ObjectFieldRelated("vlan", "Vlan", reverse=None)
     parents = ObjectFieldRelatedSet(
         "parents", "Interfaces", reverse=None,
         map_func=map_nic_name_to_dict)
     children = ObjectFieldRelatedSet(
         "children", "Interfaces", reverse=None,
         map_func=map_nic_name_to_dict)
+    vlan = ObjectFieldRelated("vlan", "Vlan", reverse=None)
 
     # links
     # discovered

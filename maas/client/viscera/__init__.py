@@ -206,7 +206,7 @@ def get_pk_descriptors(cls):
             elif type(descriptor.alt_pk) is int:
                 alt_pk_fields[descriptor.alt_pk].append((name, descriptor))
     if len(pk_fields) == 1:
-        return ((pk_fields.popitem(),),(alt_pk_fields[0],))
+        return ((pk_fields.popitem(),), (alt_pk_fields[0],))
     elif len(pk_fields) > 1:
         unique_pk_fields = {
             name: descriptor

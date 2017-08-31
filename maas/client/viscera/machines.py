@@ -8,7 +8,6 @@ __all__ = [
 import asyncio
 import base64
 import bson
-from collections import Sequence
 from http import HTTPStatus
 import typing
 

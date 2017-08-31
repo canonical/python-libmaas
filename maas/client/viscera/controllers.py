@@ -7,8 +7,6 @@ __all__ = [
     "RegionControllers",
 ]
 
-from collections import Sequence
-
 from . import (
     check,
     check_optional,

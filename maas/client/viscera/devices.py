@@ -5,8 +5,6 @@ __all__ = [
     "Devices",
 ]
 
-from collections import Sequence
-
 from .nodes import (
     Node,
     Nodes,
