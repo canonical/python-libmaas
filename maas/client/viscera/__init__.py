@@ -435,8 +435,7 @@ class Object(ObjectBasics, metaclass=ObjectType):
                     found = False
                     for alt_name, _ in alt_descriptors[0]:
                         if hasattr(self, alt_name):
-                            obj = await cls.read(
-                                getattr(self, descriptors[0][0]))
+                            obj = await cls.read(getattr(self, alt_name))
                             found = True
                             break
                     if not found:
