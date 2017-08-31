@@ -20,6 +20,7 @@ __all__ = [
 ]
 
 from collections import (
+    defaultdict,
     Iterable,
     Mapping,
     Sequence,
@@ -179,9 +180,14 @@ class ObjectBasics:
         return self.__class__.__qualname__
 
 
-def is_pk_descriptor(descriptor):
+def is_pk_descriptor(descriptor, include_alt=False):
     """Return true if `descriptor` is a primary key."""
-    return descriptor.pk is True or type(descriptor.pk) is int
+    if descriptor.pk is True or type(descriptor.pk) is int:
+        return True
+    if include_alt:
+        return descriptor.alt_pk is True or type(descriptor.alt_pk) is int
+    else:
+        return False
 
 
 def get_pk_descriptors(cls):
@@ -192,8 +198,15 @@ def get_pk_descriptors(cls):
         for name, descriptor in vars_class(cls).items()
         if isinstance(descriptor, ObjectField) and is_pk_descriptor(descriptor)
     }
+    alt_pk_fields = defaultdict(list)
+    for name, descriptor in vars_class(cls).items():
+        if isinstance(descriptor, ObjectField):
+            if descriptor.alt_pk is True:
+                alt_pk_fields[0].append((name, descriptor))
+            elif type(descriptor.alt_pk) is int:
+                alt_pk_fields[descriptor.alt_pk].append((name, descriptor))
     if len(pk_fields) == 1:
-        return (pk_fields.popitem(),)
+        return ((pk_fields.popitem(),),(alt_pk_fields[0],))
     elif len(pk_fields) > 1:
         unique_pk_fields = {
             name: descriptor
@@ -204,13 +217,25 @@ def get_pk_descriptors(cls):
             raise AttributeError(
                 "more than one field is marked as unique primary key: %s" % (
                     ', '.join(sorted(pk_fields))))
-        else:
-            return tuple(sorted((
-                (name, descriptor)
-                for name, descriptor in pk_fields.items()
-            ), key=lambda item: item[1].pk))
+        pk_descriptors = tuple(sorted((
+            (name, descriptor)
+            for name, descriptor in pk_fields.items()
+        ), key=lambda item: item[1].pk))
+        alt_pk_descriptors = tuple(
+            alt_pk_fields[idx]
+            for idx, (name, descriptor) in enumerate(pk_descriptors)
+        )
+        return pk_descriptors, alt_pk_descriptors
     else:
-        return tuple()
+        return tuple(), tuple()
+
+
+def set_alt_pk_value(alt_descriptors, obj_data, data):
+    for name, descriptor in alt_descriptors:
+        if descriptor.name in data:
+            obj_data[descriptor.name] = data[descriptor.name]
+            return name
+    return None
 
 
 class Object(ObjectBasics, metaclass=ObjectType):
@@ -223,29 +248,70 @@ class Object(ObjectBasics, metaclass=ObjectType):
         super(Object, self).__init__()
         self._changed_data = {}
         self._loaded = False
-        if isinstance(data, Mapping):
+        if isinstance(data, Mapping) and not data.get('__incomplete__', False):
             self._data = data
             self._loaded = True
         else:
-            descriptors = get_pk_descriptors(type(self))
+            descriptors, alt_descriptors = get_pk_descriptors(type(self))
             if len(descriptors) == 1:
-                self._data = {
-                    descriptors[0][1].name: data
-                }
-                # Validate that the primary key is correct and
-                # can be converted to the python value.
-                getattr(self, descriptors[0][0])
+                if isinstance(data, Mapping):
+                    obj_data = {}
+                    try:
+                        obj_data[descriptors[0][1].name] = (
+                            data[descriptors[0][1].name])
+                    except KeyError:
+                        found_name = set_alt_pk_value(
+                            alt_descriptors[0], obj_data, data)
+                        if found_name:
+                            # Validate that the set data is correct and
+                            # can be converted to the python value.
+                            getattr(self, found_name)
+                        else:
+                            raise
+                    else:
+                        # Validate that the set data is correct and
+                        # can be converted to the python value.
+                        getattr(self, descriptors[0][0])
+                else:
+                    self._data = {
+                        descriptors[0][1].name: data
+                    }
+                    # Validate that the primary key is correct and
+                    # can be converted to the python value.
+                    getattr(self, descriptors[0][0])
             elif len(descriptors) > 1:
-                if isinstance(data, Sequence):
-                    self._data = {}
+                if isinstance(data, Mapping):
+                    obj_data = {}
+                    found_names = []
                     for idx, (name, descriptor) in enumerate(descriptors):
-                        self._data[descriptor.name] = data[idx]
+                        try:
+                            obj_data[descriptor.name] = data[descriptor.name]
+                        except KeyError:
+                            found_name = set_alt_pk_value(
+                                alt_descriptors[idx], obj_data, data)
+                            if found_name:
+                                found_names.append(found_name)
+                            else:
+                                raise
+                        else:
+                            found_names.append(name)
+                    self._data = obj_data
+                    # Validate that all set data is correct and can be
+                    # converted to the python value.
+                    for name in found_names:
+                        getattr(self, name)
+                elif isinstance(data, Sequence):
+                    obj_data = {}
+                    for idx, (name, descriptor) in enumerate(descriptors):
+                        obj_data[descriptor.name] = data[idx]
+                    self._data = obj_data
+                    for name, _ in descriptors:
                         # Validate that the primary key is correct and
                         # can be converted to the python value.
                         getattr(self, name)
                 else:
                     raise TypeError(
-                        "data must be a sequence, not %s" % (
+                        "data must be a mapping or a sequence, not %s" % (
                             type(data).__name__))
             else:
                 raise TypeError(
@@ -271,7 +337,7 @@ class Object(ObjectBasics, metaclass=ObjectType):
         if name in fields:
             if self.loaded:
                 return super(Object, self).__getattribute__(name)
-            elif is_pk_descriptor(fields[name]):
+            elif is_pk_descriptor(fields[name], include_alt=True):
                 return super(Object, self).__getattribute__(name)
             else:
                 raise ObjectNotLoaded(
@@ -306,9 +372,16 @@ class Object(ObjectBasics, metaclass=ObjectType):
         unloaded = ""
         if not self.loaded:
             unloaded = " (unloaded)"
-            descriptors = get_pk_descriptors(type(self))
+            descriptors, alt_descriptors = get_pk_descriptors(type(self))
             if descriptors:
-                fields = [name for name, _ in descriptors]
+                fields = []
+                for idx, (field_name, _) in enumerate(descriptors):
+                    if hasattr(self, field_name):
+                        fields.append(field_name)
+                    else:
+                        for alt_field_name, _ in alt_descriptors[idx]:
+                            if hasattr(self, alt_field_name):
+                                fields.append(alt_field_name)
             else:
                 fields = []
         if fields is None:
@@ -346,14 +419,34 @@ class Object(ObjectBasics, metaclass=ObjectType):
         """Refresh the object from MAAS."""
         cls = type(self)
         if hasattr(cls, 'read'):
-            descriptors = get_pk_descriptors(cls)
+            descriptors, alt_descriptors = get_pk_descriptors(cls)
             if len(descriptors) == 1:
-                obj = await cls.read(getattr(self, descriptors[0][0]))
+                try:
+                    obj = await cls.read(getattr(self, descriptors[0][0]))
+                except AttributeError:
+                    found = False
+                    for alt_name, _ in alt_descriptors[0]:
+                        if hasattr(self, alt_name):
+                            obj = await cls.read(
+                                getattr(self, descriptors[0][0]))
+                            found = True
+                            break
+                    if not found:
+                        raise
             elif len(descriptors) > 1:
-                args = (
-                    getattr(self, name)
-                    for name, _ in descriptors
-                )
+                args = []
+                for idx, (name, _) in enumerate(descriptors):
+                    try:
+                        args.append(getattr(self, name))
+                    except AttributeError:
+                        found = False
+                        for alt_name, _ in alt_descriptors[idx]:
+                            if hasattr(self, alt_name):
+                                args.append(getattr(self, alt_name))
+                                found = True
+                                break
+                        if not found:
+                            raise
                 obj = await cls.read(*args)
             else:
                 raise AttributeError(
@@ -573,7 +666,9 @@ class ObjectField:
         cls = type("%s.Checked#%s" % (cls.__name__, name), (cls,), attrs)
         return cls(name, **other)
 
-    def __init__(self, name, *, default=undefined, readonly=False, pk=False):
+    def __init__(
+            self, name, *, default=undefined, readonly=False,
+            pk=False, alt_pk=False):
         """Create a `ObjectField` with an optional default.
 
         :param name: The name of the field. This is the name that's used to
@@ -584,20 +679,33 @@ class ObjectField:
         :param pk: If true marks the field as the unique primary key for the
             object it is defined on. If an integer then it define its place
             in the tuple of values that makes the object uniquely identified.
+        :param alt_pk: If true marks the field as an alternative unique
+            primary key for this object it is defined on. If an integer then
+            it define its place in the tuple of values that makes the object
+            uniquely identified.
         """
         super(ObjectField, self).__init__()
         self.name = name
         self.default = default
         if not isinstance(readonly, bool):
-            raise ValueError(
+            raise TypeError(
                 'readonly must be a bool, not %s' % type(readonly).__name__)
         else:
             self.readonly = readonly
         if not isinstance(pk, (bool, int)):
-            raise ValueError(
+            raise TypeError(
                 'pk must be a bool or an int, not %s' % type(pk).__name__)
         else:
             self.pk = pk
+        if self.pk is not False and alt_pk is not False:
+            raise ValueError(
+                'pk and alt_pk cannot be defined on the same field.')
+        elif not isinstance(alt_pk, (bool, int)):
+            raise TypeError(
+                'alt_pk must be a bool or an int, not %s' % (
+                    type(alt_pk).__name__))
+        else:
+            self.alt_pk = alt_pk
 
     def datum_to_value(self, instance, datum):
         """Convert a given MAAS-side datum to a Python-side value.
@@ -674,7 +782,8 @@ class ObjectFieldRelated(ObjectField):
 
     def __init__(
             self, name, cls, *,
-            default=undefined, readonly=False, pk=False, reverse=undefined):
+            default=undefined, readonly=False, pk=False, alt_pk=False,
+            reverse=undefined):
         """Create a `ObjectFieldRelated` with `cls`.
 
         :param name: The name of the field. This is the name that's used to
@@ -686,11 +795,15 @@ class ObjectFieldRelated(ObjectField):
         :param pk: If true marks the field as the unique primary key for the
             object it is defined on. If an integer then it define its place
             in the tuple of values that makes the object uniquely identified.
+        :param alt_pk: If true marks the field as an alternative unique
+            primary key for this object it is defined on. If an integer then
+            it define its place in the tuple of values that makes the object
+            uniquely identified.
         :param reverse: The name of the field on the returned instances of
             `cls` to place this objects instance.
         """
         super(ObjectFieldRelated, self).__init__(
-            name, default=default, readonly=readonly, pk=pk)
+            name, default=default, readonly=readonly, pk=pk, alt_pk=alt_pk)
         self.reverse = reverse
         if not isinstance(cls, str):
             if not issubclass(cls, Object):
@@ -739,7 +852,7 @@ class ObjectFieldRelated(ObjectField):
         bound = getattr(instance._origin, self.cls)
         if type(value) is bound:
             # Use the primary keys to set the value.
-            descriptors = get_pk_descriptors(bound)
+            descriptors, alt_descriptors = get_pk_descriptors(bound)
             if len(descriptors) == 1:
                 return getattr(value, descriptors[0][0])
             elif len(descriptors) > 1:
@@ -758,7 +871,9 @@ class ObjectFieldRelated(ObjectField):
 
 class ObjectFieldRelatedSet(ObjectField):
 
-    def __init__(self, name, cls, *, reverse=undefined, default=undefined):
+    def __init__(
+            self, name, cls, *, reverse=undefined, default=undefined,
+            map_func=None):
         """Create a `ObjectFieldRelatedSet` with `cls`.
 
         :param name: The name of the field. This is the name that's used to
@@ -775,6 +890,9 @@ class ObjectFieldRelatedSet(ObjectField):
         super(ObjectFieldRelatedSet, self).__init__(
             name, default=default, readonly=True)
         self.reverse = reverse
+        self.map_func = map_func
+        if self.map_func is None:
+            self.map_func = lambda instance, value: value
         if not isinstance(cls, str):
             if not issubclass(cls, ObjectSet):
                 raise TypeError(
@@ -811,7 +929,8 @@ class ObjectFieldRelatedSet(ObjectField):
         return bound.Managed(
             instance, self,
             (
-                bound._object(item, local_data=local_data)
+                bound._object(
+                    self.map_func(instance, item), local_data=local_data)
                 for item in datum
             ))
 
@@ -1046,6 +1165,7 @@ class Origin(OriginBase, metaclass=OriginType):
             ".ipranges",
             ".maas",
             ".machines",
+            ".nodes",
             ".spaces",
             ".sshkeys",
             ".static_routes",
