@@ -283,11 +283,34 @@ class TestObject(TestCase):
         error = self.assertRaises(TypeError, Object, ["some", "items"])
         self.assertThat(str(error), Equals("data must be a mapping, not list"))
 
+    def test__init_insists_on_complete_data(self):
+        data = {
+            "alice": make_name_without_spaces("alice"),
+            "__incomplete__": True,
+        }
+        error = self.assertRaises(ValueError, Object, data)
+        self.assertThat(
+            str(error),
+            Equals(
+                "data cannot be incomplete without any primary keys defined"))
+
     def test__init_takes_pk_when_defined(self):
         object_type = type(
             "PKObject", (Object,), {"pk": ObjectField("pk_d", pk=True)})
         object_pk = randint(0, 20)
         object_a = object_type(object_pk)
+        self.assertThat(object_a._data, Equals({"pk_d": object_pk}))
+        self.assertThat(object_a.pk, Equals(object_pk))
+        self.assertFalse(object_a._loaded)
+
+    def test__init_takes_pk_in_mapping_when_defined(self):
+        object_type = type(
+            "PKObject", (Object,), {"pk": ObjectField("pk_d", pk=True)})
+        object_pk = randint(0, 20)
+        object_a = object_type({
+            'pk_d': object_pk,
+            '__incomplete__': True,
+        })
         self.assertThat(object_a._data, Equals({"pk_d": object_pk}))
         self.assertThat(object_a.pk, Equals(object_pk))
         self.assertFalse(object_a._loaded)
@@ -298,6 +321,18 @@ class TestObject(TestCase):
                 "pk": ObjectField.Checked("pk_d", check(int), pk=True),
             })
         error = self.assertRaises(TypeError, object_type, "not int")
+        self.assertThat(
+            str(error), Equals("'not int' is not of type %r" % int))
+
+    def test__init_validates_pk_in_mapping_when_defined(self):
+        object_type = type(
+            "PKObject", (Object,), {
+                "pk": ObjectField.Checked("pk_d", check(int), pk=True),
+            })
+        error = self.assertRaises(TypeError, object_type, {
+            'pk_d': "not int",
+            '__incomplete__': True,
+        })
         self.assertThat(
             str(error), Equals("'not int' is not of type %r" % int))
 
@@ -313,6 +348,27 @@ class TestObject(TestCase):
             Equals(
                 "more than one field is marked as unique "
                 "primary key: pk1, pk2"))
+
+    def test__init_allows_mapping_when_multiple_pks(self):
+        object_type = type(
+            "PKObject", (Object,), {
+                "pk1": ObjectField.Checked("pk_1", check(int), pk=0),
+                "pk2": ObjectField.Checked("pk_2", check(int), pk=1),
+            })
+        object_pk_1 = randint(0, 20)
+        object_pk_2 = randint(0, 20)
+        object_a = object_type({
+            'pk_1': object_pk_1,
+            'pk_2': object_pk_2,
+            '__incomplete__': True,
+        })
+        self.assertThat(object_a._data, Equals({
+            "pk_1": object_pk_1,
+            "pk_2": object_pk_2,
+        }))
+        self.assertThat(object_a.pk1, Equals(object_pk_1))
+        self.assertThat(object_a.pk2, Equals(object_pk_2))
+        self.assertFalse(object_a._loaded)
 
     def test__init_allows_sequence_when_multiple_pks(self):
         object_type = type(
@@ -331,7 +387,7 @@ class TestObject(TestCase):
         self.assertThat(object_a.pk2, Equals(object_pk_2))
         self.assertFalse(object_a._loaded)
 
-    def test__init_requires_sequence_when_multiple_pks(self):
+    def test__init_requires_mapping_or_sequence_when_multiple_pks(self):
         object_type = type(
             "PKObject", (Object,), {
                 "pk1": ObjectField.Checked("pk_1", check(int), pk=0),
@@ -342,7 +398,22 @@ class TestObject(TestCase):
             str(error),
             Equals("data must be a mapping or a sequence, not int"))
 
-    def test__init_validates_property_when_multiple_pks(self):
+    def test__init_validates_property_when_multiple_pks_mapping(self):
+        object_type = type(
+            "PKObject", (Object,), {
+                "pk1": ObjectField.Checked("pk_1", check(int), pk=0),
+                "pk2": ObjectField.Checked("pk_2", check(int), pk=1),
+            })
+        error = self.assertRaises(
+            TypeError, object_type, {
+                'pk_1': 0,
+                'pk_2': 'bad',
+                '__incomplete__': True,
+            })
+        self.assertThat(
+            str(error), Equals("'bad' is not of type %r" % int))
+
+    def test__init_validates_property_when_multiple_pks_sequence(self):
         object_type = type(
             "PKObject", (Object,), {
                 "pk1": ObjectField.Checked("pk_1", check(int), pk=0),

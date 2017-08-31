@@ -255,13 +255,13 @@ class Object(ObjectBasics, metaclass=ObjectType):
             descriptors, alt_descriptors = get_pk_descriptors(type(self))
             if len(descriptors) == 1:
                 if isinstance(data, Mapping):
-                    obj_data = {}
+                    self._data = {}
                     try:
-                        obj_data[descriptors[0][1].name] = (
+                        self._data[descriptors[0][1].name] = (
                             data[descriptors[0][1].name])
                     except KeyError:
                         found_name = set_alt_pk_value(
-                            alt_descriptors[0], obj_data, data)
+                            alt_descriptors[0], self._data, data)
                         if found_name:
                             # Validate that the set data is correct and
                             # can be converted to the python value.
@@ -272,6 +272,9 @@ class Object(ObjectBasics, metaclass=ObjectType):
                         # Validate that the set data is correct and
                         # can be converted to the python value.
                         getattr(self, descriptors[0][0])
+                    # Reset self._data so _orig_data and _changed_data is
+                    # correct.
+                    self._data = self._data
                 else:
                     self._data = {
                         descriptors[0][1].name: data
@@ -314,9 +317,14 @@ class Object(ObjectBasics, metaclass=ObjectType):
                         "data must be a mapping or a sequence, not %s" % (
                             type(data).__name__))
             else:
-                raise TypeError(
-                    "data must be a mapping, not %s"
-                    % type(data).__name__)
+                if not isinstance(data, Mapping):
+                    raise TypeError(
+                        "data must be a mapping, not %s"
+                        % type(data).__name__)
+                else:
+                    raise ValueError(
+                        "data cannot be incomplete without any primary keys "
+                        "defined")
         self._orig_data = deepcopy(self._data)
         if local_data is not None:
             if isinstance(local_data, Mapping):
