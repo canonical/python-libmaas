@@ -18,6 +18,12 @@ from . import (
     ObjectFieldRelated,
     to,
 )
+from .nodes import (
+    Node,
+    Nodes,
+    NodesType,
+    NodeTypeMeta,
+)
 from ..bones import CallError
 from ..enum import (
     NodeStatus,
@@ -29,43 +35,7 @@ from ..errors import (
     OperationNotAllowed,
     PowerError
 )
-from .nodes import (
-    Node,
-    Nodes,
-    NodesType,
-    NodeTypeMeta,
-)
-
-
-def remove_None(params: dict):
-    """Remove all keys in `params` that have the value of `None`."""
-    return {
-        key: value
-        for key, value in params.items()
-        if value is not None
-    }
-
-
-def calculate_params_diff(old_params: dict, new_params: dict):
-    """Return the parameters based on the difference.
-
-    If a parameter exists in `old_params` but not in `new_params` then
-    parameter will be set to an empty string.
-    """
-    # Ignore all None values as those cannot be saved.
-    old_params = remove_None(old_params)
-    new_params = remove_None(new_params)
-    params_diff = {}
-    for key, value in old_params.items():
-        if key in new_params:
-            if value != new_params[key]:
-                params_diff[key] = new_params[key]
-        else:
-            params_diff[key] = ''
-    for key, value in new_params.items():
-        if key not in old_params:
-            params_diff[key] = value
-    return params_diff
+from ..utils.diff import calculate_dict_diff
 
 
 class MachinesType(NodesType):
@@ -275,7 +245,7 @@ class Machine(Node, metaclass=MachineType):
         new_owner_data = dict(self._data['owner_data'])
         self._changed_data.pop('owner_data', None)
         await super(Machine, self).save()
-        params_diff = calculate_params_diff(orig_owner_data, new_owner_data)
+        params_diff = calculate_dict_diff(orig_owner_data, new_owner_data)
         if len(params_diff) > 0:
             params_diff['system_id'] = self.system_id
             await self._handler.set_owner_data(**params_diff)
