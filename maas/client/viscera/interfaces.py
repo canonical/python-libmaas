@@ -5,7 +5,7 @@ __all__ = [
     "Interfaces",
 ]
 
-from typing import Sequence, Union
+from typing import Iterable, Union
 
 from . import (
     check,
@@ -164,9 +164,9 @@ class InterfacesType(ObjectType):
     async def create(
             cls, node: Union[Node, str],
             interface_type: InterfaceType=InterfaceType.PHYSICAL, *,
-            name: str=None, mac_address: str=None, tags: Sequence[str]=None,
+            name: str=None, mac_address: str=None, tags: Iterable[str]=None,
             vlan: Union[Vlan, int]=None, parent: Union[Interface, int]=None,
-            parents: Sequence[Union[Interface, int]]=None, mtu: int=None,
+            parents: Iterable[Union[Interface, int]]=None, mtu: int=None,
             accept_ra: bool=None, autoconf: bool=None,
             bond_mode: str=None, bond_miimon: int=None,
             bond_downdelay: int=None, bond_updelay: int=None,
@@ -289,9 +289,9 @@ class InterfacesType(ObjectType):
             handler = cls._handler.create_bond
             if parent is not None:
                 raise ValueError("use parents not parent for bond interface")
-            if not isinstance(parents, Sequence):
+            if not isinstance(parents, Iterable):
                 raise TypeError(
-                    'parents must be a sequence, not %s' % (
+                    'parents must be a iterable, not %s' % (
                         type(parents).__name__))
             if len(parents) == 0:
                 raise ValueError(

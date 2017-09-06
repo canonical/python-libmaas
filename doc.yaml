@@ -14,6 +14,7 @@ pages:
     - Introduction: client/index.md
     - Nodes: client/nodes.md
     - Networking: client/networking.md
+    - Interfaces: client/interfaces.md
     - Events: client/events.md
     - Others: client/other.md
   - Internals:

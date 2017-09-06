@@ -193,7 +193,7 @@ class TestInterfaces(TestCase):
         self.assertEquals(
             "use parents not parent for bond interface", str(error))
 
-    def test__create_bond_fails_parents_not_sequence(self):
+    def test__create_bond_fails_parents_not_iterable(self):
         Interfaces = make_origin().Interfaces
         error = self.assertRaises(
             TypeError, Interfaces.create,
@@ -201,7 +201,7 @@ class TestInterfaces(TestCase):
             name=make_string_without_spaces(),
             parents=random.randint(1, 20))
         self.assertEquals(
-            "parents must be a sequence, not int", str(error))
+            "parents must be a iterable, not int", str(error))
 
     def test__create_bond_fails_parents_is_not_Interface_or_int(self):
         Interfaces = make_origin().Interfaces
