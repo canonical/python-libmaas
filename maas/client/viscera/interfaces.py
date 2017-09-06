@@ -32,8 +32,8 @@ def gen_parents(parents):
             pass
         else:
             raise TypeError(
-                'parent[%d] must be Interface or int, not %s' % (
-                    idx, type(parent).__class__))
+                'parent[%d] must be an Interface or int, not %s' % (
+                    idx, type(parent).__name__))
         yield parent
 
 
@@ -45,8 +45,8 @@ def get_parent(parent):
         return parent
     else:
         raise TypeError(
-            "parent must be Interface or int, not %s" % (
-                type(parent).__class__))
+            "parent must be an Interface or int, not %s" % (
+                type(parent).__name__))
 
 
 class InterfaceTypeMeta(ObjectType):
@@ -62,8 +62,7 @@ class InterfaceTypeMeta(ObjectType):
             raise TypeError(
                 "node must be a Node or str, not %s"
                 % type(node).__name__)
-        data = await cls._handler.read(system_id=system_id, id=id)
-        return cls(data, {"node_system_id": system_id})
+        return cls(await cls._handler.read(system_id=system_id, id=id))
 
 
 def map_nic_name_to_dict(instance, value):
@@ -251,7 +250,7 @@ class InterfacesType(ObjectType):
             params['system_id'] = node.system_id
         else:
             raise TypeError(
-                'node must be Node or str, not %s' % (
+                'node must be a Node or str, not %s' % (
                     type(node).__name__))
 
         if name is not None:
@@ -267,7 +266,7 @@ class InterfacesType(ObjectType):
                 params['vlan'] = vlan
             else:
                 raise TypeError(
-                    'vlan must be Vlan or int, not %s' % (
+                    'vlan must be a Vlan or int, not %s' % (
                         type(vlan).__name__))
         if accept_ra is not None:
             params['accept_ra'] = accept_ra
@@ -277,7 +276,7 @@ class InterfacesType(ObjectType):
         handler = None
         if not isinstance(interface_type, InterfaceType):
             raise TypeError(
-                'interface_type must be InterfaceType, not %s' % (
+                'interface_type must be an InterfaceType, not %s' % (
                     type(interface_type).__name__))
         if interface_type == InterfaceType.PHYSICAL:
             handler = cls._handler.create_physical
