@@ -122,6 +122,8 @@ class Interface(Object, metaclass=InterfaceTypeMeta):
         """Save this interface."""
         if set(self.tags) != set(self._orig_data['tags']):
             self._changed_data['tags'] = ','.join(self.tags)
+        elif 'tags' in self._changed_data:
+            del self._changed_data['tags']
         self._changed_data.update(
             calculate_dict_diff(self._orig_data['params'], self.params))
         if 'vlan' in self._changed_data and self._changed_data['vlan']:

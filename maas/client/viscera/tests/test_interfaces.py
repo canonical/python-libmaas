@@ -599,6 +599,149 @@ class TestInterface(TestCase):
             random.randint(0, 100), random.randint(0, 100))
         self.assertEquals("node must be a Node or str, not int", str(error))
 
+    def test__interface_save_tags(self):
+        Interface = make_origin().Interface
+        Interface._handler.params = ['system_id', 'id']
+        interface = Interface({
+            'system_id': make_string_without_spaces(),
+            'id': random.randint(0, 100),
+            'tags': ['keep', 'update', 'delete'],
+            'params': {},
+        })
+        del interface.tags[2]
+        interface.tags[1] = 'updated'
+        Interface._handler.update.return_value = {
+            'system_id': interface.node.system_id,
+            'id': interface.id,
+            'tags': ['keep', 'updated'],
+            'params': {},
+        }
+        interface.save()
+        Interface._handler.update.assert_called_once_with(
+            system_id=interface.node.system_id, id=interface.id,
+            tags='keep,updated')
+
+    def test__interface_doesnt_save_tags_if_same_diff_order(self):
+        Interface = make_origin().Interface
+        Interface._handler.params = ['system_id', 'id']
+        interface = Interface({
+            'system_id': make_string_without_spaces(),
+            'id': random.randint(0, 100),
+            'tags': ['keep', 'update', 'delete'],
+            'params': {},
+        })
+        interface.tags = ['delete', 'keep', 'update']
+        interface.save()
+        self.assertEqual(0, Interface._handler.update.call_count)
+
+    def test__interface_save_passes_parameters(self):
+        Interface = make_origin().Interface
+        Interface._handler.params = ['system_id', 'id']
+        interface = Interface({
+            'system_id': make_string_without_spaces(),
+            'id': random.randint(0, 100),
+            'tags': [],
+            'params': {
+                'mtu': 1500,
+            },
+        })
+        interface.params['mtu'] = 3000
+        Interface._handler.update.return_value = {
+            'system_id': interface.node.system_id,
+            'id': interface.id,
+            'tags': [],
+            'params': {
+                'mtu': 3000
+            },
+        }
+        interface.save()
+        Interface._handler.update.assert_called_once_with(
+            system_id=interface.node.system_id, id=interface.id,
+            mtu=3000)
+
+    def test__interface_save_sets_vlan_to_None(self):
+        Interface = make_origin().Interface
+        Interface._handler.params = ['system_id', 'id']
+        vlan_data = {
+            'fabric_id': random.randint(0, 100),
+            'id': random.randint(0, 100),
+            'vid': random.randint(0, 100),
+        }
+        interface = Interface({
+            'system_id': make_string_without_spaces(),
+            'id': random.randint(0, 100),
+            'tags': [],
+            'params': {},
+            'vlan': vlan_data,
+        })
+        interface.vlan = None
+        Interface._handler.update.return_value = {
+            'system_id': interface.node.system_id,
+            'id': interface.id,
+            'tags': [],
+            'params': {},
+            'vlan': None,
+        }
+        interface.save()
+        Interface._handler.update.assert_called_once_with(
+            system_id=interface.node.system_id, id=interface.id,
+            vlan=None)
+
+    def test__interface_save_sets_vlan_to_new_vlan(self):
+        origin = make_origin()
+        Interface, Vlan = origin.Interface, origin.Vlan
+        Interface._handler.params = ['system_id', 'id']
+        vlan_data = {
+            'fabric_id': random.randint(0, 100),
+            'id': random.randint(0, 100),
+            'vid': random.randint(0, 100),
+        }
+        interface = Interface({
+            'system_id': make_string_without_spaces(),
+            'id': random.randint(0, 100),
+            'tags': [],
+            'params': {},
+            'vlan': vlan_data,
+        })
+        new_vlan = Vlan({
+            'fabric_id': random.randint(0, 100),
+            'id': random.randint(0, 100),
+            'vid': random.randint(0, 100),
+        })
+        interface.vlan = new_vlan
+        Interface._handler.update.return_value = {
+            'system_id': interface.node.system_id,
+            'id': interface.id,
+            'tags': [],
+            'params': {},
+            'vlan': new_vlan._data,
+        }
+        interface.save()
+        Interface._handler.update.assert_called_once_with(
+            system_id=interface.node.system_id, id=interface.id,
+            vlan=new_vlan.id)
+
+    def test__interface_save_doesnt_change_vlan_when_same(self):
+        origin = make_origin()
+        Interface, Vlan = origin.Interface, origin.Vlan
+        Interface._handler.params = ['system_id', 'id']
+        vlan_data = {
+            'fabric_id': random.randint(0, 100),
+            'id': random.randint(0, 100),
+            'vid': random.randint(0, 100),
+        }
+        vlan = Vlan(dict(vlan_data))
+        interface = Interface({
+            'system_id': make_string_without_spaces(),
+            'id': random.randint(0, 100),
+            'tags': [],
+            'params': {},
+            'vlan': vlan_data,
+        })
+        interface.vlan = vlan
+        interface.save()
+        self.assertEqual(0, Interface._handler.update.call_count)
+
     def test__interface_delete(self):
         Interface = make_origin().Interface
         system_id = make_string_without_spaces()
