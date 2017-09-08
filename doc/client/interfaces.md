@@ -47,6 +47,39 @@ False
   ]>
 ```
 
+## Get interface by name
+
+The ``interfaces`` property on ``Node`` gives you access to all interfaces on
+the node. Sometimes you want to access the interface objects by name.
+``by_name`` and ``get_by_name`` are helpers on ``Interfaces`` that help.
+
+```pycon
+>>> machine.interfaces.by_name
+{'bond0': <Interface mac_address='52:54:00:b4:7e:8c'
+    name='bond0' type=<InterfaceType.BOND: 'bond'>>,
+ 'ens3': <Interface mac_address='52:54:00:b4:7e:8c'
+     name='ens3' type=<InterfaceType.PHYSICAL: 'physical'>>,
+ 'ens8': <Interface mac_address='52:54:00:11:f3:d2'
+    name='ens8' type=<InterfaceType.PHYSICAL: 'physical'>>}
+>>> bond = machine.interfaces.get_by_name('bond0')
+>>> bond
+<Interface mac_address='52:54:00:b4:7e:8c'
+    name='bond0' type=<InterfaceType.BOND: 'bond'>>
+```
+
+## Read IP configuration
+
+Every ``Interface`` has a ``links`` property that provides all the IP
+information on how the interface is configured.
+
+```pycon
+>>> bond.links
+<InterfaceLinks.Managed#Interface length=1 items=[
+  <InterfaceLink ip_address=None mode=<LinkMode.AUTO: 'auto'>
+    subnet=<Subnet cidr='192.168.122.0/24' name='192.168.122.0/24'
+      vlan=<Vlan name='untagged' vid=0>>>]>
+```
+
 ## Create physical
 
 Creation of interfaces is done directly on the ``interfaces`` property of a
@@ -132,6 +165,34 @@ calling ``save`` is all that is required.
 >>> new_bond.name = 'my-bond'
 >>> new_bond.params['bond_mode'] = 'active-backup'
 >>> new_bond.save()
+```
+
+## Change IP configuration
+
+To adjust the IP configuration on a specific interface ``create`` on the
+``links`` property and ``delete`` on the ``InterfaceLink`` can be used.
+
+```pycon
+>>> new_bond.links.create(LinkMode.AUTO, subnet=subnet)
+<InterfaceLink ip_address=None mode=<LinkMode.AUTO: 'auto'>
+  subnet=<Subnet cidr='192.168.122.0/24' name='192.168.122.0/24'
+    vlan=<Vlan name='untagged' vid=0>>>
+>>> new_bond.links[-1].delete()
+>>> new_bond.links.create(
+...     LinkMode.STATIC, subnet=subnet, ip_address='192.168.122.1')
+<InterfaceLink ip_address='192.168.122.10' mode=<LinkMode.STATIC: 'static'>
+  subnet=<Subnet cidr='192.168.122.0/24' name='192.168.122.0/24'
+    vlan=<Vlan name='untagged' vid=0>>>
+>>> new_bond.links[-1].delete()
+```
+
+## Disconnect interface
+
+To completely mark an interface as disconnected and remove all configuration
+the ``disconnect`` call makes this easy.
+
+```
+>>> new_bond.disconnect()
 ```
 
 ## Delete interface

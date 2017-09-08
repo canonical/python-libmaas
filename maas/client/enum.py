@@ -117,3 +117,14 @@ class InterfaceType(enum.Enum):
     VLAN = 'vlan'
     #: Interface not linked to a node.
     UNKNOWN = 'unknown'
+
+
+class LinkMode(enum.Enum):
+    #: IP is auto assigned by MAAS.
+    AUTO = 'auto'
+    #: IP is assigned by a DHCP server.
+    DHCP = 'dhcp'
+    #: IP is statically assigned.
+    STATIC = 'static'
+    #: Connected to subnet with no IP address.
+    LINK_UP = 'link_up'

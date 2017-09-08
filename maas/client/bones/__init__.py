@@ -286,11 +286,19 @@ class ActionAPI:
         Whatever remains is assumed to be data to be passed to ``call()`` as
         keyword arguments.
 
+        All keys in ``params`` that are prefixed with '_' are remapped without
+        the '_' prefix into the ``call()``. This is used when the ``params``
+        and data passed to the call have the same key.
+
         :raise KeyError: If not all required arguments are provided.
 
         See `CallAPI.call()` for return information and exceptions.
         """
+        data = dict(data)
         params = {name: data.pop(name) for name in self.handler.params}
+        for key, value in data.items():
+            if key.startswith('_'):
+                data[key[1:]] = data.pop(key)
         response = await self.bind(**params).call(**data)
         return response.data
 
