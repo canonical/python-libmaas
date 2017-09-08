@@ -790,7 +790,7 @@ class ObjectFieldRelated(ObjectField):
     def __init__(
             self, name, cls, *,
             default=undefined, readonly=False, pk=False, alt_pk=False,
-            reverse=undefined):
+            reverse=undefined, use_data_setter=False):
         """Create a `ObjectFieldRelated` with `cls`.
 
         :param name: The name of the field. This is the name that's used to
@@ -808,10 +808,14 @@ class ObjectFieldRelated(ObjectField):
             uniquely identified.
         :param reverse: The name of the field on the returned instances of
             `cls` to place this objects instance.
+        :param use_data_setter: When True setting the field will use the
+            `_data` from the `Object` instead of using the primary keys to
+            set on the object.
         """
         super(ObjectFieldRelated, self).__init__(
             name, default=default, readonly=readonly, pk=pk, alt_pk=alt_pk)
         self.reverse = reverse
+        self.use_data_setter = use_data_setter
         if not isinstance(cls, str):
             if not issubclass(cls, Object):
                 raise TypeError(
@@ -858,19 +862,23 @@ class ObjectFieldRelated(ObjectField):
             return None
         bound = getattr(instance._origin, self.cls)
         if type(value) is bound:
-            # Use the primary keys to set the value.
-            descriptors, alt_descriptors = get_pk_descriptors(bound)
-            if len(descriptors) == 1:
-                return getattr(value, descriptors[0][0])
-            elif len(descriptors) > 1:
-                return tuple(
-                    getattr(value, name)
-                    for name, _ in descriptors
-                )
+            if self.use_data_setter:
+                # Using data setter, so just return the data for the object.
+                return value._data
             else:
-                raise AttributeError(
-                    "unable to perform set object no primary key "
-                    "fields defined for %s" % self.cls)
+                # Use the primary keys to set the value.
+                descriptors, alt_descriptors = get_pk_descriptors(bound)
+                if len(descriptors) == 1:
+                    return getattr(value, descriptors[0][0])
+                elif len(descriptors) > 1:
+                    return tuple(
+                        getattr(value, name)
+                        for name, _ in descriptors
+                    )
+                else:
+                    raise AttributeError(
+                        "unable to perform set object no primary key "
+                        "fields defined for %s" % self.cls)
         else:
             raise TypeError(
                 "must be %s, not %s" % (self.cls, type(value).__name__))

@@ -104,3 +104,16 @@ class IPRangeType(enum.Enum):
     DYNAMIC = 'dynamic'
     #: Reserved for exclusive use by MAAS or user.
     RESERVED = 'reserved'
+
+
+class InterfaceType(enum.Enum):
+    #: Physical interface.
+    PHYSICAL = 'physical'
+    #: Bonded interface.
+    BOND = 'bond'
+    #: Bridge interface.
+    BRIDGE = 'bridge'
+    #: VLAN interface.
+    VLAN = 'vlan'
+    #: Interface not linked to a node.
+    UNKNOWN = 'unknown'
