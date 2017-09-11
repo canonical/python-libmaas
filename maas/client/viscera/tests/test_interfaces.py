@@ -946,7 +946,7 @@ class TestInterface(TestCase):
         interface = Interface(interface_data)
         updated_data = dict(interface_data)
         link_id = random.randint(100, 200)
-        subnet_id = random.randint(0, 100)
+        subnet_id = random.randint(1, 100)
         updated_data['links'] = [
             {
                 'id': link_id,
@@ -991,7 +991,7 @@ class TestInterface(TestCase):
         interface = Interface(interface_data)
         updated_data = dict(interface_data)
         link_id = random.randint(100, 200)
-        subnet_id = random.randint(0, 100)
+        subnet_id = random.randint(1, 100)
         updated_data['links'] = [
             {
                 'id': link_id,
@@ -1040,7 +1040,7 @@ class TestInterface(TestCase):
         interface = Interface(interface_data)
         updated_data = dict(interface_data)
         link_id = random.randint(100, 200)
-        subnet_id = random.randint(0, 100)
+        subnet_id = random.randint(1, 100)
         updated_data['links'] = [
             {
                 'id': link_id,
@@ -1078,7 +1078,7 @@ class TestInterface(TestCase):
         interface = Interface(interface_data)
         updated_data = dict(interface_data)
         link_id = random.randint(0, 100)
-        subnet_id = random.randint(0, 100)
+        subnet_id = random.randint(1, 100)
         updated_data['links'] = [
             {
                 'id': link_id,
@@ -1107,7 +1107,7 @@ class TestInterface(TestCase):
         Interface, Subnet = origin.Interface, origin.Subnet
         system_id = make_string_without_spaces()
         link_id = random.randint(0, 100)
-        subnet_id = random.randint(0, 100)
+        subnet_id = random.randint(1, 100)
         interface_data = {
             "system_id": system_id,
             "id": random.randint(0, 100),
@@ -1126,7 +1126,7 @@ class TestInterface(TestCase):
         interface = Interface(interface_data)
         updated_data = dict(interface_data)
         new_link_id = random.randint(0, 100)
-        new_subnet_id = random.randint(0, 100)
+        new_subnet_id = random.randint(1, 100)
         updated_data['links'] = [
             {
                 'id': new_link_id,
@@ -1152,7 +1152,7 @@ class TestInterface(TestCase):
         Interface = origin.Interface
         system_id = make_string_without_spaces()
         link_id = random.randint(0, 100)
-        subnet_id = random.randint(0, 100)
+        subnet_id = random.randint(1, 100)
         interface_data = {
             "system_id": system_id,
             "id": random.randint(0, 100),

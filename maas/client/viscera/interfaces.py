@@ -248,7 +248,7 @@ class InterfaceLinksType(ObjectType):
                     "subnet must be a Subnet or int, not %s"
                     % type(subnet).__name__)
         if mode in [LinkMode.AUTO, LinkMode.STATIC]:
-            if not subnet:
+            if subnet is None:
                 raise ValueError('subnet is required for %s' % mode)
         if default_gateway and mode not in [LinkMode.AUTO, LinkMode.STATIC]:
             raise ValueError('cannot set as default_gateway for %s' % mode)
