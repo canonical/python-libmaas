@@ -230,12 +230,6 @@ class InterfaceLinksType(ObjectType):
         :returns: The created InterfaceLink.
         :rtype: `InterfaceLink`
         """
-        # The API doesn't return just the link it returns the whole interface.
-        # Store the link ids before the save to find the addition at the end.
-        link_ids = {
-            link.id
-            for link in interface.links
-        }
         if not isinstance(interface, Interface):
             raise TypeError(
                 "interface must be an Interface, not %s"
@@ -243,7 +237,7 @@ class InterfaceLinksType(ObjectType):
         if not isinstance(mode, LinkMode):
             raise TypeError(
                 "mode must be a LinkMode, not %s"
-                % type(interface).__name__)
+                % type(mode).__name__)
         if subnet is not None:
             if isinstance(subnet, Subnet):
                 subnet = subnet.id
@@ -252,7 +246,7 @@ class InterfaceLinksType(ObjectType):
             else:
                 raise TypeError(
                     "subnet must be a Subnet or int, not %s"
-                    % type(interface).__name__)
+                    % type(subnet).__name__)
         if mode in [LinkMode.AUTO, LinkMode.STATIC]:
             if not subnet:
                 raise ValueError('subnet is required for %s' % mode)
@@ -269,6 +263,12 @@ class InterfaceLinksType(ObjectType):
             params['subnet'] = subnet
         if ip_address is not None:
             params['ip_address'] = ip_address
+        # The API doesn't return just the link it returns the whole interface.
+        # Store the link ids before the save to find the addition at the end.
+        link_ids = {
+            link.id
+            for link in interface.links
+        }
         data = await interface._handler.link_subnet(**params)
         # Update the links on the interface, except for the newly created link
         # the `ManagedCreate` wrapper will add that to the interfaces link data

@@ -5,6 +5,9 @@ import random
 from testtools.matchers import (
     Equals,
     IsInstance,
+    MatchesAll,
+    MatchesSetwise,
+    MatchesStructure,
 )
 
 from ..fabrics import (
@@ -14,10 +17,18 @@ from ..fabrics import (
 from ..interfaces import (
     Interface,
     Interfaces,
+    InterfaceDiscoveredLink,
+    InterfaceDiscoveredLinks,
+    InterfaceLink,
+    InterfaceLinks,
 )
 from ..nodes import (
     Node,
     Nodes,
+)
+from ..subnets import (
+    Subnet,
+    Subnets,
 )
 from ..vlans import (
     Vlan,
@@ -25,7 +36,10 @@ from ..vlans import (
 )
 
 from .. testing import bind
-from ...enum import InterfaceType
+from ...enum import (
+    InterfaceType,
+    LinkMode,
+)
 from ...testing import (
     make_string_without_spaces,
     TestCase,
@@ -37,7 +51,9 @@ def make_origin():
     Create a new origin with required objects.
     """
     return bind(
-        Fabrics, Fabric, Interfaces, Interface, Nodes, Node, Vlans, Vlan)
+        Fabrics, Fabric, Interfaces, Interface, InterfaceLinks, InterfaceLink,
+        InterfaceDiscoveredLinks, InterfaceDiscoveredLink,
+        Nodes, Node, Subnets, Subnet, Vlans, Vlan)
 
 
 class TestInterfaces(TestCase):
@@ -556,6 +572,44 @@ class TestInterfaces(TestCase):
             "cannot create an interface of type: %s" % InterfaceType.UNKNOWN,
             str(error))
 
+    def test__by_name(self):
+        origin = make_origin()
+        Interfaces, Interface = origin.Interfaces, origin.Interface
+        system_id = make_string_without_spaces()
+        eth0_Interface = Interface({
+            'system_id': system_id,
+            'id': random.randint(0, 100),
+            'name': 'eth0',
+        })
+        eth1_Interface = Interface({
+            'system_id': system_id,
+            'id': random.randint(0, 100),
+            'name': 'eth1',
+        })
+        interfaces = Interfaces([eth0_Interface, eth1_Interface])
+        self.assertEquals({
+            'eth0': eth0_Interface,
+            'eth1': eth1_Interface,
+        }, interfaces.by_name)
+
+    def test__get_by_name(self):
+        origin = make_origin()
+        Interfaces, Interface = origin.Interfaces, origin.Interface
+        system_id = make_string_without_spaces()
+        eth0_Interface = Interface({
+            'system_id': system_id,
+            'id': random.randint(0, 100),
+            'name': 'eth0',
+        })
+        eth1_Interface = Interface({
+            'system_id': system_id,
+            'id': random.randint(0, 100),
+            'name': 'eth1',
+        })
+        interfaces = Interfaces([eth0_Interface, eth1_Interface])
+        eth0 = interfaces.get_by_name('eth0')
+        self.assertEquals(eth0, eth0_Interface)
+
 
 class TestInterface(TestCase):
 
@@ -755,3 +809,367 @@ class TestInterface(TestCase):
         interface.delete()
         Interface._handler.delete.assert_called_once_with(
             system_id=system_id, id=interface_data['id'])
+
+    def test__interface_disconnect(self):
+        Interface = make_origin().Interface
+        system_id = make_string_without_spaces()
+        interface_data = {
+            "system_id": system_id,
+            "id": random.randint(0, 100),
+            "name": make_string_without_spaces(),
+            "type": InterfaceType.PHYSICAL.value,
+            "links": [
+                {
+                    'id': random.randint(0, 100),
+                    'mode': LinkMode.AUTO.value,
+                },
+            ],
+        }
+        interface = Interface(interface_data)
+        updated_data = dict(interface_data)
+        updated_data['links'] = []
+        Interface._handler.disconnect.return_value = updated_data
+        interface.disconnect()
+        Interface._handler.disconnect.assert_called_once_with(
+            system_id=system_id, id=interface_data['id'])
+        self.assertEquals([], list(interface.links))
+
+    def test__interface_links_create_raises_TypeError_no_Interface(self):
+        origin = make_origin()
+        InterfaceLinks = origin.InterfaceLinks
+        error = self.assertRaises(
+            TypeError, InterfaceLinks.create,
+            random.randint(0, 1000), LinkMode.AUTO)
+        self.assertEquals(
+            "interface must be an Interface, not int", str(error))
+
+    def test__interface_links_create_raises_TypeError_no_LinkMode(self):
+        origin = make_origin()
+        Interface, InterfaceLinks = origin.Interface, origin.InterfaceLinks
+        interface = Interface({
+            'system_id': make_string_without_spaces(),
+            'id': random.randint(0, 100),
+        })
+        error = self.assertRaises(
+            TypeError, InterfaceLinks.create,
+            interface, LinkMode.AUTO.value)
+        self.assertEquals(
+            "mode must be a LinkMode, not str", str(error))
+
+    def test__interface_links_create_raises_TypeError_no_Subnet(self):
+        origin = make_origin()
+        Interface, InterfaceLinks = origin.Interface, origin.InterfaceLinks
+        interface = Interface({
+            'system_id': make_string_without_spaces(),
+            'id': random.randint(0, 100),
+        })
+        error = self.assertRaises(
+            TypeError, InterfaceLinks.create,
+            interface, LinkMode.AUTO,
+            subnet=make_string_without_spaces())
+        self.assertEquals(
+            "subnet must be a Subnet or int, not str", str(error))
+
+    def test__interface_links_create_raises_ValueError_AUTO_no_Subnet(self):
+        origin = make_origin()
+        Interface, InterfaceLinks = origin.Interface, origin.InterfaceLinks
+        interface = Interface({
+            'system_id': make_string_without_spaces(),
+            'id': random.randint(0, 100),
+        })
+        error = self.assertRaises(
+            ValueError, InterfaceLinks.create,
+            interface, LinkMode.AUTO)
+        self.assertEquals(
+            "subnet is required for %s" % LinkMode.AUTO, str(error))
+
+    def test__interface_links_create_raises_ValueError_STATIC_no_Subnet(self):
+        origin = make_origin()
+        Interface, InterfaceLinks = origin.Interface, origin.InterfaceLinks
+        interface = Interface({
+            'system_id': make_string_without_spaces(),
+            'id': random.randint(0, 100),
+        })
+        error = self.assertRaises(
+            ValueError, InterfaceLinks.create,
+            interface, LinkMode.STATIC)
+        self.assertEquals(
+            "subnet is required for %s" % LinkMode.STATIC, str(error))
+
+    def test__interface_links_create_raises_ValueError_LINK_UP_gateway(self):
+        origin = make_origin()
+        Interface, InterfaceLinks = origin.Interface, origin.InterfaceLinks
+        interface = Interface({
+            'system_id': make_string_without_spaces(),
+            'id': random.randint(0, 100),
+        })
+        error = self.assertRaises(
+            ValueError, InterfaceLinks.create,
+            interface, LinkMode.LINK_UP, default_gateway=True)
+        self.assertEquals(
+            "cannot set as default_gateway for %s" % LinkMode.LINK_UP,
+            str(error))
+
+    def test__interface_links_create_raises_ValueError_DHCP_gateway(self):
+        origin = make_origin()
+        Interface, InterfaceLinks = origin.Interface, origin.InterfaceLinks
+        interface = Interface({
+            'system_id': make_string_without_spaces(),
+            'id': random.randint(0, 100),
+        })
+        error = self.assertRaises(
+            ValueError, InterfaceLinks.create,
+            interface, LinkMode.DHCP, default_gateway=True)
+        self.assertEquals(
+            "cannot set as default_gateway for %s" % LinkMode.DHCP,
+            str(error))
+
+    def test__interface_links_create_AUTO(self):
+        origin = make_origin()
+        Interface, Subnet = origin.Interface, origin.Subnet
+        system_id = make_string_without_spaces()
+        interface_data = {
+            "system_id": system_id,
+            "id": random.randint(0, 100),
+            "name": make_string_without_spaces(),
+            "type": InterfaceType.PHYSICAL.value,
+            "links": [
+                {
+                    'id': random.randint(0, 100),
+                    'mode': LinkMode.LINK_UP.value,
+                    'subnet': {
+                        'id': random.randint(0, 100),
+                    }
+                },
+            ],
+        }
+        interface = Interface(interface_data)
+        updated_data = dict(interface_data)
+        link_id = random.randint(0, 100)
+        subnet_id = random.randint(0, 100)
+        updated_data['links'] = [
+            {
+                'id': link_id,
+                'mode': LinkMode.AUTO.value,
+                'subnet': {
+                    'id': subnet_id,
+                }
+            }
+        ]
+        Interface._handler.link_subnet.return_value = updated_data
+        interface.links.create(LinkMode.AUTO, subnet_id)
+        Interface._handler.link_subnet.assert_called_once_with(
+            system_id=interface.node.system_id, id=interface.id,
+            mode=LinkMode.AUTO.value, subnet=subnet_id, force=False,
+            default_gateway=False)
+        self.assertThat(interface.links, MatchesSetwise(
+            MatchesStructure(
+                id=Equals(link_id), mode=Equals(LinkMode.AUTO),
+                subnet=MatchesAll(
+                    IsInstance(Subnet),
+                    MatchesStructure(id=Equals(subnet_id))))))
+
+    def test__interface_links_create_STATIC(self):
+        origin = make_origin()
+        Interface, Subnet = origin.Interface, origin.Subnet
+        system_id = make_string_without_spaces()
+        interface_data = {
+            "system_id": system_id,
+            "id": random.randint(0, 100),
+            "name": make_string_without_spaces(),
+            "type": InterfaceType.PHYSICAL.value,
+            "links": [
+                {
+                    'id': random.randint(0, 100),
+                    'mode': LinkMode.LINK_UP.value,
+                    'subnet': {
+                        'id': random.randint(0, 100),
+                    }
+                },
+            ],
+        }
+        interface = Interface(interface_data)
+        updated_data = dict(interface_data)
+        link_id = random.randint(0, 100)
+        subnet_id = random.randint(0, 100)
+        updated_data['links'] = [
+            {
+                'id': link_id,
+                'mode': LinkMode.STATIC.value,
+                'ip_address': '192.168.122.10',
+                'subnet': {
+                    'id': subnet_id,
+                }
+            }
+        ]
+        Interface._handler.link_subnet.return_value = updated_data
+        interface.links.create(
+            LinkMode.STATIC, subnet=Subnet(subnet_id),
+            ip_address='192.168.122.10', default_gateway=True, force=True)
+        Interface._handler.link_subnet.assert_called_once_with(
+            system_id=interface.node.system_id, id=interface.id,
+            mode=LinkMode.STATIC.value, subnet=subnet_id,
+            ip_address='192.168.122.10', force=True, default_gateway=True)
+        self.assertThat(interface.links, MatchesSetwise(
+            MatchesStructure(
+                id=Equals(link_id), mode=Equals(LinkMode.STATIC),
+                ip_address=Equals('192.168.122.10'),
+                subnet=MatchesAll(
+                    IsInstance(Subnet),
+                    MatchesStructure(id=Equals(subnet_id))))))
+
+    def test__interface_links_create_DHCP(self):
+        origin = make_origin()
+        Interface, Subnet = origin.Interface, origin.Subnet
+        system_id = make_string_without_spaces()
+        interface_data = {
+            "system_id": system_id,
+            "id": random.randint(0, 100),
+            "name": make_string_without_spaces(),
+            "type": InterfaceType.PHYSICAL.value,
+            "links": [
+                {
+                    'id': random.randint(0, 100),
+                    'mode': LinkMode.LINK_UP.value,
+                    'subnet': {
+                        'id': random.randint(0, 100),
+                    }
+                },
+            ],
+        }
+        interface = Interface(interface_data)
+        updated_data = dict(interface_data)
+        link_id = random.randint(0, 100)
+        subnet_id = random.randint(0, 100)
+        updated_data['links'] = [
+            {
+                'id': link_id,
+                'mode': LinkMode.DHCP.value,
+                'subnet': {
+                    'id': subnet_id,
+                }
+            }
+        ]
+        Interface._handler.link_subnet.return_value = updated_data
+        interface.links.create(
+            LinkMode.DHCP, subnet=Subnet(subnet_id))
+        Interface._handler.link_subnet.assert_called_once_with(
+            system_id=interface.node.system_id, id=interface.id,
+            mode=LinkMode.DHCP.value, subnet=subnet_id,
+            default_gateway=False, force=False)
+        self.assertThat(interface.links, MatchesSetwise(
+            MatchesStructure(
+                id=Equals(link_id), mode=Equals(LinkMode.DHCP),
+                subnet=MatchesAll(
+                    IsInstance(Subnet),
+                    MatchesStructure(id=Equals(subnet_id))))))
+
+    def test__interface_links_create_LINK_UP(self):
+        origin = make_origin()
+        Interface, Subnet = origin.Interface, origin.Subnet
+        system_id = make_string_without_spaces()
+        interface_data = {
+            "system_id": system_id,
+            "id": random.randint(0, 100),
+            "name": make_string_without_spaces(),
+            "type": InterfaceType.PHYSICAL.value,
+            "links": [],
+        }
+        interface = Interface(interface_data)
+        updated_data = dict(interface_data)
+        link_id = random.randint(0, 100)
+        subnet_id = random.randint(0, 100)
+        updated_data['links'] = [
+            {
+                'id': link_id,
+                'mode': LinkMode.LINK_UP.value,
+                'subnet': {
+                    'id': subnet_id,
+                }
+            }
+        ]
+        Interface._handler.link_subnet.return_value = updated_data
+        interface.links.create(
+            LinkMode.LINK_UP, subnet=Subnet(subnet_id))
+        Interface._handler.link_subnet.assert_called_once_with(
+            system_id=interface.node.system_id, id=interface.id,
+            mode=LinkMode.LINK_UP.value, subnet=subnet_id,
+            default_gateway=False, force=False)
+        self.assertThat(interface.links, MatchesSetwise(
+            MatchesStructure(
+                id=Equals(link_id), mode=Equals(LinkMode.LINK_UP),
+                subnet=MatchesAll(
+                    IsInstance(Subnet),
+                    MatchesStructure(id=Equals(subnet_id))))))
+
+    def test__interface_links_delete(self):
+        origin = make_origin()
+        Interface, Subnet = origin.Interface, origin.Subnet
+        system_id = make_string_without_spaces()
+        link_id = random.randint(0, 100)
+        subnet_id = random.randint(0, 100)
+        interface_data = {
+            "system_id": system_id,
+            "id": random.randint(0, 100),
+            "name": make_string_without_spaces(),
+            "type": InterfaceType.PHYSICAL.value,
+            "links": [
+                {
+                    'id': link_id,
+                    'mode': LinkMode.AUTO.value,
+                    'subnet': {
+                        'id': subnet_id,
+                    }
+                }
+            ],
+        }
+        interface = Interface(interface_data)
+        updated_data = dict(interface_data)
+        new_link_id = random.randint(0, 100)
+        new_subnet_id = random.randint(0, 100)
+        updated_data['links'] = [
+            {
+                'id': new_link_id,
+                'mode': LinkMode.LINK_UP.value,
+                'subnet': {
+                    'id': new_subnet_id,
+                }
+            }
+        ]
+        Interface._handler.unlink_subnet.return_value = updated_data
+        interface.links[0].delete()
+        Interface._handler.unlink_subnet.assert_called_once_with(
+            system_id=interface.node.system_id, id=interface.id, _id=link_id)
+        self.assertThat(interface.links, MatchesSetwise(
+            MatchesStructure(
+                id=Equals(new_link_id), mode=Equals(LinkMode.LINK_UP),
+                subnet=MatchesAll(
+                    IsInstance(Subnet),
+                    MatchesStructure(id=Equals(new_subnet_id))))))
+
+    def test__interface_links_set_as_default_gateway(self):
+        origin = make_origin()
+        Interface = origin.Interface
+        system_id = make_string_without_spaces()
+        link_id = random.randint(0, 100)
+        subnet_id = random.randint(0, 100)
+        interface_data = {
+            "system_id": system_id,
+            "id": random.randint(0, 100),
+            "name": make_string_without_spaces(),
+            "type": InterfaceType.PHYSICAL.value,
+            "links": [
+                {
+                    'id': link_id,
+                    'mode': LinkMode.AUTO.value,
+                    'subnet': {
+                        'id': subnet_id,
+                    }
+                }
+            ],
+        }
+        interface = Interface(interface_data)
+        interface.links[0].set_as_default_gateway()
+        Interface._handler.set_default_gateway.assert_called_once_with(
+            system_id=interface.node.system_id, id=interface.id,
+            link_id=link_id)
