@@ -945,7 +945,7 @@ class TestInterface(TestCase):
         }
         interface = Interface(interface_data)
         updated_data = dict(interface_data)
-        link_id = random.randint(0, 100)
+        link_id = random.randint(100, 200)
         subnet_id = random.randint(0, 100)
         updated_data['links'] = [
             {
@@ -990,7 +990,7 @@ class TestInterface(TestCase):
         }
         interface = Interface(interface_data)
         updated_data = dict(interface_data)
-        link_id = random.randint(0, 100)
+        link_id = random.randint(100, 200)
         subnet_id = random.randint(0, 100)
         updated_data['links'] = [
             {
@@ -1039,7 +1039,7 @@ class TestInterface(TestCase):
         }
         interface = Interface(interface_data)
         updated_data = dict(interface_data)
-        link_id = random.randint(0, 100)
+        link_id = random.randint(100, 200)
         subnet_id = random.randint(0, 100)
         updated_data['links'] = [
             {
