@@ -38,7 +38,7 @@ from ..utils.profiles import (
 
 
 PROG_DESCRIPTION = """\
-MAAS provides complete automation of you physical servers for amazing data
+MAAS provides complete automation of your physical servers for amazing data
 center operational efficiency.
 
 See https://maas.io/docs for documentation.
@@ -110,7 +110,7 @@ class HelpAction(argparse._HelpAction):
 
 
 class HelpFormatter(argparse.RawDescriptionHelpFormatter):
-    """Specialisation of argparse's raw description help formatter to modify
+    """Specialization of argparse's raw description help formatter to modify
     usage to be in a better format.
     """
 
@@ -122,7 +122,7 @@ class HelpFormatter(argparse.RawDescriptionHelpFormatter):
 
 
 class ArgumentParser(argparse.ArgumentParser):
-    """Specialisation of argparse's parser with better support for
+    """Specialization of argparse's parser with better support for
     subparsers and better help output.
 
     Specifically, the one-shot `add_subparsers` call is disabled, replaced by
