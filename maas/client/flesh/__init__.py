@@ -18,6 +18,7 @@ from abc import (
 import argparse
 from importlib import import_module
 import sys
+import textwrap
 import typing
 
 import argcomplete
@@ -33,6 +34,24 @@ from ..utils.profiles import (
     Profile,
     ProfileStore,
 )
+
+
+PROG_DESCRIPTION = """\
+MAAS provides complete automation of you physical servers for amazing data
+center operational efficiency.
+
+See https://maas.io/docs for documentation.
+
+Common commands:
+
+    ...
+
+Example help commands:
+
+    `maas help`          This help page
+    `maas help commands` Lists all commands
+    `maas help deploy`   Shows help for command 'deploy'
+"""
 
 
 def colorized(text):
@@ -60,11 +79,34 @@ def get_profile_names_and_default() -> (
 PROFILE_NAMES, PROFILE_DEFAULT = get_profile_names_and_default()
 
 
+class HelpAction(argparse._HelpAction):
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        parser.print_minized_help()
+        parser.exit()
+
+
+class HelpFormatter(argparse.RawDescriptionHelpFormatter):
+    """Specialisation of argparse's raw description help formatter to modify
+    usage to be in a better format.
+    """
+
+    def _format_usage(self, usage, actions, groups, prefix):
+        if prefix is None:
+            prefix = "Usage: "
+        return super(HelpFormatter, self)._format_usage(
+            usage, actions, groups, prefix)
+
+
 class ArgumentParser(argparse.ArgumentParser):
-    """Specialisation of argparse's parser with better support for subparsers.
+    """Specialisation of argparse's parser with better support for
+    subparsers and better help output.
 
     Specifically, the one-shot `add_subparsers` call is disabled, replaced by
     a lazily evaluated `subparsers` property.
+
+    `print_minized_help` is added to only show the description which is
+    specially formatted.
     """
 
     def add_subparsers(self):
@@ -112,6 +154,19 @@ class ArgumentParser(argparse.ArgumentParser):
         """
         self.exit(2, colorized("{autored}Error:{/autored} ") + message + "\n")
 
+    def print_minized_help(self):
+        """Return the formatted help text.
+
+        Override default ArgumentParser to just include the usage and the
+        description. The `help` action is used for provide more detail.
+        """
+        formatter = self._get_formatter()
+        formatter.add_usage(
+            self.usage, self._actions,
+            self._mutually_exclusive_groups)
+        formatter.add_text(self.description)
+        print(formatter.format_help())
+
 
 class CommandError(Exception):
     """A command has failed during execution."""
@@ -148,7 +203,8 @@ class Command(metaclass=ABCMeta):
         help_title, help_body = utils.parse_docstring(cls)
         command_parser = parser.subparsers.add_parser(
             cls.name() if name is None else name, help=help_title,
-            description=help_title, epilog=help_body, add_help=False)
+            description=help_title, epilog=help_body, add_help=False,
+            formatter_class=HelpFormatter)
         command_parser.add_argument(
             "-h", "--help", action="help", help=argparse.SUPPRESS)
         command_parser.set_defaults(execute=cls(command_parser))
@@ -213,13 +269,81 @@ class OriginTableCommand(OriginCommandBase, TableCommand):
             "Implement execute() in subclasses.")
 
 
+class cmd_help(Command):
+    """Show the help summary or help for a specific command."""
+
+    def __init__(self, parser, parent_parser):
+        self.parent_parser = parent_parser
+        super(cmd_help, self).__init__(parser)
+        parser.add_argument(
+            'command', nargs='?', help="Show help for this command.")
+
+    def __call__(self, options):
+        if options.command is None:
+            self.parent_parser.print_minized_help()
+        else:
+            command = self.parent_parser.subparsers.choices.get(
+                options.command, None)
+            if command is None:
+                if options.command == 'commands':
+                    self.print_all_commands()
+                else:
+                    self.parser.error(
+                        "unknown command %s" % options.command)
+            else:
+                command.print_help()
+
+    def print_all_commands(self):
+        """Print help for all commands.
+
+        Commands are sorted in alphabetical order and wrapping is done
+        based on the width of the terminal.
+        """
+        formatter = self.parent_parser._get_formatter()
+        command_names = sorted(self.parent_parser.subparsers.choices.keys())
+        max_name_len = max([len(name) for name in command_names]) + 1
+        commands = ""
+        for name in command_names:
+            command = self.parent_parser.subparsers.choices[name]
+            extra_padding = max_name_len - len(name)
+            command_line = '%s%s%s' % (
+                name, ' ' * extra_padding, command.description)
+            while len(command_line) > formatter._width:
+                lines = textwrap.wrap(command_line, formatter._width)
+                commands += "%s\n" % lines[0]
+                if len(lines) > 1:
+                    lines[1] = (' ' * max_name_len) + lines[1]
+                    command_line = ' '.join(lines[1:])
+                else:
+                    command_line = None
+            if command_line:
+                commands += "%s\n" % command_line
+        print(commands[:-1])
+
+    @classmethod
+    def register(cls, parser, name=None):
+        """Register this command as a sub-parser of `parser`.
+
+        :type parser: An instance of `ArgumentParser`.
+        :return: The sub-parser created.
+        """
+        help_title, help_body = utils.parse_docstring(cls)
+        command_parser = parser.subparsers.add_parser(
+            cls.name() if name is None else name, help=help_title,
+            description=help_title, epilog=help_body, add_help=False,
+            formatter_class=HelpFormatter)
+        command_parser.set_defaults(execute=cls(command_parser, parser))
+        return command_parser
+
+
 def prepare_parser(program):
     """Create and populate an argument parser."""
     parser = ArgumentParser(
-        description="Interact with a remote MAAS server.", prog=program,
-        epilog=colorized("If in doubt, try {autogreen}login{/autogreen}."),
+        description=PROG_DESCRIPTION, prog=program,
+        formatter_class=HelpFormatter,
         add_help=False)
-    parser.add_argument("-h", "--help", action="help", help=argparse.SUPPRESS)
+    parser.add_argument(
+        "-h", "--help", action=HelpAction, help=argparse.SUPPRESS)
 
     # Register sub-commands.
     submodules = (
@@ -231,6 +355,7 @@ def prepare_parser(program):
         # a topic, or miscellaneous conveniences.
         "profiles", "shell",
     )
+    cmd_help.register(parser)
     for submodule in submodules:
         module = import_module("." + submodule, __name__)
         module.register(parser)
