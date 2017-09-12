@@ -30,6 +30,7 @@ from .. import (
     utils,
     viscera,
 )
+from ..utils.auth import try_getpass
 from ..utils.profiles import (
     Profile,
     ProfileStore,
@@ -44,7 +45,8 @@ See https://maas.io/docs for documentation.
 
 Common commands:
 
-    ...
+    maas login   Log-in to a MAAS.
+    maas switch  Switch the active profile.
 
 Example help commands:
 
@@ -61,6 +63,27 @@ def colorized(text):
         return colorclass.Color(text)
     else:
         return colorclass.Color(text).value_no_colors
+
+
+def read_input(message, validator=None, password=False):
+    message = "%s: " % message
+    while True:
+        if password:
+            value = try_getpass(message)
+        else:
+            value = input(message)
+        if value:
+            if validator is not None:
+                try:
+                    validator(value)
+                except Exception as exc:
+                    print(
+                        colorized("{{autored}}Error: {{/autored}} %s") %
+                        str(exc))
+                else:
+                    return value
+            else:
+                return value
 
 
 def get_profile_names_and_default() -> (
