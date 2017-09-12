@@ -30,6 +30,7 @@ from .. import (
     utils,
     viscera,
 )
+from ..utils.auth import try_getpass
 from ..utils.profiles import (
     Profile,
     ProfileStore,
@@ -37,14 +38,15 @@ from ..utils.profiles import (
 
 
 PROG_DESCRIPTION = """\
-MAAS provides complete automation of you physical servers for amazing data
+MAAS provides complete automation of your physical servers for amazing data
 center operational efficiency.
 
 See https://maas.io/docs for documentation.
 
 Common commands:
 
-    ...
+    maas login   Log-in to a MAAS.
+    maas switch  Switch the active profile.
 
 Example help commands:
 
@@ -61,6 +63,27 @@ def colorized(text):
         return colorclass.Color(text)
     else:
         return colorclass.Color(text).value_no_colors
+
+
+def read_input(message, validator=None, password=False):
+    message = "%s: " % message
+    while True:
+        if password:
+            value = try_getpass(message)
+        else:
+            value = input(message)
+        if value:
+            if validator is not None:
+                try:
+                    validator(value)
+                except Exception as exc:
+                    print(
+                        colorized("{{autored}}Error: {{/autored}} %s") %
+                        str(exc))
+                else:
+                    return value
+            else:
+                return value
 
 
 def get_profile_names_and_default() -> (
@@ -87,7 +110,7 @@ class HelpAction(argparse._HelpAction):
 
 
 class HelpFormatter(argparse.RawDescriptionHelpFormatter):
-    """Specialisation of argparse's raw description help formatter to modify
+    """Specialization of argparse's raw description help formatter to modify
     usage to be in a better format.
     """
 
@@ -99,7 +122,7 @@ class HelpFormatter(argparse.RawDescriptionHelpFormatter):
 
 
 class ArgumentParser(argparse.ArgumentParser):
-    """Specialisation of argparse's parser with better support for
+    """Specialization of argparse's parser with better support for
     subparsers and better help output.
 
     Specifically, the one-shot `add_subparsers` call is disabled, replaced by

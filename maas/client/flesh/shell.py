@@ -23,7 +23,7 @@ from .. import (
 
 
 class cmd_shell(Command):
-    """Start a shell with some convenient local variables.
+    """Start a python shell to interact with python-libmaas.
 
     If IPython is available it will be used, otherwise the familiar Python
     REPL will be started. If a script is piped in, it is read in its entirety

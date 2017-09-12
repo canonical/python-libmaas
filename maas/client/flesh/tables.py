@@ -277,16 +277,7 @@ class UsersTable(Table):
         return super().render(target, data)
 
 
-class ProfileAnonymousColumn(Column):
-
-    def render(self, target, is_anonymous):
-        if target in (RenderTarget.pretty, RenderTarget.plain):
-            return "Yes" if is_anonymous else "No"
-        else:
-            return super().render(target, is_anonymous)
-
-
-class ProfileDefaultColumn(Column):
+class ProfileActiveColumn(Column):
 
     def render(self, target, is_anonymous):
         if target is RenderTarget.pretty:
@@ -301,18 +292,16 @@ class ProfilesTable(Table):
 
     def __init__(self):
         super().__init__(
-            Column("name", "Profile name"),
+            Column("name", "Profile"),
             Column("url", "URL"),
-            ProfileAnonymousColumn("is_anonymous", "Anonymous?"),
-            ProfileDefaultColumn("is_default", "Default?"),
+            ProfileActiveColumn("is_default", "Active"),
         )
 
     def render(self, target, profiles):
         default = profiles.default
         default_name = None if default is None else default.name
         data = (
-            (profile.name, profile.url, (profile.credentials is None),
-             (profile.name == default_name))
+            (profile.name, profile.url, (profile.name == default_name))
             for profile in (profiles.load(name) for name in profiles)
         )
         data = sorted(data, key=itemgetter(0))
