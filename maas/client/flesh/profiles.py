@@ -9,6 +9,7 @@ import sys
 from . import (
     colorized,
     Command,
+    print_with_pager,
     PROFILE_DEFAULT,
     PROFILE_NAMES,
     read_input,
@@ -179,6 +180,11 @@ class cmd_profiles(TableCommand):
                 "all profiles. Use it to update your command-line client's "
                 "information after an upgrade to the MAAS server."),
         )
+        parser.other.add_argument(
+            "--no-pager", action='store_true',
+            help=(
+                "Don't use the pager when printing the output of the "
+                "command."))
 
     def __call__(self, options):
         if options.refresh:
@@ -191,7 +197,10 @@ class cmd_profiles(TableCommand):
         else:
             table = tables.ProfilesTable()
             with profiles.ProfileStore.open() as config:
-                print(table.render(options.format, config))
+                if options.no_pager:
+                    print(table.render(options.format, config))
+                else:
+                    print_with_pager(table.render(options.format, config))
 
 
 def register(parser):

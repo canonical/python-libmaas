@@ -124,6 +124,9 @@ class Column:
                 return ""
             elif isinstance(datum, colorclass.Color):
                 return datum.value_no_colors
+            elif (isinstance(datum, collections.Iterable) and
+                    not isinstance(datum, (str, bytes))):
+                return "\n".join(datum)
             else:
                 return str(datum)
         elif target is RenderTarget.pretty:
@@ -131,6 +134,9 @@ class Column:
                 return ""
             elif isinstance(datum, colorclass.Color):
                 return datum
+            elif (isinstance(datum, collections.Iterable) and
+                    not isinstance(datum, (str, bytes))):
+                return "\n".join(datum)
             else:
                 return str(datum)
         else:

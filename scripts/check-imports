@@ -520,6 +520,7 @@ checks = [
             Allow("testscenarios|testscenarios.**"),
             Allow("testtools|testtools.**"),
             Allow("twisted|twisted.**"),
+            Allow("yaml|yaml.**"),
             Allow(StandardLibraries),
         ),
     ),

@@ -17,6 +17,7 @@ from abc import (
 )
 import argparse
 from importlib import import_module
+import subprocess
 import sys
 import textwrap
 import typing
@@ -84,6 +85,26 @@ def read_input(message, validator=None, password=False):
                     return value
             else:
                 return value
+
+
+def print_with_pager(output):
+    """Print the output to `stdout` using less when in a tty."""
+    if sys.stdout.isatty():
+        try:
+            pager = subprocess.Popen(
+                ['less', '-F', '-r', '-S', '-X', '-K'],
+                stdin=subprocess.PIPE, stdout=sys.stdout)
+        except subprocess.CalledProcessError:
+            # Don't use the pager since starting it has failed.
+            print(output)
+            return
+        else:
+            pager.stdin.write(output.encode('utf-8'))
+            pager.stdin.close()
+            pager.wait()
+    else:
+        # Output directly to stdout since not in tty.
+        print(output)
 
 
 def get_profile_names_and_default() -> (
@@ -177,7 +198,7 @@ class ArgumentParser(argparse.ArgumentParser):
         """
         self.exit(2, colorized("{autored}Error:{/autored} ") + message + "\n")
 
-    def print_minized_help(self):
+    def print_minized_help(self, *, no_pager=False):
         """Return the formatted help text.
 
         Override default ArgumentParser to just include the usage and the
@@ -188,7 +209,10 @@ class ArgumentParser(argparse.ArgumentParser):
             self.usage, self._actions,
             self._mutually_exclusive_groups)
         formatter.add_text(self.description)
-        print(formatter.format_help())
+        if no_pager:
+            print(formatter.format_help())
+        else:
+            print_with_pager(formatter.format_help())
 
 
 class CommandError(Exception):
@@ -275,7 +299,7 @@ class OriginCommand(OriginCommandBase):
         origin = viscera.Origin(session)
         return self.execute(origin, options)
 
-    def execute(self, options, origin):
+    def execute(self, origin, options):
         raise NotImplementedError(
             "Implement execute() in subclasses.")
 
@@ -287,9 +311,27 @@ class OriginTableCommand(OriginCommandBase, TableCommand):
         origin = viscera.Origin(session)
         return self.execute(origin, options, target=options.format)
 
-    def execute(self, options, origin, *, target):
+    def execute(self, origin, options, *, target):
         raise NotImplementedError(
             "Implement execute() in subclasses.")
+
+
+class OriginPagedTableCommand(OriginTableCommand):
+
+    def __init__(self, parser):
+        super(OriginPagedTableCommand, self).__init__(parser)
+        parser.other.add_argument(
+            "--no-pager", action='store_true',
+            help=(
+                "Don't use the pager when printing the output of the "
+                "command."))
+
+    def __call__(self, options):
+        output = super(OriginPagedTableCommand, self).__call__(options)
+        if options.no_pager:
+            print(output)
+        else:
+            print_with_pager(output)
 
 
 class cmd_help(Command):
@@ -299,24 +341,34 @@ class cmd_help(Command):
         self.parent_parser = parent_parser
         super(cmd_help, self).__init__(parser)
         parser.add_argument(
+            "-h", "--help", action="help", help=argparse.SUPPRESS)
+        parser.add_argument(
             'command', nargs='?', help="Show help for this command.")
+        parser.other.add_argument(
+            "--no-pager", action='store_true',
+            help=(
+                "Don't use the pager when printing the output of the "
+                "command."))
 
     def __call__(self, options):
         if options.command is None:
-            self.parent_parser.print_minized_help()
+            self.parent_parser.print_minized_help(no_pager=options.no_pager)
         else:
             command = self.parent_parser.subparsers.choices.get(
                 options.command, None)
             if command is None:
                 if options.command == 'commands':
-                    self.print_all_commands()
+                    self.print_all_commands(no_pager=options.no_pager)
                 else:
                     self.parser.error(
                         "unknown command %s" % options.command)
             else:
-                command.print_help()
+                if options.no_pager:
+                    command.print_help()
+                else:
+                    print_with_pager(command.format_help())
 
-    def print_all_commands(self):
+    def print_all_commands(self, *, no_pager=False):
         """Print help for all commands.
 
         Commands are sorted in alphabetical order and wrapping is done
@@ -341,7 +393,10 @@ class cmd_help(Command):
                     command_line = None
             if command_line:
                 commands += "%s\n" % command_line
-        print(commands[:-1])
+        if no_pager:
+            print(commands[:-1])
+        else:
+            print_with_pager(commands[:-1])
 
     @classmethod
     def register(cls, parser, name=None):
@@ -370,12 +425,8 @@ def prepare_parser(program):
 
     # Register sub-commands.
     submodules = (
-        # These modules are expected to register verb-like commands into the
-        # sub-parsers created above, e.g. for "list files", "launch node".
-        # Nodes always come first.
-        "nodes", "files", "tags", "users",
-        # These modules are different: they are collections of commands around
-        # a topic, or miscellaneous conveniences.
+        "nodes", "machines", "devices", "controllers",
+        "files", "tags", "users",
         "profiles", "shell",
     )
     cmd_help.register(parser)
