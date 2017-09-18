@@ -5,19 +5,19 @@ __all__ = [
 ]
 
 from . import (
-    OriginTableCommand,
+    OriginPagedTableCommand,
     tables,
 )
 
 
-class cmd_list_tags(OriginTableCommand):
+class cmd_tags(OriginPagedTableCommand):
     """List tags."""
 
     def execute(self, origin, options, target):
         table = tables.TagsTable()
-        print(table.render(target, origin.Tags.read()))
+        return table.render(target, origin.Tags.read())
 
 
 def register(parser):
     """Register profile commands with the given parser."""
-    cmd_list_tags.register(parser)
+    cmd_tags.register(parser)

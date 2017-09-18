@@ -12,12 +12,7 @@ from operator import itemgetter
 
 from colorclass import Color
 
-from ..viscera.controllers import (
-    RackController,
-    RegionController,
-)
-from ..viscera.devices import Device
-from ..viscera.machines import Machine
+from ..enum import NodeType
 from .tabular import (
     Column,
     RenderTarget,
@@ -27,35 +22,30 @@ from .tabular import (
 
 class NodeTypeColumn(Column):
 
-    DEVICE = 1
-    MACHINE = 2
-    RACK = 3
-    REGION = 4
-
-    GLYPHS = {
-        DEVICE: Color("."),
-        MACHINE: Color("{autoblue}m{/autoblue}"),
-        RACK: Color("{yellow}c{/yellow}"),
-        REGION: Color("{automagenta}C{/automagenta}"),
+    nice_names = {
+        NodeType.MACHINE: "Machine",
+        NodeType.DEVICE: "Device",
+        NodeType.RACK_CONTROLLER: "Rackd",
+        NodeType.REGION_CONTROLLER: "Regiond",
+        NodeType.REGION_AND_RACK_CONTROLLER: "Regiond+rackd",
     }
 
-    def render(self, target, num):
-        glyph = self.GLYPHS[num]
-        if target == RenderTarget.pretty:
-            return glyph
+    def render(self, target, node_type):
+        if target in (RenderTarget.pretty, RenderTarget.plain):
+            node_type = self.nice_names[node_type]
         else:
-            return glyph.value_no_colors
+            node_type = node_type.value
+        return super().render(target, node_type)
 
 
 class NodeArchitectureColumn(Column):
 
     def render(self, target, architecture):
         if target in (RenderTarget.pretty, RenderTarget.plain):
-            if architecture is None:
-                architecture = "-"
-            elif len(architecture) == 0:
-                architecture = "-"
-            elif architecture.isspace():
+            if architecture:
+                if architecture.endswith('/generic'):
+                    architecture = architecture[:-8]
+            else:
                 architecture = "-"
         return super().render(target, architecture)
 
@@ -136,83 +126,108 @@ class NodePowerColumn(Column):
             if data in self.colours:
                 colour = self.colours[data]
                 return Color("{%s}%s{/%s}" % (
-                    colour, data.capitalize(), colour))
+                    colour, data.value.capitalize(), colour))
             else:
-                return data.capitalize()
+                return data.value.capitalize()
         elif target == RenderTarget.plain:
-            return super().render(target, data.capitalize())
+            return super().render(target, data.value.capitalize())
         else:
-            return super().render(target, data)
+            return super().render(target, data.value)
 
 
 class NodesTable(Table):
 
     def __init__(self):
         super().__init__(
-            NodeTypeColumn("type", ""),
             Column("hostname", "Hostname"),
-            Column("system_id", "System ID"),
-            NodeArchitectureColumn("architecture", "Architecture"),
-            NodeCPUsColumn("cpus", "#CPUs"),
-            NodeMemoryColumn("memory", "RAM"),
-            NodeStatusNameColumn("status", "Status"),
-            NodePowerColumn("power", "Power"),
+            NodeTypeColumn("node_type", "Type"),
         )
 
-    @classmethod
-    def data_for(cls, node):
-        if isinstance(node, Device):
-            return (
-                NodeTypeColumn.DEVICE,
-                node.hostname,
-                node.system_id,
-                "-",
-                None,
-                None,
-                "-",
-                "-",
-            )
-        elif isinstance(node, Machine):
-            return (
-                NodeTypeColumn.MACHINE,
-                node.hostname,
-                node.system_id,
-                node.architecture,
-                node.cpus,
-                node.memory,
-                node.status_name,
-                node.power_state,
-            )
-        elif isinstance(node, RackController):
-            return (
-                NodeTypeColumn.RACK,
-                node.hostname,
-                node.system_id,
-                node.architecture,
-                node.cpus,
-                node.memory,
-                "—",  # status_name
-                node.power_state,
-            )
-        elif isinstance(node, RegionController):
-            return (
-                NodeTypeColumn.REGION,
-                node.hostname,
-                node.system_id,
-                node.architecture,
-                node.cpus,
-                node.memory,
-                "—",  # status_name
-                node.power_state,
-            )
-        else:
-            raise TypeError(
-                "Cannot extract data from %r (%s)"
-                % (node, type(node).__name__))
-
     def render(self, target, nodes):
-        data = map(self.data_for, nodes)
-        data = sorted(data, key=itemgetter(0, 1))
+        data = (
+            (node.hostname, node.node_type)
+            for node in nodes
+        )
+        data = sorted(data, key=itemgetter(0))
+        return super().render(target, data)
+
+
+class MachinesTable(Table):
+
+    def __init__(self):
+        super().__init__(
+            Column("hostname", "Hostname"),
+            NodePowerColumn("power", "Power"),
+            NodeStatusNameColumn("status", "Status"),
+            NodeArchitectureColumn("architecture", "Arch"),
+            NodeCPUsColumn("cpus", "#CPUs"),
+            NodeMemoryColumn("memory", "RAM"),
+        )
+
+    def render(self, target, machines):
+        data = (
+            (
+                machine.hostname,
+                machine.power_state,
+                machine.status_name,
+                machine.architecture,
+                machine.cpus,
+                machine.memory,
+            )
+            for machine in machines
+        )
+        data = sorted(data, key=itemgetter(0))
+        return super().render(target, data)
+
+
+class DevicesTable(Table):
+
+    def __init__(self):
+        super().__init__(
+            Column("hostname", "Hostname"),
+            Column("ip_addresses", "IP addresses"),
+        )
+
+    def render(self, target, devices):
+        data = (
+            (
+                device.hostname,
+                [
+                    link.ip_address
+                    for interface in device.interfaces
+                    for link in interface.links
+                    if link.ip_address
+                ]
+            )
+            for device in devices
+        )
+        data = sorted(data, key=itemgetter(0))
+        return super().render(target, data)
+
+
+class ControllersTable(Table):
+
+    def __init__(self):
+        super().__init__(
+            Column("hostname", "Hostname"),
+            NodeTypeColumn("node_type", "Type"),
+            NodeArchitectureColumn("architecture", "Arch"),
+            NodeCPUsColumn("cpus", "#CPUs"),
+            NodeMemoryColumn("memory", "RAM"),
+        )
+
+    def render(self, target, controllers):
+        data = (
+            (
+                controller.hostname,
+                controller.node_type,
+                controller.architecture,
+                controller.cpus,
+                controller.memory,
+            )
+            for controller in controllers
+        )
+        data = sorted(data, key=itemgetter(0))
         return super().render(target, data)
 
 
