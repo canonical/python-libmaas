@@ -3,16 +3,14 @@
 from operator import itemgetter
 import yaml
 
+from .testing import TestCaseWithProfile
 from .. import (
     ArgumentParser,
     controllers,
     tabular
 )
 from ...enum import NodeType
-from ...testing import (
-    make_name_without_spaces,
-    TestCase
-)
+from ...testing import make_name_without_spaces
 from ...viscera.testing import bind
 from ...viscera.controllers import (
     RackController,
@@ -29,7 +27,7 @@ def make_origin():
         RegionController, RegionControllers)
 
 
-class TestControllers(TestCase):
+class TestControllers(TestCaseWithProfile):
     """Tests for `cmd_controllers`."""
 
     def test_returns_table_with_controllers(self):

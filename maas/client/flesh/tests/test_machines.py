@@ -3,6 +3,7 @@
 from operator import itemgetter
 import yaml
 
+from .testing import TestCaseWithProfile
 from .. import (
     ArgumentParser,
     machines,
@@ -12,10 +13,7 @@ from ...enum import (
     NodeStatus,
     PowerState
 )
-from ...testing import (
-    make_name_without_spaces,
-    TestCase
-)
+from ...testing import make_name_without_spaces
 from ...viscera.testing import bind
 from ...viscera.machines import (
     Machine,
@@ -28,7 +26,7 @@ def make_origin():
     return bind(Machines, Machine)
 
 
-class TestMachines(TestCase):
+class TestMachines(TestCaseWithProfile):
     """Tests for `cmd_machines`."""
 
     def test_returns_table_with_machines(self):

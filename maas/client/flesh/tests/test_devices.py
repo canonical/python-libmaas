@@ -3,15 +3,13 @@
 from operator import itemgetter
 import yaml
 
+from .testing import TestCaseWithProfile
 from .. import (
     ArgumentParser,
     devices,
     tabular
 )
-from ...testing import (
-    make_name_without_spaces,
-    TestCase
-)
+from ...testing import make_name_without_spaces
 from ...viscera.testing import bind
 from ...viscera.devices import (
     Device,
@@ -33,7 +31,7 @@ def make_origin():
         InterfaceLinks, InterfaceLink)
 
 
-class TestDevices(TestCase):
+class TestDevices(TestCaseWithProfile):
     """Tests for `cmd_devices`."""
 
     def test_returns_table_with_devices(self):

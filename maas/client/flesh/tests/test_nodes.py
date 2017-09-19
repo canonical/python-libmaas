@@ -3,16 +3,14 @@
 from operator import itemgetter
 import yaml
 
+from .testing import TestCaseWithProfile
 from .. import (
     ArgumentParser,
     nodes,
     tabular
 )
 from ...enum import NodeType
-from ...testing import (
-    make_name_without_spaces,
-    TestCase
-)
+from ...testing import make_name_without_spaces
 from ...viscera.testing import bind
 from ...viscera.nodes import (
     Node,
@@ -25,7 +23,7 @@ def make_origin():
     return bind(Nodes, Node)
 
 
-class TestNodes(TestCase):
+class TestNodes(TestCaseWithProfile):
     """Tests for `cmd_nodes`."""
 
     def test_returns_table_with_nodes(self):
