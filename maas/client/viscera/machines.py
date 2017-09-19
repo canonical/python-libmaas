@@ -18,12 +18,16 @@ from . import (
     ObjectFieldRelated,
     to,
 )
+from .fabrics import Fabric
+from .interfaces import Interface
 from .nodes import (
     Node,
     Nodes,
     NodesType,
     NodeTypeMeta,
 )
+from .subnets import Subnet
+from .zones import Zone
 from ..bones import CallError
 from ..enum import (
     NodeStatus,
@@ -35,7 +39,26 @@ from ..errors import (
     OperationNotAllowed,
     PowerError
 )
+from ..utils import remove_None
 from ..utils.diff import calculate_dict_diff
+
+
+FabricParam = typing.Union[str, int, Fabric]
+InterfaceParam = typing.Union[str, int, Interface]
+SubnetParam = typing.Union[str, int, Subnet]
+ZoneParam = typing.Union[str, Zone]
+
+
+def get_param_arg(param, idx, klass, arg, attr='id'):
+    """Return the correct value for a fabric from `arg`."""
+    if isinstance(arg, klass):
+        return getattr(arg, attr)
+    elif isinstance(arg, (int, str)):
+        return arg
+    else:
+        raise TypeError(
+            "%s[%d] must be int, str, or %s, not %s" % (
+                param, idx, klass.__name__, type(arg).__name__))
 
 
 class MachinesType(NodesType):
@@ -86,34 +109,138 @@ class MachinesType(NodesType):
         return cls._object(await cls._handler.create(**params))
 
     async def allocate(
-            cls, *, hostname: str=None, architecture: str=None, cpus: int=None,
-            memory: float=None, tags: typing.Sequence[str]=None):
+            cls, *,
+            hostname: str=None,
+            architectures: typing.Sequence[str]=None,
+            cpus: int=None,
+            fabrics: typing.Sequence[FabricParam]=None,
+            interfaces: typing.Sequence[InterfaceParam]=None,
+            memory: float=None,
+            pod: str=None,
+            pod_type: str=None,
+            storage: typing.Sequence[str]=None,
+            subnets: typing.Sequence[SubnetParam]=None,
+            tags: typing.Sequence[str]=None,
+            zone: typing.Union[str, Zone]=None,
+            not_fabrics: typing.Sequence[FabricParam]=None,
+            not_subnets: typing.Sequence[SubnetParam]=None,
+            not_tags: typing.Sequence[str]=None,
+            not_zones: typing.Sequence[ZoneParam]=None,
+            agent_name: str=None, comment: str=None,
+            bridge_all: bool=None, bridge_stp: bool=None, bridge_fd: int=None,
+            dry_run: bool=None, verbose: bool=None):
         """
         Allocate a machine.
 
         :param hostname: The hostname to match.
-        :param architecture: The architecture to match, e.g. "amd64".
+        :type hostname: `str`
+        :param architectures: The architecture(s) to match.
+        :type architectures: sequence of `str`
         :param cpus: The minimum number of CPUs to match.
-        :param memory: The minimum amount of RAM to match.
-        :param tags: The tags to match, as a sequence. Each tag may be
-            prefixed with a hyphen to denote that the given tag should NOT be
-            associated with a matched machine.
+        :type cpus: `int`
+        :param fabrics: The connected fabrics to match.
+        :type fabrics: sequence of either `str`, `int`, or `Fabric`
+        :param interfaces: The interfaces to match.
+        :type interfaces: sequence of either `str`, `int`, or `Interface`
+        :param memory: The minimum amount of RAM to match in MiB.
+        :type memory: `int`
+        :param pod: The pod to allocate the machine from.
+        :type pod: `str`
+        :param pod_type: The type of pod to allocate the machine from.
+        :type pod_type: `str`
+        :param subnets: The subnet(s) the desired machine must be linked to.
+        :type subnets: sequence of `str` or `int` or `Subnet`
+        :param storage: The storage contraint to match.
+        :type storage: `str`
+        :param tags: The tags to match, as a sequence.
+        :type tags: sequence of `str`
+        :param zone: The zone the desired machine must belong to.
+        :type zone: `str` or `Zone`
+        :param not_fabrics: The fabrics the machine must NOT be connected to.
+        :type not_fabrics: sequence of either `str`, `int`, or `Fabric`
+        :param not_subnets: The subnet(s) the desired machine must NOT be
+            linked to.
+        :type not_subnets: sequence of `str` or `int` or `Subnet`
+        :param not_zones: The zone(s) the desired machine must NOT in.
+        :type not_zones: sequence of `str` or `Zone`
+        :param agent_name: Agent name to attach to the acquire machine.
+        :type agent_name: `str`
+        :param comment: Comment for the allocate event placed on machine.
+        :type comment: `str`
+        :param bridge_all: Automatically create a bridge on all interfaces
+            on the allocated machine.
+        :type bridge_all: `bool`
+        :param bridge_stp: Turn spaning tree protocol on or off for the
+            bridges created with bridge_all.
+        :type bridge_stp: `bool`
+        :param bridge_fd: Set the forward delay in seconds on the bridges
+            created with bridge_all.
+        :type bridge_fd: `int`
+        :param dry_run: Don't actually acquire the machine just return the
+            machine that would have been acquired.
+        :type dry_run: `bool`
+        :param verbose: Indicate that the user would like additional verbosity
+            in the constraints_by_type field (each constraint will be prefixed
+            by `verbose_`, and contain the full data structure that indicates
+            which machine(s) matched).
+        :type verbose: `bool`
         """
-        params = {}
-        if hostname is not None:
-            params["name"] = hostname
-        if architecture is not None:
-            params["architecture"] = architecture
-        if cpus is not None:
-            params["cpu_count"] = str(cpus)
-        if memory is not None:
-            params["mem"] = str(memory)
-        if tags is not None:
-            params["tags"] = [
-                tag for tag in tags if not tag.startswith("-")]
-            params["not_tags"] = [
-                tag[1:] for tag in tags if tag.startswith("-")]
-
+        params = remove_None({
+            'name': hostname,
+            'arch': architectures,
+            'cpu_count': str(cpus) if cpus else None,
+            'mem': str(memory) if memory else None,
+            'pod': pod,
+            'pod_type': pod_type,
+            'storage': storage,
+            'tags': tags,
+            'not_tags': not_tags,
+            'agent_name': agent_name,
+            'comment': comment,
+            'bridge_all': bridge_all,
+            'bridge_stp': bridge_stp,
+            'bridge_fd': bridge_fd,
+            'dry_run': dry_run,
+            'verbose': verbose,
+        })
+        if fabrics is not None:
+            params["fabrics"] = [
+                get_param_arg('fabrics', idx, Fabric, fabric)
+                for idx, fabric in enumerate(fabrics)
+            ]
+        if interfaces is not None:
+            params["interfaces"] = [
+                get_param_arg('interfaces', idx, Interface, nic)
+                for idx, nic in enumerate(interfaces)
+            ]
+        if subnets is not None:
+            params["subnets"] = [
+                get_param_arg('subnets', idx, Subnet, subnet)
+                for idx, subnet in enumerate(subnets)
+            ]
+        if zone is not None:
+            if isinstance(zone, Zone):
+                params["zone"] = zone.name
+            elif isinstance(zone, str):
+                params["zone"] = zone
+            else:
+                raise TypeError(
+                    "zone must be a str or Zone, not %s" % type(zone).__name__)
+        if not_fabrics is not None:
+            params["not_fabrics"] = [
+                get_param_arg('not_fabrics', idx, Fabric, fabric)
+                for idx, fabric in enumerate(not_fabrics)
+            ]
+        if not_subnets is not None:
+            params["not_subnets"] = [
+                get_param_arg('not_subnets', idx, Subnet, subnet)
+                for idx, subnet in enumerate(not_subnets)
+            ]
+        if not_zones is not None:
+            params["not_in_zones"] = [
+                get_param_arg('not_zones', idx, Zone, zone, attr='name')
+                for idx, zone in enumerate(not_zones)
+            ]
         try:
             data = await cls._handler.allocate(**params)
         except CallError as error:
@@ -331,17 +458,17 @@ class Machine(Node, metaclass=MachineType):
                 await asyncio.sleep(wait_interval)
                 self._data = await self._handler.read(system_id=self.system_id)
             if self.status == NodeStatus.FAILED_COMMISSIONING:
-                msg = "{system_id} failed to commission.".format(
-                    system_id=self.system_id)
+                msg = "{hostname} failed to commission.".format(
+                    hostname=self.hostname)
                 raise FailedCommissioning(msg, self)
             if self.status == NodeStatus.FAILED_TESTING:
-                msg = "{system_id} failed testing.".format(
-                    system_id=self.system_id)
+                msg = "{hostname} failed testing.".format(
+                    hostname=self.hostname)
                 raise FailedTesting(msg, self)
             return self
 
     async def deploy(
-            self, user_data: typing.Union[bytes, str]=None,
+            self, *, user_data: typing.Union[bytes, str]=None,
             distro_series: str=None, hwe_kernel: str=None, comment: str=None,
             wait: bool=False, wait_interval: int=5):
         """Deploy this machine.
@@ -380,8 +507,8 @@ class Machine(Node, metaclass=MachineType):
                 await asyncio.sleep(wait_interval)
                 self._data = await self._handler.read(system_id=self.system_id)
             if self.status == NodeStatus.FAILED_DEPLOYMENT:
-                msg = "{system_id} failed to deploy.".format(
-                    system_id=self.system_id
+                msg = "{hostname} failed to deploy.".format(
+                    hostname=self.hostname
                 )
                 raise FailedDeployment(msg, self)
             return self
@@ -411,8 +538,8 @@ class Machine(Node, metaclass=MachineType):
                 await asyncio.sleep(wait)
                 self._data = await self._handler.read(system_id=self.system_id)
             if self.status == NodeStatus.FAILED_ENTERING_RESCUE_MODE:
-                msg = "{system_id} failed to enter rescue mode.".format(
-                    system_id=self.system_id
+                msg = "{hostname} failed to enter rescue mode.".format(
+                    hostname=self.hostname
                 )
                 raise RescueModeFailure(msg, self)
             return self
@@ -442,8 +569,8 @@ class Machine(Node, metaclass=MachineType):
                 await asyncio.sleep(wait_interval)
                 self._data = await self._handler.read(system_id=self.system_id)
             if self.status == NodeStatus.FAILED_EXITING_RESCUE_MODE:
-                msg = "{system_id} failed to exit rescue mode.".format(
-                    system_id=self.system_id
+                msg = "{hostname} failed to exit rescue mode.".format(
+                    hostname=self.hostname
                 )
                 raise RescueModeFailure(msg, self)
             return self
@@ -493,20 +620,32 @@ class Machine(Node, metaclass=MachineType):
         return self
 
     async def release(
-            self, comment: str=None, wait: bool=False, wait_interval: int=5):
+            self, *, comment: str=None, erase: bool=None,
+            secure_erase: bool=None, quick_erase: bool=None,
+            wait: bool=False, wait_interval: int=5):
         """
         Release the machine.
 
         :param comment: Reason machine was released.
         :type comment: `str`
+        :param erase: Erase the disk when release.
+        :type erase: `bool`
+        :param secure_erase: Use the drive's secure erase feature if available.
+        :type secure_erase: `bool`
+        :param quick_erase: Wipe the just the beginning and end of the disk.
+            This is not secure.
         :param wait: If specified, wait until the deploy is complete.
         :type wait: `bool`
         :param wait_interval: How often to poll, defaults to 5 seconds.
         :type wait_interval: `int`
         """
-        params = {"system_id": self.system_id}
-        if comment is not None:
-            params["comment"] = comment
+        params = remove_None({
+            "system_id": self.system_id,
+            "comment": comment,
+            "erase": erase,
+            "secure_erase": secure_erase,
+            "quick_erase": quick_erase,
+        })
         self._data = await self._handler.release(**params)
         if not wait:
             return self
@@ -515,15 +654,25 @@ class Machine(Node, metaclass=MachineType):
             while self.status in [
                     NodeStatus.RELEASING, NodeStatus.DISK_ERASING]:
                 await asyncio.sleep(wait_interval)
-                self._data = await self._handler.read(system_id=self.system_id)
+                try:
+                    self._data = await self._handler.read(
+                        system_id=self.system_id)
+                except CallError as error:
+                    if error.status == HTTPStatus.NOT_FOUND:
+                        # Release must have been on a machine in a pod. This
+                        # machine no longer exists. Just return the machine
+                        # as it has been released.
+                        return self
+                    else:
+                        raise
             if self.status == NodeStatus.FAILED_RELEASING:
-                msg = "{system_id} failed to be released.".format(
-                    system_id=self.system_id
+                msg = "{hostname} failed to be released.".format(
+                    hostname=self.hostname
                 )
                 raise FailedReleasing(msg, self)
             elif self.status == NodeStatus.FAILED_DISK_ERASING:
-                msg = "{system_id} failed to erase disk.".format(
-                    system_id=self.system_id
+                msg = "{hostname} failed to erase disk.".format(
+                    hostname=self.hostname
                 )
                 raise FailedDiskErasing(msg, self)
             return self
@@ -561,8 +710,8 @@ class Machine(Node, metaclass=MachineType):
                 await asyncio.sleep(wait_interval)
                 self._data = await self._handler.read(system_id=self.system_id)
             if self.power_state == PowerState.ERROR:
-                msg = "{system_id} failed to power on.".format(
-                    system_id=self.system_id
+                msg = "{hostname} failed to power on.".format(
+                    hostname=self.hostname
                 )
                 raise PowerError(msg, self)
             return self
@@ -603,8 +752,8 @@ class Machine(Node, metaclass=MachineType):
                 await asyncio.sleep(wait_interval)
                 self._data = await self._handler.read(system_id=self.system_id)
             if self.power_state == PowerState.ERROR:
-                msg = "{system_id} failed to power off.".format(
-                    system_id=self.system_id
+                msg = "{hostname} failed to power off.".format(
+                    hostname=self.hostname
                 )
                 raise PowerError(msg, self)
             return self

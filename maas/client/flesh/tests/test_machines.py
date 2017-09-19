@@ -56,8 +56,10 @@ class TestMachines(TestCase):
         ]
         origin.Machines._handler.read.return_value = machine_objs
         cmd = machines.cmd_machines(parser)
+        subparser = machines.cmd_machines.register(parser)
+        options = subparser.parse_args([])
         output = yaml.load(
-            cmd.execute(origin, {}, target=tabular.RenderTarget.yaml))
+            cmd.execute(origin, options, target=tabular.RenderTarget.yaml))
         self.assertEquals([
             {'name': 'hostname', 'title': 'Hostname'},
             {'name': 'power', 'title': 'Power'},
@@ -78,3 +80,18 @@ class TestMachines(TestCase):
             for machine in machine_objs
         ], key=itemgetter('hostname'))
         self.assertEquals(machines_output, output['data'])
+
+    def test_calls_handler_with_hostnames(self):
+        origin = make_origin()
+        parser = ArgumentParser()
+        origin.Machines._handler.read.return_value = []
+        subparser = machines.cmd_machines.register(parser)
+        cmd = machines.cmd_machines(parser)
+        hostnames = [
+            make_name_without_spaces()
+            for _ in range(3)
+        ]
+        options = subparser.parse_args(hostnames)
+        cmd.execute(origin, options, target=tabular.RenderTarget.yaml)
+        origin.Machines._handler.read.assert_called_once_with(
+            hostname=hostnames)

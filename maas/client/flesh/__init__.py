@@ -123,10 +123,17 @@ def get_profile_names_and_default() -> (
 PROFILE_NAMES, PROFILE_DEFAULT = get_profile_names_and_default()
 
 
-class HelpAction(argparse._HelpAction):
+class MinimalHelpAction(argparse._HelpAction):
 
     def __call__(self, parser, namespace, values, option_string=None):
         parser.print_minized_help()
+        parser.exit()
+
+
+class PagedHelpAction(argparse._HelpAction):
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        print_with_pager(parser.format_help())
         parser.exit()
 
 
@@ -253,7 +260,7 @@ class Command(metaclass=ABCMeta):
             description=help_title, epilog=help_body, add_help=False,
             formatter_class=HelpFormatter)
         command_parser.add_argument(
-            "-h", "--help", action="help", help=argparse.SUPPRESS)
+            "-h", "--help", action=PagedHelpAction, help=argparse.SUPPRESS)
         command_parser.set_defaults(execute=cls(command_parser))
         return command_parser
 
@@ -327,11 +334,25 @@ class OriginPagedTableCommand(OriginTableCommand):
                 "command."))
 
     def __call__(self, options):
+        return_code = 0
         output = super(OriginPagedTableCommand, self).__call__(options)
-        if options.no_pager:
-            print(output)
+        if isinstance(output, tuple):
+            return_code, output = output
+        elif isinstance(output, int):
+            return_code = output
+            output = None
+        elif isinstance(output, str):
+            pass
         else:
-            print_with_pager(output)
+            raise TypeError(
+                "execute must return either tuple, int or str, not %s" % (
+                    type(output).__name__))
+        if output:
+            if options.no_pager:
+                print(output)
+            else:
+                print_with_pager(output)
+        return return_code
 
 
 class cmd_help(Command):
@@ -341,7 +362,7 @@ class cmd_help(Command):
         self.parent_parser = parent_parser
         super(cmd_help, self).__init__(parser)
         parser.add_argument(
-            "-h", "--help", action="help", help=argparse.SUPPRESS)
+            "-h", "--help", action=PagedHelpAction, help=argparse.SUPPRESS)
         parser.add_argument(
             'command', nargs='?', help="Show help for this command.")
         parser.other.add_argument(
@@ -421,7 +442,7 @@ def prepare_parser(program):
         formatter_class=HelpFormatter,
         add_help=False)
     parser.add_argument(
-        "-h", "--help", action=HelpAction, help=argparse.SUPPRESS)
+        "-h", "--help", action=MinimalHelpAction, help=argparse.SUPPRESS)
 
     # Register sub-commands.
     submodules = (
@@ -477,7 +498,7 @@ def main(argv=sys.argv):
         except AttributeError:
             parser.error("Argument missing.")
         else:
-            execute(options)
+            return execute(options)
     except KeyboardInterrupt:
         raise SystemExit(1)
     except Exception as error:

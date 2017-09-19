@@ -493,6 +493,28 @@ class TestMachine(TestCase):
             wait_interval=0.1
         )
 
+    def test__release_with_deleted_machine(self):
+        system_id = make_name_without_spaces("system-id")
+        hostname = make_name_without_spaces("hostname")
+        data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "status": NodeStatus.RELEASING,
+        }
+        machine = make_origin().Machine(data)
+        machine._handler.release.return_value = data
+        machine._handler.read.side_effect = CallError(
+            request={"method": "GET", "uri": "www.example.com"},
+            response=Mock(status=HTTPStatus.NOT_FOUND),
+            content=b'',
+            call='',
+        )
+        result = machine.release(wait=True, wait_interval=0.1)
+        self.assertThat(result.status, Equals(NodeStatus.RELEASING))
+        machine._handler.release.assert_called_once_with(
+            system_id=machine.system_id
+        )
+
     def test__power_on_with_wait(self):
         system_id = make_name_without_spaces("system-id")
         hostname = make_name_without_spaces("hostname")
@@ -859,14 +881,15 @@ class TestMachines(TestCase):
         hostname = make_name_without_spaces("hostname")
         Machines.allocate(
             hostname=hostname,
-            architecture='amd64/generic',
+            architectures=['amd64/generic'],
             cpus=4,
             memory=1024.0,
-            tags=['foo', 'bar', '-baz'],
+            tags=['foo', 'bar'],
+            not_tags=['baz'],
         )
         Machines._handler.allocate.assert_called_once_with(
             name=hostname,  # API parameter is actually name, not hostname
-            architecture='amd64/generic',
+            arch=['amd64/generic'],
             cpu_count='4',
             mem='1024.0',
             tags=['foo', 'bar'],

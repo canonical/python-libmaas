@@ -6,6 +6,7 @@ __all__ = [
 ]
 
 from collections import Sequence
+import typing
 
 from . import (
     check,
@@ -23,8 +24,16 @@ from ..enum import NodeType
 class NodesType(ObjectType):
     """Metaclass for `Nodes`."""
 
-    async def read(cls):
-        data = await cls._handler.read()
+    async def read(cls, *, hostnames: typing.Sequence[str]=None):
+        """List nodes.
+
+        :param hostnames: Sequence of hostnames to only return.
+        :type hostnames: sequence of `str`
+        """
+        params = {}
+        if hostnames:
+            params["hostname"] = hostnames
+        data = await cls._handler.read(**params)
         return cls(map(cls._object, data))
 
 

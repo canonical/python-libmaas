@@ -204,3 +204,14 @@ class TestNodes(TestCase):
         nodes_observed = origin.Nodes.read()
         nodes_expected = origin.Nodes([origin.Node(data)])
         self.assertThat(nodes_observed, Equals(nodes_expected))
+
+    def test__read_with_hostnames(self):
+        origin = make_origin()
+        origin.Nodes._handler.read.return_value = []
+
+        hostnames = [
+            make_name_without_spaces()
+            for _ in range(3)
+        ]
+        origin.Nodes.read(hostnames=hostnames)
+        origin.Nodes._handler.read.assert_called_once_with(hostname=hostnames)

@@ -83,8 +83,10 @@ class TestDevices(TestCase):
         ]
         origin.Devices._handler.read.return_value = devices_objs
         cmd = devices.cmd_devices(parser)
+        subparser = devices.cmd_devices.register(parser)
+        options = subparser.parse_args([])
         output = yaml.load(
-            cmd.execute(origin, {}, target=tabular.RenderTarget.yaml))
+            cmd.execute(origin, options, target=tabular.RenderTarget.yaml))
         self.assertEquals([
             {'name': 'hostname', 'title': 'Hostname'},
             {'name': 'ip_addresses', 'title': 'IP addresses'},
@@ -102,3 +104,18 @@ class TestDevices(TestCase):
             for device in devices_objs
         ], key=itemgetter('hostname'))
         self.assertEquals(devices_output, output['data'])
+
+    def test_calls_handler_with_hostnames(self):
+        origin = make_origin()
+        parser = ArgumentParser()
+        origin.Devices._handler.read.return_value = []
+        subparser = devices.cmd_devices.register(parser)
+        cmd = devices.cmd_devices(parser)
+        hostnames = [
+            make_name_without_spaces()
+            for _ in range(3)
+        ]
+        options = subparser.parse_args(hostnames)
+        cmd.execute(origin, options, target=tabular.RenderTarget.yaml)
+        origin.Devices._handler.read.assert_called_once_with(
+            hostname=hostnames)

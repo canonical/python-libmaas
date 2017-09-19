@@ -331,18 +331,25 @@ def remove_None(params: dict):
     }
 
 
+class SpinnerContext:
+    """Context of the currently running spinner."""
+
+    msg = ""
+
+
 class Spinner:
     """Display a spinner at the terminal, if it's a TTY.
 
     Use as a context manager.
     """
 
-    def __init__(self, frames='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏', stream=sys.stdout):
+    def __init__(self, frames='/-\|', stream=sys.stdout):
         super(Spinner, self).__init__()
         self.frames = frames
         self.stream = stream
 
     def __enter__(self):
+        self.__context = SpinnerContext()
         if self.stream.isatty():
             frames = cycle(self.frames)
             stream = self.stream
@@ -352,20 +359,29 @@ class Spinner:
                 # Disable cursor.
                 stream.write("\033[?25l")
                 stream.flush()
+                prev_msg = self.__context.msg
                 try:
                     # Write out successive frames (and a backspace) every 0.1
                     # seconds until done is set.
                     while not done.wait(0.1):
-                        stream.write("%s\b" % next(frames))
+                        diff = len(prev_msg) - len(self.__context.msg)
+                        if diff < 0:
+                            diff = 0
+                        stream.write("[%s] %s%s\r" % (
+                            next(frames), self.__context.msg, ' ' * diff))
+                        prev_msg = self.__context.msg
                         stream.flush()
                 finally:
-                    # Enable cursor.
+                    # Clear line and enable cursor.
+                    clear_len = max(len(prev_msg), len(self.__context.msg)) + 4
+                    stream.write("%s\r" % (' ' * clear_len))
                     stream.write("\033[?25h")
                     stream.flush()
 
             self.__done = done
             self.__thread = threading.Thread(target=run)
             self.__thread.start()
+        return self.__context
 
     def __exit__(self, *exc_info):
         if self.stream.isatty():

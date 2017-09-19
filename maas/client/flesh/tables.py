@@ -12,7 +12,10 @@ from operator import itemgetter
 
 from colorclass import Color
 
-from ..enum import NodeType
+from ..enum import (
+    NodeType,
+    PowerState,
+)
 from .tabular import (
     Column,
     RenderTarget,
@@ -116,9 +119,9 @@ class NodeStatusNameColumn(Column):
 class NodePowerColumn(Column):
 
     colours = {
-        "on": "autogreen",
-        # "off": "",  # White.
-        "error": "autored",
+        PowerState.ON: "autogreen",
+        # PowerState.OFF: "",  # White.
+        PowerState.ERROR: "autored",
     }
 
     def render(self, target, data):

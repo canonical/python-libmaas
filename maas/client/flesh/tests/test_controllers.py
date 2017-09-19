@@ -76,8 +76,10 @@ class TestControllers(TestCase):
         origin.RackControllers._handler.read.return_value = racks
         origin.RegionControllers._handler.read.return_value = regions
         cmd = controllers.cmd_controllers(parser)
+        subparser = controllers.cmd_controllers.register(parser)
+        options = subparser.parse_args([])
         output = yaml.load(
-            cmd.execute(origin, {}, target=tabular.RenderTarget.yaml))
+            cmd.execute(origin, options, target=tabular.RenderTarget.yaml))
         self.assertEquals([
             {'name': 'hostname', 'title': 'Hostname'},
             {'name': 'node_type', 'title': 'Type'},
@@ -98,3 +100,21 @@ class TestControllers(TestCase):
         self.assertEquals(
             sorted(controller_output.values(), key=itemgetter('hostname')),
             output['data'])
+
+    def test_calls_handler_with_hostnames(self):
+        origin = make_origin()
+        parser = ArgumentParser()
+        origin.RackControllers._handler.read.return_value = []
+        origin.RegionControllers._handler.read.return_value = []
+        subparser = controllers.cmd_controllers.register(parser)
+        cmd = controllers.cmd_controllers(parser)
+        hostnames = [
+            make_name_without_spaces()
+            for _ in range(3)
+        ]
+        options = subparser.parse_args(hostnames)
+        cmd.execute(origin, options, target=tabular.RenderTarget.yaml)
+        origin.RackControllers._handler.read.assert_called_once_with(
+            hostname=hostnames)
+        origin.RegionControllers._handler.read.assert_called_once_with(
+            hostname=hostnames)
