@@ -50,6 +50,24 @@ class cmd_machines(OriginPagedTableCommand):
         return table.render(target, origin.Machines.read(hostnames=hostnames))
 
 
+class cmd_machine(OriginPagedTableCommand):
+    """Details of a machine."""
+
+    def __init__(self, parser):
+        super(cmd_machine, self).__init__(parser)
+        parser.add_argument("hostname", nargs=1, help=(
+            "Hostname of the machine."))
+
+    def execute(self, origin, options, target):
+        machines = origin.Machines.read(hostnames=options.hostname)
+        if len(machines) == 0:
+            raise CommandError(
+                "Unable to find machine %s." % options.hostname[0])
+        machine = machines[0]
+        table = tables.MachineDetail()
+        return table.render(target, machine)
+
+
 class cmd_allocate(OriginCommand):
     """Allocate an available machine.
 
@@ -429,6 +447,7 @@ class cmd_release(OriginCommand):
 def register(parser):
     """Register commands with the given parser."""
     cmd_machines.register(parser)
+    cmd_machine.register(parser)
     cmd_allocate.register(parser)
     cmd_deploy.register(parser)
     cmd_release.register(parser)

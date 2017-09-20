@@ -13,6 +13,7 @@ from operator import itemgetter
 from colorclass import Color
 
 from ..enum import (
+    InterfaceType,
     NodeType,
     PowerState,
 )
@@ -20,6 +21,7 @@ from .tabular import (
     Column,
     RenderTarget,
     Table,
+    DetailTable,
 )
 
 
@@ -138,6 +140,51 @@ class NodePowerColumn(Column):
             return super().render(target, data.value)
 
 
+class NodeInterfacesColumn(Column):
+
+    def render(self, target, data):
+        count = 0
+        for interface in data:
+            if interface.type == InterfaceType.PHYSICAL:
+                count += 1
+        return super().render(target, "%d physical" % count)
+
+
+class NodeOwnerColumn(Column):
+
+    def render(self, target, data):
+        if data is None:
+            return super().render(target, "(none)")
+        else:
+            return super().render(target, data.username)
+
+
+class NodeImageColumn(Column):
+
+    def render(self, target, data):
+        if data:
+            return super().render(target, data)
+        else:
+            return super().render(target, "(none)")
+
+
+class NodeTagsColumn(Column):
+
+    def render(self, target, data):
+        if target in [RenderTarget.plain, RenderTarget.pretty]:
+            return '\n'.join(data)
+        elif target == RenderTarget.csv:
+            return ','.join(data)
+        else:
+            return super().render(target, data)
+
+
+class NodeZoneColumn(Column):
+
+    def render(self, target, data):
+        return super().render(target, data.name)
+
+
 class NodesTable(Table):
 
     def __init__(self):
@@ -183,6 +230,48 @@ class MachinesTable(Table):
         return super().render(target, data)
 
 
+class MachineDetail(DetailTable):
+
+    def __init__(self, with_type=False):
+        self.with_type = with_type
+        columns = [
+            Column("hostname", "Hostname"),
+            NodeStatusNameColumn("status", "Status"),
+            NodeImageColumn("image", "Image"),
+            NodePowerColumn("power", "Power"),
+            Column("power_type", "Power Type"),
+            NodeArchitectureColumn("architecture", "Arch"),
+            NodeCPUsColumn("cpus", "#CPUs"),
+            NodeMemoryColumn("memory", "RAM"),
+            NodeInterfacesColumn("interfaces", "Interfaces"),
+            NodeZoneColumn("zone", "Zone"),
+            NodeOwnerColumn("owner", "Owner"),
+            NodeTagsColumn("tags", "Tags"),
+        ]
+        if with_type:
+            columns.insert(1, NodeTypeColumn("node_type", "Type"))
+        super().__init__(*columns)
+
+    def render(self, target, machine):
+        data = [
+            machine.hostname,
+            machine.status_name,
+            machine.distro_series,
+            machine.power_state,
+            machine.power_type,
+            machine.architecture,
+            machine.cpus,
+            machine.memory,
+            machine.interfaces,
+            machine.zone,
+            machine.owner,
+            machine.tags,
+        ]
+        if self.with_type:
+            data.insert(1, machine.node_type)
+        return super().render(target, data)
+
+
 class DevicesTable(Table):
 
     def __init__(self):
@@ -205,6 +294,37 @@ class DevicesTable(Table):
             for device in devices
         )
         data = sorted(data, key=itemgetter(0))
+        return super().render(target, data)
+
+
+class DeviceDetail(DetailTable):
+
+    def __init__(self, with_type=False):
+        self.with_type = with_type
+        columns = [
+            Column("hostname", "Hostname"),
+            NodeInterfacesColumn("interfaces", "Interfaces"),
+            Column("ip_addresses", "IP addresses"),
+            NodeTagsColumn("tags", "Tags"),
+        ]
+        if with_type:
+            columns.insert(1, NodeTypeColumn("node_type", "Type"))
+        super().__init__(*columns)
+
+    def render(self, target, device):
+        data = [
+            device.hostname,
+            device.interfaces,
+            [
+                link.ip_address
+                for interface in device.interfaces
+                for link in interface.links
+                if link.ip_address
+            ],
+            device.tags,
+        ]
+        if self.with_type:
+            data.insert(1, device.node_type)
         return super().render(target, data)
 
 
@@ -232,6 +352,31 @@ class ControllersTable(Table):
         )
         data = sorted(data, key=itemgetter(0))
         return super().render(target, data)
+
+
+class ControllerDetail(DetailTable):
+
+    def __init__(self):
+        super().__init__(
+            Column("hostname", "Hostname"),
+            NodeTypeColumn("node_type", "Type"),
+            NodeArchitectureColumn("architecture", "Arch"),
+            NodeCPUsColumn("cpus", "#CPUs"),
+            NodeMemoryColumn("memory", "RAM"),
+            NodeInterfacesColumn("interfaces", "Interfaces"),
+            NodeZoneColumn("zone", "Zone"),
+        )
+
+    def render(self, target, controller):
+        return super().render(target, (
+            controller.hostname,
+            controller.node_type,
+            controller.architecture,
+            controller.cpus,
+            controller.memory,
+            controller.interfaces,
+            controller.zone,
+        ))
 
 
 class TagsTable(Table):

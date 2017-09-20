@@ -20,7 +20,9 @@ from ...testing import (
 def make_origin():
     # Create a new origin with Nodes and Node. The former refers to the
     # latter via the origin, hence why it must be bound.
-    return bind(nodes.Nodes, nodes.Node)
+    return bind(
+        nodes.Nodes, nodes.Node, Device, Machine,
+        RackController, RegionController)
 
 
 class TestNode(TestCase):
@@ -48,22 +50,23 @@ class TestNode(TestCase):
         self.assertThat(node_observed, Equals(node_expected))
 
     def test__as_machine_requires_machine_type(self):
-        device_node = nodes.Node({
+        origin = make_origin()
+        device_node = origin.Node({
             "system_id": make_name_without_spaces("system-id"),
             "hostname": make_name_without_spaces("hostname"),
             "node_type": NodeType.DEVICE.value,
         })
-        rack_node = nodes.Node({
+        rack_node = origin.Node({
             "system_id": make_name_without_spaces("system-id"),
             "hostname": make_name_without_spaces("hostname"),
             "node_type": NodeType.RACK_CONTROLLER.value,
         })
-        region_node = nodes.Node({
+        region_node = origin.Node({
             "system_id": make_name_without_spaces("system-id"),
             "hostname": make_name_without_spaces("hostname"),
             "node_type": NodeType.REGION_CONTROLLER.value,
         })
-        region_rack_node = nodes.Node({
+        region_rack_node = origin.Node({
             "system_id": make_name_without_spaces("system-id"),
             "hostname": make_name_without_spaces("hostname"),
             "node_type": NodeType.REGION_AND_RACK_CONTROLLER.value,
@@ -74,7 +77,8 @@ class TestNode(TestCase):
         self.assertRaises(ValueError, region_rack_node.as_machine)
 
     def test__as_machine_returns_machine_type(self):
-        machine_node = nodes.Node({
+        origin = make_origin()
+        machine_node = origin.Node({
             "system_id": make_name_without_spaces("system-id"),
             "hostname": make_name_without_spaces("hostname"),
             "node_type": NodeType.MACHINE.value,
@@ -83,22 +87,23 @@ class TestNode(TestCase):
         self.assertIsInstance(machine, Machine)
 
     def test__as_device_requires_device_type(self):
-        machine_node = nodes.Node({
+        origin = make_origin()
+        machine_node = origin.Node({
             "system_id": make_name_without_spaces("system-id"),
             "hostname": make_name_without_spaces("hostname"),
             "node_type": NodeType.MACHINE.value,
         })
-        rack_node = nodes.Node({
+        rack_node = origin.Node({
             "system_id": make_name_without_spaces("system-id"),
             "hostname": make_name_without_spaces("hostname"),
             "node_type": NodeType.RACK_CONTROLLER.value,
         })
-        region_node = nodes.Node({
+        region_node = origin.Node({
             "system_id": make_name_without_spaces("system-id"),
             "hostname": make_name_without_spaces("hostname"),
             "node_type": NodeType.REGION_CONTROLLER.value,
         })
-        region_rack_node = nodes.Node({
+        region_rack_node = origin.Node({
             "system_id": make_name_without_spaces("system-id"),
             "hostname": make_name_without_spaces("hostname"),
             "node_type": NodeType.REGION_AND_RACK_CONTROLLER.value,
@@ -109,7 +114,8 @@ class TestNode(TestCase):
         self.assertRaises(ValueError, region_rack_node.as_device)
 
     def test__as_device_returns_device_type(self):
-        device_node = nodes.Node({
+        origin = make_origin()
+        device_node = origin.Node({
             "system_id": make_name_without_spaces("system-id"),
             "hostname": make_name_without_spaces("hostname"),
             "node_type": NodeType.DEVICE.value,
@@ -118,17 +124,18 @@ class TestNode(TestCase):
         self.assertIsInstance(device, Device)
 
     def test__as_rack_controller_requires_rack_types(self):
-        machine_node = nodes.Node({
+        origin = make_origin()
+        machine_node = origin.Node({
             "system_id": make_name_without_spaces("system-id"),
             "hostname": make_name_without_spaces("hostname"),
             "node_type": NodeType.MACHINE.value,
         })
-        device_node = nodes.Node({
+        device_node = origin.Node({
             "system_id": make_name_without_spaces("system-id"),
             "hostname": make_name_without_spaces("hostname"),
             "node_type": NodeType.DEVICE.value,
         })
-        region_node = nodes.Node({
+        region_node = origin.Node({
             "system_id": make_name_without_spaces("system-id"),
             "hostname": make_name_without_spaces("hostname"),
             "node_type": NodeType.REGION_CONTROLLER.value,
@@ -138,12 +145,13 @@ class TestNode(TestCase):
         self.assertRaises(ValueError, region_node.as_rack_controller)
 
     def test__as_rack_controller_returns_rack_type(self):
-        rack_node = nodes.Node({
+        origin = make_origin()
+        rack_node = origin.Node({
             "system_id": make_name_without_spaces("system-id"),
             "hostname": make_name_without_spaces("hostname"),
             "node_type": NodeType.RACK_CONTROLLER.value,
         })
-        region_rack_node = nodes.Node({
+        region_rack_node = origin.Node({
             "system_id": make_name_without_spaces("system-id"),
             "hostname": make_name_without_spaces("hostname"),
             "node_type": NodeType.REGION_AND_RACK_CONTROLLER.value,
@@ -154,17 +162,18 @@ class TestNode(TestCase):
         self.assertIsInstance(region_rack, RackController)
 
     def test__as_region_controller_requires_region_types(self):
-        machine_node = nodes.Node({
+        origin = make_origin()
+        machine_node = origin.Node({
             "system_id": make_name_without_spaces("system-id"),
             "hostname": make_name_without_spaces("hostname"),
             "node_type": NodeType.MACHINE.value,
         })
-        device_node = nodes.Node({
+        device_node = origin.Node({
             "system_id": make_name_without_spaces("system-id"),
             "hostname": make_name_without_spaces("hostname"),
             "node_type": NodeType.DEVICE.value,
         })
-        rack_node = nodes.Node({
+        rack_node = origin.Node({
             "system_id": make_name_without_spaces("system-id"),
             "hostname": make_name_without_spaces("hostname"),
             "node_type": NodeType.RACK_CONTROLLER.value,
@@ -174,12 +183,13 @@ class TestNode(TestCase):
         self.assertRaises(ValueError, rack_node.as_region_controller)
 
     def test__as_region_controller_returns_region_type(self):
-        region_node = nodes.Node({
+        origin = make_origin()
+        region_node = origin.Node({
             "system_id": make_name_without_spaces("system-id"),
             "hostname": make_name_without_spaces("hostname"),
             "node_type": NodeType.REGION_CONTROLLER.value,
         })
-        region_rack_node = nodes.Node({
+        region_rack_node = origin.Node({
             "system_id": make_name_without_spaces("system-id"),
             "hostname": make_name_without_spaces("hostname"),
             "node_type": NodeType.REGION_AND_RACK_CONTROLLER.value,

@@ -79,22 +79,20 @@ class Node(Object, metaclass=NodeTypeMeta):
 
         `node_type` must be `NodeType.MACHINE`.
         """
-        from .machines import Machine
         if self.node_type != NodeType.MACHINE:
             raise ValueError(
                 'Cannot convert to `Machine`, node_type is not a machine.')
-        return Machine(self._data)
+        return self._origin.Machine(self._data)
 
     def as_device(self):
         """Convert to a `Device` object.
 
         `node_type` must be `NodeType.DEVICE`.
         """
-        from .devices import Device
         if self.node_type != NodeType.DEVICE:
             raise ValueError(
                 'Cannot convert to `Device`, node_type is not a device.')
-        return Device(self._data)
+        return self._origin.Device(self._data)
 
     def as_rack_controller(self):
         """Convert to a `RackController` object.
@@ -102,13 +100,12 @@ class Node(Object, metaclass=NodeTypeMeta):
         `node_type` must be `NodeType.RACK_CONTROLLER` or
         `NodeType.REGION_AND_RACK_CONTROLLER`.
         """
-        from .controllers import RackController
         if self.node_type not in [
                 NodeType.RACK_CONTROLLER, NodeType.REGION_AND_RACK_CONTROLLER]:
             raise ValueError(
                 'Cannot convert to `RackController`, node_type is not a '
                 'rack controller.')
-        return RackController(self._data)
+        return self._origin.RackController(self._data)
 
     def as_region_controller(self):
         """Convert to a `RegionController` object.
@@ -116,11 +113,10 @@ class Node(Object, metaclass=NodeTypeMeta):
         `node_type` must be `NodeType.REGION_CONTROLLER` or
         `NodeType.REGION_AND_RACK_CONTROLLER`.
         """
-        from .controllers import RegionController
         if self.node_type not in [
                 NodeType.REGION_CONTROLLER,
                 NodeType.REGION_AND_RACK_CONTROLLER]:
             raise ValueError(
                 'Cannot convert to `RegionController`, node_type is not a '
                 'region controller.')
-        return RegionController(self._data)
+        return self._origin.RegionController(self._data)

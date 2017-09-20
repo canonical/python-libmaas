@@ -105,6 +105,59 @@ class Table:
             self.__class__.__name__, " ".join(self.columns))
 
 
+class DetailTable(Table):
+
+    def render(self, target, data):
+        columns = self.columns.values()
+        rows = [
+            column.render(target, datum)
+            for column, datum in zip(columns, data)
+        ]
+        renderer = getattr(self, "_render_%s" % target.name, None)
+        if renderer is None:
+            raise ValueError(
+                "Cannot render %r for %s." % (self.value, target))
+        else:
+            return renderer(columns, rows)
+
+    def _render_plain(self, columns, rows):
+        table = terminaltables.AsciiTable([
+            (column.title, datum)
+            for column, datum in zip(columns, rows)
+        ])
+        table.inner_heading_row_border = False
+        return table.table
+
+    def _render_pretty(self, columns, rows):
+        table = terminaltables.SingleTable([
+            (column.title, datum)
+            for column, datum in zip(columns, rows)
+        ])
+        table.inner_heading_row_border = False
+        return table.table
+
+    def _render_yaml(self, columns, rows):
+        return yaml.safe_dump({
+            column.name: datum
+            for column, datum in zip(columns, rows)
+        }, default_flow_style=False).rstrip(linesep)
+
+    def _render_json(self, columns, rows):
+        return json.dumps({
+            column.name: datum
+            for column, datum in zip(columns, rows)
+        })
+
+    def _render_csv(self, columns, rows):
+        output = StringIO()
+        writer = csv.writer(output)
+        writer.writerows([
+            (column.name, datum)
+            for column, datum in zip(columns, rows)
+        ])
+        return output.getvalue().rstrip(linesep)
+
+
 class Column:
 
     def __init__(self, name, title=None):

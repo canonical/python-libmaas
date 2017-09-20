@@ -346,8 +346,9 @@ class Machine(Node, metaclass=MachineType):
 
     power_state = ObjectField.Checked(
         "power_state", to(PowerState), readonly=True)
+    power_type = ObjectField.Checked(
+        "power_type", check(str), readonly=True)
 
-    # power_type
     # pxe_mac
     # resource_uri
     # routers
