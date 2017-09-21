@@ -46,8 +46,13 @@ See https://maas.io/docs for documentation.
 
 Common commands:
 
-    maas login   Log-in to a MAAS.
-    maas switch  Switch the active profile.
+    maas login           Log-in to a MAAS.
+    maas switch          Switch the active profile.
+    maas machines        List machines.
+    maas deploy          Allocate and deploy machine.
+    maas release         Release machine.
+    maas fabrics         List fabrics.
+    maas subnets         List subnets.
 
 Example help commands:
 
