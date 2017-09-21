@@ -7,6 +7,8 @@ __all__ = [
 import asyncio
 import base64
 import os
+import sys
+import time
 
 from . import (
     colorized,
@@ -14,6 +16,7 @@ from . import (
     OriginCommand,
     OriginPagedTableCommand,
     tables,
+    yes_or_no
 )
 from .. import utils
 from ..bones import CallError
@@ -243,7 +246,7 @@ class cmd_allocate(OriginCommand):
             if (machine.status == NodeStatus.ALLOCATED and
                     machine.owner.username == me.username):
                 return False, machine
-            else:
+            elif machine.status != NodeStatus.READY:
                 raise CommandError(
                     "Unable to allocate machine %s." % options.hostname)
         params = utils.remove_None({
@@ -316,8 +319,8 @@ class cmd_deploy(cmd_allocate):
             "--no-wait", action="store_true", help=(
                 "Don't wait for the deploy to complete."))
 
-    @asynchronous
-    async def deploy(self, origin, options, context):
+    def _get_deploy_options(self, options):
+        """Return the deployment options based on command line."""
         user_data = None
         if options.user_data and options.b64_user_data:
             raise CommandError(
@@ -326,40 +329,68 @@ class cmd_deploy(cmd_allocate):
             user_data = options.b64_user_data
         if options.user_data:
             user_data = base64_file(options.user_data)
-        deploy_options = utils.remove_None({
+        return utils.remove_None({
             'distro_series': options.image,
             'hwe_kernel': options.hwe_kernel,
             'user_data': user_data,
             'comment': options.comment,
             'wait': False,
         })
-        if options.hostname:
-            context.msg = colorized(
-                "{autoblue}Allocating{/autoblue} %s") % (
-                    options.hostname)
-        else:
-            context.msg = colorized("{autoblue}Searching{/autoblue}")
-        allocated, machine = await self.allocate(origin, options)
-        context.msg = colorized(
-            "{autoblue}Deploying{/autoblue} %s") % machine.hostname
-        try:
-            machine = await machine.deploy(**deploy_options)
-        except CallError:
-            if allocated:
-                await machine.release()
-            raise
-        if not options.no_wait:
-            context.msg = colorized(
-                "{autoblue}Deploying{/autoblue} %s on %s") % (
-                    machine.distro_series, machine.hostname)
-            while machine.status == NodeStatus.DEPLOYING:
-                await asyncio.sleep(15)
-                await machine.refresh()
-        return machine
+
+    def _handle_abort(self, machine, allocated):
+        """Handle the user aborting mid deployment."""
+        abort = yes_or_no("Abort deployment?")
+        if abort:
+            with utils.Spinner() as context:
+                if allocated:
+                    context.msg = colorized(
+                        "{autoblue}Releasing{/autoblue} %s") % (
+                            machine.hostname)
+                    machine.release()
+                    context.print(colorized(
+                        "{autoblue}Released{/autoblue} %s") % (
+                            machine.hostname))
+                else:
+                    context.msg = colorized(
+                        "{autoblue}Aborting{/autoblue} %s") % (
+                            machine.hostname)
+                    machine.abort()
+                    context.print(colorized(
+                        "{autoblue}Aborted{/autoblue} %s") % (
+                            machine.hostname))
 
     def execute(self, origin, options):
-        with utils.Spinner() as context:
-            machine = self.deploy(origin, options, context)
+        deploy_options = self._get_deploy_options(options)
+        allocated, machine = False, None
+        try:
+            with utils.Spinner() as context:
+                if options.hostname:
+                    context.msg = colorized(
+                        "{autoblue}Allocating{/autoblue} %s") % (
+                            options.hostname)
+                else:
+                    context.msg = colorized("{autoblue}Searching{/autoblue}")
+                allocated, machine = self.allocate(origin, options)
+                context.msg = colorized(
+                    "{autoblue}Deploying{/autoblue} %s") % machine.hostname
+                try:
+                    machine = machine.deploy(**deploy_options)
+                except CallError:
+                    if allocated:
+                        machine.release()
+                    raise
+                if not options.no_wait:
+                    context.msg = colorized(
+                        "{autoblue}Deploying{/autoblue} %s on %s") % (
+                            machine.distro_series, machine.hostname)
+                    while machine.status == NodeStatus.DEPLOYING:
+                        time.sleep(15)
+                        machine.refresh()
+        except KeyboardInterrupt:
+            if sys.stdout.isatty() and machine is not None:
+                self._handle_abort(machine, allocated)
+            raise
+
         if machine.status == NodeStatus.FAILED_DEPLOYMENT:
             raise CommandError(
                 "Deployment of %s on %s failed." % (

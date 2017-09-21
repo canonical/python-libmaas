@@ -92,6 +92,17 @@ def read_input(message, validator=None, password=False):
                 return value
 
 
+def yes_or_no(question):
+    question = "%s [y/N] " % question
+    while True:
+        value = input(question)
+        value = value.lower()
+        if value in ['y', 'yes']:
+            return True
+        elif value in ['n', 'no']:
+            return False
+
+
 def print_with_pager(output):
     """Print the output to `stdout` using less when in a tty."""
     if sys.stdout.isatty():
