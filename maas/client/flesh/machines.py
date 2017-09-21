@@ -212,7 +212,7 @@ class cmd_allocate(OriginCommand):
             "Agent name to attach to the acquire machine."))
         if with_comment:
             parser.other.add_argument("--comment", help=(
-                "Comment for the allocate event placed on machine."))
+                "Reason for allocating the machine."))
         parser.other.add_argument(
             "--bridge-all", action='store_true', default=None, help=(
                 "Automatically create a bridge on all interfaces on the "
@@ -290,7 +290,7 @@ class cmd_deploy(cmd_allocate):
                 "Base64 encoded string of the user data that gets run on the "
                 "machine once it has deployed."))
         parser.other.add_argument("--comment", help=(
-            "Comment for the deploy event placed on machine."))
+            "Reason for deploying the machine."))
         parser.other.add_argument(
             "--no-wait", action="store_true", help=(
                 "Don't wait for the deploy to complete."))
@@ -436,7 +436,7 @@ class cmd_release(OriginCommand, MachineWorkMixin):
         parser.add_argument('--all', action='store_true', help=(
             "Release all machines owned by you."))
         parser.add_argument('--comment', help=(
-            "Comment for the release event placed on machine."))
+            "Reason for releasing the machine."))
         parser.add_argument('--erase', action='store_true', help=(
             "Erase the disk when releasing."))
         parser.add_argument('--secure-erase', action='store_true', help=(
@@ -476,6 +476,25 @@ class cmd_release(OriginCommand, MachineWorkMixin):
             "release", machines, params, "Releasing", "Released")
 
 
+class cmd_abort(OriginCommand, MachineWorkMixin):
+    """Abort machine's current action."""
+
+    def __init__(self, parser):
+        super(cmd_abort, self).__init__(parser)
+        parser.add_argument("hostname", nargs="+", help=(
+            "Hostname of the machine to abort the action."))
+        parser.add_argument('--comment', help=(
+            "Reason for aborting the action."))
+
+    def execute(self, origin, options):
+        params = utils.remove_None({
+            "comment": options.comment,
+        })
+        machines = self.get_machines(origin, options.hostname)
+        return self.perform_action(
+            "abort", machines, params, "Aborting", "Aborted")
+
+
 class cmd_mark_fixed(OriginCommand, MachineWorkMixin):
     """Mark machine fixed."""
 
@@ -484,7 +503,7 @@ class cmd_mark_fixed(OriginCommand, MachineWorkMixin):
         parser.add_argument("hostname", nargs="+", help=(
             "Hostname of the machine to mark fixed."))
         parser.add_argument('--comment', help=(
-            "Comment for the mark fixed event placed on machine."))
+            "Reason for marking the machine fixed."))
 
     def execute(self, origin, options):
         machines = self.get_machines(origin, options.hostname)
@@ -500,7 +519,7 @@ class cmd_mark_broken(OriginCommand, MachineWorkMixin):
         parser.add_argument("hostname", nargs="+", help=(
             "Hostname of the machine to mark broken."))
         parser.add_argument('--comment', help=(
-            "Comment for the mark broken event placed on machine."))
+            "Reason for marking the machine broken."))
 
     def execute(self, origin, options):
         machines = self.get_machines(origin, options.hostname)
@@ -515,5 +534,6 @@ def register(parser):
     cmd_allocate.register(parser)
     cmd_deploy.register(parser)
     cmd_release.register(parser)
+    cmd_abort.register(parser)
     cmd_mark_fixed.register(parser)
     cmd_mark_broken.register(parser)
