@@ -334,7 +334,19 @@ def remove_None(params: dict):
 class SpinnerContext:
     """Context of the currently running spinner."""
 
-    msg = ""
+    def __init__(self, spinner):
+        self.spinner = spinner
+        self.msg = ""
+
+    def print(self, *args, **kwargs):
+        """Print inside of the spinner context.
+
+        This must be used when inside of a spinner context to ensure that
+        the line printed doesn't overwrite an already existing spinner line.
+        """
+        clear_len = len(self.msg) + 4
+        self.spinner.stream.write("%s\r" % (' ' * clear_len))
+        print(*args, file=self.spinner.stream, **kwargs)
 
 
 class Spinner:
@@ -349,7 +361,7 @@ class Spinner:
         self.stream = stream
 
     def __enter__(self):
-        self.__context = SpinnerContext()
+        self.__context = SpinnerContext(self)
         if self.stream.isatty():
             frames = cycle(self.frames)
             stream = self.stream

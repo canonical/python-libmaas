@@ -352,7 +352,81 @@ class cmd_deploy(cmd_allocate):
                     machine.hostname, machine.status_name))
 
 
-class cmd_release(OriginCommand):
+class MachineWorkMixin:
+    """Mixin that helps with performing actions across a set of machinse."""
+
+    @asynchronous
+    async def _async_perform_action(
+            self, context, action, machines, params, success_title):
+
+        async def _perform(machine, params):
+            """Prints the errors as the occur."""
+            try:
+                await getattr(machine, action)(**params)
+            except Exception as exc:
+                context.print(
+                    colorized("{autored}Error:{/autored} %s") % str(exc))
+                raise
+            else:
+                context.print(colorized(
+                    "{autogreen}%s{/autogreen} %s") % (
+                        success_title, machine.hostname))
+
+        results = await asyncio.gather(*[
+            _perform(machine, params)
+            for machine in machines
+        ], return_exceptions=True)
+        failures = [
+            result
+            for result in results
+            if isinstance(result, Exception)
+        ]
+        if len(failures) > 0:
+            return 1
+        return 0
+
+    def perform_action(
+            self, action, machines, params, progress_title, success_title):
+        """Perform the action on the set of machines."""
+        if len(machines) == 0:
+            return 0
+        with utils.Spinner() as context:
+            if len(machines) == 1:
+                msg = machines[0].hostname
+            elif len(machines) == 2:
+                msg = "%s and %s" % (
+                    machines[0].hostname, machines[1].hostname)
+            else:
+                msg = "%s machines" % len(machines)
+            context.msg = colorized(
+                "{autoblue}%s{/autoblue} %s" % (progress_title, msg))
+            return self._async_perform_action(
+                context, action, machines, params, success_title)
+
+    def get_machines(self, origin, hostnames):
+        """Return a set of machines based on `hostnames`.
+
+        Any hostname that is not found will result in an error.
+        """
+        hostnames = {
+            hostname: True
+            for hostname in hostnames
+        }
+        machines = origin.Machines.read(hostnames=hostnames)
+        machines = [
+            machine
+            for machine in machines
+            if hostnames.pop(machine.hostname, False)
+        ]
+        if len(hostnames) > 0:
+            raise CommandError(
+                "Unable to find %s %s." % (
+                    "machines" if len(hostnames) > 1 else "machine",
+                    ','.join(hostnames)))
+        return machines
+
+
+class cmd_release(OriginCommand, MachineWorkMixin):
     """Release machine."""
 
     def __init__(self, parser):
@@ -373,33 +447,6 @@ class cmd_release(OriginCommand):
         parser.other.add_argument(
             "--no-wait", action="store_true", help=(
                 "Don't wait for the release to complete."))
-
-    @asynchronous
-    async def release(self, machines, params):
-
-        async def _release(machine, params):
-            """Prints the errors as the occur."""
-            try:
-                await machine.release(**params)
-            except Exception as exc:
-                print(colorized("{autored}Error:{/autored} %s") % str(exc))
-                raise
-            else:
-                print(colorized(
-                    "{autogreen}Released{/autogreen} %s") % machine.hostname)
-
-        results = await asyncio.gather(*[
-            _release(machine, params)
-            for machine in machines
-        ], return_exceptions=True)
-        failures = [
-            result
-            for result in results
-            if isinstance(result, Exception)
-        ]
-        if len(failures) > 0:
-            return 1
-        return 0
 
     def execute(self, origin, options):
         if options.hostname and options.all:
@@ -424,34 +471,41 @@ class cmd_release(OriginCommand):
                             NodeStatus.COMMISSIONING, NodeStatus.TESTING]))
             ]
         else:
-            hostnames = {
-                hostname: True
-                for hostname in options.hostname
-            }
-            machines = origin.Machines.read(hostnames=hostnames)
-            machines = [
-                machine
-                for machine in machines
-                if hostnames.pop(machine.hostname, False)
-            ]
-            if len(hostnames) > 0:
-                raise CommandError(
-                    "Unable to find %s %s." % (
-                        "machines" if len(hostnames) > 1 else "machine",
-                        ','.join(hostnames)))
-        if len(machines) == 0:
-            return 0
-        with utils.Spinner() as context:
-            if len(machines) == 1:
-                msg = machines[0].hostname
-            elif len(machines) == 2:
-                msg = "%s and %s" % (
-                    machines[0].hostname, machines[1].hostname)
-            else:
-                msg = "%s machines" % len(machines)
-            context.msg = colorized(
-                "{autoblue}Releasing{/autoblue} %s" % msg)
-            return self.release(machines, params)
+            machines = self.get_machines(origin, options.hostname)
+        return self.perform_action(
+            "release", machines, params, "Releasing", "Released")
+
+
+class cmd_mark_fixed(OriginCommand, MachineWorkMixin):
+    """Mark machine fixed."""
+
+    def __init__(self, parser):
+        super(cmd_mark_fixed, self).__init__(parser)
+        parser.add_argument("hostname", nargs="+", help=(
+            "Hostname of the machine to mark fixed."))
+        parser.add_argument('--comment', help=(
+            "Comment for the mark fixed event placed on machine."))
+
+    def execute(self, origin, options):
+        machines = self.get_machines(origin, options.hostname)
+        return self.perform_action(
+            "mark_fixed", machines, {}, "Marking fixed", "Marked fixed")
+
+
+class cmd_mark_broken(OriginCommand, MachineWorkMixin):
+    """Mark machine broken."""
+
+    def __init__(self, parser):
+        super(cmd_mark_broken, self).__init__(parser)
+        parser.add_argument("hostname", nargs="+", help=(
+            "Hostname of the machine to mark broken."))
+        parser.add_argument('--comment', help=(
+            "Comment for the mark broken event placed on machine."))
+
+    def execute(self, origin, options):
+        machines = self.get_machines(origin, options.hostname)
+        return self.perform_action(
+            "mark_broken", machines, {}, "Marking broken", "Marked broken")
 
 
 def register(parser):
@@ -461,3 +515,5 @@ def register(parser):
     cmd_allocate.register(parser)
     cmd_deploy.register(parser)
     cmd_release.register(parser)
+    cmd_mark_fixed.register(parser)
+    cmd_mark_broken.register(parser)
