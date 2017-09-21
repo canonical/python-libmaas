@@ -16,6 +16,7 @@ from . import (
     tables,
 )
 from .. import utils
+from ..bones import CallError
 from ..enum import NodeStatus
 from ..utils.async import asynchronous
 
@@ -232,6 +233,19 @@ class cmd_allocate(OriginCommand):
 
     @asynchronous
     async def allocate(self, origin, options):
+        if options.hostname:
+            me = await origin.Users.whoami()
+            machines = await origin.Machines.read(hostnames=[options.hostname])
+            if len(machines) == 0:
+                raise CommandError(
+                    "Unable to find machine %s." % options.hostname)
+            machine = machines[0]
+            if (machine.status == NodeStatus.ALLOCATED and
+                    machine.owner.username == me.username):
+                return False, machine
+            else:
+                raise CommandError(
+                    "Unable to allocate machine %s." % options.hostname)
         params = utils.remove_None({
             'hostname': options.hostname,
             'architectures': options.arch,
@@ -253,12 +267,19 @@ class cmd_allocate(OriginCommand):
             'bridge_fd': options.bridge_fd,
             'dry_run': getattr(options, 'dry_run', False),
         })
-        return await origin.Machines.allocate(**params)
+        machine = await origin.Machines.allocate(**params)
+        if options.hostname and machine.hostname != options.hostname:
+            await machine.release()
+            raise CommandError(
+                "MAAS failed to allocate machine %s; "
+                "instead it allocated %s." % (
+                    options.hostname, machine.hostname))
+        return True, machine
 
     def execute(self, origin, options):
         with utils.Spinner() as context:
             context.msg = colorized("{automagenta}Allocating{/automagenta}")
-            machine = self.allocate(origin, options)
+            _, machine = self.allocate(origin, options)
         print(colorized(
             "{autoblue}Allocated{/autoblue} %s") % machine.hostname)
 
@@ -318,10 +339,15 @@ class cmd_deploy(cmd_allocate):
                     options.hostname)
         else:
             context.msg = colorized("{autoblue}Searching{/autoblue}")
-        machine = await self.allocate(origin, options)
+        allocated, machine = await self.allocate(origin, options)
         context.msg = colorized(
             "{autoblue}Deploying{/autoblue} %s") % machine.hostname
-        machine = await machine.deploy(**deploy_options)
+        try:
+            machine = await machine.deploy(**deploy_options)
+        except CallError:
+            if allocated:
+                await machine.release()
+            raise
         if not options.no_wait:
             context.msg = colorized(
                 "{autoblue}Deploying{/autoblue} %s on %s") % (
@@ -357,23 +383,41 @@ class MachineWorkMixin:
 
     @asynchronous
     async def _async_perform_action(
-            self, context, action, machines, params, success_title):
+            self, context, action, machines, params,
+            progress_title, success_title):
 
-        async def _perform(machine, params):
-            """Prints the errors as the occur."""
+        def _update_msg(remaining):
+            """Update the spinner message."""
+            if len(remaining) == 1:
+                msg = remaining[0].hostname
+            elif len(remaining) == 2:
+                msg = "%s and %s" % (
+                    remaining[0].hostname, remaining[1].hostname)
+            else:
+                msg = "%s machines" % len(remaining)
+            context.msg = colorized(
+                "{autoblue}%s{/autoblue} %s" % (progress_title, msg))
+
+        async def _perform(machine, params, remaining):
+            """Updates the messages as actions complete."""
             try:
                 await getattr(machine, action)(**params)
             except Exception as exc:
+                remaining.remove(machine)
+                _update_msg(remaining)
                 context.print(
                     colorized("{autored}Error:{/autored} %s") % str(exc))
                 raise
             else:
+                remaining.remove(machine)
+                _update_msg(remaining)
                 context.print(colorized(
                     "{autogreen}%s{/autogreen} %s") % (
                         success_title, machine.hostname))
 
+        _update_msg(machines)
         results = await asyncio.gather(*[
-            _perform(machine, params)
+            _perform(machine, params, machines)
             for machine in machines
         ], return_exceptions=True)
         failures = [
@@ -391,17 +435,9 @@ class MachineWorkMixin:
         if len(machines) == 0:
             return 0
         with utils.Spinner() as context:
-            if len(machines) == 1:
-                msg = machines[0].hostname
-            elif len(machines) == 2:
-                msg = "%s and %s" % (
-                    machines[0].hostname, machines[1].hostname)
-            else:
-                msg = "%s machines" % len(machines)
-            context.msg = colorized(
-                "{autoblue}%s{/autoblue} %s" % (progress_title, msg))
             return self._async_perform_action(
-                context, action, machines, params, success_title)
+                context, action, machines, params,
+                progress_title, success_title)
 
     def get_machines(self, origin, hostnames):
         """Return a set of machines based on `hostnames`.

@@ -337,6 +337,7 @@ class SpinnerContext:
     def __init__(self, spinner):
         self.spinner = spinner
         self.msg = ""
+        self._prev_msg = ""
 
     def print(self, *args, **kwargs):
         """Print inside of the spinner context.
@@ -344,9 +345,9 @@ class SpinnerContext:
         This must be used when inside of a spinner context to ensure that
         the line printed doesn't overwrite an already existing spinner line.
         """
-        clear_len = len(self.msg) + 4
+        clear_len = max(len(self._prev_msg), len(self.msg)) + 4
         self.spinner.stream.write("%s\r" % (' ' * clear_len))
-        print(*args, file=self.spinner.stream, **kwargs)
+        print(*args, file=self.spinner.stream, flush=True, **kwargs)
 
 
 class Spinner:
@@ -371,21 +372,24 @@ class Spinner:
                 # Disable cursor.
                 stream.write("\033[?25l")
                 stream.flush()
-                prev_msg = self.__context.msg
                 try:
                     # Write out successive frames (and a backspace) every 0.1
                     # seconds until done is set.
                     while not done.wait(0.1):
-                        diff = len(prev_msg) - len(self.__context.msg)
+                        diff = (
+                            len(self.__context._prev_msg) -
+                            len(self.__context.msg))
                         if diff < 0:
                             diff = 0
                         stream.write("[%s] %s%s\r" % (
                             next(frames), self.__context.msg, ' ' * diff))
-                        prev_msg = self.__context.msg
+                        self.__context._prev_msg = self.__context.msg
                         stream.flush()
                 finally:
                     # Clear line and enable cursor.
-                    clear_len = max(len(prev_msg), len(self.__context.msg)) + 4
+                    clear_len = max(
+                        len(self.__context._prev_msg),
+                        len(self.__context.msg)) + 4
                     stream.write("%s\r" % (' ' * clear_len))
                     stream.write("\033[?25h")
                     stream.flush()
