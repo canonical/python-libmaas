@@ -21,12 +21,13 @@ from ...viscera.interfaces import (
     InterfaceLink,
     InterfaceLinks,
 )
+from ...viscera.users import User
 
 
 def make_origin():
     """Make origin for devices."""
     return bind(
-        Devices, Device,
+        Devices, Device, User,
         Interfaces, Interface,
         InterfaceLinks, InterfaceLink)
 
@@ -40,6 +41,7 @@ class TestDevices(TestCaseWithProfile):
         devices_objs = [
             {
                 'hostname': make_name_without_spaces(),
+                'owner': make_name_without_spaces(),
                 'interface_set': [
                     {
                         'links': [
@@ -60,6 +62,7 @@ class TestDevices(TestCaseWithProfile):
             },
             {
                 'hostname': make_name_without_spaces(),
+                'owner': make_name_without_spaces(),
                 'interface_set': [
                     {
                         'links': [
@@ -87,11 +90,13 @@ class TestDevices(TestCaseWithProfile):
             cmd.execute(origin, options, target=tabular.RenderTarget.yaml))
         self.assertEquals([
             {'name': 'hostname', 'title': 'Hostname'},
+            {'name': 'owner', 'title': 'Owner'},
             {'name': 'ip_addresses', 'title': 'IP addresses'},
         ], output['columns'])
         devices_output = sorted([
             {
                 'hostname': device['hostname'],
+                'owner': device['owner'] if device['owner'] else '(none)',
                 'ip_addresses': [
                     link['ip_address']
                     for nic in device['interface_set']

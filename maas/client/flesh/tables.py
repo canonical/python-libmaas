@@ -8,7 +8,10 @@ __all__ = [
     "UsersTable",
 ]
 
-from operator import itemgetter
+from operator import (
+    attrgetter,
+    itemgetter
+)
 
 from colorclass import Color
 
@@ -16,12 +19,14 @@ from ..enum import (
     InterfaceType,
     NodeType,
     PowerState,
+    RDNSMode,
 )
 from .tabular import (
     Column,
     RenderTarget,
     Table,
     DetailTable,
+    NestedTableColumn,
 )
 
 
@@ -168,17 +173,6 @@ class NodeImageColumn(Column):
             return super().render(target, "(none)")
 
 
-class NodeTagsColumn(Column):
-
-    def render(self, target, data):
-        if target in [RenderTarget.plain, RenderTarget.pretty]:
-            return '\n'.join(data)
-        elif target == RenderTarget.csv:
-            return ','.join(data)
-        else:
-            return super().render(target, data)
-
-
 class NodeZoneColumn(Column):
 
     def render(self, target, data):
@@ -193,13 +187,12 @@ class NodesTable(Table):
             NodeTypeColumn("node_type", "Type"),
         )
 
-    def render(self, target, nodes):
+    def get_rows(self, target, nodes):
         data = (
             (node.hostname, node.node_type)
             for node in nodes
         )
-        data = sorted(data, key=itemgetter(0))
-        return super().render(target, data)
+        return sorted(data, key=itemgetter(0))
 
 
 class MachinesTable(Table):
@@ -209,25 +202,26 @@ class MachinesTable(Table):
             Column("hostname", "Hostname"),
             NodePowerColumn("power", "Power"),
             NodeStatusNameColumn("status", "Status"),
+            NodeOwnerColumn("owner", "Owner"),
             NodeArchitectureColumn("architecture", "Arch"),
             NodeCPUsColumn("cpus", "#CPUs"),
             NodeMemoryColumn("memory", "RAM"),
         )
 
-    def render(self, target, machines):
+    def get_rows(self, target, machines):
         data = (
             (
                 machine.hostname,
                 machine.power_state,
                 machine.status_name,
+                machine.owner,
                 machine.architecture,
                 machine.cpus,
                 machine.memory,
             )
             for machine in machines
         )
-        data = sorted(data, key=itemgetter(0))
-        return super().render(target, data)
+        return sorted(data, key=itemgetter(0))
 
 
 class MachineDetail(DetailTable):
@@ -244,15 +238,16 @@ class MachineDetail(DetailTable):
             NodeCPUsColumn("cpus", "#CPUs"),
             NodeMemoryColumn("memory", "RAM"),
             NodeInterfacesColumn("interfaces", "Interfaces"),
+            Column("ip_addresses", "IP addresses"),
             NodeZoneColumn("zone", "Zone"),
             NodeOwnerColumn("owner", "Owner"),
-            NodeTagsColumn("tags", "Tags"),
+            Column("tags", "Tags"),
         ]
         if with_type:
             columns.insert(1, NodeTypeColumn("node_type", "Type"))
         super().__init__(*columns)
 
-    def render(self, target, machine):
+    def get_rows(self, target, machine):
         data = [
             machine.hostname,
             machine.status_name,
@@ -263,13 +258,19 @@ class MachineDetail(DetailTable):
             machine.cpus,
             machine.memory,
             machine.interfaces,
+            [
+                link.ip_address
+                for interface in machine.interfaces
+                for link in interface.links
+                if link.ip_address
+            ],
             machine.zone,
             machine.owner,
             machine.tags,
         ]
         if self.with_type:
             data.insert(1, machine.node_type)
-        return super().render(target, data)
+        return data
 
 
 class DevicesTable(Table):
@@ -277,13 +278,15 @@ class DevicesTable(Table):
     def __init__(self):
         super().__init__(
             Column("hostname", "Hostname"),
+            NodeOwnerColumn("owner", "Owner"),
             Column("ip_addresses", "IP addresses"),
         )
 
-    def render(self, target, devices):
+    def get_rows(self, target, devices):
         data = (
             (
                 device.hostname,
+                device.owner,
                 [
                     link.ip_address
                     for interface in device.interfaces
@@ -293,8 +296,7 @@ class DevicesTable(Table):
             )
             for device in devices
         )
-        data = sorted(data, key=itemgetter(0))
-        return super().render(target, data)
+        return sorted(data, key=itemgetter(0))
 
 
 class DeviceDetail(DetailTable):
@@ -305,13 +307,14 @@ class DeviceDetail(DetailTable):
             Column("hostname", "Hostname"),
             NodeInterfacesColumn("interfaces", "Interfaces"),
             Column("ip_addresses", "IP addresses"),
-            NodeTagsColumn("tags", "Tags"),
+            NodeOwnerColumn("owner", "Owner"),
+            Column("tags", "Tags"),
         ]
         if with_type:
             columns.insert(1, NodeTypeColumn("node_type", "Type"))
         super().__init__(*columns)
 
-    def render(self, target, device):
+    def get_rows(self, target, device):
         data = [
             device.hostname,
             device.interfaces,
@@ -321,11 +324,12 @@ class DeviceDetail(DetailTable):
                 for link in interface.links
                 if link.ip_address
             ],
+            device.owner,
             device.tags,
         ]
         if self.with_type:
             data.insert(1, device.node_type)
-        return super().render(target, data)
+        return data
 
 
 class ControllersTable(Table):
@@ -339,7 +343,7 @@ class ControllersTable(Table):
             NodeMemoryColumn("memory", "RAM"),
         )
 
-    def render(self, target, controllers):
+    def get_rows(self, target, controllers):
         data = (
             (
                 controller.hostname,
@@ -350,8 +354,7 @@ class ControllersTable(Table):
             )
             for controller in controllers
         )
-        data = sorted(data, key=itemgetter(0))
-        return super().render(target, data)
+        return sorted(data, key=itemgetter(0))
 
 
 class ControllerDetail(DetailTable):
@@ -367,8 +370,8 @@ class ControllerDetail(DetailTable):
             NodeZoneColumn("zone", "Zone"),
         )
 
-    def render(self, target, controller):
-        return super().render(target, (
+    def get_rows(self, target, controller):
+        return (
             controller.hostname,
             controller.node_type,
             controller.architecture,
@@ -376,7 +379,7 @@ class ControllerDetail(DetailTable):
             controller.memory,
             controller.interfaces,
             controller.zone,
-        ))
+        )
 
 
 class TagsTable(Table):
@@ -389,13 +392,12 @@ class TagsTable(Table):
             Column("comment", "Comment"),
         )
 
-    def render(self, target, tags):
+    def get_rows(self, target, tags):
         data = (
             (tag.name, tag.definition, tag.kernel_opts, tag.comment)
             for tag in tags
         )
-        data = sorted(data, key=itemgetter(0))
-        return super().render(target, data)
+        return sorted(data, key=itemgetter(0))
 
 
 class FilesTable(Table):
@@ -405,10 +407,9 @@ class FilesTable(Table):
             Column("filename", "File name"),
         )
 
-    def render(self, target, files):
+    def get_rows(self, target, files):
         data = ((f.filename,) for f in files)
-        data = sorted(data, key=itemgetter(0))
-        return super().render(target, data)
+        return sorted(data, key=itemgetter(0))
 
 
 class UserIsAdminColumn(Column):
@@ -434,10 +435,9 @@ class UsersTable(Table):
             UserIsAdminColumn("is_admin", "Admin?"),
         )
 
-    def render(self, target, users):
+    def get_rows(self, target, users):
         data = ((user.username,) for user in users)
-        data = sorted(data, key=itemgetter(0))
-        return super().render(target, data)
+        return sorted(data, key=itemgetter(0))
 
 
 class ProfileActiveColumn(Column):
@@ -460,12 +460,364 @@ class ProfilesTable(Table):
             ProfileActiveColumn("is_default", "Active"),
         )
 
-    def render(self, target, profiles):
+    def get_rows(self, target, profiles):
         default = profiles.default
         default_name = None if default is None else default.name
         data = (
             (profile.name, profile.url, (profile.name == default_name))
             for profile in (profiles.load(name) for name in profiles)
         )
-        data = sorted(data, key=itemgetter(0))
+        return sorted(data, key=itemgetter(0))
+
+
+class VIDColumn(Column):
+
+    def render(self, target, data):
+        vlan, vlans = data, data._data['fabric'].vlans
+        vlans = sorted(vlans, key=attrgetter('id'))
+        if vlans[0] == vlan:
+            if vlan.vid == 0:
+                data = "untagged"
+            else:
+                data = "untagged (%d)" % vlan.vid
+        else:
+            data = vlan.vid
         return super().render(target, data)
+
+
+class DHCPColumn(Column):
+
+    def render(self, target, vlan):
+        if vlan.dhcp_on:
+            if vlan.primary_rack:
+                if vlan.secondary_rack:
+                    text = "HA Enabled"
+                else:
+                    text = "Enabled"
+            if target == RenderTarget.pretty:
+                text = Color("{autogreen}%s{/autogreen}") % text
+        elif vlan.relay_vlan:
+            text = "Relayed via %s.%s" % (vlan.fabric.name, vlan.vid)
+            if target == RenderTarget.pretty:
+                text = Color("{autoblue}%s{/autoblue}") % text
+        else:
+            text = "Disabled"
+        return super().render(target, text)
+
+
+class SpaceNameColumn(Column):
+
+    def render(self, target, space):
+        name = space.name
+        if name == "undefined":
+            name = "(undefined)"
+        return super().render(target, name)
+
+
+class SubnetNameColumn(Column):
+
+    def render(self, target, subnet):
+        name = subnet.cidr
+        if subnet.name and subnet.name != name:
+            name = "%s (%s)" % (name, subnet.name)
+        return super().render(target, name)
+
+
+class SubnetActiveColumn(Column):
+
+    def render(self, target, active):
+        if active:
+            text = "Active"
+        else:
+            text = "Disabled"
+        if target == RenderTarget.pretty and active:
+            text = Color('{autogreen}Active{/autogreen}')
+        return super().render(target, text)
+
+
+class SubnetRDNSModeColumn(Column):
+
+    def render(self, target, mode):
+        if mode == RDNSMode.DISABLED:
+            text = "Disabled"
+        else:
+            if mode == RDNSMode.ENABLED:
+                text = "Enabled"
+            elif mode == RDNSMode.RFC2317:
+                text = "Enabled w/ RFC 2317"
+            if target == RenderTarget.pretty:
+                text = Color("{autogreen}%s{/autogreen}") % text
+        return super().render(target, text)
+
+
+class SubnetsTable(Table):
+
+    def __init__(self, *, visible_columns=None, fabrics=None):
+        self.fabrics = fabrics
+        super().__init__(
+            SubnetNameColumn("name", "Subnet"),
+            VIDColumn("vid", "VID"),
+            Column("fabric", "Fabric"),
+            SpaceNameColumn("space", "Space"),
+            visible_columns=visible_columns
+        )
+
+    def get_vlan(self, vlan):
+        fabric = self.get_fabric(vlan.fabric)
+        for fabric_vlan in fabric.vlans:
+            if fabric_vlan.id == vlan.id:
+                return fabric_vlan
+
+    def get_fabric(self, unloaded_fabric):
+        for fabric in self.fabrics:
+            if fabric.id == unloaded_fabric.id:
+                return fabric
+
+    def get_rows(self, target, subnets):
+        return (
+            (
+                subnet,
+                self.get_vlan(subnet.vlan),
+                self.get_fabric(subnet.vlan.fabric).name,
+                subnet.vlan.space,
+            )
+            for subnet in sorted(subnets, key=attrgetter('cidr'))
+        )
+
+
+class SubnetDetail(DetailTable):
+
+    def __init__(self, *, fabrics=None):
+        self.fabrics = fabrics
+        super().__init__(
+            Column("name", "Name"),
+            Column("cidr", "CIDR"),
+            Column("gateway_ip", "Gateway IP"),
+            Column("dns", "DNS"),
+            VIDColumn("vid", "VID"),
+            Column("fabric", "Fabric"),
+            SpaceNameColumn("space", "Space"),
+            SubnetActiveColumn("managed", "Managed allocation"),
+            SubnetActiveColumn("allow_proxy", "Allow proxy"),
+            SubnetActiveColumn("active_discovery", "Active discovery"),
+            SubnetRDNSModeColumn("rdns_mode", "Reverse DNS mode"),
+        )
+
+    def get_vlan(self, vlan):
+        fabric = self.get_fabric(vlan.fabric)
+        for fabric_vlan in fabric.vlans:
+            if fabric_vlan.id == vlan.id:
+                return fabric_vlan
+
+    def get_fabric(self, unloaded_fabric):
+        for fabric in self.fabrics:
+            if fabric.id == unloaded_fabric.id:
+                return fabric
+
+    def get_rows(self, target, subnet):
+        return (
+            subnet.name,
+            subnet.cidr,
+            subnet.gateway_ip,
+            subnet.dns_servers,
+            self.get_vlan(subnet.vlan),
+            self.get_fabric(subnet.vlan.fabric).name,
+            subnet.vlan.space,
+            subnet.managed,
+            subnet.allow_proxy,
+            subnet.active_discovery,
+            subnet.rdns_mode,
+        )
+
+
+class VlansTable(Table):
+
+    def __init__(self, *, visible_columns=None, fabrics=None, subnets=None):
+        self.subnets = subnets
+        super().__init__(
+            VIDColumn("vid", "VID"),
+            DHCPColumn("dhcp", "DHCP"),
+            SpaceNameColumn("space", "Space"),
+            NestedTableColumn("subnets", "Subnets", SubnetsTable, None, {
+                'visible_columns': ('name',),
+                'fabrics': fabrics,
+            }),
+            visible_columns=visible_columns
+        )
+
+    def get_subnets(self, vlan):
+        """Return the subnets for the `vlan`."""
+        return vlan._origin.Subnets([
+            subnet
+            for subnet in self.subnets
+            if subnet.vlan.id == vlan.id
+        ])
+
+    def get_rows(self, target, vlans):
+        return (
+            (
+                vlan,
+                vlan,
+                vlan.space,
+                self.get_subnets(vlan)
+            )
+            for vlan in sorted(vlans, key=attrgetter('vid'))
+        )
+
+
+class VlanDetail(DetailTable):
+
+    def __init__(self, *, fabrics=None, subnets=None):
+        self.fabrics = fabrics
+        self.subnets = subnets
+        super().__init__(
+            VIDColumn("vid", "VID"),
+            Column("name", "Name"),
+            Column("fabric", "Fabric"),
+            Column("mtu", "MTU"),
+            DHCPColumn("dhcp", "DHCP"),
+            Column("primary_rack", "Primary rack"),
+            Column("secondary_rack", "Secondary rack"),
+            SpaceNameColumn("space", "Space"),
+            NestedTableColumn("subnets", "Subnets", SubnetsTable, None, {
+                'visible_columns': ('name',),
+                'fabrics': fabrics,
+            }),
+        )
+
+    def get_fabric(self, vlan):
+        for fabric in self.fabrics:
+            if fabric.id == vlan.fabric.id:
+                return fabric
+
+    def get_subnets(self, vlan):
+        """Return the subnets for the `vlan`."""
+        return vlan._origin.Subnets([
+            subnet
+            for subnet in self.subnets
+            if subnet.vlan.id == vlan.id
+        ])
+
+    def get_rows(self, target, vlan):
+        primary_rack = vlan.primary_rack
+        if primary_rack is not None:
+            primary_rack.refresh()
+        secondary_rack = vlan.secondary_rack
+        if secondary_rack is not None:
+            secondary_rack.refresh()
+        return (
+            vlan,
+            vlan.name,
+            self.get_fabric(vlan).name,
+            vlan.mtu,
+            vlan,
+            primary_rack.hostname if primary_rack else None,
+            secondary_rack.hostname if secondary_rack else None,
+            vlan.space,
+            self.get_subnets(vlan)
+        )
+
+
+class FabricsTable(Table):
+
+    def __init__(self, *, visible_columns=None, subnets=None):
+        super().__init__(
+            Column("name", "Fabric"),
+            NestedTableColumn(
+                "vlans", "VLANs", VlansTable, None, {'subnets': subnets}),
+            visible_columns=visible_columns
+        )
+
+    def get_rows(self, target, fabrics):
+        self['vlans'].table_kwargs['fabrics'] = fabrics
+        return (
+            (
+                fabric.name,
+                fabric.vlans
+            )
+            for fabric in sorted(fabrics, key=attrgetter('id'))
+        )
+
+
+class FabricDetail(DetailTable):
+
+    def __init__(self, *, fabrics=None, subnets=None):
+        super().__init__(
+            Column("name", "Name"),
+            NestedTableColumn(
+                "vlans", "VLANs", VlansTable, None, {
+                    'fabrics': fabrics,
+                    'subnets': subnets}),
+        )
+
+    def get_rows(self, target, fabric):
+        return (
+            fabric.name,
+            fabric.vlans,
+        )
+
+
+class SpacesTable(Table):
+
+    def __init__(self, *, visible_columns=None, fabrics=None, subnets=None):
+        self.fabrics = fabrics
+        super().__init__(
+            SpaceNameColumn("name", "Space"),
+            NestedTableColumn(
+                "vlans", "VLANs", VlansTable, None, {
+                    'visible_columns': ('vid', 'dhcp', 'subnets'),
+                    'fabrics': fabrics,
+                    'subnets': subnets}),
+            visible_columns=visible_columns
+        )
+
+    def get_fabric(self, vlan):
+        for fabric in self.fabrics:
+            for fabric_vlan in fabric.vlans:
+                if fabric_vlan.id == vlan.id:
+                    return fabric
+
+    def get_vlans(self, vlans):
+        for vlan in vlans:
+            vlan._data['fabric'] = self.get_fabric(vlan)
+        return vlans
+
+    def get_rows(self, target, spaces):
+        return (
+            (
+                space,
+                self.get_vlans(space.vlans)
+            )
+            for space in sorted(spaces, key=attrgetter('name'))
+        )
+
+
+class SpaceDetail(DetailTable):
+
+    def __init__(self, *, fabrics=None, subnets=None):
+        self.fabrics = fabrics
+        super().__init__(
+            SpaceNameColumn("name", "Space"),
+            NestedTableColumn(
+                "vlans", "VLANs", VlansTable, None, {
+                    'visible_columns': ('vid', 'dhcp', 'subnets'),
+                    'fabrics': fabrics,
+                    'subnets': subnets}),
+        )
+
+    def get_fabric(self, vlan):
+        for fabric in self.fabrics:
+            for fabric_vlan in fabric.vlans:
+                if fabric_vlan.id == vlan.id:
+                    return fabric
+
+    def get_vlans(self, vlans):
+        for vlan in vlans:
+            vlan._data['fabric'] = self.get_fabric(vlan)
+        return vlans
+
+    def get_rows(self, target, space):
+        return (
+            space,
+            self.get_vlans(space.vlans)
+        )

@@ -60,7 +60,9 @@ class Vlan(Object, metaclass=VlanType):
         "name", check_optional(str), check_optional(str))
     mtu = ObjectField.Checked(
         "mtu", check(int), check(int))
-    space = ObjectFieldRelated("space", "Space")
+    space = ObjectFieldRelated(
+        "space", "Space",
+        map_func=lambda _, data: {'name': data, '__incomplete__': True})
 
     relay_vlan = ObjectFieldRelated("relay_vlan", "Vlan")
     dhcp_on = ObjectField.Checked(
@@ -70,8 +72,6 @@ class Vlan(Object, metaclass=VlanType):
 
     external_dhcp = ObjectField.Checked(
         "external_dhcp", check_optional(str), readonly=True)
-
-    # space
 
     def __repr__(self):
         return super(Vlan, self).__repr__(

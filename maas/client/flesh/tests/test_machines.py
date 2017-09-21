@@ -19,11 +19,12 @@ from ...viscera.machines import (
     Machine,
     Machines
 )
+from ...viscera.users import User
 
 
 def make_origin():
     """Make origin for machines."""
-    return bind(Machines, Machine)
+    return bind(Machines, Machine, User)
 
 
 class TestMachines(TestCaseWithProfile):
@@ -38,6 +39,7 @@ class TestMachines(TestCaseWithProfile):
                 'architecture': 'amd64/generic',
                 'status': NodeStatus.READY.value,
                 'status_name': NodeStatus.READY.name,
+                'owner': None,
                 'power_state': PowerState.OFF.value,
                 'cpu_count': 2,
                 'memory': 1024,
@@ -47,6 +49,7 @@ class TestMachines(TestCaseWithProfile):
                 'architecture': 'i386/generic',
                 'status': NodeStatus.DEPLOYED.value,
                 'status_name': NodeStatus.DEPLOYED.name,
+                'owner': make_name_without_spaces(),
                 'power_state': PowerState.ON.value,
                 'cpu_count': 4,
                 'memory': 4096,
@@ -62,6 +65,7 @@ class TestMachines(TestCaseWithProfile):
             {'name': 'hostname', 'title': 'Hostname'},
             {'name': 'power', 'title': 'Power'},
             {'name': 'status', 'title': 'Status'},
+            {'name': 'owner', 'title': 'Owner'},
             {'name': 'architecture', 'title': 'Arch'},
             {'name': 'cpus', 'title': '#CPUs'},
             {'name': 'memory', 'title': 'RAM'},
@@ -71,6 +75,7 @@ class TestMachines(TestCaseWithProfile):
                 'hostname': machine['hostname'],
                 'power': machine['power_state'],
                 'status': machine['status_name'],
+                'owner': machine['owner'] if machine['owner'] else '(none)',
                 'architecture': machine['architecture'],
                 'cpus': machine['cpu_count'],
                 'memory': machine['memory'],

@@ -790,7 +790,7 @@ class ObjectFieldRelated(ObjectField):
     def __init__(
             self, name, cls, *,
             default=undefined, readonly=False, pk=False, alt_pk=False,
-            reverse=undefined, use_data_setter=False):
+            reverse=undefined, use_data_setter=False, map_func=None):
         """Create a `ObjectFieldRelated` with `cls`.
 
         :param name: The name of the field. This is the name that's used to
@@ -816,6 +816,9 @@ class ObjectFieldRelated(ObjectField):
             name, default=default, readonly=readonly, pk=pk, alt_pk=alt_pk)
         self.reverse = reverse
         self.use_data_setter = use_data_setter
+        self.map_func = map_func
+        if self.map_func is None:
+            self.map_func = lambda instance, value: value
         if not isinstance(cls, str):
             if not issubclass(cls, Object):
                 raise TypeError(
@@ -835,6 +838,7 @@ class ObjectFieldRelated(ObjectField):
             Python-side value.
         :return: A set of `cls` from the given datum.
         """
+        datum = self.map_func(instance, datum)
         if datum is None:
             return None
         local_data = None

@@ -9,6 +9,7 @@ from . import (
     check,
     Object,
     ObjectField,
+    ObjectFieldRelatedSet,
     ObjectSet,
     ObjectType,
 )
@@ -65,10 +66,13 @@ class Space(Object, metaclass=SpaceType):
     """A Space."""
 
     id = ObjectField.Checked("id", check(int), readonly=True, pk=True)
-    name = ObjectField.Checked("name", check(str), readonly=True)
+    name = ObjectField.Checked(
+        "name", check(str), readonly=True, alt_pk=0)
 
     # description is allowed in the create call and displayed in the UI
     # but never returned by the API.
+
+    vlans = ObjectFieldRelatedSet("vlans", "Vlans", reverse=None)
 
     async def delete(self):
         """Delete this Space."""

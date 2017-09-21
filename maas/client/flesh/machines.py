@@ -34,20 +34,30 @@ def base64_file(filepath):
 
 
 class cmd_machines(OriginPagedTableCommand):
-    """List all machines."""
+    """List machines."""
 
     def __init__(self, parser):
         super(cmd_machines, self).__init__(parser)
         parser.add_argument("hostname", nargs='*', help=(
             "Hostname of the machine."))
+        parser.add_argument("--owned", action="store_true", help=(
+            "Show only machines owned by you."))
 
     def execute(self, origin, options, target):
         hostnames = None
         if options.hostname:
             hostnames = options.hostname
-
+        machines = origin.Machines.read(hostnames=hostnames)
+        if options.owned:
+            me = origin.Users.whoami()
+            machines = origin.Machines([
+                machine
+                for machine in machines
+                if machine.owner is not None and
+                machine.owner.username == me.username
+            ])
         table = tables.MachinesTable()
-        return table.render(target, origin.Machines.read(hostnames=hostnames))
+        return table.render(target, machines)
 
 
 class cmd_machine(OriginPagedTableCommand):

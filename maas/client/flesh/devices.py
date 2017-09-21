@@ -12,19 +12,30 @@ from . import (
 
 
 class cmd_devices(OriginPagedTableCommand):
-    """List all devices."""
+    """List devices."""
 
     def __init__(self, parser):
         super(cmd_devices, self).__init__(parser)
         parser.add_argument("hostname", nargs='*', help=(
             "Hostname of the device."))
+        parser.add_argument("--owned", action="store_true", help=(
+            "Show only machines owned by you."))
 
     def execute(self, origin, options, target):
         hostnames = None
         if options.hostname:
             hostnames = options.hostname
+        devices = origin.Devices.read(hostnames=hostnames)
+        if options.owned:
+            me = origin.Users.whoami()
+            devices = origin.Devices([
+                device
+                for device in devices
+                if device.owner is not None and
+                device.owner.username == me.username
+            ])
         table = tables.DevicesTable()
-        return table.render(target, origin.Devices.read(hostnames=hostnames))
+        return table.render(target, devices)
 
 
 class cmd_device(OriginPagedTableCommand):

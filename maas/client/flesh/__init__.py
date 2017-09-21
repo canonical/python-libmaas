@@ -447,6 +447,7 @@ def prepare_parser(program):
     # Register sub-commands.
     submodules = (
         "nodes", "machines", "devices", "controllers",
+        "fabrics", "vlans", "subnets", "spaces",
         "files", "tags", "users",
         "profiles", "shell",
     )

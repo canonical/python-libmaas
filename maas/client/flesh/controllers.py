@@ -17,7 +17,7 @@ from ..utils.async import asynchronous
 
 
 class cmd_controllers(OriginPagedTableCommand):
-    """List all controllers."""
+    """List controllers."""
 
     def __init__(self, parser):
         super(cmd_controllers, self).__init__(parser)

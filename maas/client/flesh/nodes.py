@@ -13,7 +13,7 @@ from ..enum import NodeType
 
 
 class cmd_nodes(OriginPagedTableCommand):
-    """List all nodes."""
+    """List nodes."""
 
     def __init__(self, parser):
         super(cmd_nodes, self).__init__(parser)
