@@ -288,7 +288,10 @@ class cmd_allocate(OriginCommand):
 
 
 class cmd_deploy(cmd_allocate):
-    """Allocate and deploy machine."""
+    """Allocate and deploy machine.
+
+    See `help allocate` for more details on the allocation parameters.
+    """
 
     def __init__(self, parser):
         super(cmd_deploy, self).__init__(
