@@ -7,6 +7,8 @@ __all__ = [
 import asyncio
 import base64
 import os
+import re
+import subprocess
 import sys
 import time
 
@@ -287,7 +289,273 @@ class cmd_allocate(OriginCommand):
             "{autoblue}Allocated{/autoblue} %s") % machine.hostname)
 
 
-class cmd_deploy(cmd_allocate):
+class MachineWorkMixin:
+    """Mixin that helps with performing actions across a set of machinse."""
+
+    @asynchronous
+    async def _async_perform_action(
+            self, context, action, machines, params,
+            progress_title, success_title):
+
+        def _update_msg(remaining):
+            """Update the spinner message."""
+            if len(remaining) == 1:
+                msg = remaining[0].hostname
+            elif len(remaining) == 2:
+                msg = "%s and %s" % (
+                    remaining[0].hostname, remaining[1].hostname)
+            else:
+                msg = "%s machines" % len(remaining)
+            context.msg = colorized(
+                "{autoblue}%s{/autoblue} %s" % (progress_title, msg))
+
+        async def _perform(machine, params, remaining):
+            """Updates the messages as actions complete."""
+            try:
+                await getattr(machine, action)(**params)
+            except Exception as exc:
+                remaining.remove(machine)
+                _update_msg(remaining)
+                context.print(
+                    colorized("{autored}Error:{/autored} %s") % str(exc))
+                raise
+            else:
+                remaining.remove(machine)
+                _update_msg(remaining)
+                context.print(colorized(
+                    "{autogreen}%s{/autogreen} %s") % (
+                        success_title, machine.hostname))
+
+        _update_msg(machines)
+        results = await asyncio.gather(*[
+            _perform(machine, params, machines)
+            for machine in machines
+        ], return_exceptions=True)
+        failures = [
+            result
+            for result in results
+            if isinstance(result, Exception)
+        ]
+        if len(failures) > 0:
+            return 1
+        return 0
+
+    def perform_action(
+            self, action, machines, params, progress_title, success_title):
+        """Perform the action on the set of machines."""
+        if len(machines) == 0:
+            return 0
+        with utils.Spinner() as context:
+            return self._async_perform_action(
+                context, action, machines, params,
+                progress_title, success_title)
+
+    def get_machines(self, origin, hostnames):
+        """Return a set of machines based on `hostnames`.
+
+        Any hostname that is not found will result in an error.
+        """
+        hostnames = {
+            hostname: True
+            for hostname in hostnames
+        }
+        machines = origin.Machines.read(hostnames=hostnames)
+        machines = [
+            machine
+            for machine in machines
+            if hostnames.pop(machine.hostname, False)
+        ]
+        if len(hostnames) > 0:
+            raise CommandError(
+                "Unable to find %s %s." % (
+                    "machines" if len(hostnames) > 1 else "machine",
+                    ','.join(hostnames)))
+        return machines
+
+
+class MachineSSHMixin:
+    """Mixin that provides the ability to SSH."""
+
+    def add_ssh_options(self, parser):
+        """Add the SSH arguments to the `parser`."""
+        parser.add_argument(
+            "--username", metavar='USER', help=(
+                "Username for the SSH connection."))
+        parser.add_argument(
+            "--boot-only", action="store_true", help=(
+                "Only use the IP addresses on the machine's boot interface."))
+
+    def get_ip_addresses(self, machine, *, boot_only=False):
+        """Return all IP address for `machine`.
+
+        IP address from `boot_interface` come first.
+        """
+        boot_ips = [
+            link.ip_address
+            for link in machine.boot_interface.links
+            if link.ip_address
+        ]
+        if boot_only:
+            return boot_ips
+        else:
+            other_ips = [
+                link.ip_address
+                for interface in machine.interfaces
+                for link in interface.links
+                if (interface.id != machine.boot_interface.id and
+                    link.ip_address)
+            ]
+            return boot_ips + other_ips
+
+    @asynchronous
+    async def _async_get_pingable_ips(self, ip_addresses):
+        """Return list of all IP address that could be pinged."""
+
+        async def _async_ping(ip_address):
+            try:
+                process = await asyncio.create_subprocess_exec(
+                    'ping', '-nq', '-c', '1', ip_address,
+                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            except OSError:
+                return None
+            await process.wait()
+            if process.returncode == 0:
+                return ip_address
+
+        pinged_ips = await asyncio.gather(*[
+            _async_ping(ip_address)
+            for ip_address in ip_addresses
+        ])
+        return [
+            ip_address
+            for ip_address in pinged_ips
+            if ip_address is not None
+        ]
+
+    def _check_ssh(self, *args):
+        """Check if SSH connection can be made to IP with username."""
+        ssh = subprocess.Popen(
+            args,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL)
+        ssh.wait()
+        return ssh.returncode == 0
+
+    def _determine_username(self, ip):
+        """SSH in as root and determine the username."""
+        ssh = subprocess.Popen([
+            "ssh",
+            "-o", "UserKnownHostsFile=/dev/null",
+            "-o", "StrictHostKeyChecking=no",
+            "root@%s" % ip],
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL)
+        first_line = ssh.stdout.readline()
+        ssh.kill()
+        ssh.wait()
+        if first_line:
+            match = re.search(
+                r"Please login as the user \"(\w+)\" rather than "
+                r"the user \"root\".", first_line.decode('utf-8'))
+            if match:
+                return match.groups()[0]
+        else:
+            return None
+
+    def ssh(
+            self, machine, *,
+            username=None, command=None, boot_only=False, wait=300):
+        """SSH into `machine`."""
+        start_time = time.monotonic()
+        with utils.Spinner() as context:
+            context.msg = colorized(
+                "{autoblue}Determining{/autoblue} best IP for %s" % (
+                    machine.hostname))
+            ip_addresses = self.get_ip_addresses(machine, boot_only=boot_only)
+            if len(ip_addresses) > 0:
+                pingable_ips = self._async_get_pingable_ips(ip_addresses)
+                while (len(pingable_ips) == 0 and
+                        (time.monotonic() - start_time) < wait):
+                    time.sleep(5)
+                    pingable_ips = self._async_get_pingable_ips(ip_addresses)
+                if len(pingable_ips) == 0:
+                    raise CommandError(
+                        "No IP addresses on %s can be reached." % (
+                            machine.hostname))
+                else:
+                    ip = pingable_ips[0]
+            else:
+                raise CommandError(
+                    "%s has no IP addresses." % machine.hostname)
+
+            if username is None:
+                context.msg = colorized(
+                    "{autoblue}Determining{/autoblue} SSH username on %s" % (
+                        machine.hostname))
+                username = self._determine_username(ip)
+                while (username is None and
+                        (time.monotonic() - start_time) < wait):
+                    username = self._determine_username(ip)
+                if username is None:
+                    raise CommandError(
+                        "Failed to determine the username for SSH.")
+
+            conn_str = "%s@%s" % (username, ip)
+            args = [
+                "ssh",
+                "-o", "UserKnownHostsFile=/dev/null",
+                "-o", "StrictHostKeyChecking=no",
+                conn_str
+            ]
+
+            context.msg = colorized(
+                "{automagenta}Waiting{/automagenta} for SSH on %s" % (
+                    machine.hostname))
+            check_args = args + ["echo"]
+            connectable = self._check_ssh(*check_args)
+            while not connectable and (time.monotonic() - start_time) < wait:
+                time.sleep(5)
+                connectable = self._check_ssh(*check_args)
+            if not connectable:
+                raise CommandError(
+                    "SSH never started on %s using IP %s." % (
+                        machine.hostname, ip))
+
+        if command is not None:
+            args.append(command)
+        ssh = subprocess.Popen(
+            args, stdin=sys.stdin, stdout=sys.stdout, stderr=sys.stderr)
+        ssh.wait()
+        return ssh.returncode
+
+
+class MachineReleaseMixin(MachineWorkMixin):
+    """Mixin that provide releasing machines."""
+
+    def add_release_options(self, parser):
+        parser.add_argument('--erase', action='store_true', help=(
+            "Erase the disk when releasing."))
+        parser.add_argument('--secure-erase', action='store_true', help=(
+            "Use the drives secure erase feature if available on the disk."))
+        parser.add_argument('--quick-erase', action='store_true', help=(
+            "Wipe the just the beginning and end of the disk. "
+            "This is not secure."))
+
+    def get_release_params(self, options):
+        return utils.remove_None({
+            'erase': options.erase,
+            'secure_erase': options.secure_erase,
+            'quick_erase': options.quick_erase,
+        })
+
+    def release(self, machines, params):
+        return self.perform_action(
+            "release", machines, params, "Releasing", "Released")
+
+
+class cmd_deploy(cmd_allocate, MachineSSHMixin, MachineReleaseMixin):
     """Allocate and deploy machine.
 
     See `help allocate` for more details on the allocation parameters.
@@ -316,6 +584,15 @@ class cmd_deploy(cmd_allocate):
             "--b64-user-data", metavar="BASE64", help=(
                 "Base64 encoded string of the user data that gets run on the "
                 "machine once it has deployed."))
+        parser.add_argument(
+            "--ssh", action="store_true", help=(
+                "SSH into the machine once its deployed."))
+        self.add_ssh_options(parser)
+        parser.add_argument(
+            "--release-on-exit", action="store_true", help=(
+                "Release the machine once the SSH connection is closed. "
+                "Only used with --ssh is provided."))
+        self.add_release_options(parser)
         parser.other.add_argument("--comment", help=(
             "Reason for deploying the machine."))
         parser.other.add_argument(
@@ -411,92 +688,18 @@ class cmd_deploy(cmd_allocate):
                 "Machine %s transitioned to an unexpected state of %s." % (
                     machine.hostname, machine.status_name))
 
-
-class MachineWorkMixin:
-    """Mixin that helps with performing actions across a set of machinse."""
-
-    @asynchronous
-    async def _async_perform_action(
-            self, context, action, machines, params,
-            progress_title, success_title):
-
-        def _update_msg(remaining):
-            """Update the spinner message."""
-            if len(remaining) == 1:
-                msg = remaining[0].hostname
-            elif len(remaining) == 2:
-                msg = "%s and %s" % (
-                    remaining[0].hostname, remaining[1].hostname)
-            else:
-                msg = "%s machines" % len(remaining)
-            context.msg = colorized(
-                "{autoblue}%s{/autoblue} %s" % (progress_title, msg))
-
-        async def _perform(machine, params, remaining):
-            """Updates the messages as actions complete."""
-            try:
-                await getattr(machine, action)(**params)
-            except Exception as exc:
-                remaining.remove(machine)
-                _update_msg(remaining)
-                context.print(
-                    colorized("{autored}Error:{/autored} %s") % str(exc))
-                raise
-            else:
-                remaining.remove(machine)
-                _update_msg(remaining)
-                context.print(colorized(
-                    "{autogreen}%s{/autogreen} %s") % (
-                        success_title, machine.hostname))
-
-        _update_msg(machines)
-        results = await asyncio.gather(*[
-            _perform(machine, params, machines)
-            for machine in machines
-        ], return_exceptions=True)
-        failures = [
-            result
-            for result in results
-            if isinstance(result, Exception)
-        ]
-        if len(failures) > 0:
-            return 1
-        return 0
-
-    def perform_action(
-            self, action, machines, params, progress_title, success_title):
-        """Perform the action on the set of machines."""
-        if len(machines) == 0:
-            return 0
-        with utils.Spinner() as context:
-            return self._async_perform_action(
-                context, action, machines, params,
-                progress_title, success_title)
-
-    def get_machines(self, origin, hostnames):
-        """Return a set of machines based on `hostnames`.
-
-        Any hostname that is not found will result in an error.
-        """
-        hostnames = {
-            hostname: True
-            for hostname in hostnames
-        }
-        machines = origin.Machines.read(hostnames=hostnames)
-        machines = [
-            machine
-            for machine in machines
-            if hostnames.pop(machine.hostname, False)
-        ]
-        if len(hostnames) > 0:
-            raise CommandError(
-                "Unable to find %s %s." % (
-                    "machines" if len(hostnames) > 1 else "machine",
-                    ','.join(hostnames)))
-        return machines
+        if options.ssh:
+            machine.refresh()
+            code = self.ssh(
+                machine, username=options.username,
+                boot_only=options.boot_only)
+            if code == 0 and options.release_on_exit:
+                release_params = self.get_release_params(options)
+                release_params["wait"] = True
+                self.release([machine], release_params)
 
 
-class cmd_release(OriginCommand, MachineWorkMixin):
+class cmd_release(OriginCommand, MachineReleaseMixin):
     """Release machine."""
 
     def __init__(self, parser):
@@ -507,13 +710,7 @@ class cmd_release(OriginCommand, MachineWorkMixin):
             "Release all machines owned by you."))
         parser.add_argument('--comment', help=(
             "Reason for releasing the machine."))
-        parser.add_argument('--erase', action='store_true', help=(
-            "Erase the disk when releasing."))
-        parser.add_argument('--secure-erase', action='store_true', help=(
-            "Use the drives secure erase feature if available on the disk."))
-        parser.add_argument('--quick-erase', action='store_true', help=(
-            "Wipe the just the beginning and end of the disk. "
-            "This is not secure."))
+        self.add_release_options(parser)
         parser.other.add_argument(
             "--no-wait", action="store_true", help=(
                 "Don't wait for the release to complete."))
@@ -523,12 +720,8 @@ class cmd_release(OriginCommand, MachineWorkMixin):
             raise CommandError("Cannot pass both hostname and --all.")
         if not options.hostname and not options.all:
             raise CommandError("Missing parameter hostname or --all.")
-        params = utils.remove_None({
-            'erase': options.erase,
-            'secure_erase': options.secure_erase,
-            'quick_erase': options.quick_erase,
-            'wait': False if options.no_wait else True,
-        })
+        params = self.get_release_params(options)
+        params['wait'] = False if options.no_wait else True
         if options.all:
             me = origin.Users.whoami()
             machines = origin.Machines.read()
@@ -542,8 +735,7 @@ class cmd_release(OriginCommand, MachineWorkMixin):
             ]
         else:
             machines = self.get_machines(origin, options.hostname)
-        return self.perform_action(
-            "release", machines, params, "Releasing", "Released")
+        return self.release(machines, params)
 
 
 class cmd_abort(OriginCommand, MachineWorkMixin):
@@ -597,6 +789,24 @@ class cmd_mark_broken(OriginCommand, MachineWorkMixin):
             "mark_broken", machines, {}, "Marking broken", "Marked broken")
 
 
+class cmd_ssh(OriginCommand, MachineWorkMixin, MachineSSHMixin):
+    """SSH into a machine."""
+
+    def __init__(self, parser):
+        super(cmd_ssh, self).__init__(parser)
+        parser.add_argument("hostname", nargs=1, help=(
+            "Hostname of the machine to SSH to."))
+        parser.add_argument("command", nargs="?", default=None, help=(
+            "Hostname of the machine to SSH to."))
+        self.add_ssh_options(parser)
+
+    def execute(self, origin, options):
+        machine = self.get_machines(origin, options.hostname)[0]
+        return self.ssh(
+            machine, username=options.username,
+            command=options.command, boot_only=options.boot_only)
+
+
 def register(parser):
     """Register commands with the given parser."""
     cmd_machines.register(parser)
@@ -607,3 +817,4 @@ def register(parser):
     cmd_abort.register(parser)
     cmd_mark_fixed.register(parser)
     cmd_mark_broken.register(parser)
+    cmd_ssh.register(parser)
