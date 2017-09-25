@@ -347,7 +347,7 @@ class MachineWorkMixin:
             return 0
         with utils.Spinner() as context:
             return self._async_perform_action(
-                context, action, machines, params,
+                context, action, list(machines), params,
                 progress_title, success_title)
 
     def get_machines(self, origin, hostnames):
@@ -385,7 +385,7 @@ class MachineSSHMixin:
             "--boot-only", action="store_true", help=(
                 "Only use the IP addresses on the machine's boot interface."))
 
-    def get_ip_addresses(self, machine, *, boot_only=False):
+    def get_ip_addresses(self, machine, *, boot_only=False, discovered=False):
         """Return all IP address for `machine`.
 
         IP address from `boot_interface` come first.
@@ -396,7 +396,16 @@ class MachineSSHMixin:
             if link.ip_address
         ]
         if boot_only:
-            return boot_ips
+            if boot_ips:
+                return boot_ips
+            elif discovered:
+                return [
+                    link.ip_address
+                    for link in machine.boot_interface.discovered
+                    if link.ip_address
+                ]
+            else:
+                return []
         else:
             other_ips = [
                 link.ip_address
@@ -405,7 +414,24 @@ class MachineSSHMixin:
                 if (interface.id != machine.boot_interface.id and
                     link.ip_address)
             ]
-            return boot_ips + other_ips
+            ips = boot_ips + other_ips
+            if ips:
+                return ips
+            elif discovered:
+                return [
+                    link.ip_address
+                    for link in machine.boot_interface.discovered
+                    if link.ip_address
+                ] + [
+                    link.ip_address
+                    for interface in machine.interfaces
+                    for link in interface.discovered
+                    if (interface.id != machine.boot_interface.id and
+                        link.ip_address)
+                ]
+            else:
+                return []
+
 
     @asynchronous
     async def _async_get_pingable_ips(self, ip_addresses):
@@ -466,14 +492,16 @@ class MachineSSHMixin:
 
     def ssh(
             self, machine, *,
-            username=None, command=None, boot_only=False, wait=300):
+            username=None, command=None, boot_only=False, discovered=False,
+            wait=300):
         """SSH into `machine`."""
         start_time = time.monotonic()
         with utils.Spinner() as context:
             context.msg = colorized(
                 "{autoblue}Determining{/autoblue} best IP for %s" % (
                     machine.hostname))
-            ip_addresses = self.get_ip_addresses(machine, boot_only=boot_only)
+            ip_addresses = self.get_ip_addresses(
+                machine, boot_only=boot_only, discovered=discovered)
             if len(ip_addresses) > 0:
                 pingable_ips = self._async_get_pingable_ips(ip_addresses)
                 while (len(pingable_ips) == 0 and
@@ -551,8 +579,10 @@ class MachineReleaseMixin(MachineWorkMixin):
         })
 
     def release(self, machines, params):
+        wait = params.get('wait', True)
         return self.perform_action(
-            "release", machines, params, "Releasing", "Released")
+            "release", machines, params, "Releasing",
+            "Released" if wait else "Releasing")
 
 
 class cmd_deploy(cmd_allocate, MachineSSHMixin, MachineReleaseMixin):
@@ -699,6 +729,93 @@ class cmd_deploy(cmd_allocate, MachineSSHMixin, MachineReleaseMixin):
                 self.release([machine], release_params)
 
 
+class cmd_commission(OriginCommand, MachineSSHMixin, MachineWorkMixin):
+    """Commission machine."""
+
+    def __init__(self, parser):
+        super(cmd_commission, self).__init__(parser)
+        parser.add_argument("hostname", nargs="*", help=(
+            "Hostname of the machine to commission."))
+        parser.add_argument("--all", action="store_true", help=(
+            "Commission all machines that can be commissioned."))
+        parser.add_argument("--new", action="store_true", help=(
+            "Commission all new machines."))
+        parser.add_argument("--skip-networking", action="store_true", help=(
+            "Skip machine network discovery, keeping the current interface "
+            "configuration for the machine."))
+        parser.add_argument("--skip-storage", action="store_true", help=(
+            "Skip machine storage discovery, keeping the current storage "
+            "configuration for the machine."))
+        parser.add_argument("--scripts", nargs="*", metavar="SCRIPT", help=(
+            "Run only the selected commissioning scripts."))
+        parser.add_argument("--ssh", action="store_true", help=(
+            "SSH into the machine during commissioning."))
+        self.add_ssh_options(parser)
+        parser.other.add_argument(
+            "--no-wait", action="store_true", help=(
+                "Don't wait for the commisisoning to complete."))
+
+    def execute(self, origin, options):
+        if options.hostname and options.all:
+            raise CommandError("Cannot pass both hostname and --all.")
+        if options.hostname and options.new:
+            raise CommandError("Cannot pass both hostname and --new.")
+        if not options.hostname and not options.all and not options.new:
+            raise CommandError("Missing parameter hostname, --all, or --new.")
+        if (options.ssh and
+                (len(options.hostname) > 1 or options.all or options.new)):
+            raise CommandError(
+                "--ssh can only be used when commissioning one machine.")
+        if options.all:
+            machines = origin.Machines.read()
+            machines = [
+                machine
+                for machine in machines
+                if machine.status in [
+                    NodeStatus.NEW, NodeStatus.READY,
+                    NodeStatus.FAILED_COMMISSIONING]
+            ]
+        elif options.new:
+            machines = origin.Machines.read()
+            machines = [
+                machine
+                for machine in machines
+                if machine.status == NodeStatus.NEW
+            ]
+        else:
+            machines = self.get_machines(origin, options.hostname)
+        params = utils.remove_None({
+            'enable_ssh': options.ssh,
+            'skip_networking': options.skip_networking,
+            'skip_storage': options.skip_storage,
+            'commissioning_scripts': options.scripts,
+            'wait': False if options.no_wait else True
+        })
+        try:
+            rc = self.perform_action(
+                "commission", machines, params,
+                "Commissioning",
+                "Commissioning" if options.no_wait else "Commissioned")
+        except KeyboardInterrupt:
+            if sys.stdout.isatty():
+                abort = yes_or_no("Abort commissioning?")
+                if abort:
+                    return self.perform_action(
+                        "abort", machines, {}, "Aborting", "Aborted")
+                else:
+                    return 1
+        if rc == 0 and len(machines) > 0 and options.ssh:
+            machine = machines[0]
+            machine.refresh()
+            rc = self.ssh(
+                machine, username=options.username,
+                boot_only=options.boot_only, discovered=True)
+            if rc == 0:
+                return self.perform_action(
+                    "power_off", [machine], {}, "Powering off", "Powered off")
+        return rc
+
+
 class cmd_release(OriginCommand, MachineReleaseMixin):
     """Release machine."""
 
@@ -807,14 +924,49 @@ class cmd_ssh(OriginCommand, MachineWorkMixin, MachineSSHMixin):
             command=options.command, boot_only=options.boot_only)
 
 
+class cmd_power_on(OriginCommand, MachineWorkMixin):
+    """Power on machine."""
+
+    def __init__(self, parser):
+        super(cmd_power_on, self).__init__(parser)
+        parser.add_argument("hostname", nargs="+", help=(
+            "Hostname of the machine to power on."))
+        parser.add_argument('--comment', help=(
+            "Reason for powering the machine on."))
+
+    def execute(self, origin, options):
+        machines = self.get_machines(origin, options.hostname)
+        return self.perform_action(
+            "power_on", machines, {}, "Powering on", "Powered on")
+
+
+class cmd_power_off(OriginCommand, MachineWorkMixin):
+    """Power off machine."""
+
+    def __init__(self, parser):
+        super(cmd_power_off, self).__init__(parser)
+        parser.add_argument("hostname", nargs="+", help=(
+            "Hostname of the machine to power off."))
+        parser.add_argument('--comment', help=(
+            "Reason for powering the machine off."))
+
+    def execute(self, origin, options):
+        machines = self.get_machines(origin, options.hostname)
+        return self.perform_action(
+            "power_off", machines, {}, "Powering off", "Powered off")
+
+
 def register(parser):
     """Register commands with the given parser."""
     cmd_machines.register(parser)
     cmd_machine.register(parser)
     cmd_allocate.register(parser)
     cmd_deploy.register(parser)
+    cmd_commission.register(parser)
     cmd_release.register(parser)
     cmd_abort.register(parser)
     cmd_mark_fixed.register(parser)
     cmd_mark_broken.register(parser)
+    cmd_power_off.register(parser)
+    cmd_power_on.register(parser)
     cmd_ssh.register(parser)
