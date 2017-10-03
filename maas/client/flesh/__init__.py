@@ -518,25 +518,25 @@ def main(argv=sys.argv):
             return execute(options)
     except KeyboardInterrupt:
         raise SystemExit(1)
-    except Exception as error:
-        # This is unexpected. Why? Because the CLI code raises SystemExit or
-        # invokes something that raises SystemExit when it chooses to exit.
-        # SystemExit does not subclass Exception, and so it would not be
-        # handled here, hence this is not a deliberate exit.
-        if parser is None or options is None or options.debug:
-            # The user has either chosen to debug OR we crashed before/while
-            # parsing arguments. Either way, let's not be terse.
-            if sys.stdin.isatty() and sys.stdout.isatty():
-                # We're at a fully interactive terminal so let's post-mortem.
-                *_, exc_traceback = sys.exc_info()
-                post_mortem(exc_traceback)
-                # Exit non-zero, but quietly; dumping the traceback again on
-                # the way out is confusing after doing a post-mortem.
-                raise SystemExit(1)
-            else:
-                # Re-raise so the traceback is dumped and we exit non-zero.
-                raise
-        else:
-            # Display a terse error message. Note that parser.error() will
-            # raise SystemExit(>0) after printing its message.
-            parser.error("%s" % error)
+    #except Exception as error:
+    #    # This is unexpected. Why? Because the CLI code raises SystemExit or
+    #    # invokes something that raises SystemExit when it chooses to exit.
+    #    # SystemExit does not subclass Exception, and so it would not be
+    #    # handled here, hence this is not a deliberate exit.
+    #    if parser is None or options is None or options.debug:
+    #        # The user has either chosen to debug OR we crashed before/while
+    #        # parsing arguments. Either way, let's not be terse.
+    #        if sys.stdin.isatty() and sys.stdout.isatty():
+    #            # We're at a fully interactive terminal so let's post-mortem.
+    #            *_, exc_traceback = sys.exc_info()
+    #            post_mortem(exc_traceback)
+    #            # Exit non-zero, but quietly; dumping the traceback again on
+    #            # the way out is confusing after doing a post-mortem.
+    #            raise SystemExit(1)
+    #        else:
+    #            # Re-raise so the traceback is dumped and we exit non-zero.
+    #            raise
+    #    else:
+    #        # Display a terse error message. Note that parser.error() will
+    #        # raise SystemExit(>0) after printing its message.
+    #        parser.error("%s" % error)

@@ -1,33 +1,34 @@
-"""Objects for volume groups."""
+"""Objects for Bcaches."""
 
 __all__ = [
-    "VolumeGroup",
-    "VolumeGroups",
+    "Bcache",
+    "Bcaches",
 ]
 
 from typing import Iterable, Union
 
 from . import (
-    check,
     ObjectField,
-    ObjectFieldRelatedSet,
+    ObjectFieldRelated,
     ObjectSet,
     ObjectType,
+    to,
 )
 from .nodes import Node
 from .block_devices import BlockDevice
 from .partitions import Partition
 from .filesystem_groups import (
+    DeviceField,
     FilesystemGroup,
-    DevicesField,
 )
+from ..enum import CacheMode
 
 
-class VolumeGroupType(ObjectType):
-    """Metaclass for `VolumeGroup`."""
+class BcacheType(ObjectType):
+    """Metaclass for `Bcache`."""
 
     async def read(cls, node, id):
-        """Get `VolumeGroup` by `id`."""
+        """Get `Bcache` by `id`."""
         if isinstance(node, str):
             system_id = node
         elif isinstance(node, Node):
@@ -39,37 +40,34 @@ class VolumeGroupType(ObjectType):
         return cls(await cls._handler.read(system_id=system_id, id=id))
 
 
-class VolumeGroup(FilesystemGroup, metaclass=VolumeGroupType):
-    """A volume group on a machine."""
+class Bcache(FilesystemGroup, metaclass=BcacheType):
+    """A Bcache on a machine."""
 
+    cache_mode = ObjectField.Checked(
+        "cache_mode", to(CacheMode), check(CacheMode))
     uuid = ObjectField.Checked("uuid", check(str), check(str))
 
-    size = ObjectField.Checked(
-        "size", check(int), check(int), readonly=True)
-    available_size = ObjectField.Checked(
-        "available_size", check(int), readonly=True)
-    used_size = ObjectField.Checked(
-        "used_size", check(int), readonly=True)
-
-    devices = DevicesField("devices")
-    logical_volumes = ObjectFieldRelatedSet(
-        "logical_volumes", "BlockDevices", reverse=None)
+    backing_device = DeviceField("backing_device")
+    cache_set = ObjectFieldRelated(
+        "cache_set", "BcacheCacheSet", reverse=None)
+    virtual_device = ObjectFieldRelated(
+        "virtual_device", "BlockDevice", reverse=None, readonly=True)
 
     def __repr__(self):
-        return super(VolumeGroup, self).__repr__(
-            fields={"name", "size"})
+        return super(Bcache, self).__repr__(
+            fields={"name", "cache_mode", "size", "backing_device"})
 
     async def delete(self):
-        """Delete this volume group."""
+        """Delete this Bcache."""
         await self._handler.delete(
             system_id=self.node.system_id, id=self.id)
 
 
-class VolumeGroupsType(ObjectType):
-    """Metaclass for `VolumeGroups`."""
+class BcachesType(ObjectType):
+    """Metaclass for `Bcaches`."""
 
     async def read(cls, node):
-        """Get list of `VolumeGroup`'s for `node`."""
+        """Get list of `Bcache`'s for `node`."""
         if isinstance(node, str):
             system_id = node
         elif isinstance(node, Node):
@@ -85,20 +83,21 @@ class VolumeGroupsType(ObjectType):
             for item in data)
 
     async def create(
-            cls, node: Union[Node, str], name: str,
-            devices: Iterable[Union[BlockDevice, Partition]],
-            *, uuid: str=None):
+            cls, node: Union[Node, str],
+            backing_device: Union[BlockDevice, Partition],
+            cache_mode: CacheMode, *,
+            name: str=None, uuid: str=None):
         """
-        Create a volume group on a Node.
+        Create a Bcache on a Node.
 
         :param node: Node to create the interface on.
         :type node: `Node` or `str`
-        :param name: Name of the volume group.
-        :type name: `str`
         :param devices: Mixed list of block devices or partitions to create
-            the volume group from.
+            the Bcache from.
         :type devices: iterable of mixed type of `BlockDevice` or `Partition`
-        :param uuid: The UUID for the volume group (optional).
+        :param name: Name of the Bcache (optional).
+        :type name: `str`
+        :param uuid: The UUID for the Bcache (optional).
         :type uuid: `str`
         """
         params = {
@@ -136,17 +135,17 @@ class VolumeGroupsType(ObjectType):
         return cls._object(await cls._handler.create(**params))
 
 
-class VolumeGroups(ObjectSet, metaclass=VolumeGroupsType):
-    """The set of volume groups on a machine."""
+class Bcaches(ObjectSet, metaclass=BcachesType):
+    """The set of Bcaches on a machine."""
 
     @property
     def by_name(self):
-        """Return mapping of name to `VolumeGroup`."""
+        """Return mapping of name to `Bcache`."""
         return {
-            vg.name: vg
-            for vg in self
+            bcache.name: bcache
+            for bcache in self
         }
 
     def get_by_name(self, name):
-        """Return a `VolumeGroup` by its name."""
+        """Return a `Bcache` by its name."""
         return self.by_name[name]

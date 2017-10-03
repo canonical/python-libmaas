@@ -9,6 +9,7 @@ from typing import Iterable, Union
 
 from . import (
     check,
+    check_optional,
     Object,
     ObjectField,
     ObjectFieldRelated,
@@ -53,11 +54,11 @@ class BlockDevice(Object, metaclass=BlockDeviceTypeMeta):
     name = ObjectField.Checked(
         "name", check(str), check(str), alt_pk=1)
     model = ObjectField.Checked(
-        "model", check(str), check(str))
+        "model", check_optional(str), check_optional(str))
     serial = ObjectField.Checked(
-        "serial", check(str), check(str))
+        "serial", check_optional(str), check_optional(str))
     id_path = ObjectField.Checked(
-        "id_path", check(str), check(str))
+        "id_path", check_optional(str), check_optional(str))
     size = ObjectField.Checked(
         "size", check(int), check(int))
     block_size = ObjectField.Checked(
@@ -81,8 +82,16 @@ class BlockDevice(Object, metaclass=BlockDeviceTypeMeta):
         "filesystem", "Filesystem", readonly=True)
 
     def __repr__(self):
-        return super(BlockDevice, self).__repr__(
-            fields={"name", "type", "model", "serial", "id_path"})
+        if self.type == BlockDeviceType.PHYSICAL:
+            return super(BlockDevice, self).__repr__(
+                name="PhysicalBlockDevice",
+                fields={"name", "model", "serial", "id_path"})
+        elif self.type == BlockDeviceType.VIRTUAL:
+            return super(BlockDevice, self).__repr__(
+                name="VirtualBlockDevice",
+                fields={"name",})
+        else:
+            raise ValueError("Unknown type: %s" % self.type)
 
     async def save(self):
         """Save this block device."""

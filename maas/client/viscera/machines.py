@@ -358,6 +358,12 @@ class Machine(Node, metaclass=MachineType):
     status_name = ObjectField.Checked(
         "status_name", check(str), readonly=True)
 
+    bcaches = ObjectFieldRelatedSet(
+        "bcaches", "Bcaches", reverse=None)
+    cache_sets = ObjectFieldRelatedSet(
+        "cache_sets", "BcacheCacheSets", reverse=None)
+    raids = ObjectFieldRelatedSet(
+        "raids", "Raids", reverse=None)
     volume_groups = ObjectFieldRelatedSet(
         "volume_groups", "VolumeGroups", reverse=None)
 

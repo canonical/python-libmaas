@@ -1,8 +1,8 @@
-"""Objects for volume groups."""
+"""Objects for RAIDs."""
 
 __all__ = [
-    "VolumeGroup",
-    "VolumeGroups",
+    "Raid",
+    "Raids",
 ]
 
 from typing import Iterable, Union
@@ -10,24 +10,26 @@ from typing import Iterable, Union
 from . import (
     check,
     ObjectField,
-    ObjectFieldRelatedSet,
+    ObjectFieldRelated,
     ObjectSet,
     ObjectType,
+    to,
 )
 from .nodes import Node
 from .block_devices import BlockDevice
 from .partitions import Partition
 from .filesystem_groups import (
-    FilesystemGroup,
     DevicesField,
+    FilesystemGroup,
 )
+from ..enum import RaidLevel
 
 
-class VolumeGroupType(ObjectType):
-    """Metaclass for `VolumeGroup`."""
+class RaidType(ObjectType):
+    """Metaclass for `Raid`."""
 
     async def read(cls, node, id):
-        """Get `VolumeGroup` by `id`."""
+        """Get `Raid` by `id`."""
         if isinstance(node, str):
             system_id = node
         elif isinstance(node, Node):
@@ -39,37 +41,36 @@ class VolumeGroupType(ObjectType):
         return cls(await cls._handler.read(system_id=system_id, id=id))
 
 
-class VolumeGroup(FilesystemGroup, metaclass=VolumeGroupType):
-    """A volume group on a machine."""
+class Raid(FilesystemGroup, metaclass=RaidType):
+    """A RAID on a machine."""
 
     uuid = ObjectField.Checked("uuid", check(str), check(str))
 
+    level = ObjectField.Checked(
+        "level", to(RaidLevel), readonly=True)
     size = ObjectField.Checked(
         "size", check(int), check(int), readonly=True)
-    available_size = ObjectField.Checked(
-        "available_size", check(int), readonly=True)
-    used_size = ObjectField.Checked(
-        "used_size", check(int), readonly=True)
 
     devices = DevicesField("devices")
-    logical_volumes = ObjectFieldRelatedSet(
-        "logical_volumes", "BlockDevices", reverse=None)
+    spare_devices = DevicesField("spare_devices")
+    virtual_device = ObjectFieldRelated(
+        "virtual_device", "BlockDevice", reverse=None, readonly=True)
 
     def __repr__(self):
-        return super(VolumeGroup, self).__repr__(
-            fields={"name", "size"})
+        return super(Raid, self).__repr__(
+            fields={"name", "level", "size"})
 
     async def delete(self):
-        """Delete this volume group."""
+        """Delete this RAID."""
         await self._handler.delete(
             system_id=self.node.system_id, id=self.id)
 
 
-class VolumeGroupsType(ObjectType):
-    """Metaclass for `VolumeGroups`."""
+class RaidsType(ObjectType):
+    """Metaclass for `Raids`."""
 
     async def read(cls, node):
-        """Get list of `VolumeGroup`'s for `node`."""
+        """Get list of `Raid`'s for `node`."""
         if isinstance(node, str):
             system_id = node
         elif isinstance(node, Node):
@@ -85,24 +86,32 @@ class VolumeGroupsType(ObjectType):
             for item in data)
 
     async def create(
-            cls, node: Union[Node, str], name: str,
-            devices: Iterable[Union[BlockDevice, Partition]],
-            *, uuid: str=None):
+            cls, node: Union[Node, str],
+            level: Union[RaidLevel, str],
+            devices: Iterable[Union[BlockDevice, Partition]], *,
+            name: str=None, uuid: str=None,
+            spare_devices: Iterable[Union[BlockDevice, Partition]]):
         """
-        Create a volume group on a Node.
+        Create a RAID on a Node.
 
         :param node: Node to create the interface on.
         :type node: `Node` or `str`
-        :param name: Name of the volume group.
-        :type name: `str`
+        :param level: RAID level.
+        :type level: `RaidLevel`
         :param devices: Mixed list of block devices or partitions to create
-            the volume group from.
+            the RAID from.
         :type devices: iterable of mixed type of `BlockDevice` or `Partition`
-        :param uuid: The UUID for the volume group (optional).
+        :param name: Name of the RAID (optional).
+        :type name: `str`
+        :param uuid: The UUID for the RAID (optional).
         :type uuid: `str`
+        :param spare_devices: Mixed list of block devices or partitions to add
+            as spare devices on the RAID.
+        :type spare_devices: iterable of mixed type of `BlockDevice` or
+            `Partition`
         """
         params = {
-            'name': name,
+            'level': str(level),
         }
         if isinstance(node, str):
             params['system_id'] = node
@@ -131,22 +140,41 @@ class VolumeGroupsType(ObjectType):
             params['block_devices'] = block_devices
         if len(partitions) > 0:
             params['partitions'] = partitions
+
+        spare_block_devices = []
+        spare_partitions = []
+        for idx, device in enumerate(spare_devices):
+            if isinstance(device, BlockDevice):
+                spare_block_devices.append(device.id)
+            elif isinstance(device, Partition):
+                spare_partitions.append(device.id)
+            else:
+                raise TypeError(
+                    "spare_devices[%d] must be a BlockDevice or "
+                    "Partition, not %s" % type(device).__name__)
+        if len(spare_block_devices) > 0:
+            params['spare_devices'] = spare_block_devices
+        if len(spare_partitions) > 0:
+            params['spare_partitions'] = spare_partitions
+
+        if name is not None:
+            params['name'] = name
         if uuid is not None:
             params['uuid'] = uuid
         return cls._object(await cls._handler.create(**params))
 
 
-class VolumeGroups(ObjectSet, metaclass=VolumeGroupsType):
-    """The set of volume groups on a machine."""
+class Raids(ObjectSet, metaclass=RaidsType):
+    """The set of RAIDs on a machine."""
 
     @property
     def by_name(self):
-        """Return mapping of name to `VolumeGroup`."""
+        """Return mapping of name to `Raid`."""
         return {
-            vg.name: vg
-            for vg in self
+            raid.name: raid
+            for raid in self
         }
 
     def get_by_name(self, name):
-        """Return a `VolumeGroup` by its name."""
+        """Return a `Raid` by its name."""
         return self.by_name[name]
