@@ -327,7 +327,7 @@ class InterfacesType(ObjectType):
         :type interface_type: `InterfaceType`
         :param name: The name for the interface (optional).
         :type name: `str`
-        :param tags: List of tags to add to the machine.
+        :param tags: List of tags to add to the interface.
         :type tags: sequence of `str`
         :param mtu: The MTU for the interface (optional).
         :type mtu: `int`
@@ -495,12 +495,12 @@ class Interfaces(ObjectSet, metaclass=InterfacesType):
 
     @property
     def by_name(self):
-        """Return mapping of name of interface to interface object."""
+        """Return mapping of name of interface to `Interface`."""
         return {
             interface.name: interface
             for interface in self
         }
 
     def get_by_name(self, name):
-        """Return an interface by its name."""
+        """Return an `Interface` by its name."""
         return self.by_name[name]

@@ -432,7 +432,6 @@ class MachineSSHMixin:
             else:
                 return []
 
-
     @asynchronous
     async def _async_get_pingable_ips(self, ip_addresses):
         """Return list of all IP address that could be pinged."""

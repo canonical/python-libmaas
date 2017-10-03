@@ -128,3 +128,17 @@ class LinkMode(enum.Enum):
     STATIC = 'static'
     #: Connected to subnet with no IP address.
     LINK_UP = 'link_up'
+
+
+class BlockDeviceType(enum.Enum):
+    #: Physical block device.
+    PHYSICAL = 'physical'
+    #: Virtual block device.
+    VIRTUAL = 'virtual'
+
+
+class PartitionTableType(enum.Enum):
+    #: Master boot record
+    MBR = 'mbr'
+    #: GUID Partition Table
+    GPT = 'gpt'

@@ -1170,6 +1170,7 @@ class Origin(OriginBase, metaclass=OriginType):
         modules = {
             ".",
             ".account",
+            ".block_devices",
             ".boot_resources",
             ".boot_sources",
             ".boot_source_selections",
@@ -1180,11 +1181,13 @@ class Origin(OriginBase, metaclass=OriginType):
             ".fabrics",
             ".spaces",
             ".files",
+            ".filesystems",
             ".interfaces",
             ".ipranges",
             ".maas",
             ".machines",
             ".nodes",
+            ".partitions",
             ".spaces",
             ".sshkeys",
             ".static_routes",
@@ -1193,6 +1196,7 @@ class Origin(OriginBase, metaclass=OriginType):
             ".users",
             ".version",
             ".vlans",
+            ".volume_groups",
             ".zones",
         }
         super(Origin, self).__init__(
