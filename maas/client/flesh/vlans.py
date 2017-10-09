@@ -58,7 +58,7 @@ class cmd_vlan(OriginPagedTableCommand):
         super(cmd_vlan, self).__init__(parser)
         parser.add_argument("fabric", nargs=1, help=(
             "Name of the fabric."))
-        parser.add_argument("vid", nargs=1, type=int, help=(
+        parser.add_argument("vid", nargs=1, help=(
             "VID of the VLAN."))
 
     @asynchronous
@@ -84,7 +84,16 @@ class cmd_vlan(OriginPagedTableCommand):
                     "Unable to find fabric %s." % options.fabric[0])
             else:
                 raise
-        vlan = self.get_vlan(fabric.vlans, options.vid[0])
+        vlan_id = options.vid[0]
+        if vlan_id != 'untagged':
+            try:
+                vlan_id = int(vlan_id)
+            except ValueError:
+                vlan = None
+            else:
+                vlan = self.get_vlan(fabric.vlans, options.vid[0])
+        else:
+            vlan = fabric.vlans.get_default()
         if vlan is None:
             raise CommandError(
                 "Unable to find VLAN %s on fabric %s." % (
