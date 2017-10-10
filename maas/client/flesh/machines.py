@@ -433,27 +433,29 @@ class MachineSSHMixin:
                 return []
 
     @asynchronous
-    async def _async_get_pingable_ips(self, ip_addresses):
+    async def _async_get_sshable_ips(self, ip_addresses):
         """Return list of all IP address that could be pinged."""
 
         async def _async_ping(ip_address):
             try:
-                process = await asyncio.create_subprocess_exec(
-                    'ping', '-nq', '-c', '1', ip_address,
-                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            except OSError:
+                reader, writer = await asyncio.wait_for(
+                    asyncio.open_connection(ip_address, 22), timeout=5)
+            except (OSError, TimeoutError):
                 return None
-            await process.wait()
-            if process.returncode == 0:
+            try:
+                line = await reader.readline()
+            finally:
+                writer.close()
+            if line.startswith(b'SSH-'):
                 return ip_address
 
-        pinged_ips = await asyncio.gather(*[
+        ssh_ips = await asyncio.gather(*[
             _async_ping(ip_address)
             for ip_address in ip_addresses
         ])
         return [
             ip_address
-            for ip_address in pinged_ips
+            for ip_address in ssh_ips
             if ip_address is not None
         ]
 
@@ -502,11 +504,11 @@ class MachineSSHMixin:
             ip_addresses = self.get_ip_addresses(
                 machine, boot_only=boot_only, discovered=discovered)
             if len(ip_addresses) > 0:
-                pingable_ips = self._async_get_pingable_ips(ip_addresses)
+                pingable_ips = self._async_get_sshable_ips(ip_addresses)
                 while (len(pingable_ips) == 0 and
                         (time.monotonic() - start_time) < wait):
                     time.sleep(5)
-                    pingable_ips = self._async_get_pingable_ips(ip_addresses)
+                    pingable_ips = self._async_get_sshable_ips(ip_addresses)
                 if len(pingable_ips) == 0:
                     raise CommandError(
                         "No IP addresses on %s can be reached." % (
