@@ -117,7 +117,7 @@ class Table(metaclass=ABCMeta):
         return computed
 
     def _render_plain(self, data):
-        rows = self._compute_rows(RenderTarget.pretty, data)
+        rows = self._compute_rows(RenderTarget.plain, data)
         rows.insert(0, [column.title for column in self._flatten_columns(
             self.visible_columns)])
         return terminaltables.AsciiTable(rows).table
@@ -172,7 +172,7 @@ class Table(metaclass=ABCMeta):
         writer.writerow([column.name for column in self._flatten_columns(
             self.visible_columns)])
         writer.writerows(
-            self._compute_rows(RenderTarget.pretty, data, duplicate=True))
+            self._compute_rows(RenderTarget.csv, data, duplicate=True))
         return output.getvalue().rstrip(linesep)
 
     def __repr__(self):
