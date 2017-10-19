@@ -639,7 +639,7 @@ class cmd_deploy(cmd_allocate, MachineSSHMixin, MachineReleaseMixin):
         if options.b64_user_data:
             user_data = options.b64_user_data
         if options.user_data:
-            user_data = base64_file(options.user_data)
+            user_data = base64_file(options.user_data).decode("ascii")
         return utils.remove_None({
             'distro_series': options.image,
             'hwe_kernel': options.hwe_kernel,
