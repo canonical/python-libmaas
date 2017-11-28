@@ -17,7 +17,9 @@ from abc import (
 )
 import argparse
 from importlib import import_module
+import subprocess
 import sys
+import textwrap
 import typing
 
 import argcomplete
@@ -29,10 +31,35 @@ from .. import (
     utils,
     viscera,
 )
+from ..utils.auth import try_getpass
 from ..utils.profiles import (
     Profile,
     ProfileStore,
 )
+
+
+PROG_DESCRIPTION = """\
+MAAS provides complete automation of your physical servers for amazing data
+center operational efficiency.
+
+See https://maas.io/docs for documentation.
+
+Common commands:
+
+    maas login           Log-in to a MAAS.
+    maas switch          Switch the active profile.
+    maas machines        List machines.
+    maas deploy          Allocate and deploy machine.
+    maas release         Release machine.
+    maas fabrics         List fabrics.
+    maas subnets         List subnets.
+
+Example help commands:
+
+    `maas help`          This help page
+    `maas help commands` Lists all commands
+    `maas help deploy`   Shows help for command 'deploy'
+"""
 
 
 def colorized(text):
@@ -42,6 +69,58 @@ def colorized(text):
         return colorclass.Color(text)
     else:
         return colorclass.Color(text).value_no_colors
+
+
+def read_input(message, validator=None, password=False):
+    message = "%s: " % message
+    while True:
+        if password:
+            value = try_getpass(message)
+        else:
+            value = input(message)
+        if value:
+            if validator is not None:
+                try:
+                    validator(value)
+                except Exception as exc:
+                    print(
+                        colorized("{{autored}}Error: {{/autored}} %s") %
+                        str(exc))
+                else:
+                    return value
+            else:
+                return value
+
+
+def yes_or_no(question):
+    question = "%s [y/N] " % question
+    while True:
+        value = input(question)
+        value = value.lower()
+        if value in ['y', 'yes']:
+            return True
+        elif value in ['n', 'no']:
+            return False
+
+
+def print_with_pager(output):
+    """Print the output to `stdout` using less when in a tty."""
+    if sys.stdout.isatty():
+        try:
+            pager = subprocess.Popen(
+                ['less', '-F', '-r', '-S', '-X', '-K'],
+                stdin=subprocess.PIPE, stdout=sys.stdout)
+        except subprocess.CalledProcessError:
+            # Don't use the pager since starting it has failed.
+            print(output)
+            return
+        else:
+            pager.stdin.write(output.encode('utf-8'))
+            pager.stdin.close()
+            pager.wait()
+    else:
+        # Output directly to stdout since not in tty.
+        print(output)
 
 
 def get_profile_names_and_default() -> (
@@ -60,11 +139,41 @@ def get_profile_names_and_default() -> (
 PROFILE_NAMES, PROFILE_DEFAULT = get_profile_names_and_default()
 
 
+class MinimalHelpAction(argparse._HelpAction):
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        parser.print_minized_help()
+        parser.exit()
+
+
+class PagedHelpAction(argparse._HelpAction):
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        print_with_pager(parser.format_help())
+        parser.exit()
+
+
+class HelpFormatter(argparse.RawDescriptionHelpFormatter):
+    """Specialization of argparse's raw description help formatter to modify
+    usage to be in a better format.
+    """
+
+    def _format_usage(self, usage, actions, groups, prefix):
+        if prefix is None:
+            prefix = "Usage: "
+        return super(HelpFormatter, self)._format_usage(
+            usage, actions, groups, prefix)
+
+
 class ArgumentParser(argparse.ArgumentParser):
-    """Specialisation of argparse's parser with better support for subparsers.
+    """Specialization of argparse's parser with better support for
+    subparsers and better help output.
 
     Specifically, the one-shot `add_subparsers` call is disabled, replaced by
     a lazily evaluated `subparsers` property.
+
+    `print_minized_help` is added to only show the description which is
+    specially formatted.
     """
 
     def add_subparsers(self):
@@ -112,6 +221,22 @@ class ArgumentParser(argparse.ArgumentParser):
         """
         self.exit(2, colorized("{autored}Error:{/autored} ") + message + "\n")
 
+    def print_minized_help(self, *, no_pager=False):
+        """Return the formatted help text.
+
+        Override default ArgumentParser to just include the usage and the
+        description. The `help` action is used for provide more detail.
+        """
+        formatter = self._get_formatter()
+        formatter.add_usage(
+            self.usage, self._actions,
+            self._mutually_exclusive_groups)
+        formatter.add_text(self.description)
+        if no_pager:
+            print(formatter.format_help())
+        else:
+            print_with_pager(formatter.format_help())
+
 
 class CommandError(Exception):
     """A command has failed during execution."""
@@ -148,9 +273,10 @@ class Command(metaclass=ABCMeta):
         help_title, help_body = utils.parse_docstring(cls)
         command_parser = parser.subparsers.add_parser(
             cls.name() if name is None else name, help=help_title,
-            description=help_title, epilog=help_body, add_help=False)
+            description=help_title, epilog=help_body, add_help=False,
+            formatter_class=HelpFormatter)
         command_parser.add_argument(
-            "-h", "--help", action="help", help=argparse.SUPPRESS)
+            "-h", "--help", action=PagedHelpAction, help=argparse.SUPPRESS)
         command_parser.set_defaults(execute=cls(command_parser))
         return command_parser
 
@@ -183,7 +309,8 @@ class OriginCommandBase(Command):
             help=(
                 "The name of the remote MAAS instance to use. Use "
                 "`profiles list` to obtain a list of valid profiles." +
-                ("" if PROFILE_DEFAULT is None else " [default: %(default)s]")
+                ("" if PROFILE_DEFAULT is None else
+                 " [default: %s]" % PROFILE_DEFAULT.name)
             ))
         if PROFILE_DEFAULT is not None:
             parser.set_defaults(profile=PROFILE_DEFAULT.name)
@@ -196,7 +323,7 @@ class OriginCommand(OriginCommandBase):
         origin = viscera.Origin(session)
         return self.execute(origin, options)
 
-    def execute(self, options, origin):
+    def execute(self, origin, options):
         raise NotImplementedError(
             "Implement execute() in subclasses.")
 
@@ -208,29 +335,140 @@ class OriginTableCommand(OriginCommandBase, TableCommand):
         origin = viscera.Origin(session)
         return self.execute(origin, options, target=options.format)
 
-    def execute(self, options, origin, *, target):
+    def execute(self, origin, options, *, target):
         raise NotImplementedError(
             "Implement execute() in subclasses.")
+
+
+class OriginPagedTableCommand(OriginTableCommand):
+
+    def __init__(self, parser):
+        super(OriginPagedTableCommand, self).__init__(parser)
+        parser.other.add_argument(
+            "--no-pager", action='store_true',
+            help=(
+                "Don't use the pager when printing the output of the "
+                "command."))
+
+    def __call__(self, options):
+        return_code = 0
+        output = super(OriginPagedTableCommand, self).__call__(options)
+        if isinstance(output, tuple):
+            return_code, output = output
+        elif isinstance(output, int):
+            return_code = output
+            output = None
+        elif isinstance(output, str):
+            pass
+        else:
+            raise TypeError(
+                "execute must return either tuple, int or str, not %s" % (
+                    type(output).__name__))
+        if output:
+            if options.no_pager:
+                print(output)
+            else:
+                print_with_pager(output)
+        return return_code
+
+
+class cmd_help(Command):
+    """Show the help summary or help for a specific command."""
+
+    def __init__(self, parser, parent_parser):
+        self.parent_parser = parent_parser
+        super(cmd_help, self).__init__(parser)
+        parser.add_argument(
+            "-h", "--help", action=PagedHelpAction, help=argparse.SUPPRESS)
+        parser.add_argument(
+            'command', nargs='?', help="Show help for this command.")
+        parser.other.add_argument(
+            "--no-pager", action='store_true',
+            help=(
+                "Don't use the pager when printing the output of the "
+                "command."))
+
+    def __call__(self, options):
+        if options.command is None:
+            self.parent_parser.print_minized_help(no_pager=options.no_pager)
+        else:
+            command = self.parent_parser.subparsers.choices.get(
+                options.command, None)
+            if command is None:
+                if options.command == 'commands':
+                    self.print_all_commands(no_pager=options.no_pager)
+                else:
+                    self.parser.error(
+                        "unknown command %s" % options.command)
+            else:
+                if options.no_pager:
+                    command.print_help()
+                else:
+                    print_with_pager(command.format_help())
+
+    def print_all_commands(self, *, no_pager=False):
+        """Print help for all commands.
+
+        Commands are sorted in alphabetical order and wrapping is done
+        based on the width of the terminal.
+        """
+        formatter = self.parent_parser._get_formatter()
+        command_names = sorted(self.parent_parser.subparsers.choices.keys())
+        max_name_len = max([len(name) for name in command_names]) + 1
+        commands = ""
+        for name in command_names:
+            command = self.parent_parser.subparsers.choices[name]
+            extra_padding = max_name_len - len(name)
+            command_line = '%s%s%s' % (
+                name, ' ' * extra_padding, command.description)
+            while len(command_line) > formatter._width:
+                lines = textwrap.wrap(command_line, formatter._width)
+                commands += "%s\n" % lines[0]
+                if len(lines) > 1:
+                    lines[1] = (' ' * max_name_len) + lines[1]
+                    command_line = ' '.join(lines[1:])
+                else:
+                    command_line = None
+            if command_line:
+                commands += "%s\n" % command_line
+        if no_pager:
+            print(commands[:-1])
+        else:
+            print_with_pager(commands[:-1])
+
+    @classmethod
+    def register(cls, parser, name=None):
+        """Register this command as a sub-parser of `parser`.
+
+        :type parser: An instance of `ArgumentParser`.
+        :return: The sub-parser created.
+        """
+        help_title, help_body = utils.parse_docstring(cls)
+        command_parser = parser.subparsers.add_parser(
+            cls.name() if name is None else name, help=help_title,
+            description=help_title, epilog=help_body, add_help=False,
+            formatter_class=HelpFormatter)
+        command_parser.set_defaults(execute=cls(command_parser, parser))
+        return command_parser
 
 
 def prepare_parser(program):
     """Create and populate an argument parser."""
     parser = ArgumentParser(
-        description="Interact with a remote MAAS server.", prog=program,
-        epilog=colorized("If in doubt, try {autogreen}login{/autogreen}."),
+        description=PROG_DESCRIPTION, prog=program,
+        formatter_class=HelpFormatter,
         add_help=False)
-    parser.add_argument("-h", "--help", action="help", help=argparse.SUPPRESS)
+    parser.add_argument(
+        "-h", "--help", action=MinimalHelpAction, help=argparse.SUPPRESS)
 
     # Register sub-commands.
     submodules = (
-        # These modules are expected to register verb-like commands into the
-        # sub-parsers created above, e.g. for "list files", "launch node".
-        # Nodes always come first.
-        "nodes", "files", "tags", "users",
-        # These modules are different: they are collections of commands around
-        # a topic, or miscellaneous conveniences.
+        "nodes", "machines", "devices", "controllers",
+        "fabrics", "vlans", "subnets", "spaces",
+        "files", "tags", "users",
         "profiles", "shell",
     )
+    cmd_help.register(parser)
     for submodule in submodules:
         module = import_module("." + submodule, __name__)
         module.register(parser)
@@ -278,7 +516,7 @@ def main(argv=sys.argv):
         except AttributeError:
             parser.error("Argument missing.")
         else:
-            execute(options)
+            return execute(options)
     except KeyboardInterrupt:
         raise SystemExit(1)
     except Exception as error:

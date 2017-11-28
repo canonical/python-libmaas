@@ -124,9 +124,42 @@ class Client:
         }
 
     @facade
+    def static_routes(origin):
+        return {
+            "create": origin.StaticRoutes.create,
+            "get": origin.StaticRoute.read,
+            "list": origin.StaticRoutes.read,
+        }
+
+    @facade
+    def subnets(origin):
+        return {
+            "create": origin.Subnets.create,
+            "get": origin.Subnet.read,
+            "list": origin.Subnets.read,
+        }
+
+    @facade
+    def spaces(origin):
+        return {
+            "create": origin.Spaces.create,
+            "get": origin.Space.read,
+            "get_default": origin.Space.get_default,
+            "list": origin.Spaces.read,
+        }
+
+    @facade
     def files(origin):
         return {
             "list": origin.Files.read,
+        }
+
+    @facade
+    def ip_ranges(origin):
+        return {
+            "create": origin.IPRanges.create,
+            "get": origin.IPRange.read,
+            "list": origin.IPRanges.read,
         }
 
     @facade
@@ -146,6 +179,7 @@ class Client:
     def machines(origin):
         return {
             "allocate": origin.Machines.allocate,
+            "create": origin.Machines.create,
             "get": origin.Machine.read,
             "list": origin.Machines.read,
             "get_power_parameters_for":
@@ -178,6 +212,7 @@ class Client:
     def tags(origin):
         return {
             "create": origin.Tags.create,
+            "get": origin.Tag.read,
             "list": origin.Tags.read,
         }
 

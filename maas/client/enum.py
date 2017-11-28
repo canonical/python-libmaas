@@ -57,3 +57,74 @@ class NodeStatus(enum.IntEnum):
     TESTING = 21
     #: Testing has failed
     FAILED_TESTING = 22
+
+
+class NodeType(enum.IntEnum):
+    #: Machine
+    MACHINE = 0
+    #: Device
+    DEVICE = 1
+    #: Rack
+    RACK_CONTROLLER = 2
+    #: Region
+    REGION_CONTROLLER = 3
+    #: Region+Rack
+    REGION_AND_RACK_CONTROLLER = 4
+
+
+class PowerState(enum.Enum):
+    #: On
+    ON = 'on'
+    #: Off
+    OFF = 'off'
+    #: Unknown
+    UNKNOWN = 'unknown'
+    #: Error
+    ERROR = 'error'
+
+
+class PowerStopMode(enum.Enum):
+    #: Perform hard stop.
+    HARD = 'hard'
+    #: Perform soft stop.
+    SOFT = 'soft'
+
+
+class RDNSMode(enum.IntEnum):
+    #: Do not generate reverse DNS for this Subnet.
+    DISABLED = 0
+    #: Generate reverse DNS only for the CIDR.
+    ENABLED = 1
+    #: Generate RFC2317 glue if needed (Subnet is too small for its own zone.)
+    RFC2317 = 2
+
+
+class IPRangeType(enum.Enum):
+    #: Dynamic IP Range.
+    DYNAMIC = 'dynamic'
+    #: Reserved for exclusive use by MAAS or user.
+    RESERVED = 'reserved'
+
+
+class InterfaceType(enum.Enum):
+    #: Physical interface.
+    PHYSICAL = 'physical'
+    #: Bonded interface.
+    BOND = 'bond'
+    #: Bridge interface.
+    BRIDGE = 'bridge'
+    #: VLAN interface.
+    VLAN = 'vlan'
+    #: Interface not linked to a node.
+    UNKNOWN = 'unknown'
+
+
+class LinkMode(enum.Enum):
+    #: IP is auto assigned by MAAS.
+    AUTO = 'auto'
+    #: IP is assigned by a DHCP server.
+    DHCP = 'dhcp'
+    #: IP is statically assigned.
+    STATIC = 'static'
+    #: Connected to subnet with no IP address.
+    LINK_UP = 'link_up'

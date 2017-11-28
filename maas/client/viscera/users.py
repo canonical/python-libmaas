@@ -39,18 +39,25 @@ class Users(ObjectSet, metaclass=UsersType):
     """The set of users."""
 
 
-class User(Object):
+class UserType(ObjectType):
+
+    async def read(cls, username):
+        data = await cls._handler.read(username=username)
+        return cls(data)
+
+
+class User(Object, metaclass=UserType):
     """A user."""
 
     username = ObjectField.Checked(
-        "username", check(str), check(str))
+        "username", check(str), check(str), pk=True)
     email = ObjectField.Checked(
         "email", check(str), check(str))
     is_admin = ObjectField.Checked(
         "is_superuser", check(bool), check(bool))
 
     def __repr__(self):
-        if self.is_admin:
+        if self.loaded and self.is_admin:
             return super(User, self).__repr__(
                 name="Admin", fields={"username"})
         else:

@@ -1,3 +1,17 @@
+# Copyright 2016-2017 Canonical Ltd.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """Encoding of MIME multipart data."""
 
 __all__ = [
@@ -76,7 +90,16 @@ def make_payloads(name, content):
 
     This raises `AssertionError` if it encounters anything else.
     """
-    if isinstance(content, bytes):
+    if content is None:
+        yield make_bytes_payload(name, b"")
+    elif isinstance(content, bool):
+        if content:
+            yield make_bytes_payload(name, b"true")
+        else:
+            yield make_bytes_payload(name, b"false")
+    elif isinstance(content, int):
+        yield make_bytes_payload(name, b"%d" % content)
+    elif isinstance(content, bytes):
         yield make_bytes_payload(name, content)
     elif isinstance(content, str):
         yield make_string_payload(name, content)

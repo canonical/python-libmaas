@@ -88,6 +88,43 @@ class TestClient(TestCase):
             )
         ))
 
+    def test__client_maps_subnets(self):
+        self.assertThat(self.client, MatchesClient(
+            subnets=MatchesFacade(
+                create=self.origin.Subnets.create,
+                get=self.origin.Subnet.read,
+                list=self.origin.Subnets.read,
+            )
+        ))
+
+    def test__client_maps_spaces(self):
+        self.assertThat(self.client, MatchesClient(
+            spaces=MatchesFacade(
+                create=self.origin.Spaces.create,
+                get=self.origin.Space.read,
+                get_default=self.origin.Space.get_default,
+                list=self.origin.Spaces.read,
+            )
+        ))
+
+    def test__client_maps_ip_ranges(self):
+        self.assertThat(self.client, MatchesClient(
+            ip_ranges=MatchesFacade(
+                create=self.origin.IPRanges.create,
+                get=self.origin.IPRange.read,
+                list=self.origin.IPRanges.read,
+            )
+        ))
+
+    def test__client_maps_static_routes(self):
+        self.assertThat(self.client, MatchesClient(
+            static_routes=MatchesFacade(
+                create=self.origin.StaticRoutes.create,
+                get=self.origin.StaticRoute.read,
+                list=self.origin.StaticRoutes.read,
+            )
+        ))
+
     def test__client_maps_files(self):
         self.assertThat(self.client, MatchesClient(
             files=MatchesFacade(
@@ -99,6 +136,7 @@ class TestClient(TestCase):
         self.assertThat(self.client, MatchesClient(
             machines=MatchesFacade(
                 allocate=self.origin.Machines.allocate,
+                create=self.origin.Machines.create,
                 get=self.origin.Machine.read,
                 list=self.origin.Machines.read,
             ),

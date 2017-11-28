@@ -18,10 +18,18 @@ from . import (
 class TagsType(ObjectType):
     """Metaclass for `Tags`."""
 
-    async def create(cls, name, *, comment="", definition="", kernel_opts=""):
-        data = await cls._handler.new(
-            name=name, comment=comment, definition=definition,
-            kernel_opts=kernel_opts)
+    async def create(
+            cls, name, *, comment=None, definition=None, kernel_opts=None):
+        params = {
+            "name": name,
+        }
+        if comment is not None:
+            params["comment"] = comment
+        if definition is not None:
+            params["definition"] = definition
+        if kernel_opts is not None:
+            params["kernel_opts"] = kernel_opts
+        data = await cls._handler.create(**params)
         return cls._object(data)
 
     async def read(cls):
@@ -33,7 +41,14 @@ class Tags(ObjectSet, metaclass=TagsType):
     """The set of tags."""
 
 
-class Tag(Object):
+class TagType(ObjectType):
+
+    async def read(cls, name):
+        data = await cls._handler.read(name=name)
+        return cls(data)
+
+
+class Tag(Object, metaclass=TagType):
     """A tag."""
 
     name = ObjectField.Checked(
@@ -45,3 +60,9 @@ class Tag(Object):
     kernel_opts = ObjectField.Checked(
         "kernel_opts", check_optional(str), check_optional(str),
         default=None)
+
+    async def delete(self):
+        """
+        Deletes the `Tag` from MAAS.
+        """
+        return await self._handler.delete(name=self.name)

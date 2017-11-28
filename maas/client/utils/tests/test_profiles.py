@@ -1,3 +1,17 @@
+# Copyright 2016-2017 Canonical Ltd.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """Tests for `maas.client.utils.profiles`."""
 
 import contextlib
@@ -24,9 +38,11 @@ from ..profiles import (
 from ..testing import make_Credentials
 
 
-def make_profile():
+def make_profile(name=None):
+    if name is None:
+        name = make_name_without_spaces("name")
     return Profile(
-        name=make_name_without_spaces("name"), url="http://example.com:5240/",
+        name=name, url="http://example.com:5240/",
         credentials=make_Credentials(), description={"resources": []},
         something=make_name_without_spaces("something"))
 
@@ -235,6 +251,15 @@ class TestProfileStoreDefault(TestCase):
         profile = make_profile()
         config1.default = profile
         self.assertEqual(profile, config2.default)
+
+    def test_default_profile_switch_profile(self):
+        database = sqlite3.connect(":memory:")
+        config = ProfileStore(database)
+        profile1 = make_profile()
+        profile2 = make_profile()
+        config.default = profile1
+        config.default = profile2
+        self.assertEqual(profile2, config.default)
 
     def test_default_profile_remains_default_after_subsequent_save(self):
         database = sqlite3.connect(":memory:")

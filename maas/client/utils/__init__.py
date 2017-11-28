@@ -1,3 +1,17 @@
+# Copyright 2016-2017 Canonical Ltd.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """Utilities for the MAAS client."""
 
 __all__ = [
@@ -308,18 +322,47 @@ def coalesce(*values, default=None):
         return default
 
 
+def remove_None(params: dict):
+    """Remove all keys in `params` that have the value of `None`."""
+    return {
+        key: value
+        for key, value in params.items()
+        if value is not None
+    }
+
+
+class SpinnerContext:
+    """Context of the currently running spinner."""
+
+    def __init__(self, spinner):
+        self.spinner = spinner
+        self.msg = ""
+        self._prev_msg = ""
+
+    def print(self, *args, **kwargs):
+        """Print inside of the spinner context.
+
+        This must be used when inside of a spinner context to ensure that
+        the line printed doesn't overwrite an already existing spinner line.
+        """
+        clear_len = max(len(self._prev_msg), len(self.msg)) + 4
+        self.spinner.stream.write("%s\r" % (' ' * clear_len))
+        print(*args, file=self.spinner.stream, flush=True, **kwargs)
+
+
 class Spinner:
     """Display a spinner at the terminal, if it's a TTY.
 
     Use as a context manager.
     """
 
-    def __init__(self, frames='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏', stream=sys.stdout):
+    def __init__(self, frames='/-\|', stream=sys.stdout):
         super(Spinner, self).__init__()
         self.frames = frames
         self.stream = stream
 
     def __enter__(self):
+        self.__context = SpinnerContext(self)
         if self.stream.isatty():
             frames = cycle(self.frames)
             stream = self.stream
@@ -333,16 +376,28 @@ class Spinner:
                     # Write out successive frames (and a backspace) every 0.1
                     # seconds until done is set.
                     while not done.wait(0.1):
-                        stream.write("%s\b" % next(frames))
+                        diff = (
+                            len(self.__context._prev_msg) -
+                            len(self.__context.msg))
+                        if diff < 0:
+                            diff = 0
+                        stream.write("[%s] %s%s\r" % (
+                            next(frames), self.__context.msg, ' ' * diff))
+                        self.__context._prev_msg = self.__context.msg
                         stream.flush()
                 finally:
-                    # Enable cursor.
+                    # Clear line and enable cursor.
+                    clear_len = max(
+                        len(self.__context._prev_msg),
+                        len(self.__context.msg)) + 4
+                    stream.write("%s\r" % (' ' * clear_len))
                     stream.write("\033[?25h")
                     stream.flush()
 
             self.__done = done
             self.__thread = threading.Thread(target=run)
             self.__thread.start()
+        return self.__context
 
     def __exit__(self, *exc_info):
         if self.stream.isatty():

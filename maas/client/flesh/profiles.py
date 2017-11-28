@@ -9,8 +9,10 @@ import sys
 from . import (
     colorized,
     Command,
+    print_with_pager,
     PROFILE_DEFAULT,
     PROFILE_NAMES,
+    read_input,
     TableCommand,
     tables,
 )
@@ -26,42 +28,8 @@ from ..utils import (
 from ..utils.async import asynchronous
 
 
-class cmd_login_base(Command):
-
-    def __init__(self, parser):
-        super(cmd_login_base, self).__init__(parser)
-        parser.add_argument(
-            "profile_name", metavar="profile-name", help=(
-                "The name with which you will later refer to this remote "
-                "server and credentials within this tool."
-                ))
-        parser.add_argument(
-            "url", type=utils.api_url, help=(
-                "The URL of the remote API, e.g. http://example.com/MAAS/ "
-                "or http://example.com/MAAS/api/2.0/ if you wish to specify "
-                "the API version."))
-        parser.add_argument(
-            '-k', '--insecure', action='store_true', help=(
-                "Disable SSL certificate check"), default=False)
-
-    @staticmethod
-    def print_whats_next(profile):
-        """Explain what to do next."""
-        what_next = [
-            "{{autogreen}}Congratulations!{{/autogreen}} You are logged in "
-            "to the MAAS server at {{autoblue}}{profile.url}{{/autoblue}} "
-            "with the profile name {{autoblue}}{profile.name}{{/autoblue}}.",
-            "For help with the available commands, try:",
-            "  maas --help",
-            ]
-        for message in what_next:
-            message = message.format(profile=profile)
-            print(colorized(message))
-            print()
-
-
-class cmd_login(cmd_login_base):
-    """Log-in to a remote MAAS with username and password.
+class cmd_login(Command):
+    """Log-in to a MAAS with either username and password or apikey.
 
     The username and password will NOT be saved; a new API key will be
     obtained from MAAS and associated with the new profile. This key can be
@@ -71,40 +39,66 @@ class cmd_login(cmd_login_base):
     def __init__(self, parser):
         super(cmd_login, self).__init__(parser)
         parser.add_argument(
+            "-p", "--profile-name", default=None, help=(
+                "The name to give the profile. Default is the username used "
+                "to login."))
+        parser.add_argument(
+            '--apikey', default=None, help=(
+                "The API key acquired from MAAS. This requires the profile "
+                "name to be provided as well."))
+        parser.add_argument(
+            '-k', '--insecure', action='store_true', help=(
+                "Disable SSL certificate check"), default=False)
+        parser.add_argument(
+            "url", nargs="?", type=utils.api_url, help=(
+                "The URL of the API, e.g. http://example.com/MAAS/ "
+                "or http://example.com/MAAS/api/2.0/ if you wish to specify "
+                "the API version. If no URL is provided then it will be "
+                "prompted for, interactively."))
+        parser.add_argument(
             "username", nargs="?", default=None, help=(
-                "The username used to login to MAAS. Omit this and the "
-                "password for anonymous API access."))
+                "The username used to login to MAAS. If no username is "
+                "provided and API key is not being used it will be prompted "
+                "for, interactively."))
         parser.add_argument(
             "password", nargs="?", default=None, help=(
-                "The password used to login to MAAS. Omit both the username "
-                "and the password for anonymous API access, or pass a single "
-                "hyphen to allow the password to be provided via standard-"
-                "input. If a username is provided but no password, the "
-                "password will be prompted for, interactively."
-            ),
-        )
+                "The password used to login to MAAS. If no password is "
+                "proviced and API key is not being used it will be promoed "
+                "for, interactively."))
 
     @asynchronous
     async def __call__(self, options):
-        # Special-case when password is "-", meaning read from stdin.
-        if options.password == "-":
-            options.password = sys.stdin.readline().strip()
-
-        while True:
-            try:
-                profile = await helpers.login(
-                    options.url, username=options.username,
-                    password=options.password, insecure=options.insecure)
-            except helpers.UsernameWithoutPassword:
-                # Try to obtain the password interactively.
-                options.password = auth.try_getpass("Password: ")
-                if options.password is None:
-                    raise
+        if options.apikey and not options.profile_name:
+            raise ValueError(
+                "-p,--profile-name must be provided with --apikey")
+        if not options.url:
+            url = read_input("URL", validator=utils.api_url)
+        else:
+            url = options.url
+        if not options.apikey:
+            if not options.username:
+                username = read_input("Username")
             else:
-                break
+                username = options.username
+            if not options.password:
+                password = read_input("Password", password=True)
+            else:
+                password = options.password
+                if password == '-':
+                    password = sys.stdin.readline().strip()
+            profile = await helpers.login(
+                url, username=username, password=password,
+                insecure=options.insecure)
+        else:
+            credentials = auth.obtain_credentials(options.apikey)
+            session = await bones.SessionAPI.fromURL(
+                url, credentials=credentials, insecure=options.insecure)
+            profile = profiles.Profile(
+                options.profile_name, url, credentials=credentials,
+                description=session.description)
 
-        # Give it the name the user wanted.
-        profile = profile.replace(name=options.profile_name)
+        if options.profile_name:
+            profile = profile.replace(name=options.profile_name)
 
         # Save a new profile.
         with profiles.ProfileStore.open() as config:
@@ -113,61 +107,35 @@ class cmd_login(cmd_login_base):
 
         self.print_whats_next(profile)
 
-
-class cmd_add(cmd_login_base):
-    """Add a profile for a remote MAAS using an *API key*.
-
-    The `login` command will typically be more convenient.
-    """
-
-    def __init__(self, parser):
-        super(cmd_add, self).__init__(parser)
-        parser.add_argument(
-            "credentials", nargs="?", default=None, help=(
-                "The credentials, also known as the API key, for the remote "
-                "MAAS server. These can be found in the user preferences page "
-                "in the Web UI; they take the form of a long random-looking "
-                "string composed of three parts, separated by colons. Specify "
-                "an empty string for anonymous API access, or pass a single "
-                "hyphen to allow the credentials to be provided via standard-"
-                "input. If no credentials are provided, they will be prompted "
-                "for, interactively."
-            ),
-        )
-
-    @asynchronous
-    async def __call__(self, options):
-        # Try and obtain credentials interactively if they're not given, or
-        # read them from stdin if they're specified as "-".
-        credentials = auth.obtain_credentials(options.credentials)
-        # Establish a session with the remote API.
-        session = await bones.SessionAPI.fromURL(
-            options.url, credentials=credentials, insecure=options.insecure)
-        # Make a new profile and save it as the default.
-        profile = profiles.Profile(
-            options.profile_name, options.url, credentials=credentials,
-            description=session.description)
-        with profiles.ProfileStore.open() as config:
-            config.save(profile)
-            config.default = profile
-
-        self.print_whats_next(profile)
+    @staticmethod
+    def print_whats_next(profile):
+        """Explain what to do next."""
+        what_next = [
+            "{{autogreen}}Congratulations!{{/autogreen}} You are logged in "
+            "to the MAAS server at {{autoblue}}{profile.url}{{/autoblue}} "
+            "with the profile name {{autoblue}}{profile.name}{{/autoblue}}.",
+            "For help with the available commands, try:",
+            "  maas help",
+            ]
+        for message in what_next:
+            message = message.format(profile=profile)
+            print(colorized(message))
+            print()
 
 
-class cmd_remove(Command):
-    """Remove a profile, purging any stored credentials.
+class cmd_logout(Command):
+    """Logout of a MAAS profile, purging any stored credentials.
 
     This will remove the given profile from your command-line client. You can
     re-create it later using `add` or `login`.
     """
 
     def __init__(self, parser):
-        super(cmd_remove, self).__init__(parser)
+        super(cmd_logout, self).__init__(parser)
         parser.add_argument(
             "profile_name", metavar="profile-name",
             nargs="?", choices=PROFILE_NAMES, help=(
-                "The name with which a remote server and its "
-                "credentials are referred to within this tool." +
+                "The profile name you want to logout of." +
                 ("" if PROFILE_DEFAULT is None else " [default: %(default)s]")
             ),
         )
@@ -180,15 +148,18 @@ class cmd_remove(Command):
 
 
 class cmd_switch(Command):
-    """Switch the default profile."""
+    """Switch the active profile.
+
+    This will switch the currently active profile to the given profile. The
+    previous profile will remain, just use `switch` again to go back.
+    """
 
     def __init__(self, parser):
         super(cmd_switch, self).__init__(parser)
         parser.add_argument(
             "profile_name", metavar="profile-name", choices=PROFILE_NAMES,
             help=(
-                "The name with which a remote server and its credentials "
-                "are referred to within this tool."
+                "The profile name you want to switch to."
             ),
         )
 
@@ -198,55 +169,43 @@ class cmd_switch(Command):
             config.default = profile
 
 
-class cmd_list(TableCommand):
-    """List remote APIs that have been logged-in to."""
+class cmd_profiles(TableCommand):
+    """List profiles (aka. logged in MAAS's)."""
+
+    def __init__(self, parser):
+        super(cmd_profiles, self).__init__(parser)
+        parser.add_argument(
+            "--refresh", action='store_true', default=False, help=(
+                "Retrieves the latest version of the help information for "
+                "all profiles. Use it to update your command-line client's "
+                "information after an upgrade to the MAAS server."),
+        )
+        parser.other.add_argument(
+            "--no-pager", action='store_true',
+            help=(
+                "Don't use the pager when printing the output of the "
+                "command."))
 
     def __call__(self, options):
-        table = tables.ProfilesTable()
-        with profiles.ProfileStore.open() as config:
-            print(table.render(options.format, config))
-
-
-class cmd_refresh(Command):
-    """Refresh the API descriptions of all profiles.
-
-    This retrieves the latest version of the help information for each
-    profile.  Use it to update your command-line client's information after
-    an upgrade to the MAAS server.
-    """
-
-    def __call__(self, options):
-        with profiles.ProfileStore.open() as config:
-            for profile_name in config:
-                profile = config.load(profile_name)
-                session = bones.SessionAPI.fromProfile(profile)
-                profile = profile.replace(description=session.description)
-                config.save(profile)
+        if options.refresh:
+            with profiles.ProfileStore.open() as config:
+                for profile_name in config:
+                    profile = config.load(profile_name)
+                    session = bones.SessionAPI.fromProfile(profile)
+                    profile = profile.replace(description=session.description)
+                    config.save(profile)
+        else:
+            table = tables.ProfilesTable()
+            with profiles.ProfileStore.open() as config:
+                if options.no_pager:
+                    print(table.render(options.format, config))
+                else:
+                    print_with_pager(table.render(options.format, config))
 
 
 def register(parser):
     """Register profile commands with the given parser."""
-
-    # Register `login`, `logout`, and `switch` as top-level commands.
     cmd_login.register(parser)
-    cmd_remove.register(parser, "logout")
+    cmd_logout.register(parser)
     cmd_switch.register(parser)
-
-    # Register the complete set of commands with the `profiles` sub-parser.
-    parser = parser.subparsers.add_parser(
-        "profiles", help="Manage profiles, e.g. adding, removing, logging-in.",
-        description=(
-            "A profile is a convenient way to refer to a remote MAAS "
-            "installation. It encompasses the URL, the credentials, and "
-            "the retrieved API description. Each profile has a unique name "
-            "which can be provided to commands that work with remote MAAS "
-            "installations, or a default profile can be chosen."
-        ),
-    )
-
-    cmd_add.register(parser)
-    cmd_remove.register(parser)
-    cmd_login.register(parser)
-    cmd_list.register(parser)
-    cmd_switch.register(parser)
-    cmd_refresh.register(parser)
+    cmd_profiles.register(parser)

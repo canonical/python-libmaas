@@ -2,14 +2,14 @@
 
 _python-libmaas_ provides:
 
+* A command-line tool for working with MAAS servers.
+
 * A rich and stable Python client library for interacting with MAAS 2.0+
   servers. This can be used in a synchronous/blocking mode, or an
   asynchronous/non-blocking mode based on [asyncio][].
 
 * A lower-level Python client library, auto-generated to match the MAAS
   server it's interacting with.
-
-* A command-line tool for working with MAAS servers.
 
 For MAAS _server_ documentation, visit
 [docs.ubuntu.com](https://docs.ubuntu.com/maas/).
@@ -58,19 +58,76 @@ your shell's ``PATH`` so you can invoke it as ``maas``.
 
 ## Command-line
 
+Best place to start with the CLI is the help menu.
+
 ```console
-$ bin/maas profiles login --help
-$ bin/maas profiles login exmpl \
->   http://example.com:5240/MAAS/ my_username
-Password: …
-$ bin/maas list
-┌───┬────────────┬───────────┬───────┬────────┬────────┬─────────┐
-│   │ Hostname   │ System ID │ #CPUs │ RAM    │ Status │ Power   │
-├───┼────────────┼───────────┼───────┼────────┼────────┼─────────┤
-│ m │ botswana   │ pncys4    │ 4     │ 8.0 GB │ Ready  │ Off     │
-│ c │ namibia    │ xfaxgw    │ 4     │ 8.0 GB │ —      │ Error   │
-│ C │ madagascar │ 4y3h7n    │ 4     │ 8.0 GB │ —      │ Unknown │
-└───┴────────────┴───────────┴───────┴────────┴────────┴─────────┘
+$ bin/maas help
+$ bin/maas help commands
+```
+
+Once your have familiarized yourself with the available commands you will
+want to login to your MAAS. You can either pass arguments to login or it
+will ask your for the needed information to login.
+
+```console
+$ bin/maas login
+```
+
+The CLI supports multiple profiles with ``login``. Use ``profiles`` and
+``switch`` to view and change between profiles.
+
+```console
+$ bin/maas profiles
+┌─────────┬─────────────────────────────────────┬────────┐
+│ Profile │ URL                                 │ Active │
+├─────────┼─────────────────────────────────────┼────────┤
+│ admin   │ http://localhost:5240/MAAS/api/2.0/ │ ✓      │
+│ other   │ http://localhost:5240/MAAS/api/2.0/ │        │
+└─────────┴─────────────────────────────────────┴────────┘
+$ bin/maas switch other
+$ bin/maas profiles
+┌─────────┬─────────────────────────────────────┬────────┐
+│ Profile │ URL                                 │ Active │
+├─────────┼─────────────────────────────────────┼────────┤
+│ admin   │ http://localhost:5240/MAAS/api/2.0/ │        │
+│ other   │ http://localhost:5240/MAAS/api/2.0/ │ ✓      │
+└─────────┴─────────────────────────────────────┴────────┘
+```
+
+The ``nodes``, ``machines``, ``devices``, and ``controllers`` provide access
+to either all nodes with ``nodes`` or specific node types with ``machines``,
+``devices``, and ``controllers``.
+
+```console
+$ bin/maas nodes
+┌────────────────────┬───────────────┐
+│ Hostname           │ Type          │
+├────────────────────┼───────────────┤
+│ another            │ Device        │
+│ blake-ubnt-desktop │ Regiond+rackd │
+│ testing            │ Device        │
+│ win2016            │ Machine       │
+└────────────────────┴───────────────┘
+$ bin/maas machines
+┌──────────┬───────┬────────┬───────┬───────┬────────┐
+│ Hostname │ Power │ Status │ Arch  │ #CPUs │ RAM    │
+├──────────┼───────┼────────┼───────┼───────┼────────┤
+│ win2016  │ Off   │ Broken │ amd64 │ 4     │ 8.0 GB │
+└──────────┴───────┴────────┴───────┴───────┴────────┘
+$ bin/maas devices
+┌──────────┬───────────────┐
+│ Hostname │ IP addresses  │
+├──────────┼───────────────┤
+│ another  │ 192.168.1.223 │
+│ testing  │ 192.168.1.150 │
+│          │ 192.168.1.143 │
+└──────────┴───────────────┘
+$ bin/maas controllers
+┌────────────────────┬───────────────┬───────┬───────┬─────────┐
+│ Hostname           │ Type          │ Arch  │ #CPUs │ RAM     │
+├────────────────────┼───────────────┼───────┼───────┼─────────┤
+│ blake-ubnt-desktop │ Regiond+rackd │ amd64 │ 8     │ 24.0 GB │
+└────────────────────┴───────────────┴───────┴───────┴─────────┘
 ```
 
 Tab-completion in ``bash`` and ``tcsh`` is supported too. For example,
@@ -79,7 +136,7 @@ in ``bash``:
 ```console
 $ source <(bin/register-python-argcomplete --shell=bash bin/maas)
 $ bin/maas <tab>
-allocate  launch  list  list-files  list-tags  ...
+allocate  files  login  nodes  shell  ...
 ```
 
 

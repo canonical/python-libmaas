@@ -6,6 +6,10 @@ __all__ = [
 
 import argparse
 
+from .... import flesh
+from ....testing import TestCase
+from ....utils.tests.test_profiles import make_profile
+
 
 def capture_parse_error(parser, *args):
     """Capture the `ArgumentError` arising from parsing the given arguments.
@@ -20,3 +24,16 @@ def capture_parse_error(parser, *args):
         return error
     else:
         return None
+
+
+class TestCaseWithProfile(TestCase):
+    """Base test case class for all of `flesh` commands.
+
+    This creates an empty default profile.
+    """
+
+    def setUp(self):
+        self.profile = make_profile("default")
+        self.patch(flesh, "PROFILE_NAMES", ["default"])
+        self.patch(flesh, "PROFILE_DEFAULT", self.profile)
+        super(TestCaseWithProfile, self).setUp()
