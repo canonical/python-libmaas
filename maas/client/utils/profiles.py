@@ -272,7 +272,7 @@ class ProfileStore:
                 yield store
             else:
                 yield store
-        except:
+        except:  # noqa: E722
             raise
         else:
             database.commit()

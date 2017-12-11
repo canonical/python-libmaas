@@ -16,6 +16,7 @@ from . import (
     check_optional,
     ObjectField,
     ObjectFieldRelated,
+    ObjectFieldRelatedSet,
     to,
 )
 from .fabrics import Fabric
@@ -331,6 +332,8 @@ class Machine(Node, metaclass=MachineType):
         "memory", check(int), check(int))
     min_hwe_kernel = ObjectField.Checked(
         "min_hwe_kernel", check_optional(str), check_optional(str))
+    netboot = ObjectField.Checked(
+        "netboot", check(bool), readonly=True)
     osystem = ObjectField.Checked(
         "osystem", check(str), readonly=True)
     owner_data = ObjectField.Checked(
@@ -338,22 +341,13 @@ class Machine(Node, metaclass=MachineType):
 
     boot_interface = ObjectFieldRelated(
         "boot_interface", "Interface", readonly=True)
-
-    # blockdevice_set
-    # macaddress_set
-    # netboot
-    # physicalblockdevice_set
+    block_devices = ObjectFieldRelatedSet(
+        "blockdevice_set", "BlockDevices", reverse=None)
 
     power_state = ObjectField.Checked(
         "power_state", to(PowerState), readonly=True)
     power_type = ObjectField.Checked(
         "power_type", check(str), readonly=True)
-
-    # pxe_mac
-    # resource_uri
-    # routers
-    # status
-    # storage
 
     status = ObjectField.Checked(
         "status", to(NodeStatus), readonly=True)
@@ -364,8 +358,16 @@ class Machine(Node, metaclass=MachineType):
     status_name = ObjectField.Checked(
         "status_name", check(str), readonly=True)
 
+    bcaches = ObjectFieldRelatedSet(
+        "bcaches", "Bcaches", reverse=None)
+    cache_sets = ObjectFieldRelatedSet(
+        "cache_sets", "BcacheCacheSets", reverse=None)
+    raids = ObjectFieldRelatedSet(
+        "raids", "Raids", reverse=None)
+    volume_groups = ObjectFieldRelatedSet(
+        "volume_groups", "VolumeGroups", reverse=None)
+
     # swap_size
-    # virtualblockdevice_set
 
     async def save(self):
         """Save the machine in MAAS."""

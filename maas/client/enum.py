@@ -128,3 +128,39 @@ class LinkMode(enum.Enum):
     STATIC = 'static'
     #: Connected to subnet with no IP address.
     LINK_UP = 'link_up'
+
+
+class BlockDeviceType(enum.Enum):
+    #: Physical block device.
+    PHYSICAL = 'physical'
+    #: Virtual block device.
+    VIRTUAL = 'virtual'
+
+
+class PartitionTableType(enum.Enum):
+    #: Master boot record
+    MBR = 'mbr'
+    #: GUID Partition Table
+    GPT = 'gpt'
+
+
+class RaidLevel(enum.Enum):
+    #: RAID level 0
+    RAID_0 = 'raid-0'
+    #: RAID level 1
+    RAID_1 = 'raid-1'
+    #: RAID level 5
+    RAID_5 = 'raid-5'
+    #: RAID level 6
+    RAID_6 = 'raid-6'
+    #: RAID level 10
+    RAID_10 = 'raid-10'
+
+
+class CacheMode(enum.Enum):
+    #: Writeback
+    WRITEBACK = 'writeback'
+    #: Writethough
+    WRITETHROUGH = 'writethrough'
+    #: Writearound
+    WRITEAROUND = 'writearound'
