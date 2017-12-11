@@ -1047,7 +1047,7 @@ def to(cls):
     return to_cls
 
 
-def check(*expected):
+def check(expected):
     def checker(value):
         if issubclass(type(value), expected):
             return value

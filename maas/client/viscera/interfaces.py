@@ -106,7 +106,7 @@ class Interface(Object, metaclass=InterfaceTypeMeta):
     tags = ObjectField.Checked(
         "tags", check(list), check(list))
     params = ObjectField.Checked(
-        "params", check((dict, str)), check(dict, str))
+        "params", check((dict, str)), check((dict, str)))
     parents = ObjectFieldRelatedSet(
         "parents", "Interfaces", reverse=None,
         map_func=map_nic_name_to_dict)
@@ -136,6 +136,7 @@ class Interface(Object, metaclass=InterfaceTypeMeta):
         params = self.params
         if not isinstance(params, dict):
             params = {}
+        self._changed_data.pop('params', None)
         self._changed_data.update(
             calculate_dict_diff(orig_params, params))
         if 'vlan' in self._changed_data and self._changed_data['vlan']:
