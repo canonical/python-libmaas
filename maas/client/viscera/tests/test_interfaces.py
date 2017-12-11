@@ -713,6 +713,29 @@ class TestInterface(TestCase):
             system_id=interface.node.system_id, id=interface.id,
             mtu=3000)
 
+    def test__interface_save_handles_str_params(self):
+        Interface = make_origin().Interface
+        Interface._handler.params = ['system_id', 'id']
+        interface = Interface({
+            'system_id': make_string_without_spaces(),
+            'id': random.randint(0, 100),
+            'tags': [],
+            'params': '',
+        })
+        interface.params = {'mtu': 3000}
+        Interface._handler.update.return_value = {
+            'system_id': interface.node.system_id,
+            'id': interface.id,
+            'tags': [],
+            'params': {
+                'mtu': 3000
+            },
+        }
+        interface.save()
+        Interface._handler.update.assert_called_once_with(
+            system_id=interface.node.system_id, id=interface.id,
+            mtu=3000)
+
     def test__interface_save_sets_vlan_to_None(self):
         Interface = make_origin().Interface
         Interface._handler.params = ['system_id', 'id']
