@@ -5,7 +5,7 @@ __all__ = [
     "Bcaches",
 ]
 
-from typing import Iterable, Union
+from typing import Union
 
 from . import (
     ObjectField,
@@ -13,8 +13,10 @@ from . import (
     ObjectSet,
     ObjectType,
     to,
+    check,
 )
 from .nodes import Node
+from .bcache_cache_sets import BcacheCacheSet
 from .block_devices import BlockDevice
 from .partitions import Partition
 from .filesystem_groups import (
@@ -85,6 +87,7 @@ class BcachesType(ObjectType):
     async def create(
             cls, node: Union[Node, str],
             backing_device: Union[BlockDevice, Partition],
+            cache_set: Union[BcacheCacheSet, int],
             cache_mode: CacheMode, *,
             name: str=None, uuid: str=None):
         """
@@ -92,9 +95,14 @@ class BcachesType(ObjectType):
 
         :param node: Node to create the interface on.
         :type node: `Node` or `str`
-        :param devices: Mixed list of block devices or partitions to create
+        :param backing_device: Either a block device or partition to create
             the Bcache from.
-        :type devices: iterable of mixed type of `BlockDevice` or `Partition`
+        :type backing_device: `BlockDevice` or `Partition`
+        :param cache_set: Bcache cache set to use in front of backing device.
+        :type cache_set: `BcacheCacheSet` or `int`
+        :param cache_mode: Caching mode to use for this device.
+        :type cache_mode: `CacheMode`
+        :type backing_device: `BlockDevice` or `Partition`
         :param name: Name of the Bcache (optional).
         :type name: `str`
         :param uuid: The UUID for the Bcache (optional).
@@ -112,24 +120,31 @@ class BcachesType(ObjectType):
                 'node must be a Node or str, not %s' % (
                     type(node).__name__))
 
-        if len(devices) == 0:
-            raise ValueError("devices must contain at least one device.")
+        if isinstance(backing_device, BlockDevice):
+            params['backing_device'] = backing_device.id
+        elif isinstance(backing_device, Partition):
+            params['backing_partition'] = backing_device.id
+        else:
+            raise TypeError(
+                "backing_device must be a BlockDevice or Partition, "
+                "not %s" % type(backing_device).__name__)
 
-        block_devices = []
-        partitions = []
-        for idx, device in enumerate(devices):
-            if isinstance(device, BlockDevice):
-                block_devices.append(device.id)
-            elif isinstance(device, Partition):
-                partitions.append(device.id)
-            else:
-                raise TypeError(
-                    "devices[%d] must be a BlockDevice or "
-                    "Partition, not %s" % type(device).__name__)
-        if len(block_devices) > 0:
-            params['block_devices'] = block_devices
-        if len(partitions) > 0:
-            params['partitions'] = partitions
+        if isinstance(cache_set, BcacheCacheSet):
+            params['cache_set'] = cache_set.id
+        elif isinstance(cache_set, int):
+            params['cache_set'] = cache_set
+        else:
+            raise TypeError(
+                "cache_set must be a BcacheCacheSet or int, "
+                "not %s" % type(cache_set).__name__)
+
+        if isinstance(cache_mode, CacheMode):
+            params['cache_mode'] = cache_mode.value
+        else:
+            raise TypeError(
+                "cache_mode must be a CacheMode, "
+                "not %s" % type(cache_mode).__name__)
+
         if uuid is not None:
             params['uuid'] = uuid
         return cls._object(await cls._handler.create(**params))

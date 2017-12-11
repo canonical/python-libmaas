@@ -13,12 +13,8 @@ from . import (
     ObjectFieldRelated,
     ObjectFieldRelatedSet,
     ObjectSet,
-    ObjectType,
     undefined,
 )
-from .nodes import Node
-from .block_devices import BlockDevice
-from .partitions import Partition
 from ..enum import BlockDeviceType
 
 
@@ -33,12 +29,12 @@ def get_device_object(origin, datum):
         raise ValueError('Unknown devices type: %s' % device_type)
 
 
-class Devices(ObjectSet):
+class FilesystemGroupDevices(ObjectSet):
     """Devices that make up a `FilesystemGroup`."""
 
 
 class DevicesField(ObjectFieldRelatedSet):
-    """Field for `Devices`."""
+    """Field for `FilesystemGroupDevices`."""
 
     def __init__(self, name):
         """Create a `DevicesField`.
@@ -65,10 +61,10 @@ class DevicesField(ObjectFieldRelatedSet):
             raise TypeError(
                 "datum must be a sequence, not %s" % type(datum).__name__)
         # Get the class from the bound origin.
-        bound = getattr(instance._origin, "Devices")
+        bound = getattr(instance._origin, "FilesystemGroupDevices")
         return bound((
-                get_device_object(instance._origin, item)
-                for item in datum
+            get_device_object(instance._origin, item)
+            for item in datum
             ))
 
 

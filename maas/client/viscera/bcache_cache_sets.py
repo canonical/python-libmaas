@@ -5,14 +5,11 @@ __all__ = [
     "BcacheCacheSets",
 ]
 
-from typing import Iterable, Union
+from typing import Union
 
 from . import (
-    ObjectField,
-    ObjectFieldRelated,
     ObjectSet,
     ObjectType,
-    to,
 )
 from .nodes import Node
 from .block_devices import BlockDevice
@@ -21,7 +18,6 @@ from .filesystem_groups import (
     DeviceField,
     FilesystemGroup,
 )
-from ..enum import CacheMode
 
 
 class BcacheCacheSetType(ObjectType):

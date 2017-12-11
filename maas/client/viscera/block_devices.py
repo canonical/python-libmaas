@@ -89,7 +89,7 @@ class BlockDevice(Object, metaclass=BlockDeviceTypeMeta):
         elif self.type == BlockDeviceType.VIRTUAL:
             return super(BlockDevice, self).__repr__(
                 name="VirtualBlockDevice",
-                fields={"name",})
+                fields={"name", })
         else:
             raise ValueError("Unknown type: %s" % self.type)
 
