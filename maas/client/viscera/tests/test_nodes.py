@@ -225,3 +225,17 @@ class TestNodes(TestCase):
         ]
         origin.Nodes.read(hostnames=hostnames)
         origin.Nodes._handler.read.assert_called_once_with(hostname=hostnames)
+
+    def test__read_with_normalized_hostnames(self):
+        origin = make_origin()
+        origin.Nodes._handler.read.return_value = []
+
+        hostnames = [
+            make_name_without_spaces()
+            for _ in range(3)
+        ]
+        origin.Nodes.read(hostnames=[
+            '%s.%s' % (hostname, make_name_without_spaces())
+            for hostname in hostnames
+        ])
+        origin.Nodes._handler.read.assert_called_once_with(hostname=hostnames)

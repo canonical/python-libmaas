@@ -21,6 +21,13 @@ from . import (
 from ..enum import NodeType
 
 
+def normalize_hostname(hostname):
+    """Strips the FQDN from the hostname, since hostname is unique in MAAS."""
+    if hostname:
+        return hostname.split('.', 1)[0]
+    return hostname
+
+
 class NodesType(ObjectType):
     """Metaclass for `Nodes`."""
 
@@ -32,7 +39,10 @@ class NodesType(ObjectType):
         """
         params = {}
         if hostnames:
-            params["hostname"] = hostnames
+            params["hostname"] = [
+                normalize_hostname(hostname)
+                for hostname in hostnames
+            ]
         data = await cls._handler.read(**params)
         return cls(map(cls._object, data))
 
