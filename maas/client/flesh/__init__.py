@@ -309,7 +309,8 @@ class OriginCommandBase(Command):
             help=(
                 "The name of the remote MAAS instance to use. Use "
                 "`profiles list` to obtain a list of valid profiles." +
-                ("" if PROFILE_DEFAULT is None else " [default: %(default)s]")
+                ("" if PROFILE_DEFAULT is None else
+                 " [default: %s]" % PROFILE_DEFAULT.name)
             ))
         if PROFILE_DEFAULT is not None:
             parser.set_defaults(profile=PROFILE_DEFAULT.name)

@@ -232,6 +232,7 @@ class ProfileStore:
     def default(self, profile: Profile):
         with self.database:
             self.save(profile)
+            del self.default
             self.database.execute(
                 "UPDATE profiles SET selected = (name = ?)",
                 (profile.name,))

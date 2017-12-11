@@ -252,6 +252,15 @@ class TestProfileStoreDefault(TestCase):
         config1.default = profile
         self.assertEqual(profile, config2.default)
 
+    def test_default_profile_switch_profile(self):
+        database = sqlite3.connect(":memory:")
+        config = ProfileStore(database)
+        profile1 = make_profile()
+        profile2 = make_profile()
+        config.default = profile1
+        config.default = profile2
+        self.assertEqual(profile2, config.default)
+
     def test_default_profile_remains_default_after_subsequent_save(self):
         database = sqlite3.connect(":memory:")
         profile = make_profile()
