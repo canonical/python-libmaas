@@ -105,15 +105,3 @@ class BcacheCacheSetsType(ObjectType):
 
 class BcacheCacheSets(ObjectSet, metaclass=BcacheCacheSetsType):
     """The set of cache sets on a machine."""
-
-    @property
-    def by_name(self):
-        """Return mapping of name to `BcacheCacheSet`."""
-        return {
-            cs.name: cs
-            for cs in self
-        }
-
-    def get_by_name(self, name):
-        """Return a `BcacheCacheSet` by its name."""
-        return self.by_name[name]
