@@ -86,15 +86,18 @@ class BcachesType(ObjectType):
 
     async def create(
             cls, node: Union[Node, str],
+            name: str,
             backing_device: Union[BlockDevice, Partition],
             cache_set: Union[BcacheCacheSet, int],
             cache_mode: CacheMode, *,
-            name: str=None, uuid: str=None):
+            uuid: str=None):
         """
         Create a Bcache on a Node.
 
         :param node: Node to create the interface on.
         :type node: `Node` or `str`
+        :param name: Name of the Bcache.
+        :type name: `str`
         :param backing_device: Either a block device or partition to create
             the Bcache from.
         :type backing_device: `BlockDevice` or `Partition`
@@ -103,8 +106,6 @@ class BcachesType(ObjectType):
         :param cache_mode: Caching mode to use for this device.
         :type cache_mode: `CacheMode`
         :type backing_device: `BlockDevice` or `Partition`
-        :param name: Name of the Bcache (optional).
-        :type name: `str`
         :param uuid: The UUID for the Bcache (optional).
         :type uuid: `str`
         """
