@@ -90,6 +90,48 @@ class TestSubnet(TestCase):
         self.assertThat(Subnet(subnet).rdns_mode, Equals(RDNSMode.RFC2317))
         Subnet._handler.read.assert_called_once_with(id=subnet["id"])
 
+    def test__subnet_update_vlan(self):
+        origin = make_origin()
+        Subnet, Vlan = origin.Subnet, origin.Vlan
+        Subnet._handler.params = ['id']
+        subnet_id = random.randint(1, 100)
+        subnet = Subnet({
+            "id": subnet_id,
+            "name": make_string_without_spaces(),
+            "vlan": {
+                "id": random.randint(1, 100),
+            }
+        })
+        new_vlan = Vlan({
+            "id": random.randint(101, 200),
+            "fabric_id": random.randint(101, 200),
+        })
+        subnet.vlan = new_vlan
+        Subnet._handler.update.return_value = {
+            "id": subnet.id,
+            "name": subnet.name,
+            "vlan": {
+                "id": new_vlan.id,
+            }
+        }
+        subnet.save()
+        Subnet._handler.update.assert_called_once_with(
+            id=subnet_id, vlan=new_vlan.id)
+
+    def test__subnet_doesnt_update_vlan_if_same(self):
+        Subnet = make_origin().Subnet
+        subnet_id = random.randint(1, 100)
+        subnet = Subnet({
+            "id": subnet_id,
+            "name": make_string_without_spaces(),
+            "vlan": {
+                "id": random.randint(1, 100),
+            }
+        })
+        subnet.vlan = subnet.vlan
+        subnet.save()
+        self.assertEqual(0, Subnet._handler.update.call_count)
+
     def test__subnet_delete(self):
         Subnet = make_origin().Subnet
         subnet_id = random.randint(1, 100)
