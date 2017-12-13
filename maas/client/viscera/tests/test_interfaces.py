@@ -782,7 +782,7 @@ class TestInterface(TestCase):
         })
         new_vlan = Vlan({
             'fabric_id': random.randint(0, 100),
-            'id': random.randint(0, 100),
+            'id': random.randint(101, 200),
             'vid': random.randint(0, 100),
         })
         interface.vlan = new_vlan
