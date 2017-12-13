@@ -97,6 +97,7 @@ class BlockDevice(Object, metaclass=BlockDeviceTypeMeta):
         """Save this block device."""
         old_tags = list(self._orig_data['tags'])
         new_tags = list(self.tags)
+        self._changed_data.pop('tags', None)
         await super(BlockDevice, self).save()
         for tag_name in new_tags:
             if tag_name not in old_tags:
@@ -206,9 +207,9 @@ class BlockDevicesType(ObjectType):
                 'node must be a Node or str, not %s' % (
                     type(node).__name__))
 
-        if not size:
+        if not size or size < 0:
             raise ValueError("size must be provided and greater than zero.")
-        if not block_size:
+        if not block_size or block_size < 0:
             raise ValueError(
                 "block_size must be provided and greater than zero.")
         if model and not serial:
