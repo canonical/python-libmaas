@@ -63,3 +63,6 @@ target/
 
 # mkdocs
 site/
+
+# Packaging
+.pc/

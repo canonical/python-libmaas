@@ -1,0 +1,5 @@
+python-libmaas (0.5.0-0ubuntu1) bionic; urgency=medium
+
+  * Initial release (LP: #1747328)
+
+ -- Andres Rodriguez <andreserl@ubuntu.com>  Sun, 04 Feb 2018 20:45:42 -0500

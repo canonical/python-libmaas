@@ -1,0 +1,23 @@
+# Compulsory line, this is a version 4 file
+version=4
+
+# PGP signature mangle, so foo.tar.gz has foo.tar.gz.sig
+#opts="pgpsigurlmangle=s%$%.sig%"
+
+# GitHub hosted projects
+opts="filenamemangle=s%(?:.*?)?v?(\d[\d.]*)\.tar\.gz%python-libmaas-$1.tar.gz%" \
+   https://github.com/maas/python-libmaas/tags \
+   (?:.*?/)?v?(\d[\d.]*)\.tar\.gz debian uupdate
+
+# PyPI
+# https://pypi.debian.net/python-libmaas/python-libmaas-(.+)\.(?:zip|tgz|tbz|txz|(?:tar\.(?:gz|bz2|xz)))
+
+# Direct Git
+# opts="mode=git" http://git.example.com/python-libmaas.git \
+#   refs/tags/v([\d\.]+) debian uupdate
+
+
+
+
+# Uncomment to find new files on GooglePages
+# http://example.googlepages.com/foo.html python-libmaas-(.*)\.tar\.gz

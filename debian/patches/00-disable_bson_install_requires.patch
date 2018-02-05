@@ -1,0 +1,24 @@
+Description: Disable bson from install_requires on setup.py
+ install_requires depends on bson, but this dependency is not in the Ubuntu
+ archive. Instead, Ubuntu has a python3-bson package that comes from
+ mongodb. The packaging using this bson instead, hence we need to comment
+ this from setup.py
+Author: Andres Rodriguez <andreserl@ubuntu.com>
+
+---
+Forwarded: not-needed
+Reviewed-By: Andres Rodriguez <andreserl@ubuntu.com>
+Last-Update: 2018-02-04
+
+Index: python-libmaas/setup.py
+===================================================================
+--- python-libmaas.orig/setup.py	2018-02-04 21:14:01.327982771 -0500
++++ python-libmaas/setup.py	2018-02-04 21:14:01.327982771 -0500
+@@ -32,7 +32,6 @@
+     install_requires=[
+         "aiohttp >= 2.0.0",
+         "argcomplete >= 1.0",
+-        "bson >= 0.4.8",
+         "colorclass >= 1.2.0",
+         "oauthlib >= 1.0.3",
+         "pytz >= 2014.10",
