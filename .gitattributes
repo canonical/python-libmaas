@@ -1,0 +1,4 @@
+/debian export-ignore
+/git export-ignore
+.gitignore export-ignore
+.gitattributes export-ignore
