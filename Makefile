@@ -1,4 +1,4 @@
-PYTHON := python3.5
+PYTHON := python3
 
 # ---
 

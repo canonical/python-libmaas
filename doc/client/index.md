@@ -9,7 +9,7 @@ Web API.
 ## An example
 
 ```python
-#!/usr/bin/env python3.5
+#!/usr/bin/env python3.6
 
 from maas.client import connect
 
@@ -73,7 +73,7 @@ heavily in _python-libmaas_ — along with the ``Asynchronous`` metaclass
 — to create the automatic blocking/not-blocking behaviour.
 
 ```python
-#!/usr/bin/env python3.5
+#!/usr/bin/env python3.6
 
 from maas.client import login
 from maas.client.utils.async import asynchronous

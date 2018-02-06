@@ -36,14 +36,14 @@ Or install with [pip](https://pip.pypa.io/) into a
 [virtualenv](https://virtualenv.readthedocs.org/):
 
 ```console
-$ virtualenv --python=python3.5 amc && source amc/bin/activate
+$ virtualenv --python=python3 amc && source amc/bin/activate
 $ pip install git+https://github.com/maas/python-libmaas.git
 ```
 
 Or install from [PyPI](https://pypi.python.org/):
 
 ```console
-$ virtualenv --python=python3.5 amc && source amc/bin/activate
+$ virtualenv --python=python3 amc && source amc/bin/activate
 $ pip install python-libmaas
 ```
 
