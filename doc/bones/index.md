@@ -9,7 +9,7 @@ _bones_ behind the scenes).
 ## Some example code
 
 ```python
-#!/usr/bin/env python3.5
+#!/usr/bin/env python3
 
 from http import HTTPStatus
 from pprint import pprint

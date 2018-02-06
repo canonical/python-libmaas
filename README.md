@@ -9,11 +9,11 @@ Python client API library made especially for [MAAS][].
 ## Installation
 
 All the dependencies are declared in `setup.py` so this can be installed
-with [pip](https://pip.pypa.io/). Python 3.5 is required.
+with [pip](https://pip.pypa.io/). Python 3.5+ is required.
 
 When working from trunk it can be helpful to use `virtualenv`:
 
-    $ virtualenv --python=python3.5 amc && source amc/bin/activate
+    $ virtualenv --python=python3 amc && source amc/bin/activate
     $ pip install git+https://github.com/maas/python-libmaas.git
     $ maas --help
 

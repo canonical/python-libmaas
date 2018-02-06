@@ -109,7 +109,7 @@ A more advanced asyncio based script that runs commissioning with extra scripts
 and waits until all machines have successfully commissioned.
 
 ```python
-#!/usr/bin/env python3.5
+#!/usr/bin/env python3
 
 import asyncio
 

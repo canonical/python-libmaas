@@ -4,7 +4,7 @@
 ## Some example code
 
 ```python
-#!/usr/bin/env python3.5
+#!/usr/bin/env python3
 
 from pprint import pprint
 from maas.client import viscera
