@@ -32,7 +32,7 @@ setup(
     install_requires=[
         "aiohttp >= 2.0.0",
         "argcomplete >= 1.0",
-        "bson >= 0.4.8",
+        "pymongo >= 3.5.1",
         "colorclass >= 1.2.0",
         "oauthlib >= 1.0.3",
         "pytz >= 2014.10",
