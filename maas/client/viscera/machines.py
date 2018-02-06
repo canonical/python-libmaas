@@ -592,7 +592,7 @@ class Machine(Node, metaclass=MachineType):
         :returns: Mapping of hardware details.
         """
         data = await self._handler.details(system_id=self.system_id)
-        return bson.decode_all(data)
+        return bson.decode_all(data)[0]
 
     async def mark_broken(self, *, comment: str=None):
         """Mark broken.
