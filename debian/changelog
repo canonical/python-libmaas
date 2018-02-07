@@ -1,3 +1,12 @@
+python-libmaas (0.6.0-0ubuntu1) bionic; urgency=medium
+
+  * New upstream release
+  * d/p/{00-disable_bson_install_requires,01-fix_setup_py_lists}.patch: Drop.
+    merged upstream.
+  * debian/watch: Cleanup unneeded comments.
+
+ -- Andres Rodriguez <andreserl@ubuntu.com>  Tue, 06 Feb 2018 21:15:00 -0500
+
 python-libmaas (0.5.0-0ubuntu1) bionic; urgency=medium
 
   * Initial release (LP: #1747328)
