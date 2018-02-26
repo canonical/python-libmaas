@@ -168,6 +168,7 @@ def schema_import(conn, dbpath):
         "INSERT OR IGNORE INTO profiles (name, data)"
         " SELECT name, data FROM source.profiles"
         " WHERE data IS NOT NULL")
+    conn.commit()  # need to commit before detaching the other db
     conn.execute(
         "DETACH DATABASE source")
 
