@@ -1,12 +1,13 @@
 language: python
 python:
   - "3.5"
+  - "3.6"
 
 install:
   - pip install codecov tox
 
 script:
-  - tox -e py35,lint
+  - tox -e py3,lint
 
 after_success:
   - codecov --env TRAVIS_PYTHON_VERSION

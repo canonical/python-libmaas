@@ -19,6 +19,7 @@ setup(
         'License :: OSI Approved :: GNU Affero General Public License v3',
         'Programming Language :: Python :: 3 :: Only',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
         'Topic :: Software Development :: Libraries',
     ],
     namespace_packages=['maas'],
@@ -32,9 +33,9 @@ setup(
     install_requires=[
         "aiohttp >= 2.0.0",
         "argcomplete >= 1.0",
-        "pymongo >= 3.5.1",
         "colorclass >= 1.2.0",
         "oauthlib >= 1.0.3",
+        "pymongo >= 3.5.1",  # for bson
         "pytz >= 2014.10",
         "PyYAML >= 3.11",
         "terminaltables >= 2.1.0",
