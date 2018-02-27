@@ -110,6 +110,8 @@ class RaidsType(ObjectType):
         :type spare_devices: iterable of mixed type of `BlockDevice` or
             `Partition`
         """
+        if isinstance(level, RaidLevel):
+            level = level.value
         params = {
             'level': str(level),
         }
