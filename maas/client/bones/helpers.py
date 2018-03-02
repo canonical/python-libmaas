@@ -39,7 +39,6 @@ class RemoteError(Exception):
 
 async def fetch_api_description(
         url: typing.Union[str, ParseResult, SplitResult],
-        credentials: typing.Optional[Credentials]=None,
         insecure: bool=False):
     """Fetch the API description from the remote MAAS instance."""
     url_describe = urljoin(_ensure_url_string(url), "describe/")
@@ -119,9 +118,7 @@ async def connect(url, *, apikey=None, insecure=False):
     else:
         credentials = Credentials.parse(apikey)
 
-    # Circular import.
-    from ..bones.helpers import fetch_api_description
-    description = await fetch_api_description(url, credentials, insecure)
+    description = await fetch_api_description(url, insecure)
 
     # Return a new (unsaved) profile.
     return Profile(
@@ -207,9 +204,7 @@ async def login(url, *, username=None, password=None, insecure=False):
             credentials = await authenticate(
                 url.geturl(), username, password, insecure=insecure)
 
-    # Circular import.
-    from ..bones.helpers import fetch_api_description
-    description = await fetch_api_description(url, credentials, insecure)
+    description = await fetch_api_description(url, insecure)
 
     # Return a new (unsaved) profile.
     return Profile(

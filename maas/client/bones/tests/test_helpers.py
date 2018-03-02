@@ -107,8 +107,7 @@ class TestConnect(TestCase):
         # Connect without an apikey.
         profile = helpers.connect("http://example.org:5240/MAAS/")
         helpers.fetch_api_description.assert_called_once_with(
-            urlparse("http://example.org:5240/MAAS/api/2.0/"),
-            None, False)
+            urlparse("http://example.org:5240/MAAS/api/2.0/"), False)
         # A Profile instance was returned with no credentials.
         self.assertThat(profile, IsInstance(profiles.Profile))
         self.assertThat(profile.credentials, Is(None))
@@ -120,8 +119,7 @@ class TestConnect(TestCase):
             "http://example.org:5240/MAAS/", apikey=str(credentials))
         # The description was fetched.
         helpers.fetch_api_description.assert_called_once_with(
-            urlparse("http://example.org:5240/MAAS/api/2.0/"),
-            credentials, False)
+            urlparse("http://example.org:5240/MAAS/api/2.0/"), False)
         # A Profile instance was returned with the expected credentials.
         self.assertThat(profile, IsInstance(profiles.Profile))
         self.assertThat(profile.credentials, Equals(credentials))
@@ -155,8 +153,7 @@ class TestConnect(TestCase):
     def test__API_description_is_fetched_insecurely_if_requested(self):
         helpers.connect("http://example.org:5240/MAAS/", insecure=True)
         helpers.fetch_api_description.assert_called_once_with(
-            urlparse("http://example.org:5240/MAAS/api/2.0/"),
-            None, True)
+            urlparse("http://example.org:5240/MAAS/api/2.0/"), True)
 
 
 class TestLogin(TestCase):
