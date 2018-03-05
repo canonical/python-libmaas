@@ -318,8 +318,8 @@ class Machine(Node, metaclass=MachineType):
 
     architecture = ObjectField.Checked(
         "architecture", check_optional(str), check_optional(str))
-    boot_disk = ObjectField.Checked(
-        "boot_disk", check_optional(str), check_optional(str))
+    boot_disk = ObjectFieldRelated(
+        "boot_disk", "BlockDevice", readonly=True)
     cpus = ObjectField.Checked(
         "cpu_count", check(int), check(int))
     disable_ipv4 = ObjectField.Checked(
