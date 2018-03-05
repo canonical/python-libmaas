@@ -43,6 +43,10 @@ class cmd_login(Command):
                 "The name to give the profile. Default is the username used "
                 "to login."))
         parser.add_argument(
+            '--anonymous', default=False, action='store_true', help=(
+                "Create an anonymous profile, no credentials are associated "
+                "to it."))
+        parser.add_argument(
             '--apikey', default=None, help=(
                 "The API key acquired from MAAS. This requires the profile "
                 "name to be provided as well."))
@@ -68,27 +72,33 @@ class cmd_login(Command):
 
     @asynchronous
     async def __call__(self, options):
+        has_auth_info = any(
+            (options.apikey, options.username, options.password))
+        if options.anonymous and has_auth_info:
+            raise ValueError(
+                "Can't specify username, password or--apikey with --anonymous")
+
         if options.apikey and not options.profile_name:
             raise ValueError(
                 "-p,--profile-name must be provided with --apikey")
+
         if not options.url:
             url = read_input("URL", validator=utils.api_url)
         else:
             url = options.url
+
         if not options.apikey:
-            if not options.username:
-                username = read_input("Username")
-            else:
-                username = options.username
-            if not options.password:
+            if options.anonymous:
+                password = None
+            elif options.username and not options.password:
                 password = read_input("Password", password=True)
             else:
                 password = options.password
                 if password == '-':
                     password = sys.stdin.readline().strip()
             profile = await helpers.login(
-                url, username=username, password=password,
-                insecure=options.insecure)
+                url, anonymous=options.anonymous, username=options.username,
+                password=password, insecure=options.insecure)
         else:
             credentials = auth.obtain_credentials(options.apikey)
             session = await bones.SessionAPI.fromURL(

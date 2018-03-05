@@ -37,7 +37,7 @@ class SessionAPI:
         """Return a `SessionAPI` for a given MAAS instance."""
         try:
             description = await helpers.fetch_api_description(
-                url, credentials=credentials, insecure=insecure)
+                url, insecure=insecure)
         except helpers.RemoteError as error:
             # For now just re-raise as SessionError.
             raise SessionError(str(error))

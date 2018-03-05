@@ -1,12 +1,14 @@
 """Tests for `maas.client.bones.helpers`."""
 
 import json
+from unittest.mock import Mock
 from urllib.parse import (
     urlparse,
     urlsplit,
 )
 
 import aiohttp.web
+from macaroonbakery.httpbakery import Client
 from testtools import ExpectedException
 from testtools.matchers import (
     Equals,
@@ -103,12 +105,12 @@ class TestConnect(TestCase):
             helpers, "fetch_api_description",
             AsyncCallableMock(return_value={}))
 
-    def test__anonymous_when_no_apikey_provided(self):
+    def test__anonymous(self):
         # Connect without an apikey.
-        profile = helpers.connect("http://example.org:5240/MAAS/")
+        profile = helpers.connect(
+            "http://example.org:5240/MAAS/")
         helpers.fetch_api_description.assert_called_once_with(
-            urlparse("http://example.org:5240/MAAS/api/2.0/"),
-            None, False)
+            urlparse("http://example.org:5240/MAAS/api/2.0/"), False)
         # A Profile instance was returned with no credentials.
         self.assertThat(profile, IsInstance(profiles.Profile))
         self.assertThat(profile.credentials, Is(None))
@@ -120,8 +122,7 @@ class TestConnect(TestCase):
             "http://example.org:5240/MAAS/", apikey=str(credentials))
         # The description was fetched.
         helpers.fetch_api_description.assert_called_once_with(
-            urlparse("http://example.org:5240/MAAS/api/2.0/"),
-            credentials, False)
+            urlparse("http://example.org:5240/MAAS/api/2.0/"), False)
         # A Profile instance was returned with the expected credentials.
         self.assertThat(profile, IsInstance(profiles.Profile))
         self.assertThat(profile.credentials, Equals(credentials))
@@ -155,8 +156,7 @@ class TestConnect(TestCase):
     def test__API_description_is_fetched_insecurely_if_requested(self):
         helpers.connect("http://example.org:5240/MAAS/", insecure=True)
         helpers.fetch_api_description.assert_called_once_with(
-            urlparse("http://example.org:5240/MAAS/api/2.0/"),
-            None, True)
+            urlparse("http://example.org:5240/MAAS/api/2.0/"), True)
 
 
 class TestLogin(TestCase):
@@ -171,17 +171,31 @@ class TestLogin(TestCase):
             helpers, "fetch_api_description",
             AsyncCallableMock(return_value={}))
 
-    def test__anonymous_when_neither_username_nor_password_provided(self):
-        # Log-in without a user-name or a password.
-        profile = helpers.login("http://example.org:5240/MAAS/")
+    def test__anonymous(self):
+        # Log-in anonymously.
+        profile = helpers.login(
+            "http://example.org:5240/MAAS/", anonymous=True)
         # No token was obtained, but the description was fetched.
         helpers.authenticate.assert_not_called()
-        helpers.fetch_api_description.assert_called_once_with(
-            urlparse("http://example.org:5240/MAAS/api/2.0/"),
-            None, False)
         # A Profile instance was returned with no credentials.
         self.assertThat(profile, IsInstance(profiles.Profile))
         self.assertThat(profile.credentials, Is(None))
+
+    def test__macaroon_auth_with_no_username_and_password(self):
+        credentials = make_Credentials()
+        self.patch(
+            helpers, "authenticate_with_macaroon",
+            AsyncCallableMock(return_value=credentials))
+        # Log-in without a user-name or a password.
+        profile = helpers.login("http://example.org:5240/MAAS/")
+        # A token is obtained via macaroons, but the description was fetched.
+        # The description was fetched.
+        helpers.fetch_api_description.assert_called_once_with(
+            urlparse("http://example.org:5240/MAAS/api/2.0/"), False)
+        # The returned profile uses credentials obtained from the
+        # authentication
+        self.assertThat(profile, IsInstance(profiles.Profile))
+        self.assertThat(profile.credentials, Is(credentials))
 
     def test__authenticated_when_username_and_password_provided(self):
         credentials = make_Credentials()
@@ -192,9 +206,6 @@ class TestLogin(TestCase):
         helpers.authenticate.assert_called_once_with(
             "http://example.org:5240/MAAS/api/2.0/",
             "foo", "bar", insecure=False)
-        helpers.fetch_api_description.assert_called_once_with(
-            urlparse("http://example.org:5240/MAAS/api/2.0/"),
-            credentials, False)
         # A Profile instance was returned with the expected credentials.
         self.assertThat(profile, IsInstance(profiles.Profile))
         self.assertThat(profile.credentials, Is(credentials))
@@ -230,19 +241,22 @@ class TestLogin(TestCase):
             "http://foo:@example.org:5240/MAAS/", password="wonderland")
 
     def test__URL_is_normalised_to_point_at_API_endpoint(self):
-        profile = helpers.login("http://example.org:5240/MAAS/")
+        profile = helpers.login(
+            "http://example.org:5240/MAAS/", anonymous=True)
         self.assertThat(profile.url, Equals(
             api_url("http://example.org:5240/MAAS/")))
 
     def test__profile_is_given_default_name_based_on_URL(self):
         domain = make_name_without_spaces("domain")
-        profile = helpers.login("http://%s/MAAS/" % domain)
+        profile = helpers.login(
+            "http://%s/MAAS/" % domain, anonymous=True)
         self.assertThat(profile.name, Equals(domain))
 
     def test__API_description_is_saved_in_profile(self):
         description = {make_name("key"): make_name("value")}
         helpers.fetch_api_description.return_value = description
-        profile = helpers.login("http://example.org:5240/MAAS/")
+        profile = helpers.login(
+            "http://example.org:5240/MAAS/", anonymous=True)
         self.assertThat(profile.description, Equals(description))
 
     def test__API_token_is_fetched_insecurely_if_requested(self):
@@ -252,10 +266,10 @@ class TestLogin(TestCase):
             "foo", "bar", insecure=True)
 
     def test__API_description_is_fetched_insecurely_if_requested(self):
-        helpers.login("http://example.org:5240/MAAS/", insecure=True)
+        helpers.login(
+            "http://example.org:5240/MAAS/", anonymous=True, insecure=True)
         helpers.fetch_api_description.assert_called_once_with(
-            urlparse("http://example.org:5240/MAAS/api/2.0/"),
-            None, True)
+            urlparse("http://example.org:5240/MAAS/api/2.0/"), True)
 
     def test__uses_username_from_URL_if_set(self):
         helpers.login("http://foo@maas.io/", password="bar")
@@ -341,6 +355,39 @@ class TestAuthenticate(TestCase):
         async with builder.serve() as baseurl:
             with ExpectedException(helpers.RemoteError):
                 await helpers.authenticate(baseurl, "username", "password")
+
+
+class TestAuthenticateWithMacaroon(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.mock_client_request = self.patch(Client, "request")
+        self.token_result = {
+            'consumer_key': 'abc', 'token_key': '123', 'token_secret': 'xyz'}
+        self.mock_response = Mock()
+        self.mock_response.status_code = 200
+        self.mock_response.json.return_value = self.token_result
+        self.mock_client_request.return_value = self.mock_response
+
+    async def test__authenticate_with_bakery_creates_token(self):
+        credentials = await helpers.authenticate_with_macaroon(
+            "http://example.com")
+        self.assertEqual(credentials, "abc:123:xyz")
+        # a call to create an API token is made
+        self.mock_client_request.assert_called_once_with(
+            "POST",
+            "http://example.com/account/?op=create_authorisation_token",
+            verify=True)
+
+    async def test__authenticate_failed_request(self):
+        self.mock_response.status_code = 500
+        self.mock_response.text = "error!"
+        try:
+            await helpers.authenticate_with_macaroon("http://example.com")
+        except helpers.LoginError as e:
+            self.assertEqual(str(e), "Login failed: error!")
+        else:
+            self.fail("LoginError not raised")
 
 
 class TestDeriveResourceName(TestCase):

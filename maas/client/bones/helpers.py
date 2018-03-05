@@ -14,6 +14,8 @@ __all__ = [
     "UsernameWithoutPassword",
 ]
 
+import asyncio
+from concurrent import futures
 from getpass import getuser
 from http import HTTPStatus
 from socket import gethostname
@@ -26,6 +28,7 @@ from urllib.parse import (
 )
 
 import aiohttp
+from macaroonbakery import httpbakery
 
 from ..utils import api_url
 from ..utils.async import asynchronous
@@ -39,7 +42,6 @@ class RemoteError(Exception):
 
 async def fetch_api_description(
         url: typing.Union[str, ParseResult, SplitResult],
-        credentials: typing.Optional[Credentials]=None,
         insecure: bool=False):
     """Fetch the API description from the remote MAAS instance."""
     url_describe = urljoin(_ensure_url_string(url), "describe/")
@@ -62,9 +64,7 @@ def _ensure_url_string(url):
     """Convert `url` to a string URL if it isn't one already."""
     if isinstance(url, str):
         return url
-    elif isinstance(url, ParseResult):
-        return url.geturl()
-    elif isinstance(url, SplitResult):
+    elif isinstance(url, (ParseResult, SplitResult)):
         return url.geturl()
     else:
         raise TypeError(
@@ -119,9 +119,7 @@ async def connect(url, *, apikey=None, insecure=False):
     else:
         credentials = Credentials.parse(apikey)
 
-    # Circular import.
-    from ..bones.helpers import fetch_api_description
-    description = await fetch_api_description(url, credentials, insecure)
+    description = await fetch_api_description(url, insecure)
 
     # Return a new (unsaved) profile.
     return Profile(
@@ -146,7 +144,8 @@ class LoginNotSupported(LoginError):
 
 
 @asynchronous
-async def login(url, *, username=None, password=None, insecure=False):
+async def login(url, *, anonymous=False, username=None, password=None,
+                insecure=False):
     """Log-in to a remote MAAS instance.
 
     Returns a new :class:`Profile` which has NOT been saved. To log-in AND
@@ -194,11 +193,14 @@ async def login(url, *, username=None, password=None, insecure=False):
     url = url._replace(netloc=hostinfo)
 
     if username is None:
-        if password is None or len(password) == 0:
-            credentials = None  # Anonymous.
-        else:
+        if password:
             raise PasswordWithoutUsername(
                 "Password provided without user-name; specify user-name.")
+        elif anonymous:
+            credentials = None
+        else:
+            credentials = await authenticate_with_macaroon(
+                url.geturl(), insecure=insecure)
     else:
         if password is None:
             raise UsernameWithoutPassword(
@@ -207,14 +209,30 @@ async def login(url, *, username=None, password=None, insecure=False):
             credentials = await authenticate(
                 url.geturl(), username, password, insecure=insecure)
 
-    # Circular import.
-    from ..bones.helpers import fetch_api_description
-    description = await fetch_api_description(url, credentials, insecure)
+    description = await fetch_api_description(url, insecure)
 
     # Return a new (unsaved) profile.
     return Profile(
         name=url.netloc, url=url.geturl(), credentials=credentials,
         description=description)
+
+
+async def authenticate_with_macaroon(url, insecure=False):
+    """Login via macaroons and generate and return new API keys."""
+    executor = futures.ThreadPoolExecutor(max_workers=1)
+
+    def get_token():
+        client = httpbakery.Client()
+        resp = client.request(
+            'POST', '{}/account/?op=create_authorisation_token'.format(url),
+            verify=not insecure)
+        if resp.status_code != 200:
+            raise LoginError('Login failed: {}'.format(resp.text))
+        result = resp.json()
+        return '{consumer_key}:{token_key}:{token_secret}'.format(**result)
+
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(executor, get_token)
 
 
 async def authenticate(url, username, password, *, insecure=False):

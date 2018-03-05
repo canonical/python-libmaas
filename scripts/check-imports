@@ -514,6 +514,7 @@ checks = [
             Allow("aiohttp|aiohttp.**"),
             Allow("django|django.**"),
             Allow("fixtures|fixtures.**"),
+            Allow("macaroonbakery|macaroonbakery.**"),
             Allow("maas.client|maas.client.**"),
             Allow("multidict|multidict.**"),
             Allow("pkg_resources|pkg_resources.**"),
@@ -551,6 +552,7 @@ checks = [
         Rule(
             Allow("aiohttp|aiohttp.**"),
             Allow("maas.client|maas.client.**"),
+            Allow("macaroonbakery|macaroonbakery.**"),
             Allow("oauthlib.oauth1"),
             Allow("pytz"),
             Allow("bson"),

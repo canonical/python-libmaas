@@ -34,6 +34,7 @@ setup(
         "aiohttp >= 2.0.0",
         "argcomplete >= 1.0",
         "colorclass >= 1.2.0",
+        "macaroonbakery >= 1.1.3",
         "oauthlib >= 1.0.3",
         "pymongo >= 3.5.1",  # for bson
         "pytz >= 2014.10",
