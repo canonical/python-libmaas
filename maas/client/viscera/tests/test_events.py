@@ -35,6 +35,7 @@ def make_Event_dict():
         "level": random.choice(list(events.Level)),
         "created": datetime.utcnow().strftime("%a, %d %b. %Y %H:%M:%S"),
         "description": make_name_without_spaces("description"),
+        "username": make_name_without_spaces("username")
     }
 
 
@@ -90,6 +91,7 @@ class TestEventsQuery(TestCase):
             "agent_name": make_name_without_spaces("agent"),
             "level": random.choice(list(events.Level)),
             "limit": random.randrange(1, 1000),
+            "owner": make_name_without_spaces("username"),
         }
         obj.query(**arguments)
         expected = {
@@ -101,6 +103,7 @@ class TestEventsQuery(TestCase):
             "agent_name": [arguments["agent_name"]],
             "level": [arguments["level"].name],
             "limit": [str(arguments["limit"])],
+            "owner": [arguments["owner"]],
         }
         obj._handler.query.assert_called_once_with(**expected)
 

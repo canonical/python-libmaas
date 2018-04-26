@@ -43,7 +43,8 @@ from ..utils.async import is_loop_running
 #         level=event.type.level_str,
 #         created=event.created.strftime('%a, %d %b. %Y %H:%M:%S'),
 #         type=event.type.description,
-#         description=event.description
+#         description=event.description,
+#         username=event.user.username
 #     )
 #
 # Notes:
@@ -57,6 +58,7 @@ class Level(enum.IntEnum):
     They happen to correspond to levels in the `logging` module.
     """
 
+    AUDIT = 0
     DEBUG = logging.DEBUG
     INFO = logging.INFO
     WARNING = logging.WARNING
@@ -93,7 +95,8 @@ class EventsType(ObjectType):
             level: typing.Union[Level, int, str]=None,
             before: int=None,
             after: int=None,
-            limit: int=None):
+            limit: int=None,
+            owner: str=None):
         """Query MAAS for matching events."""
 
         if before is not None and after is not None:
@@ -122,6 +125,8 @@ class EventsType(ObjectType):
             params["after"] = ["{:d}".format(after)]
         if limit is not None:
             params["limit"] = ["{:d}".format(limit)]
+        if owner is not None:
+            params["owner"] = [owner]
 
         data = await cls._handler.query(**params)
         return cls(data)
@@ -298,6 +303,9 @@ class Event(Object):
         "description", readonly=True)
     description_short = ObjectField.Checked(
         "description", partial(truncate, 50), readonly=True)
+
+    username = ObjectField(
+        "username", readonly=True)
 
     def __repr__(self):
         return (
