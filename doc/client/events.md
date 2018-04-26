@@ -18,6 +18,7 @@ This accepts a plethora of optional arguments to narrow down the results:
 >>> events = client.events.query(agent_name=…)
 >>> events = client.events.query(level=…)
 >>> events = client.events.query(after=…, limit=…)
+>>> events = client.events.query(owner=…)
 ```
 
 These arguments can be combined to narrow the results even further.
