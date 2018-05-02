@@ -13,6 +13,7 @@ from urllib.parse import (
     parse_qs,
     urlparse,
 )
+from .users import User
 
 import pytz
 
@@ -96,7 +97,7 @@ class EventsType(ObjectType):
             before: int=None,
             after: int=None,
             limit: int=None,
-            owner: str=None):
+            owner: typing.Union[User, str]=None):
         """Query MAAS for matching events."""
 
         if before is not None and after is not None:
@@ -126,7 +127,14 @@ class EventsType(ObjectType):
         if limit is not None:
             params["limit"] = ["{:d}".format(limit)]
         if owner is not None:
-            params["owner"] = [owner]
+            if isinstance(owner, User):
+                params["owner"] = [owner.username]
+            elif isinstance(owner, str):
+                params["owner"] = [owner]
+            else:
+                raise TypeError(
+                    "owner must be either User or str, not %s" % (
+                        type(owner).__name__))
 
         data = await cls._handler.query(**params)
         return cls(data)
