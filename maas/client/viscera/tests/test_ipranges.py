@@ -53,6 +53,17 @@ class TestIPRanges(TestCase):
             comment=comment,
         )
 
+    def test__ipranges_create_requires_IPRangeType(self):
+        IPRanges = make_origin().IPRanges
+        start_ip = make_string_without_spaces()
+        end_ip = make_string_without_spaces()
+        comment = make_string_without_spaces()
+        error = self.assertRaises(
+            TypeError, IPRanges.create,
+            start_ip=start_ip, end_ip=end_ip,
+            type=make_string_without_spaces(), comment=comment)
+        self.assertEquals("type must be an IPRangeType, not str", str(error))
+
     def test__ipranges_read(self):
         """IPRanges.read() returns a list of IPRanges."""
         IPRanges = make_origin().IPRanges
