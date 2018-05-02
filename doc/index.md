@@ -228,23 +228,6 @@ Pull requests are welcome but authors need to sign the [Canonical
 contributor license agreement][CCLA] before those PRs can be merged.
 
 
-### _bones_ & _viscera_
-
-Digging around in the code and when using the primary client API, you
-may find references to _bones_ and _viscera_. These libraries form the
-base for the client API:
-
-* [_bones_](bones/index.md) is a lower-level library that closely
-  mirrors MAAS's Web API. Every MAAS server publishes a description of
-  its Web API and _bones_ generates a convenient mechanism to interact
-  with it.
-
-* [_viscera_](viscera/index.md) is a higher-level library which makes
-  heavy use of _bones_. MAAS's Web API is sometimes unfriendly or
-  inconsistent, but _viscera_ presents a hand-crafted API that has been
-  designed for developers rather than machines.
-
-
 [asyncio]: https://docs.python.org/3/library/asyncio.html
 
 [CCLA]: https://www.ubuntu.com/legal/contributors

@@ -210,10 +210,11 @@ async def login(url, *, anonymous=False, username=None, password=None,
                 url.geturl(), username, password, insecure=insecure)
 
     description = await fetch_api_description(url, insecure)
+    profile_name = username or url.netloc
 
     # Return a new (unsaved) profile.
     return Profile(
-        name=url.netloc, url=url.geturl(), credentials=credentials,
+        name=profile_name, url=url.geturl(), credentials=credentials,
         description=description)
 
 
