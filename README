@@ -1,66 +1,55 @@
-python-libmaas
-==============
+# python-libmaas
 
-Python client API library made especially for
-`MAAS <https://maas.io/>`__.
+Python client API library made especially for [MAAS][].
 
-|Build Status| |codecov.io|
+[![Build Status](https://travis-ci.org/maas/python-libmaas.svg?branch=master)](https://travis-ci.org/maas/python-libmaas)
+[![codecov.io](https://codecov.io/github/maas/python-libmaas/coverage.svg?branch=master)](https://codecov.io/github/maas/python-libmaas?branch=master)
 
-Installation
-------------
 
-All the dependencies are declared in ``setup.py`` so this can be
-installed with `pip <https://pip.pypa.io/>`__. Python 3.5+ is required.
+## Installation
 
-When working from trunk it can be helpful to use ``virtualenv``:
+All the dependencies are declared in `setup.py` so this can be installed
+with [pip](https://pip.pypa.io/). Python 3.5+ is required.
 
-::
+When working from trunk it can be helpful to use `virtualenv`:
 
     $ virtualenv --python=python3 amc && source amc/bin/activate
     $ pip install git+https://github.com/maas/python-libmaas.git
     $ maas --help
 
-Releases are periodically made to `PyPI <https://pypi.python.org/>`__
-but, at least for now, it makes more sense to work directly from trunk.
+Releases are periodically made to [PyPI](https://pypi.python.org/) but,
+at least for now, it makes more sense to work directly from trunk.
 
-Documentation
--------------
 
-Documentation can be generated with ``make docs`` which publishes into
-the ``site`` directory. Recent documentation is also published to the
-`MAAS Client Library & CLI
-documentation <http://maas.github.io/python-libmaas/>`__ site.
+## Documentation
 
-Development
------------
+Documentation can be generated with `make docs` which publishes into the
+`site` directory. Recent documentation is also published to the
+[MAAS Client Library & CLI documentation][docs] site.
 
-It's pretty easy to start hacking on *python-libmaas*:
 
-::
+## Development
+
+It's pretty easy to start hacking on _python-libmaas_:
 
     $ git clone git@github.com:maas/python-libmaas.git
     $ cd python-libmaas
     $ make develop
     $ make test
 
-Installing `IPython <https://ipython.org/>`__ is generally a good idea
-too:
-
-::
+Installing [IPython][] is generally a good idea too:
 
     $ bin/pip install -UI IPython
 
-Pull requests are welcome but authors need to sign the `Canonical
-contributor license
-agreement <https://www.ubuntu.com/legal/contributors>`__ before those
-PRs can be merged.
+Pull requests are welcome but authors need to sign the [Canonical
+contributor license agreement][CCLA] before those PRs can be merged.
 
-History & licence
------------------
 
-In short: `AGPLv3 <https://www.gnu.org/licenses/agpl-3.0.html>`__.
+## History & licence
 
-*python-libmaas* was begun by a core MAAS developer, Gavin Panella, on
+In short: [AGPLv3][].
+
+_python-libmaas_ was begun by a core MAAS developer, Gavin Panella, on
 his own time, but is now maintained by the core MAAS team at Canonical.
 It is licensed under the GNU Affero GPLv3, the same as MAAS itself.
 
@@ -68,7 +57,11 @@ Some of the code in here has come from MAAS, upon which Canonical Ltd
 has the copyright. Gavin Panella licenses his parts under the AGPLv3,
 and MAAS is also under the AGPLv3, so everything should be good.
 
-.. |Build Status| image:: https://travis-ci.org/maas/python-libmaas.svg?branch=master
-   :target: https://travis-ci.org/maas/python-libmaas
-.. |codecov.io| image:: https://codecov.io/github/maas/python-libmaas/coverage.svg?branch=master
-   :target: https://codecov.io/github/maas/python-libmaas?branch=master
+
+[MAAS]: https://maas.io/
+[docs]: http://maas.github.io/python-libmaas/
+
+[CCLA]: https://www.ubuntu.com/legal/contributors
+[AGPLv3]: https://www.gnu.org/licenses/agpl-3.0.html
+
+[IPython]: https://ipython.org/
