@@ -66,12 +66,6 @@
 
     <li class="toctree-l2"><a href="#development">Development</a></li>
     
-        <ul>
-        
-            <li><a class="toctree-l3" href="#bones-viscera">bones &amp; viscera</a></li>
-        
-        </ul>
-    
 
     </ul>
 	    </li>
@@ -94,48 +88,15 @@
                 </li>
                 <li class="">
                     
+    <a class="" href="client/interfaces/index.html">Interfaces</a>
+                </li>
+                <li class="">
+                    
     <a class="" href="client/events/index.html">Events</a>
                 </li>
                 <li class="">
                     
     <a class="" href="client/other/index.html">Others</a>
-                </li>
-    </ul>
-	    </li>
-          
-            <li class="toctree-l1">
-		
-    <span class="caption-text">Internals</span>
-    <ul class="subnav">
-                <li class="">
-                    
-    <a class="" href="bones/index.html">Bones</a>
-                </li>
-                <li class="">
-                    
-    <span class="caption-text">Viscera</span>
-    <ul class="subnav">
-                <li class="toctree-l3">
-                    
-    <a class="" href="viscera/index.html">Introduction</a>
-                </li>
-                <li class="toctree-l3">
-                    
-    <a class="" href="viscera/getting-started/index.html">Getting started</a>
-                </li>
-                <li class="toctree-l3">
-                    
-    <a class="" href="viscera/nodes/index.html">Nodes</a>
-                </li>
-                <li class="toctree-l3">
-                    
-    <a class="" href="viscera/events/index.html">Events</a>
-                </li>
-                <li class="toctree-l3">
-                    
-    <a class="" href="viscera/other/index.html">Others</a>
-                </li>
-    </ul>
                 </li>
     </ul>
 	    </li>
@@ -195,6 +156,9 @@
 <p><em>python-libmaas</em> provides:</p>
 <ul>
 <li>
+<p>A command-line tool for working with MAAS servers.</p>
+</li>
+<li>
 <p>A rich and stable Python client library for interacting with MAAS 2.0+
   servers. This can be used in a synchronous/blocking mode, or an
   asynchronous/non-blocking mode based on <a href="https://docs.python.org/3/library/asyncio.html">asyncio</a>.</p>
@@ -202,9 +166,6 @@
 <li>
 <p>A lower-level Python client library, auto-generated to match the MAAS
   server it&rsquo;s interacting with.</p>
-</li>
-<li>
-<p>A command-line tool for working with MAAS servers.</p>
 </li>
 </ul>
 <p>For MAAS <em>server</em> documentation, visit
@@ -222,12 +183,12 @@ $ make</code></pre>
 
 <p>Or install with <a href="https://pip.pypa.io/">pip</a> into a
 <a href="https://virtualenv.readthedocs.org/">virtualenv</a>:</p>
-<pre class="codehilite"><code class="language-console">$ virtualenv --python=python3.5 amc &amp;&amp; source amc/bin/activate
+<pre class="codehilite"><code class="language-console">$ virtualenv --python=python3 amc &amp;&amp; source amc/bin/activate
 $ pip install git+https://github.com/maas/python-libmaas.git</code></pre>
 
 
 <p>Or install from <a href="https://pypi.python.org/">PyPI</a>:</p>
-<pre class="codehilite"><code class="language-console">$ virtualenv --python=python3.5 amc &amp;&amp; source amc/bin/activate
+<pre class="codehilite"><code class="language-console">$ virtualenv --python=python3 amc &amp;&amp; source amc/bin/activate
 $ pip install python-libmaas</code></pre>
 
 
@@ -238,25 +199,75 @@ like <code>bin/maas</code> instead of bare <code>maas</code> invocations. If you
 installed from PyPI the <code>maas</code> command will probably be installed on
 your shell&rsquo;s <code>PATH</code> so you can invoke it as <code>maas</code>.</p>
 <h2 id="command-line">Command-line</h2>
-<pre class="codehilite"><code class="language-console">$ bin/maas profiles login --help
-$ bin/maas profiles login exmpl \
-&gt;   http://example.com:5240/MAAS/ my_username
-Password: …
-$ bin/maas list
-┌───┬────────────┬───────────┬───────┬────────┬────────┬─────────┐
-│   │ Hostname   │ System ID │ #CPUs │ RAM    │ Status │ Power   │
-├───┼────────────┼───────────┼───────┼────────┼────────┼─────────┤
-│ m │ botswana   │ pncys4    │ 4     │ 8.0 GB │ Ready  │ Off     │
-│ c │ namibia    │ xfaxgw    │ 4     │ 8.0 GB │ —      │ Error   │
-│ C │ madagascar │ 4y3h7n    │ 4     │ 8.0 GB │ —      │ Unknown │
-└───┴────────────┴───────────┴───────┴────────┴────────┴─────────┘</code></pre>
+<p>Best place to start with the CLI is the help menu.</p>
+<pre class="codehilite"><code class="language-console">$ bin/maas help
+$ bin/maas help commands</code></pre>
+
+
+<p>Once your have familiarized yourself with the available commands you will
+want to login to your MAAS. You can either pass arguments to login or it
+will ask your for the needed information to login.</p>
+<pre class="codehilite"><code class="language-console">$ bin/maas login</code></pre>
+
+
+<p>The CLI supports multiple profiles with <code>login</code>. Use <code>profiles</code> and
+<code>switch</code> to view and change between profiles.</p>
+<pre class="codehilite"><code class="language-console">$ bin/maas profiles
+┌─────────┬─────────────────────────────────────┬────────┐
+│ Profile │ URL                                 │ Active │
+├─────────┼─────────────────────────────────────┼────────┤
+│ admin   │ http://localhost:5240/MAAS/api/2.0/ │ ✓      │
+│ other   │ http://localhost:5240/MAAS/api/2.0/ │        │
+└─────────┴─────────────────────────────────────┴────────┘
+$ bin/maas switch other
+$ bin/maas profiles
+┌─────────┬─────────────────────────────────────┬────────┐
+│ Profile │ URL                                 │ Active │
+├─────────┼─────────────────────────────────────┼────────┤
+│ admin   │ http://localhost:5240/MAAS/api/2.0/ │        │
+│ other   │ http://localhost:5240/MAAS/api/2.0/ │ ✓      │
+└─────────┴─────────────────────────────────────┴────────┘</code></pre>
+
+
+<p>The <code>nodes</code>, <code>machines</code>, <code>devices</code>, and <code>controllers</code> provide access
+to either all nodes with <code>nodes</code> or specific node types with <code>machines</code>,
+<code>devices</code>, and <code>controllers</code>.</p>
+<pre class="codehilite"><code class="language-console">$ bin/maas nodes
+┌────────────────────┬───────────────┐
+│ Hostname           │ Type          │
+├────────────────────┼───────────────┤
+│ another            │ Device        │
+│ blake-ubnt-desktop │ Regiond+rackd │
+│ testing            │ Device        │
+│ win2016            │ Machine       │
+└────────────────────┴───────────────┘
+$ bin/maas machines
+┌──────────┬───────┬────────┬───────┬───────┬────────┐
+│ Hostname │ Power │ Status │ Arch  │ #CPUs │ RAM    │
+├──────────┼───────┼────────┼───────┼───────┼────────┤
+│ win2016  │ Off   │ Broken │ amd64 │ 4     │ 8.0 GB │
+└──────────┴───────┴────────┴───────┴───────┴────────┘
+$ bin/maas devices
+┌──────────┬───────────────┐
+│ Hostname │ IP addresses  │
+├──────────┼───────────────┤
+│ another  │ 192.168.1.223 │
+│ testing  │ 192.168.1.150 │
+│          │ 192.168.1.143 │
+└──────────┴───────────────┘
+$ bin/maas controllers
+┌────────────────────┬───────────────┬───────┬───────┬─────────┐
+│ Hostname           │ Type          │ Arch  │ #CPUs │ RAM     │
+├────────────────────┼───────────────┼───────┼───────┼─────────┤
+│ blake-ubnt-desktop │ Regiond+rackd │ amd64 │ 8     │ 24.0 GB │
+└────────────────────┴───────────────┴───────┴───────┴─────────┘</code></pre>
 
 
 <p>Tab-completion in <code>bash</code> and <code>tcsh</code> is supported too. For example,
 in <code>bash</code>:</p>
 <pre class="codehilite"><code class="language-console">$ source &lt;(bin/register-python-argcomplete --shell=bash bin/maas)
 $ bin/maas &lt;tab&gt;
-allocate  launch  list  list-files  list-tags  ...</code></pre>
+allocate  files  login  nodes  shell  ...</code></pre>
 
 
 <h2 id="client-library">Client library</h2>
@@ -324,24 +335,6 @@ $ make test</code></pre>
 
 <p>Pull requests are welcome but authors need to sign the <a href="https://www.ubuntu.com/legal/contributors">Canonical
 contributor license agreement</a> before those PRs can be merged.</p>
-<h3 id="bones-viscera"><em>bones</em> &amp; <em>viscera</em></h3>
-<p>Digging around in the code and when using the primary client API, you
-may find references to <em>bones</em> and <em>viscera</em>. These libraries form the
-base for the client API:</p>
-<ul>
-<li>
-<p><a href="bones/index.html"><em>bones</em></a> is a lower-level library that closely
-  mirrors MAAS&rsquo;s Web API. Every MAAS server publishes a description of
-  its Web API and <em>bones</em> generates a convenient mechanism to interact
-  with it.</p>
-</li>
-<li>
-<p><a href="viscera/index.html"><em>viscera</em></a> is a higher-level library which makes
-  heavy use of <em>bones</em>. MAAS&rsquo;s Web API is sometimes unfriendly or
-  inconsistent, but <em>viscera</em> presents a hand-crafted API that has been
-  designed for developers rather than machines.</p>
-</li>
-</ul>
               
             </div>
           </div>
@@ -364,18 +357,18 @@ base for the client API:</p>
 
   Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
 </footer>
-	  
+      
         </div>
       </div>
 
     </section>
-    
+
   </div>
 
   <div class="rst-versions" role="note" style="cursor: pointer">
     <span class="rst-current-version" data-toggle="rst-current-version">
       
-          <a href="https://github.com/maas/python-libmaas" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
+          <a href="https://github.com/maas/python-libmaas/" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
       
       
       
@@ -383,12 +376,15 @@ base for the client API:</p>
       
     </span>
 </div>
+    <script>var base_url = '.';</script>
     <script src="./js/theme.js"></script>
+      <script src="./search/require.js"></script>
+      <script src="./search/search.js"></script>
 
 </body>
 </html>
 
 <!--
-MkDocs version : 0.16.3
-Build Date UTC : 2017-07-21 07:22:59
+MkDocs version : 0.17.3
+Build Date UTC : 2018-05-02 11:46:45
 -->

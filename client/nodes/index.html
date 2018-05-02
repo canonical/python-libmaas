@@ -83,6 +83,24 @@
     <li class="toctree-l3"><a href="#allocating-and-deploying">Allocating and deploying</a></li>
     
 
+    <li class="toctree-l3"><a href="#abort">Abort</a></li>
+    
+
+    <li class="toctree-l3"><a href="#rescue-mode">Rescue mode</a></li>
+    
+
+    <li class="toctree-l3"><a href="#broken-fixed">Broken &amp; Fixed</a></li>
+    
+
+    <li class="toctree-l3"><a href="#owner-data">Owner Data</a></li>
+    
+
+    <li class="toctree-l3"><a href="#power-control">Power Control</a></li>
+    
+
+    <li class="toctree-l3"><a href="#reset-configuration">Reset Configuration</a></li>
+    
+
     </ul>
                 </li>
                 <li class="">
@@ -91,48 +109,15 @@
                 </li>
                 <li class="">
                     
+    <a class="" href="../interfaces/index.html">Interfaces</a>
+                </li>
+                <li class="">
+                    
     <a class="" href="../events/index.html">Events</a>
                 </li>
                 <li class="">
                     
     <a class="" href="../other/index.html">Others</a>
-                </li>
-    </ul>
-	    </li>
-          
-            <li class="toctree-l1">
-		
-    <span class="caption-text">Internals</span>
-    <ul class="subnav">
-                <li class="">
-                    
-    <a class="" href="../../bones/index.html">Bones</a>
-                </li>
-                <li class="">
-                    
-    <span class="caption-text">Viscera</span>
-    <ul class="subnav">
-                <li class="toctree-l3">
-                    
-    <a class="" href="../../viscera/index.html">Introduction</a>
-                </li>
-                <li class="toctree-l3">
-                    
-    <a class="" href="../../viscera/getting-started/index.html">Getting started</a>
-                </li>
-                <li class="toctree-l3">
-                    
-    <a class="" href="../../viscera/nodes/index.html">Nodes</a>
-                </li>
-                <li class="toctree-l3">
-                    
-    <a class="" href="../../viscera/events/index.html">Events</a>
-                </li>
-                <li class="toctree-l3">
-                    
-    <a class="" href="../../viscera/other/index.html">Others</a>
-                </li>
-    </ul>
                 </li>
     </ul>
 	    </li>
@@ -275,7 +260,7 @@ NodeStatus.READY</code></pre>
 
 <p>A more advanced asyncio based script that runs commissioning with extra scripts
 and waits until all machines have successfully commissioned.</p>
-<pre class="codehilite"><code class="language-python">#!/usr/bin/env python3.5
+<pre class="codehilite"><code class="language-python">#!/usr/bin/env python3
 
 import asyncio
 
@@ -359,6 +344,71 @@ NodeStatus.COMMISSIONING
 &gt;&gt;&gt; machine.deploy()
 &gt;&gt;&gt; print(machine.status)
 NodeStatus.DEPLOYING</code></pre>
+
+
+<h2 id="abort">Abort</h2>
+<p>If an action is performed on a machine and it needs to be aborted before it
+finishes <code>abort</code> can be used.</p>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; machine.commission(wait=False)
+&gt;&gt;&gt; machine.status
+NodeStatus.COMMISSIONING
+&gt;&gt;&gt; machine.abort()
+&gt;&gt;&gt; machine.status
+NodeStatus.NEW</code></pre>
+
+
+<h2 id="rescue-mode">Rescue mode</h2>
+<p>Boot the machine into rescue mode and then exit.</p>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; machine.enter_rescue_mode()
+&gt;&gt;&gt; machine.exit_rescue_mode()</code></pre>
+
+
+<h2 id="broken-fixed">Broken &amp; Fixed</h2>
+<p>When a machine is identified as broken you can easily mark it broken and then
+fixed once the issue is resolved.</p>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; machine.mark_broken()
+&gt;&gt;&gt; machine.status
+NodeStatus.BROKEN
+&gt;&gt;&gt; machine.mark_fixed()
+&gt;&gt;&gt; machine.status
+NodeStatus.READY</code></pre>
+
+
+<h2 id="owner-data">Owner Data</h2>
+<p>Owner data is extra information that you can set on a machine to hold some state information.</p>
+<p><strong>Note:</strong> Once the machine is no longer in your control the information will be lost.</p>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; machine.owner_data
+{}
+&gt;&gt;&gt; machine.owner_data['state'] = 'my-state-info'
+&gt;&gt;&gt; machine.save()
+&gt;&gt;&gt; machine.owner_data
+{'state': 'my-state-info'}
+&gt;&gt;&gt; machine.release()
+&gt;&gt;&gt; machine.owner_data
+{}</code></pre>
+
+
+<h2 id="power-control">Power Control</h2>
+<p>The power state of a machine can be controlled outside of deploy, releasing, and rescue mode. If you need to control the power of a BMC independently the <code>power_on</code>, <code>power_off</code> and <code>query_power_state</code> can be of help.</p>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; machine.power_state
+PowerState.ON
+&gt;&gt;&gt; machine.power_off()
+&gt;&gt;&gt; machine.power_state
+PowerState.OFF
+&gt;&gt;&gt; machine.power_on()
+&gt;&gt;&gt; machine.power_state
+PowerState.ON
+&gt;&gt;&gt; machine.query_power_state()
+PowerState.ON</code></pre>
+
+
+<h2 id="reset-configuration">Reset Configuration</h2>
+<p>It is possible to restore the machine back to exactly how it was after you completed commissioning. This is helpful when you have made a configuration that you no longer want or you want to start fresh.</p>
+<pre class="codehilite"><code class="language-pycon">&gt;&gt;&gt; machine.restore_default_configuration()
+&gt;&gt;&gt; # Only restore networking.
+&gt;&gt;&gt; machine.restore_networking_configuration()
+&gt;&gt;&gt; # Only restore storage configuration.
+&gt;&gt;&gt; machine.restore_storage_configuration()</code></pre>
               
             </div>
           </div>
@@ -383,18 +433,18 @@ NodeStatus.DEPLOYING</code></pre>
 
   Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
 </footer>
-	  
+      
         </div>
       </div>
 
     </section>
-    
+
   </div>
 
   <div class="rst-versions" role="note" style="cursor: pointer">
     <span class="rst-current-version" data-toggle="rst-current-version">
       
-          <a href="https://github.com/maas/python-libmaas" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
+          <a href="https://github.com/maas/python-libmaas/" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
       
       
         <span><a href="../index.html" style="color: #fcfcfc;">&laquo; Previous</a></span>
@@ -404,7 +454,10 @@ NodeStatus.DEPLOYING</code></pre>
       
     </span>
 </div>
+    <script>var base_url = '../..';</script>
     <script src="../../js/theme.js"></script>
+      <script src="../../search/require.js"></script>
+      <script src="../../search/search.js"></script>
 
 </body>
 </html>
