@@ -50,10 +50,15 @@ class IPRangesType(ObjectType):
         :returns: The created IPRange
         :rtype: `IPRange`
         """
+        if not isinstance(type, IPRangeType):
+            raise TypeError(
+                "type must be an IPRangeType, not %s"
+                % TYPE(type).__name__)
+
         params = {
             'start_ip': start_ip,
             'end_ip': end_ip,
-            'type': type,
+            'type': type.value,
         }
         if comment is not None:
             params["comment"] = comment
@@ -73,7 +78,7 @@ class IPRanges(ObjectSet, metaclass=IPRangesType):
     """The set of IPRanges stored in MAAS."""
 
 
-class IPRangeType(ObjectType):
+class IPRangeTypeMeta(ObjectType):
     """Metaclass for `IPRange`."""
 
     async def read(cls, id: int):
@@ -82,7 +87,7 @@ class IPRangeType(ObjectType):
         return cls(data)
 
 
-class IPRange(Object, metaclass=IPRangeType):
+class IPRange(Object, metaclass=IPRangeTypeMeta):
     """A IPRange."""
 
     id = ObjectField.Checked(

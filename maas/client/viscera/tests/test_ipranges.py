@@ -10,6 +10,7 @@ from ..ipranges import (
 )
 
 from .. testing import bind
+from ...enum import IPRangeType
 from ...testing import (
     make_string_without_spaces,
     TestCase,
@@ -30,13 +31,13 @@ class TestIPRanges(TestCase):
         IPRanges = make_origin().IPRanges
         start_ip = make_string_without_spaces()
         end_ip = make_string_without_spaces()
-        type = make_string_without_spaces()
+        type = IPRangeType.DYNAMIC
         comment = make_string_without_spaces()
         IPRanges._handler.create.return_value = {
             "id": 1,
             "start_ip": start_ip,
             "end_ip": end_ip,
-            "type": type,
+            "type": type.value,
             "comment": comment,
         }
         IPRanges.create(
@@ -48,7 +49,7 @@ class TestIPRanges(TestCase):
         IPRanges._handler.create.assert_called_once_with(
             start_ip=start_ip,
             end_ip=end_ip,
-            type=type,
+            type=type.value,
             comment=comment,
         )
 
