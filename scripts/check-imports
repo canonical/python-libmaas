@@ -564,6 +564,7 @@ checks = [
     (
         Setup,
         Rule(
+            Allow("os.path|os.path.**"),
             Allow("setuptools|setuptools.**"),
         ),
     ),

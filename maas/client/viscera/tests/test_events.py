@@ -13,6 +13,7 @@ from testtools.matchers import (
     IsInstance,
 )
 
+from ..users import User
 from .. import events
 from ...testing import (
     make_mac_address,
@@ -35,6 +36,7 @@ def make_Event_dict():
         "level": random.choice(list(events.Level)),
         "created": datetime.utcnow().strftime("%a, %d %b. %Y %H:%M:%S"),
         "description": make_name_without_spaces("description"),
+        "username": make_name_without_spaces("username")
     }
 
 
@@ -64,7 +66,7 @@ class TestEventsQuery(TestCase):
         obj.query()
         obj._handler.query.assert_called_once_with()
 
-    def test__query_arguments_are_assembled_and_passed_to_bones_handler(self):
+    def test__query_arguments_are_assembled_and_passed_to_bones_handler1(self):
         obj = make_origin().Events
         arguments = {
             "hostnames": (
@@ -90,6 +92,7 @@ class TestEventsQuery(TestCase):
             "agent_name": make_name_without_spaces("agent"),
             "level": random.choice(list(events.Level)),
             "limit": random.randrange(1, 1000),
+            "owner": make_name_without_spaces("username"),
         }
         obj.query(**arguments)
         expected = {
@@ -101,8 +104,86 @@ class TestEventsQuery(TestCase):
             "agent_name": [arguments["agent_name"]],
             "level": [arguments["level"].name],
             "limit": [str(arguments["limit"])],
+            "owner": [arguments["owner"]],
         }
         obj._handler.query.assert_called_once_with(**expected)
+
+    def test__query_arguments_are_assembled_and_passed_to_bones_handler2(self):
+        obj = make_origin().Events
+        user = User({
+            "username": make_name_without_spaces("username"),
+            "email": make_name_without_spaces("user@"),
+            "is_superuser": False,
+        })
+        arguments = {
+            "hostnames": (
+                make_name_without_spaces("hostname"),
+                make_name_without_spaces("hostname"),
+            ),
+            "domains": (
+                make_name_without_spaces("domain"),
+                make_name_without_spaces("domain"),
+            ),
+            "zones": (
+                make_name_without_spaces("zone"),
+                make_name_without_spaces("zone"),
+            ),
+            "macs": (
+                make_mac_address(),
+                make_mac_address(),
+            ),
+            "system_ids": (
+                make_name_without_spaces("system-id"),
+                make_name_without_spaces("system-id"),
+            ),
+            "agent_name": make_name_without_spaces("agent"),
+            "level": random.choice(list(events.Level)),
+            "limit": random.randrange(1, 1000),
+            "owner": user,
+        }
+        obj.query(**arguments)
+        expected = {
+            "hostname": list(arguments["hostnames"]),
+            "domain": list(arguments["domains"]),
+            "zone": list(arguments["zones"]),
+            "mac_address": list(arguments["macs"]),
+            "id": list(arguments["system_ids"]),
+            "agent_name": [arguments["agent_name"]],
+            "level": [arguments["level"].name],
+            "limit": [str(arguments["limit"])],
+            "owner": [user.username],
+        }
+        obj._handler.query.assert_called_once_with(**expected)
+
+    def test__query_arguments_raises_error_for_invalid_owner(self):
+        obj = make_origin().Events
+        arguments = {
+            "hostnames": (
+                make_name_without_spaces("hostname"),
+                make_name_without_spaces("hostname"),
+            ),
+            "domains": (
+                make_name_without_spaces("domain"),
+                make_name_without_spaces("domain"),
+            ),
+            "zones": (
+                make_name_without_spaces("zone"),
+                make_name_without_spaces("zone"),
+            ),
+            "macs": (
+                make_mac_address(),
+                make_mac_address(),
+            ),
+            "system_ids": (
+                make_name_without_spaces("system-id"),
+                make_name_without_spaces("system-id"),
+            ),
+            "agent_name": make_name_without_spaces("agent"),
+            "level": random.choice(list(events.Level)),
+            "limit": random.randrange(1, 1000),
+            "owner": random.randint(0, 10),
+        }
+        self.assertRaises(TypeError, obj.query, **arguments)
 
     def test__query_level_is_normalised(self):
         obj = make_origin().Events

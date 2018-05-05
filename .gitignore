@@ -66,3 +66,6 @@ site/
 
 # Packaging
 .pc/
+
+# Editors
+.vscode/
