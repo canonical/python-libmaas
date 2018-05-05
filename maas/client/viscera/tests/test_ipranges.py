@@ -10,6 +10,7 @@ from ..ipranges import (
 )
 
 from .. testing import bind
+from ...enum import IPRangeType
 from ...testing import (
     make_string_without_spaces,
     TestCase,
@@ -30,13 +31,13 @@ class TestIPRanges(TestCase):
         IPRanges = make_origin().IPRanges
         start_ip = make_string_without_spaces()
         end_ip = make_string_without_spaces()
-        type = make_string_without_spaces()
+        type = IPRangeType.DYNAMIC
         comment = make_string_without_spaces()
         IPRanges._handler.create.return_value = {
             "id": 1,
             "start_ip": start_ip,
             "end_ip": end_ip,
-            "type": type,
+            "type": type.value,
             "comment": comment,
         }
         IPRanges.create(
@@ -48,9 +49,20 @@ class TestIPRanges(TestCase):
         IPRanges._handler.create.assert_called_once_with(
             start_ip=start_ip,
             end_ip=end_ip,
-            type=type,
+            type=type.value,
             comment=comment,
         )
+
+    def test__ipranges_create_requires_IPRangeType(self):
+        IPRanges = make_origin().IPRanges
+        start_ip = make_string_without_spaces()
+        end_ip = make_string_without_spaces()
+        comment = make_string_without_spaces()
+        error = self.assertRaises(
+            TypeError, IPRanges.create,
+            start_ip=start_ip, end_ip=end_ip,
+            type=make_string_without_spaces(), comment=comment)
+        self.assertEquals("type must be an IPRangeType, not str", str(error))
 
     def test__ipranges_read(self):
         """IPRanges.read() returns a list of IPRanges."""
