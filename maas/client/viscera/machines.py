@@ -118,7 +118,9 @@ class MachinesType(NodesType):
             interfaces: typing.Sequence[InterfaceParam]=None,
             memory: float=None,
             pod: str=None,
+            not_pod: str=None,
             pod_type: str=None,
+            not_pod_type: str=None,
             storage: typing.Sequence[str]=None,
             subnets: typing.Sequence[SubnetParam]=None,
             tags: typing.Sequence[str]=None,
@@ -147,8 +149,12 @@ class MachinesType(NodesType):
         :type memory: `int`
         :param pod: The pod to allocate the machine from.
         :type pod: `str`
+        :param not_pod: Pod the machine must not be located in.
+        :type not_pod: `str`
         :param pod_type: The type of pod to allocate the machine from.
         :type pod_type: `str`
+        :param not_pod_type: Pod type the machine must not be located in.
+        :type not_pod_type: `str`
         :param subnets: The subnet(s) the desired machine must be linked to.
         :type subnets: sequence of `str` or `int` or `Subnet`
         :param storage: The storage contraint to match.
@@ -192,7 +198,9 @@ class MachinesType(NodesType):
             'cpu_count': str(cpus) if cpus else None,
             'mem': str(memory) if memory else None,
             'pod': pod,
+            'not_pod': not_pod,
             'pod_type': pod_type,
+            'not_pod_type': not_pod_type,
             'storage': storage,
             'tags': tags,
             'not_tags': not_tags,
