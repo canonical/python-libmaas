@@ -52,7 +52,7 @@ class Vlan(Object, metaclass=VlanType):
         "id", check(int), readonly=True)
 
     fabric = ObjectFieldRelated(
-        "fabric_id", "Fabric", readonly=True, pk=0)
+        "fabric_id", "Fabric", pk=0)
     vid = ObjectField.Checked(
         "vid", check(int), check(int), pk=1)
 
@@ -76,6 +76,21 @@ class Vlan(Object, metaclass=VlanType):
     def __repr__(self):
         return super(Vlan, self).__repr__(
             fields={"name", "vid"})
+
+    async def save(self):
+        if ('fabric_id' in self._changed_data and
+                self._changed_data['fabric_id']):
+            if (self._orig_data['fabric_id'] and
+                    self._changed_data['fabric_id'] == (
+                        self._orig_data['fabric_id'])):
+                # Fabric didn't really change, the object was just set to the
+                # same Fabric
+                del self._changed_data['fabric_id']
+            else:
+                # Allow the update of the fabric by setting the 'fabric' field
+                # with the new 'fabric_id'.
+                self._changed_data['fabric'] = self._changed_data['fabric_id']
+        await super(Vlan, self).save()
 
     async def delete(self):
         """Delete this VLAN."""
