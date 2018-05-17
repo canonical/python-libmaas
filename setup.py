@@ -1,9 +1,25 @@
 """Setuptools installer for python-libmaas."""
 
+from os.path import (
+    dirname,
+    join,
+)
+
 from setuptools import (
     find_packages,
     setup,
 )
+
+
+# The directory in which setup.py lives.
+here = dirname(__file__)
+
+
+def read(filename):
+    """Return the whitespace-stripped content of `filename`."""
+    path = join(here, filename)
+    with open(path, "r") as fin:
+        return fin.read().strip()
 
 
 setup(
@@ -11,7 +27,7 @@ setup(
     author='MAAS Developers',
     author_email='maas-devel@lists.launchpad.net',
     url='https://github.com/maas/python-libmaas',
-    version="0.6.0",
+    version="0.6.1",
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
@@ -51,6 +67,8 @@ setup(
         "Twisted",
     ],
     description="A client API library specially for MAAS.",
+    long_description=read('README'),
+    long_description_content_type='text/markdown',
     entry_points={
         "console_scripts": {
             "maas = maas.client.flesh:main",
