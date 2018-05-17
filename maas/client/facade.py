@@ -124,6 +124,14 @@ class Client:
         }
 
     @facade
+    def pods(origin):
+        return {
+            "create": origin.Pods.create,
+            "list": origin.Pods.read,
+            "get": origin.Pod.read,
+        }
+
+    @facade
     def static_routes(origin):
         return {
             "create": origin.StaticRoutes.create,
