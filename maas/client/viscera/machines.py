@@ -27,6 +27,7 @@ from .nodes import (
     NodesType,
     NodeTypeMeta,
 )
+from .pods import Pod
 from .subnets import Subnet
 from .zones import Zone
 from ..bones import CallError
@@ -117,8 +118,8 @@ class MachinesType(NodesType):
             fabrics: typing.Sequence[FabricParam]=None,
             interfaces: typing.Sequence[InterfaceParam]=None,
             memory: float=None,
-            pod: str=None,
-            not_pod: str=None,
+            pod: typing.Union[str, Pod]=None,
+            not_pod: typing.Union[str, Pod]=None,
             pod_type: str=None,
             not_pod_type: str=None,
             storage: typing.Sequence[str]=None,

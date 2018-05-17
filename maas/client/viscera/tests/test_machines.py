@@ -28,11 +28,25 @@ from ...testing import (
     make_name_without_spaces,
     TestCase,
 )
+from ..pods import (
+    Pod,
+    Pods,
+)
 
 
-def make_origin():
-    # Create a new origin with Machines and Machine. The former refers to the
-    # latter via the origin, hence why it must be bound.
+def make_pods_origin():
+    """
+    Create a new origin with Pods and Pod. The former
+    refers to the latter via the origin, hence why it must be bound.
+    """
+    return bind(Pods, Pod)
+
+
+def make_machines_origin():
+    """
+    Create a new origin with Machines and Machine. The former
+    refers to the latter via the origin, hence why it must be bound.
+    """
     return bind(machines.Machines, machines.Machine)
 
 
@@ -54,7 +68,7 @@ class TestMachine(TestCase):
             % machine._data))
 
     def test__get_power_parameters(self):
-        machine = make_origin().Machine({
+        machine = make_machines_origin().Machine({
             "system_id": make_name_without_spaces("system-id"),
             "hostname": make_name_without_spaces("hostname"),
         })
@@ -75,7 +89,7 @@ class TestMachine(TestCase):
             "system_id": make_name_without_spaces("system-id"),
             "hostname": make_name_without_spaces("hostname"),
         }
-        origin = make_origin()
+        origin = make_machines_origin()
         machine = origin.Machine(data)
         machine._handler.abort.return_value = data
         comment = make_name_without_spaces("comment")
@@ -90,7 +104,7 @@ class TestMachine(TestCase):
             "system_id": make_name_without_spaces("system-id"),
             "hostname": make_name_without_spaces("hostname"),
         }
-        origin = make_origin()
+        origin = make_machines_origin()
         machine = origin.Machine(data)
         machine._handler.clear_default_gateways.return_value = data
         self.assertThat(
@@ -107,7 +121,7 @@ class TestMachine(TestCase):
             "hostname": hostname,
             "status": NodeStatus.COMMISSIONING,
         }
-        machine = make_origin().Machine(data)
+        machine = make_machines_origin().Machine(data)
         machine._handler.commission.return_value = data
         machine.commission()
         self.assertThat(machine.status, Equals(NodeStatus.COMMISSIONING))
@@ -128,7 +142,7 @@ class TestMachine(TestCase):
             "hostname": hostname,
             "status": NodeStatus.READY,
         }
-        machine = make_origin().Machine(data)
+        machine = make_machines_origin().Machine(data)
         machine._handler.commission.return_value = data
         machine._handler.read.return_value = ready_data
         machine.commission(wait=True, wait_interval=0.1)
@@ -155,7 +169,7 @@ class TestMachine(TestCase):
             "hostname": hostname,
             "status": NodeStatus.READY,
         }
-        machine = make_origin().Machine(data)
+        machine = make_machines_origin().Machine(data)
         machine._handler.commission.return_value = data
         machine._handler.read.side_effect = [
             testing_data,
@@ -180,7 +194,7 @@ class TestMachine(TestCase):
             "hostname": hostname,
             "status": NodeStatus.FAILED_COMMISSIONING,
         }
-        machine = make_origin().Machine(data)
+        machine = make_machines_origin().Machine(data)
         machine._handler.commission.return_value = data
         machine._handler.read.return_value = failed_commissioning_data
         self.assertRaises(machines.FailedCommissioning, machine.commission,
@@ -199,7 +213,7 @@ class TestMachine(TestCase):
             "hostname": hostname,
             "status": NodeStatus.DEPLOYED,
         }
-        machine = make_origin().Machine(data)
+        machine = make_machines_origin().Machine(data)
         machine._handler.deploy.return_value = data
         machine._handler.read.return_value = deployed_data
         machine.deploy(wait=True, wait_interval=0.1)
@@ -221,7 +235,7 @@ class TestMachine(TestCase):
             "hostname": hostname,
             "status": NodeStatus.FAILED_DEPLOYMENT,
         }
-        machine = make_origin().Machine(data)
+        machine = make_machines_origin().Machine(data)
         machine._handler.deploy.return_value = data
         machine._handler.read.return_value = failed_deploy_data
         self.assertRaises(machines.FailedDeployment, machine.deploy,
@@ -233,7 +247,7 @@ class TestMachine(TestCase):
             "hostname": make_name_without_spaces("hostname"),
             "status": NodeStatus.ENTERING_RESCUE_MODE,
         }
-        machine = make_origin().Machine(rescue_mode_machine)
+        machine = make_machines_origin().Machine(rescue_mode_machine)
         machine._handler.rescue_mode.return_value = rescue_mode_machine
         self.assertThat(
             machine.enter_rescue_mode(),
@@ -244,7 +258,7 @@ class TestMachine(TestCase):
         )
 
     def test__enter_rescue_mode_operation_not_allowed(self):
-        machine = make_origin().Machine({
+        machine = make_machines_origin().Machine({
             "system_id": make_name_without_spaces("system-id"),
             "hostname": make_name_without_spaces("hostname"),
         })
@@ -272,8 +286,8 @@ class TestMachine(TestCase):
             "hostname": hostname,
             "status": NodeStatus.RESCUE_MODE,
         }
-        rm_machine = make_origin().Machine(rm_data)
-        erm_machine = make_origin().Machine(erm_data)
+        rm_machine = make_machines_origin().Machine(rm_data)
+        erm_machine = make_machines_origin().Machine(erm_data)
         rm_machine._handler.rescue_mode.return_value = rm_data
         rm_machine._handler.read.return_value = erm_data
         result = rm_machine.enter_rescue_mode(wait=True, wait_interval=0.1)
@@ -295,7 +309,7 @@ class TestMachine(TestCase):
             "hostname": hostname,
             "status": NodeStatus.FAILED_ENTERING_RESCUE_MODE,
         }
-        machine = make_origin().Machine(data)
+        machine = make_machines_origin().Machine(data)
         machine._handler.rescue_mode.return_value = data
         machine._handler.read.return_value = failed_enter_rescue_mode_data
         self.assertRaises(
@@ -309,7 +323,7 @@ class TestMachine(TestCase):
             "hostname": make_name_without_spaces("hostname"),
             "status": NodeStatus.EXITING_RESCUE_MODE,
         }
-        machine = make_origin().Machine(exit_machine)
+        machine = make_machines_origin().Machine(exit_machine)
         machine._handler.exit_rescue_mode.return_value = exit_machine
         self.assertThat(
             machine.exit_rescue_mode(),
@@ -320,7 +334,7 @@ class TestMachine(TestCase):
         )
 
     def test__exit_rescue_mode_operation_not_allowed(self):
-        machine = make_origin().Machine({
+        machine = make_machines_origin().Machine({
             "system_id": make_name_without_spaces("system-id"),
             "hostname": make_name_without_spaces("hostname"),
         })
@@ -348,8 +362,8 @@ class TestMachine(TestCase):
             "hostname": hostname,
             "status": NodeStatus.DEPLOYED,
         }
-        machine = make_origin().Machine(data)
-        deployed_machine = make_origin().Machine(deployed_data)
+        machine = make_machines_origin().Machine(data)
+        deployed_machine = make_machines_origin().Machine(deployed_data)
         machine._handler.exit_rescue_mode.return_value = data
         machine._handler.read.return_value = deployed_data
         result = machine.exit_rescue_mode(wait=True, wait_interval=0.1)
@@ -371,7 +385,7 @@ class TestMachine(TestCase):
             "hostname": hostname,
             "status": NodeStatus.FAILED_EXITING_RESCUE_MODE,
         }
-        machine = make_origin().Machine(data)
+        machine = make_machines_origin().Machine(data)
         machine._handler.exit_rescue_mode.return_value = data
         machine._handler.read.return_value = failed_exit_rescue_mode_data
         self.assertRaises(
@@ -384,7 +398,7 @@ class TestMachine(TestCase):
             "system_id": make_name_without_spaces("system-id"),
             "hostname": make_name_without_spaces("hostname"),
         }
-        origin = make_origin()
+        origin = make_machines_origin()
         machine = origin.Machine(data)
         config = make_name_without_spaces("config")
         machine._handler.get_curtin_config.return_value = config
@@ -399,7 +413,7 @@ class TestMachine(TestCase):
             "system_id": make_name_without_spaces("system-id"),
             "hostname": make_name_without_spaces("hostname"),
         }
-        origin = make_origin()
+        origin = make_machines_origin()
         machine = origin.Machine(data)
         machine._handler.mark_broken.return_value = data
         comment = make_name_without_spaces("comment")
@@ -414,7 +428,7 @@ class TestMachine(TestCase):
             "system_id": make_name_without_spaces("system-id"),
             "hostname": make_name_without_spaces("hostname"),
         }
-        origin = make_origin()
+        origin = make_machines_origin()
         machine = origin.Machine(data)
         machine._handler.mark_fixed.return_value = data
         comment = make_name_without_spaces("comment")
@@ -437,8 +451,8 @@ class TestMachine(TestCase):
             "hostname": hostname,
             "status": NodeStatus.ALLOCATED,
         }
-        machine = make_origin().Machine(data)
-        allocated_machine = make_origin().Machine(allocated_data)
+        machine = make_machines_origin().Machine(data)
+        allocated_machine = make_machines_origin().Machine(allocated_data)
         machine._handler.release.return_value = data
         machine._handler.read.return_value = allocated_data
         result = machine.release(wait=True, wait_interval=0.1)
@@ -460,7 +474,7 @@ class TestMachine(TestCase):
             "hostname": hostname,
             "status": NodeStatus.FAILED_RELEASING,
         }
-        machine = make_origin().Machine(data)
+        machine = make_machines_origin().Machine(data)
         machine._handler.release.return_value = data
         machine._handler.read.return_value = failed_release_data
         self.assertRaises(
@@ -483,7 +497,7 @@ class TestMachine(TestCase):
             "hostname": hostname,
             "status": NodeStatus.FAILED_DISK_ERASING,
         }
-        machine = make_origin().Machine(data)
+        machine = make_machines_origin().Machine(data)
         machine._handler.release.return_value = data
         machine._handler.read.return_value = failed_disk_erase_data
         self.assertRaises(
@@ -501,7 +515,7 @@ class TestMachine(TestCase):
             "hostname": hostname,
             "status": NodeStatus.RELEASING,
         }
-        machine = make_origin().Machine(data)
+        machine = make_machines_origin().Machine(data)
         machine._handler.release.return_value = data
         machine._handler.read.side_effect = CallError(
             request={"method": "GET", "uri": "www.example.com"},
@@ -528,8 +542,8 @@ class TestMachine(TestCase):
             "hostname": hostname,
             "power_state": PowerState.ON,
         }
-        machine = make_origin().Machine(data)
-        powered_machine = make_origin().Machine(power_data)
+        machine = make_machines_origin().Machine(data)
+        powered_machine = make_machines_origin().Machine(power_data)
         machine._handler.power_on.return_value = data
         machine._handler.read.return_value = power_data
         result = machine.power_on(wait=True, wait_interval=0.1)
@@ -552,8 +566,8 @@ class TestMachine(TestCase):
             "hostname": hostname,
             "power_state": PowerState.UNKNOWN,
         }
-        machine = make_origin().Machine(data)
-        powered_machine = make_origin().Machine(power_data)
+        machine = make_machines_origin().Machine(data)
+        powered_machine = make_machines_origin().Machine(power_data)
         machine._handler.power_on.return_value = data
         machine._handler.read.return_value = power_data
         result = machine.power_on(wait=True, wait_interval=0.1)
@@ -574,7 +588,7 @@ class TestMachine(TestCase):
             "hostname": hostname,
             "power_state": PowerState.ERROR,
         }
-        machine = make_origin().Machine(data)
+        machine = make_machines_origin().Machine(data)
         machine._handler.power_on.return_value = data
         machine._handler.read.return_value = failed_power_data
         self.assertRaises(
@@ -597,8 +611,8 @@ class TestMachine(TestCase):
             "hostname": hostname,
             "power_state": PowerState.OFF,
         }
-        machine = make_origin().Machine(data)
-        powered_machine = make_origin().Machine(power_data)
+        machine = make_machines_origin().Machine(data)
+        powered_machine = make_machines_origin().Machine(power_data)
         machine._handler.power_off.return_value = data
         machine._handler.read.return_value = power_data
         result = machine.power_off(wait=True, wait_interval=0.1)
@@ -616,7 +630,7 @@ class TestMachine(TestCase):
             "hostname": hostname,
             "power_state": PowerState.ON,
         }
-        machine = make_origin().Machine(data)
+        machine = make_machines_origin().Machine(data)
         machine._handler.power_off.return_value = data
         machine.power_off(stop_mode=PowerStopMode.SOFT, wait=False)
         machine._handler.power_off.assert_called_once_with(
@@ -636,8 +650,8 @@ class TestMachine(TestCase):
             "hostname": hostname,
             "power_state": PowerState.UNKNOWN,
         }
-        machine = make_origin().Machine(data)
-        powered_machine = make_origin().Machine(power_data)
+        machine = make_machines_origin().Machine(data)
+        powered_machine = make_machines_origin().Machine(power_data)
         machine._handler.power_off.return_value = data
         machine._handler.read.return_value = power_data
         result = machine.power_off(wait=True, wait_interval=0.1)
@@ -658,7 +672,7 @@ class TestMachine(TestCase):
             "hostname": hostname,
             "power_state": PowerState.ERROR,
         }
-        machine = make_origin().Machine(data)
+        machine = make_machines_origin().Machine(data)
         machine._handler.power_off.return_value = data
         machine._handler.read.return_value = failed_power_data
         self.assertRaises(
@@ -679,7 +693,7 @@ class TestMachine(TestCase):
         query_data = {
             "state": "on"
         }
-        machine = make_origin().Machine(data)
+        machine = make_machines_origin().Machine(data)
         machine._handler.query_power_state.return_value = query_data
         result = machine.query_power_state()
         self.assertIsInstance(result, PowerState)
@@ -695,7 +709,7 @@ class TestMachine(TestCase):
                      b' (glibc 2.23) -->\n<list>\n</list>\n\x05lldp\x00F\x00' \
                      b'\x00\x00\x00<?xml version="1.0" encoding="UTF-8"?>\n' \
                      b'<lldp label="LLDP neighbors"/>\n\x00'
-        machine = make_origin().Machine({
+        machine = make_machines_origin().Machine({
             "system_id": make_name_without_spaces("system-id"),
             "hostname": make_name_without_spaces("hostname"),
         })
@@ -717,7 +731,7 @@ class TestMachine(TestCase):
             "system_id": system_id,
             "hostname": hostname,
         }
-        machine = make_origin().Machine(data)
+        machine = make_machines_origin().Machine(data)
         machine._handler.restore_default_configuration.return_value = data
         machine.restore_default_configuration()
         self.assertEqual(data, machine._data)
@@ -731,7 +745,7 @@ class TestMachine(TestCase):
             "system_id": system_id,
             "hostname": hostname,
         }
-        machine = make_origin().Machine(data)
+        machine = make_machines_origin().Machine(data)
         mock_restore_networking = (
             machine._handler.restore_networking_configuration)
         mock_restore_networking.return_value = data
@@ -747,7 +761,7 @@ class TestMachine(TestCase):
             "system_id": system_id,
             "hostname": hostname,
         }
-        machine = make_origin().Machine(data)
+        machine = make_machines_origin().Machine(data)
         mock_restore_storage = (
             machine._handler.restore_storage_configuration)
         mock_restore_storage.return_value = data
@@ -768,7 +782,7 @@ class TestMachine(TestCase):
                 "keep": "me"
             }
         }
-        machine = make_origin().Machine(data)
+        machine = make_machines_origin().Machine(data)
         del machine.owner_data['delete']
         machine.owner_data['hello'] = 'whole new world'
         machine.owner_data['new'] = 'brand-new'
@@ -796,7 +810,7 @@ class TestMachine(TestCase):
                 "keep": "me"
             }
         }
-        machine = make_origin().Machine(data)
+        machine = make_machines_origin().Machine(data)
         machine.owner_data = {
             'hello': 'whole new world',
             'keep': 'me',
@@ -853,7 +867,7 @@ class TestMachine_APIVersion(TestCase):
 class TestMachines(TestCase):
 
     def test__create(self):
-        origin = make_origin()
+        origin = make_machines_origin()
         Machines, Machine = origin.Machines, origin.Machine
         Machines._handler.create.return_value = {}
         observed = Machines.create(
@@ -876,7 +890,7 @@ class TestMachines(TestCase):
             domain='maas')
 
     def test__allocate(self):
-        Machines = make_origin().Machines
+        Machines = make_machines_origin().Machines
         Machines._handler.allocate.return_value = {}
         hostname = make_name_without_spaces("hostname")
         Machines.allocate(
@@ -896,8 +910,58 @@ class TestMachines(TestCase):
             not_tags=['baz'],
         )
 
+    def test__allocate_with_pod(self):
+        Pod = make_pods_origin().Pod
+        pod = Pod({})
+        Machines = make_machines_origin().Machines
+        Machines._handler.allocate.return_value = {}
+        hostname = make_name_without_spaces("hostname")
+        Machines.allocate(
+            hostname=hostname,
+            architectures=['amd64/generic'],
+            cpus=4,
+            memory=1024.0,
+            tags=['foo', 'bar'],
+            not_tags=['baz'],
+            pod=pod,
+        )
+        Machines._handler.allocate.assert_called_once_with(
+            name=hostname,  # API parameter is actually name, not hostname
+            arch=['amd64/generic'],
+            cpu_count='4',
+            mem='1024.0',
+            tags=['foo', 'bar'],
+            not_tags=['baz'],
+            pod=pod,
+        )
+
+    def test__allocate_with_not_pod(self):
+        Pod = make_pods_origin().Pod
+        pod = Pod({})
+        Machines = make_machines_origin().Machines
+        Machines._handler.allocate.return_value = {}
+        hostname = make_name_without_spaces("hostname")
+        Machines.allocate(
+            hostname=hostname,
+            architectures=['amd64/generic'],
+            cpus=4,
+            memory=1024.0,
+            tags=['foo', 'bar'],
+            not_tags=['baz'],
+            not_pod=pod,
+        )
+        Machines._handler.allocate.assert_called_once_with(
+            name=hostname,  # API parameter is actually name, not hostname
+            arch=['amd64/generic'],
+            cpu_count='4',
+            mem='1024.0',
+            tags=['foo', 'bar'],
+            not_tags=['baz'],
+            not_pod=pod,
+        )
+
     def test__get_power_parameters_for_with_empty_list(self):
-        Machines = make_origin().Machines
+        Machines = make_machines_origin().Machines
         self.assertThat(
             Machines.get_power_parameters_for(system_ids=[]),
             Equals({}),
@@ -910,7 +974,7 @@ class TestMachines(TestCase):
             }
             for _ in range(3)
         }
-        Machines = make_origin().Machines
+        Machines = make_machines_origin().Machines
         Machines._handler.power_parameters.return_value = power_parameters
         self.assertThat(
             Machines.get_power_parameters_for(
