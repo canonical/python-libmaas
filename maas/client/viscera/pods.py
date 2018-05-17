@@ -120,6 +120,22 @@ class Pod(Object, metaclass=PodType):
     total = ObjectField.Checked(
         "total", check(dict), check(dict))
 
+    async def save(self):
+        """Save the `Pod`."""
+        old_tags = list(self._orig_data['tags'])
+        new_tags = list(self.tags)
+        self._changed_data.pop('tags', None)
+        await super(Pod, self).save()
+        for tag_name in new_tags:
+            if tag_name not in old_tags:
+                await self._handler.add_tag(id=self.id, tag=tag_name)
+            else:
+                old_tags.remove(tag_name)
+        for tag_name in old_tags:
+            await self._handler.remove_tag(id=self.id, tag=tag_name)
+        self._orig_data['tags'] = new_tags
+        self._data['tags'] = list(new_tags)
+
     async def refresh(self):
         """Refresh the `Pod`."""
         return await self._handler.refresh(id=self.id)
@@ -180,24 +196,6 @@ class Pod(Object, metaclass=PodType):
                     "zone must be an int, str or Zone, not %s" %
                     type(zone).__name__)
         return await self._handler.compose(**params, id=self.id)
-
-    async def add_tag(self, tag: str):
-        """Add tag to `Pod`.
-
-        :param tag: The tag being added.
-        :type tag: `str`
-        """
-        params = {'tag': tag}
-        return await self._handler.add_tag(**params, id=self.id)
-
-    async def remove_tag(self, tag: str):
-        """Remove tag from `Pod`.
-
-        :param tag: The tag being removed.
-        :type tag: `str`
-        """
-        params = {'tag': tag}
-        return await self._handler.remove_tag(**params, id=self.id)
 
     async def update(
             self, *, name: str=None,

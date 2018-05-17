@@ -156,24 +156,6 @@ class TestPod(TestCase):
         pod.parameters()
         Pod._handler.parameters.assert_called_once_with(id=pod_data["id"])
 
-    def test__pod_add_tag(self):
-        Pod = make_origin().Pod
-        pod_data = make_pod()
-        pod = Pod(pod_data)
-        tag = make_name_without_spaces("tag")
-        pod.add_tag(tag)
-        Pod._handler.add_tag.assert_called_once_with(
-            tag=tag, id=pod_data["id"])
-
-    def test__pod_remove_tag(self):
-        Pod = make_origin().Pod
-        pod_data = make_pod()
-        pod = Pod(pod_data)
-        tag = make_name_without_spaces("tag")
-        pod.remove_tag(tag)
-        Pod._handler.remove_tag.assert_called_once_with(
-            tag=tag, id=pod_data["id"])
-
     def test__pod_compose(self):
         Pod = make_origin().Pod
         pod_data = make_pod()
@@ -252,3 +234,24 @@ class TestPod(TestCase):
         pod = Pod(pod_data)
         pod.delete()
         Pod._handler.delete.assert_called_once_with(id=pod_data["id"])
+
+    def test__save_add_tag(self):
+        Pod = make_origin().Pod
+        pod_data = make_pod()
+        pod = Pod(pod_data)
+        tag = make_string_without_spaces()
+        pod.tags.append(tag)
+        Pod._handler.add_tag.return_value = None
+        pod.save()
+        Pod._handler.add_tag.assert_called_once_with(id=pod.id, tag=tag)
+
+    def test__save_remove_tag(self):
+        Pod = make_origin().Pod
+        pod_data = make_pod()
+        tag = make_string_without_spaces()
+        pod_data['tags'] = [tag]
+        pod = Pod(pod_data)
+        pod.tags.remove(tag)
+        Pod._handler.remove_tag.return_value = None
+        pod.save()
+        Pod._handler.remove_tag.assert_called_once_with(id=pod.id, tag=tag)
