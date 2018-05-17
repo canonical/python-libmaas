@@ -1191,6 +1191,7 @@ class Origin(OriginBase, metaclass=OriginType):
             ".machines",
             ".nodes",
             ".partitions",
+            ".pods",
             ".raids",
             ".spaces",
             ".sshkeys",
