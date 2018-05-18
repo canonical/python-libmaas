@@ -94,8 +94,6 @@ class Vlan(Object, metaclass=VlanType):
                 # with the new 'fabric_id'.
                 self._changed_data['fabric'] = self._changed_data['fabric_id']
         await super(Vlan, self).save()
-        # Set fabric_id because it was lost from the `save`.
-        self._data['fabric_id'] = fabric_id
 
     async def delete(self):
         """Delete this VLAN."""

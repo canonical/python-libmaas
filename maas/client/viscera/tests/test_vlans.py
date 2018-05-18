@@ -163,6 +163,7 @@ class TestVlan(TestCase):
         Vlan._handler.update.return_value = {
             "id": vlan_id,
             "vid": vid,
+            "fabric_id": new_fabric.id,
         }
         vlan.save()
         Vlan._handler.update.assert_called_once_with(
