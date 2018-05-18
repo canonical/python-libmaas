@@ -912,7 +912,7 @@ class TestMachines(TestCase):
 
     def test__allocate_with_pod(self):
         Pod = make_pods_origin().Pod
-        pod = Pod({})
+        pod = Pod({'name': make_name_without_spaces("pod")})
         Machines = make_machines_origin().Machines
         Machines._handler.allocate.return_value = {}
         hostname = make_name_without_spaces("hostname")
@@ -923,7 +923,7 @@ class TestMachines(TestCase):
             memory=1024.0,
             tags=['foo', 'bar'],
             not_tags=['baz'],
-            pod=pod,
+            pod=pod.name,
         )
         Machines._handler.allocate.assert_called_once_with(
             name=hostname,  # API parameter is actually name, not hostname
@@ -932,12 +932,12 @@ class TestMachines(TestCase):
             mem='1024.0',
             tags=['foo', 'bar'],
             not_tags=['baz'],
-            pod=pod,
+            pod=pod.name,
         )
 
     def test__allocate_with_not_pod(self):
         Pod = make_pods_origin().Pod
-        pod = Pod({})
+        pod = Pod({'name': make_name_without_spaces("pod")})
         Machines = make_machines_origin().Machines
         Machines._handler.allocate.return_value = {}
         hostname = make_name_without_spaces("hostname")
@@ -948,7 +948,7 @@ class TestMachines(TestCase):
             memory=1024.0,
             tags=['foo', 'bar'],
             not_tags=['baz'],
-            not_pod=pod,
+            not_pod=pod.name,
         )
         Machines._handler.allocate.assert_called_once_with(
             name=hostname,  # API parameter is actually name, not hostname
@@ -957,7 +957,7 @@ class TestMachines(TestCase):
             mem='1024.0',
             tags=['foo', 'bar'],
             not_tags=['baz'],
-            not_pod=pod,
+            not_pod=pod.name,
         )
 
     def test__get_power_parameters_for_with_empty_list(self):

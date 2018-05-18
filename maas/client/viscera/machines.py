@@ -198,8 +198,6 @@ class MachinesType(NodesType):
             'arch': architectures,
             'cpu_count': str(cpus) if cpus else None,
             'mem': str(memory) if memory else None,
-            'pod': pod,
-            'not_pod': not_pod,
             'pod_type': pod_type,
             'not_pod_type': not_pod_type,
             'storage': storage,
@@ -223,6 +221,23 @@ class MachinesType(NodesType):
                 get_param_arg('interfaces', idx, Interface, nic)
                 for idx, nic in enumerate(interfaces)
             ]
+        if pod is not None:
+            if isinstance(pod, Pod):
+                params["pod"] = pod.name
+            elif isinstance(pod, str):
+                params["pod"] = pod
+            else:
+                raise TypeError(
+                    "pod must be a str or Pod, not %s" % type(pod).__name__)
+        if not_pod is not None:
+            if isinstance(not_pod, Pod):
+                params["not_pod"] = not_pod.name
+            elif isinstance(not_pod, str):
+                params["not_pod"] = not_pod
+            else:
+                raise TypeError(
+                    "not_pod must be a str or Pod, not %s" %
+                    type(not_pod).__name__)
         if subnets is not None:
             params["subnets"] = [
                 get_param_arg('subnets', idx, Subnet, subnet)
