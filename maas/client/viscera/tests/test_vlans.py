@@ -166,5 +166,28 @@ class TestVlan(TestCase):
         }
         vlan.save()
         Vlan._handler.update.assert_called_once_with(
-            fabric_id=fabric_id, vid=vid, fabric=new_fabric.id)
+            fabric_id=fabric_id, vid=vid, _vid=vid, fabric=new_fabric.id)
         self.assertThat(vlan.fabric.id, Equals(new_fabric.id))
+
+    def test__vlan_update_vid(self):
+        origin = make_origin()
+        Vlan = origin.Vlan
+        Vlan._handler.params = ['fabric_id', 'vid']
+        fabric_id = random.randint(1, 100)
+        vlan_id = random.randint(5001, 6000)
+        vid = random.randint(100, 200)
+        new_vid = random.randint(201, 300)
+        vlan = Vlan({
+            "id": vlan_id,
+            "fabric_id": fabric_id,
+            "vid": vid,
+        })
+        vlan.vid = new_vid
+        Vlan._handler.update.return_value = {
+            "id": vlan_id,
+            "vid": new_vid,
+        }
+        vlan.save()
+        Vlan._handler.update.assert_called_once_with(
+            fabric_id=fabric_id, vid=vid, _vid=new_vid)
+        self.assertThat(new_vid, Equals(new_vid))
