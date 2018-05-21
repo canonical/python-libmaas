@@ -80,7 +80,6 @@ class Vlan(Object, metaclass=VlanType):
     async def save(self):
         # Store fabric_id so its reset on save. `fabric_id` is not returned
         # by the API, this is stored through `local_data`.
-        fabric_id = self._data['fabric_id']
         if ('fabric_id' in self._changed_data and
                 self._changed_data['fabric_id']):
             if (self._orig_data['fabric_id'] and
@@ -94,8 +93,6 @@ class Vlan(Object, metaclass=VlanType):
                 # with the new 'fabric_id'.
                 self._changed_data['fabric'] = self._changed_data['fabric_id']
         await super(Vlan, self).save()
-        # Set fabric_id because it was lost from the `save`.
-        self._data['fabric_id'] = fabric_id
 
     async def delete(self):
         """Delete this VLAN."""
