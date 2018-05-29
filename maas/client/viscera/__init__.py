@@ -1193,6 +1193,7 @@ class Origin(OriginBase, metaclass=OriginType):
             ".partitions",
             ".pods",
             ".raids",
+            ".resource_pools",
             ".spaces",
             ".sshkeys",
             ".static_routes",
