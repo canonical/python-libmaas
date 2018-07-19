@@ -204,15 +204,18 @@ class TestPod(TestCase):
         default_storage_pool = make_name_without_spaces("default_storage_pool")
         cpu_over_commit_ratio = random.uniform(0, 10)
         memory_over_commit_ratio = random.uniform(0, 10)
+        host = make_name_without_spaces("host")
         pod.update(
             name=name, default_storage_pool=default_storage_pool,
             cpu_over_commit_ratio=cpu_over_commit_ratio,
-            memory_over_commit_ratio=memory_over_commit_ratio)
+            memory_over_commit_ratio=memory_over_commit_ratio,
+            host=host)
         Pod._handler.update.assert_called_once_with(
             id=pod_data["id"], name=name,
             default_storage_pool=default_storage_pool,
             cpu_over_commit_ratio=str(cpu_over_commit_ratio),
-            memory_over_commit_ratio=str(memory_over_commit_ratio))
+            memory_over_commit_ratio=str(memory_over_commit_ratio),
+            host=host)
 
     def test__pod_update_raises_error_for_default_storage_pool_not_virsh(self):
         Pod = make_origin().Pod
@@ -222,11 +225,13 @@ class TestPod(TestCase):
         default_storage_pool = make_name_without_spaces("default_storage_pool")
         cpu_over_commit_ratio = random.uniform(0, 10)
         memory_over_commit_ratio = random.uniform(0, 10)
+        host = make_name_without_spaces("host")
         self.assertRaises(
             OperationNotAllowed, pod.update, name=name,
             default_storage_pool=default_storage_pool,
             cpu_over_commit_ratio=cpu_over_commit_ratio,
-            memory_over_commit_ratio=memory_over_commit_ratio)
+            memory_over_commit_ratio=memory_over_commit_ratio,
+            host=host)
 
     def test__pod_delete(self):
         Pod = make_origin().Pod

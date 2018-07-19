@@ -119,6 +119,7 @@ class Pod(Object, metaclass=PodType):
         "used", check(dict), check(dict))
     total = ObjectField.Checked(
         "total", check(dict), check(dict))
+    host = ObjectFieldRelated("host", "Node", readonly=True)
 
     async def save(self):
         """Save the `Pod`."""
@@ -201,7 +202,8 @@ class Pod(Object, metaclass=PodType):
             self, *, name: str=None,
             default_storage_pool: str=None,
             cpu_over_commit_ratio: float=None,
-            memory_over_commit_ratio: float=None):
+            memory_over_commit_ratio: float=None,
+            host: str=None):
         """Update the `Pod`.
 
         :param name: Name for the pod (optional).
@@ -213,6 +215,8 @@ class Pod(Object, metaclass=PodType):
         :type cpu_over_commit_ratio: `float`
         :param memory_over_commit_ratio: Memory over commit ratio (optional).
         :type memory_over_commit_ratio: `float`
+        :param host: The host for the pod
+            (optional).
 
         Note: 'type' cannot be updated on a Pod. The Pod must be deleted and
         re-added to change the type.
@@ -226,6 +230,7 @@ class Pod(Object, metaclass=PodType):
             'memory_over_commit_ratio': (
                 str(memory_over_commit_ratio)
                 if memory_over_commit_ratio else None),
+            'host': host,
         })
         if self.type != 'virsh' and default_storage_pool is not None:
             message = (
