@@ -119,6 +119,9 @@ class Pod(Object, metaclass=PodType):
         "used", check(dict), check(dict))
     total = ObjectField.Checked(
         "total", check(dict), check(dict))
+    default_macvlan_mode = ObjectField.Checked(
+        "default_macvlan_mode", check(str), check(str))
+    host = ObjectFieldRelated("host", "Node")
 
     async def save(self):
         """Save the `Pod`."""
@@ -196,42 +199,6 @@ class Pod(Object, metaclass=PodType):
                     "zone must be an int, str or Zone, not %s" %
                     type(zone).__name__)
         return await self._handler.compose(**params, id=self.id)
-
-    async def update(
-            self, *, name: str=None,
-            default_storage_pool: str=None,
-            cpu_over_commit_ratio: float=None,
-            memory_over_commit_ratio: float=None):
-        """Update the `Pod`.
-
-        :param name: Name for the pod (optional).
-        :type name: `str`
-        :param default_storage_pool: Default storage pool for Virsh pod
-            (optional).
-        :type default_storage_pool: `str`
-        :param cpu_over_commit_ratio: CPU over commit ratio (optional).
-        :type cpu_over_commit_ratio: `float`
-        :param memory_over_commit_ratio: Memory over commit ratio (optional).
-        :type memory_over_commit_ratio: `float`
-
-        Note: 'type' cannot be updated on a Pod. The Pod must be deleted and
-        re-added to change the type.
-        """
-        params = remove_None({
-            'name': name,
-            'default_storage_pool': default_storage_pool,
-            'cpu_over_commit_ratio': (
-                str(cpu_over_commit_ratio)
-                if cpu_over_commit_ratio else None),
-            'memory_over_commit_ratio': (
-                str(memory_over_commit_ratio)
-                if memory_over_commit_ratio else None),
-        })
-        if self.type != 'virsh' and default_storage_pool is not None:
-            message = (
-                "'default_storage_pool' only compatiable for pod type `virsh`")
-            raise OperationNotAllowed(message)
-        return await self._handler.update(**params, id=self.id)
 
     async def delete(self):
         """Delete the `Pod`."""
