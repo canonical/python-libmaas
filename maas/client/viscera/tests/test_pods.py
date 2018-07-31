@@ -168,15 +168,17 @@ class TestPod(TestCase):
         hostname = make_name_without_spaces("hostname")
         domain = random.randint(1, 10)
         zone = random.randint(1, 10)
+        interfaces = make_string_without_spaces()
         pod.compose(
             cores=cores, memory=memory, cpu_speed=cpu_speed,
             architecture=architecture, storage=storage,
-            hostname=hostname, domain=domain, zone=zone)
+            hostname=hostname, domain=domain, zone=zone,
+            interfaces=interfaces)
         Pod._handler.compose.assert_called_once_with(
             id=pod_data["id"], cores=str(cores), memory=str(memory),
             cpu_speed=str(cpu_speed), architecture=architecture,
             storage=storage, hostname=hostname, domain=str(domain),
-            zone=str(zone))
+            zone=str(zone), interfaces=interfaces)
 
     def test__pod_compose_raises_type_error_for_zone(self):
         Pod = make_origin().Pod
@@ -190,10 +192,11 @@ class TestPod(TestCase):
         hostname = make_name_without_spaces("hostname")
         domain = random.randint(1, 10)
         zone = 0.1
+        interfaces = make_string_without_spaces()
         self.assertRaises(
             TypeError, pod.compose, cores=cores, memory=memory,
             cpu_speed=cpu_speed, architecture=architecture, storage=storage,
-            hostname=hostname, domain=domain, zone=zone)
+            hostname=hostname, domain=domain, zone=zone, interfaces=interfaces)
 
     def test__pod_delete(self):
         Pod = make_origin().Pod

@@ -152,7 +152,8 @@ class Pod(Object, metaclass=PodType):
             cpu_speed: int=None, architecture: str=None,
             storage: typing.Sequence[str]=None, hostname: str=None,
             domain: typing.Union[int, str]=None,
-            zone: typing.Union[int, str, Zone]=None):
+            zone: typing.Union[int, str, Zone]=None,
+            interfaces: typing.Sequence[str]=None):
         """Compose a machine from `Pod`.
 
         All fields below are optional:
@@ -175,6 +176,36 @@ class Pod(Object, metaclass=PodType):
         :type domain: `int` or `str`
         :param zone: The zone ID for the machine (optional).
         :type zone: `int` or 'str' or `Zone`
+        :param interfaces: A labeled constraint map associating constraint
+            labels with interface properties that should be matched. Returned
+            nodes must have one or more interface matching the specified
+            constraints. The labeled constraint map must be in the format:
+            ``<label>:<key>=<value>[,<key2>=<value2>[,...]]``
+
+            Each key can be one of the following:
+
+            - id: Matches an interface with the specific id
+            - fabric: Matches an interface attached to the specified fabric.
+            - fabric_class: Matches an interface attached to a fabric
+              with the specified class.
+            - ip: Matches an interface with the specified IP address
+              assigned to it.
+            - mode: Matches an interface with the specified mode. (Currently,
+              the only supported mode is "unconfigured".)
+            - name: Matches an interface with the specified name.
+              (For example, "eth0".)
+            - hostname: Matches an interface attached to the node with
+              the specified hostname.
+            - subnet: Matches an interface attached to the specified subnet.
+            - space: Matches an interface attached to the specified space.
+            - subnet_cidr: Matches an interface attached to the specified
+              subnet CIDR. (For example, "192.168.0.0/24".)
+            - type: Matches an interface of the specified type. (Valid
+              types: "physical", "vlan", "bond", "bridge", or "unknown".)
+            - vlan: Matches an interface on the specified VLAN.
+            - vid: Matches an interface on a VLAN with the specified VID.
+            - tag: Matches an interface tagged with the specified tag.
+        :type interfaces: `str`
         :returns: The created Machine
         :rtype: `Machine`
         """
@@ -186,6 +217,7 @@ class Pod(Object, metaclass=PodType):
             'storage': storage,
             'hostname': hostname,
             'domain': str(domain) if domain else None,
+            'interfaces': interfaces,
         })
         if zone is not None:
             if isinstance(zone, Zone):
