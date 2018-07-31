@@ -209,6 +209,15 @@ class TestClient(TestCase):
             ),
         ))
 
+    def test__client_maps_resource_pools(self):
+        self.assertThat(self.client, MatchesClient(
+            resource_pools=MatchesFacade(
+                create=self.origin.ResourcePools.create,
+                get=self.origin.ResourcePool.read,
+                list=self.origin.ResourcePools.read,
+            ),
+        ))
+
 
 def MatchesClient(**facades):
     """Matches a `facade.Client` with the given facades."""
