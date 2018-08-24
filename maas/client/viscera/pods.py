@@ -121,7 +121,7 @@ class Pod(Object, metaclass=PodType):
         "total", check(dict), check(dict))
     default_macvlan_mode = ObjectField.Checked(
         "default_macvlan_mode", check(str), check(str))
-    host = ObjectFieldRelated("host", "Node")
+    host = ObjectFieldRelated("host", "Node", readonly=True)
 
     async def save(self):
         """Save the `Pod`."""
