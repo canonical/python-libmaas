@@ -101,7 +101,7 @@ class ApplicationBuilder:
             view.set(action, handler)
 
     def serve(self):
-        """Return an maas_async context manager to serve the built application."""
+        """Return an async context manager to serve the built application."""
         return ApplicationRunner(
             self._application, self._basepath)
 
