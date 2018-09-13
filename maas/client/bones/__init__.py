@@ -20,7 +20,7 @@ import aiohttp
 from . import helpers
 from .. import utils
 from ..utils import profiles
-from ..utils.async import asynchronous
+from ..utils.maas_async import asynchronous
 
 
 class SessionError(Exception):

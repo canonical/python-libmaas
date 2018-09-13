@@ -5,7 +5,7 @@ __all__ = [
     "login",
 ]
 
-from .utils.async import asynchronous
+from .utils.maas_async import asynchronous
 
 
 @asynchronous

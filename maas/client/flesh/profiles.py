@@ -25,7 +25,7 @@ from ..utils import (
     auth,
     profiles,
 )
-from ..utils.async import asynchronous
+from ..utils.maas_async import asynchronous
 
 
 class cmd_login(Command):

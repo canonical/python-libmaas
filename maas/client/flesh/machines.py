@@ -23,7 +23,7 @@ from . import (
 from .. import utils
 from ..bones import CallError
 from ..enum import NodeStatus
-from ..utils.async import asynchronous
+from ..utils.maas_async import asynchronous
 
 
 def validate_file(parser, arg):

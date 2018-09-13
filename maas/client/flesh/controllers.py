@@ -13,7 +13,7 @@ from . import (
     tables,
 )
 from ..enum import NodeType
-from ..utils.async import asynchronous
+from ..utils.maas_async import asynchronous
 
 
 class cmd_controllers(OriginPagedTableCommand):
