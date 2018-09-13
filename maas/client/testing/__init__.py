@@ -33,7 +33,7 @@ import testscenarios
 from testtools import testcase
 from testtools.matchers import DocTestMatches
 
-from ..utils.async import Asynchronous
+from ..utils.maas_async import Asynchronous
 
 
 random_letters = map(
