@@ -23,7 +23,7 @@ from testtools.matchers import (
     MatchesPredicate,
 )
 
-from .. import async
+from .. import maas_async
 from ...testing import TestCase
 
 
@@ -35,12 +35,12 @@ class TestAsynchronousWrapper(TestCase):
 
     def test_returns_plain_result_unaltered_when_loop_not_running(self):
         token = object()
-        func = async.asynchronous(lambda: token)
+        func = maas_async.asynchronous(lambda: token)
         self.assertThat(func(), Is(token))
 
     def test_returns_plain_result_unaltered_when_loop_running(self):
         token = object()
-        func = async.asynchronous(lambda: token)
+        func = maas_async.asynchronous(lambda: token)
 
         async def within_event_loop():
             loop = asyncio.get_event_loop()
@@ -53,12 +53,12 @@ class TestAsynchronousWrapper(TestCase):
 
     def test_blocks_on_awaitable_result_when_loop_not_running(self):
         token = asyncio.sleep(0.0)
-        func = async.asynchronous(lambda: token)
+        func = maas_async.asynchronous(lambda: token)
         self.assertThat(func(), Is(None))
 
     def test_returns_awaitable_result_unaltered_when_loop_running(self):
         token = asyncio.sleep(0.0)
-        func = async.asynchronous(lambda: token)
+        func = maas_async.asynchronous(lambda: token)
 
         async def within_event_loop():
             loop = asyncio.get_event_loop()
@@ -78,7 +78,7 @@ class TestAsynchronousType(TestCase):
     def test_callable_attributes_are_wrapped(self):
         # `Asynchronous` groks class- and static-methods.
 
-        class Class(metaclass=async.Asynchronous):
+        class Class(metaclass=maas_async.Asynchronous):
 
             attribute = 123
 

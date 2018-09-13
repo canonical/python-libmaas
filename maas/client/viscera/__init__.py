@@ -46,7 +46,7 @@ from ..utils import (
     get_all_subclasses,
     vars_class,
 )
-from ..utils.async import Asynchronous
+from ..utils.maas_async import Asynchronous
 
 
 undefined = object()

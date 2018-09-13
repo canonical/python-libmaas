@@ -336,7 +336,6 @@ class TestAuthenticate(TestCase):
         @builder.handle("anon:Version.read")
         async def version(request):
             return {"capabilities": []}
-
         async with builder.serve() as baseurl:
             with ExpectedException(helpers.LoginNotSupported):
                 await helpers.authenticate(baseurl, "username", "password")
@@ -351,7 +350,6 @@ class TestAuthenticate(TestCase):
         @builder.route("POST", "/accounts/authenticate/")
         async def deploy(request):
             raise aiohttp.web.HTTPForbidden()
-
         async with builder.serve() as baseurl:
             with ExpectedException(helpers.RemoteError):
                 await helpers.authenticate(baseurl, "username", "password")
