@@ -31,7 +31,7 @@ import aiohttp
 from macaroonbakery import httpbakery
 
 from ..utils import api_url
-from ..utils.async import asynchronous
+from ..utils.maas_async import asynchronous
 from ..utils.creds import Credentials
 from ..utils.profiles import Profile
 

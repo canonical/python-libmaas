@@ -23,7 +23,7 @@ from . import (
     ObjectSet,
     ObjectType,
 )
-from ..utils.async import is_loop_running
+from ..utils.maas_async import is_loop_running
 
 #
 # The query API call returns:
