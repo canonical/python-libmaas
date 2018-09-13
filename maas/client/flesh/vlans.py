@@ -12,7 +12,7 @@ from . import (
     tables,
 )
 from ..bones import CallError
-from ..utils.async import asynchronous
+from ..utils.maas_async import asynchronous
 
 
 class cmd_vlans(OriginPagedTableCommand):
