@@ -387,6 +387,15 @@ class TestAuthenticateWithMacaroon(TestCase):
         else:
             self.fail("LoginError not raised")
 
+    async def test__authenticate_macaroon_not_supported(self):
+        self.mock_response.status_code = 401
+        try:
+            await helpers.authenticate_with_macaroon("http://example.com")
+        except helpers.MacaroonLoginNotSupported as e:
+            self.assertEqual(str(e), "Macaroon authentication not supported")
+        else:
+            self.fail("MacaroonLoginNotSupported not raised")
+
 
 class TestDeriveResourceName(TestCase):
     """Tests for `derive_resource_name`."""
