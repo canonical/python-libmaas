@@ -143,6 +143,10 @@ class LoginNotSupported(LoginError):
     """Server does not support login-type auth for API clients."""
 
 
+class MacaroonLoginNotSupported(LoginError):
+    """Server does not support macaroon auth for API clients."""
+
+
 @asynchronous
 async def login(url, *, anonymous=False, username=None, password=None,
                 insecure=False):
@@ -227,7 +231,12 @@ async def authenticate_with_macaroon(url, insecure=False):
         resp = client.request(
             'POST', '{}/account/?op=create_authorisation_token'.format(url),
             verify=not insecure)
-        if resp.status_code != 200:
+        if resp.status_code == HTTPStatus.UNAUTHORIZED:
+            # if the auteentication with Candid fails, an exception is raised
+            # above so we don't get here
+            raise MacaroonLoginNotSupported(
+                'Macaroon authentication not supported')
+        if resp.status_code != HTTPStatus.OK:
             raise LoginError('Login failed: {}'.format(resp.text))
         result = resp.json()
         return '{consumer_key}:{token_key}:{token_secret}'.format(**result)
