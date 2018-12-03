@@ -32,11 +32,11 @@ class SubnetsType(ObjectType):
         return cls(map(cls._object, data))
 
     async def create(
-            cls, cidr: str, vlan: Union[Vlan, int]=None, *,
-            name: str=None, description: str=None,
-            gateway_ip: str=None, rdns_mode: RDNSMode=None,
-            dns_servers: Union[Sequence[str], str]=None,
-            managed: bool=None):
+            cls, cidr: str, vlan: Union[Vlan, int] = None, *,
+            name: str = None, description: str = None,
+            gateway_ip: str = None, rdns_mode: RDNSMode = None,
+            dns_servers: Union[Sequence[str], str] = None,
+            managed: bool = None):
         """
         Create a `Subnet` in MAAS.
 

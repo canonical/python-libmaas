@@ -210,8 +210,8 @@ class InterfaceLinksType(ObjectType):
 
     async def create(
             cls, interface: Interface, mode: LinkMode,
-            subnet: Union[Subnet, int]=None, ip_address: str=None,
-            force: bool=False, default_gateway: bool=False):
+            subnet: Union[Subnet, int] = None, ip_address: str = None,
+            force: bool = False, default_gateway: bool = False):
         """
         Create a link on `Interface` in MAAS.
 
@@ -316,15 +316,16 @@ class InterfacesType(ObjectType):
 
     async def create(
             cls, node: Union[Node, str],
-            interface_type: InterfaceType=InterfaceType.PHYSICAL, *,
-            name: str=None, mac_address: str=None, tags: Iterable[str]=None,
-            vlan: Union[Vlan, int]=None, parent: Union[Interface, int]=None,
-            parents: Iterable[Union[Interface, int]]=None, mtu: int=None,
-            accept_ra: bool=None, autoconf: bool=None,
-            bond_mode: str=None, bond_miimon: int=None,
-            bond_downdelay: int=None, bond_updelay: int=None,
-            bond_lacp_rate: str=None, bond_xmit_hash_policy: str=None,
-            bridge_stp: bool=None, bridge_fd: int=None):
+            interface_type: InterfaceType = InterfaceType.PHYSICAL, *,
+            name: str = None, mac_address: str = None,
+            tags: Iterable[str] = None, vlan: Union[Vlan, int] = None,
+            parent: Union[Interface, int] = None,
+            parents: Iterable[Union[Interface, int]] = None, mtu: int = None,
+            accept_ra: bool = None, autoconf: bool = None,
+            bond_mode: str = None, bond_miimon: int = None,
+            bond_downdelay: int = None, bond_updelay: int = None,
+            bond_lacp_rate: str = None, bond_xmit_hash_policy: str = None,
+            bridge_stp: bool = None, bridge_fd: int = None):
         """
         Create a `Interface` in MAAS.
 

@@ -107,8 +107,8 @@ class BootResourcesType(ObjectType):
 
     async def create(
             cls, name: str, architecture: str, content: io.IOBase, *,
-            title: str="",
-            filetype: BootResourceFileType=BootResourceFileType.TGZ,
+            title: str = "",
+            filetype: BootResourceFileType = BootResourceFileType.TGZ,
             chunk_size=(1 << 22), progress_callback=None):
         """Create a `BootResource`.
 

@@ -87,7 +87,7 @@ class VolumeGroupsType(ObjectType):
     async def create(
             cls, node: Union[Node, str], name: str,
             devices: Iterable[Union[BlockDevice, Partition]],
-            *, uuid: str=None):
+            *, uuid: str = None):
         """
         Create a volume group on a Node.
 
