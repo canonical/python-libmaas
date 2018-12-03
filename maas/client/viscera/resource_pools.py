@@ -21,7 +21,7 @@ class ResourcePoolsType(ObjectType):
         data = await cls._handler.read()
         return cls(map(cls._object, data))
 
-    async def create(cls, name: str, description: str=None):
+    async def create(cls, name: str, description: str = None):
         """
         Create a `ResourcePool` in MAAS.
 

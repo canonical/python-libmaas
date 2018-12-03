@@ -42,7 +42,7 @@ class RemoteError(Exception):
 
 async def fetch_api_description(
         url: typing.Union[str, ParseResult, SplitResult],
-        insecure: bool=False):
+        insecure: bool = False):
     """Fetch the API description from the remote MAAS instance."""
     url_describe = urljoin(_ensure_url_string(url), "describe/")
     connector = aiohttp.TCPConnector(verify_ssl=(not insecure))

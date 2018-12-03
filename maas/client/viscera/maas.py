@@ -173,7 +173,7 @@ class MAASType(ObjectType):
         server config.
         """
         data = await cls.get_config("upstream_dns")
-        return [] if data is None else re.split("[,\s]+", data)
+        return [] if data is None else re.split(r'[,\s]+', data)
 
     async def set_upstream_dns(
             cls, addresses: typing.Optional[typing.Sequence[str]]):

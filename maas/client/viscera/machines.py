@@ -69,9 +69,9 @@ class MachinesType(NodesType):
     async def create(
             cls, architecture: str, mac_addresses: typing.Sequence[str],
             power_type: str,
-            power_parameters: typing.Mapping[str, typing.Any]=None, *,
-            subarchitecture: str=None, min_hwe_kernel: str=None,
-            hostname: str=None, domain: typing.Union[int, str]=None):
+            power_parameters: typing.Mapping[str, typing.Any] = None, *,
+            subarchitecture: str = None, min_hwe_kernel: str = None,
+            hostname: str = None, domain: typing.Union[int, str] = None):
         """
         Create a new machine.
 
@@ -112,27 +112,27 @@ class MachinesType(NodesType):
 
     async def allocate(
             cls, *,
-            hostname: str=None,
-            architectures: typing.Sequence[str]=None,
-            cpus: int=None,
-            fabrics: typing.Sequence[FabricParam]=None,
-            interfaces: typing.Sequence[InterfaceParam]=None,
-            memory: float=None,
-            pod: typing.Union[str, Pod]=None,
-            not_pod: typing.Union[str, Pod]=None,
-            pod_type: str=None,
-            not_pod_type: str=None,
-            storage: typing.Sequence[str]=None,
-            subnets: typing.Sequence[SubnetParam]=None,
-            tags: typing.Sequence[str]=None,
-            zone: typing.Union[str, Zone]=None,
-            not_fabrics: typing.Sequence[FabricParam]=None,
-            not_subnets: typing.Sequence[SubnetParam]=None,
-            not_tags: typing.Sequence[str]=None,
-            not_zones: typing.Sequence[ZoneParam]=None,
-            agent_name: str=None, comment: str=None,
-            bridge_all: bool=None, bridge_stp: bool=None, bridge_fd: int=None,
-            dry_run: bool=None, verbose: bool=None):
+            hostname: str = None,
+            architectures: typing.Sequence[str] = None,
+            cpus: int = None,
+            fabrics: typing.Sequence[FabricParam] = None,
+            interfaces: typing.Sequence[InterfaceParam] = None,
+            memory: float = None,
+            pod: typing.Union[str, Pod] = None,
+            not_pod: typing.Union[str, Pod] = None,
+            pod_type: str = None,
+            not_pod_type: str = None,
+            storage: typing.Sequence[str] = None,
+            subnets: typing.Sequence[SubnetParam] = None,
+            tags: typing.Sequence[str] = None,
+            zone: typing.Union[str, Zone] = None,
+            not_fabrics: typing.Sequence[FabricParam] = None,
+            not_subnets: typing.Sequence[SubnetParam] = None,
+            not_tags: typing.Sequence[str] = None,
+            not_zones: typing.Sequence[ZoneParam] = None,
+            agent_name: str = None, comment: str = None,
+            bridge_all: bool = None, bridge_stp: bool = None,
+            bridge_fd: int = None, dry_run: bool = None, verbose: bool = None):
         """
         Allocate a machine.
 
@@ -410,7 +410,7 @@ class Machine(Node, metaclass=MachineType):
         data = await self._handler.power_parameters(system_id=self.system_id)
         return data
 
-    async def abort(self, *, comment: str=None):
+    async def abort(self, *, comment: str = None):
         """Abort the current action.
 
         :param comment: Reason for aborting the action.
@@ -431,11 +431,11 @@ class Machine(Node, metaclass=MachineType):
         return self
 
     async def commission(
-            self, *, enable_ssh: bool=None, skip_networking: bool=None,
-            skip_storage: bool=None,
-            commissioning_scripts: typing.Sequence[str]=None,
-            testing_scripts: typing.Sequence[str]=None,
-            wait: bool=False, wait_interval: int=5):
+            self, *, enable_ssh: bool = None, skip_networking: bool = None,
+            skip_storage: bool = None,
+            commissioning_scripts: typing.Sequence[str] = None,
+            testing_scripts: typing.Sequence[str] = None,
+            wait: bool = False, wait_interval: int = 5):
         """Commission this machine.
 
         :param enable_ssh: Prevent the machine from powering off after running
@@ -495,9 +495,9 @@ class Machine(Node, metaclass=MachineType):
             return self
 
     async def deploy(
-            self, *, user_data: typing.Union[bytes, str]=None,
-            distro_series: str=None, hwe_kernel: str=None, comment: str=None,
-            wait: bool=False, wait_interval: int=5):
+            self, *, user_data: typing.Union[bytes, str] = None,
+            distro_series: str = None, hwe_kernel: str = None,
+            comment: str = None, wait: bool = False, wait_interval: int = 5):
         """Deploy this machine.
 
         :param user_data: User-data to provide to the machine when booting. If
@@ -540,7 +540,8 @@ class Machine(Node, metaclass=MachineType):
                 raise FailedDeployment(msg, self)
             return self
 
-    async def enter_rescue_mode(self, wait: bool=False, wait_interval: int=5):
+    async def enter_rescue_mode(
+            self, wait: bool = False, wait_interval: int = 5):
         """
         Send this machine into 'rescue mode'.
 
@@ -571,7 +572,8 @@ class Machine(Node, metaclass=MachineType):
                 raise RescueModeFailure(msg, self)
             return self
 
-    async def exit_rescue_mode(self, wait: bool=False, wait_interval: int=5):
+    async def exit_rescue_mode(
+            self, wait: bool = False, wait_interval: int = 5):
         """
         Exit rescue mode.
 
@@ -618,7 +620,7 @@ class Machine(Node, metaclass=MachineType):
         data = await self._handler.details(system_id=self.system_id)
         return bson.decode_all(data)[0]
 
-    async def mark_broken(self, *, comment: str=None):
+    async def mark_broken(self, *, comment: str = None):
         """Mark broken.
 
         :param comment: Reason machine is broken.
@@ -632,7 +634,7 @@ class Machine(Node, metaclass=MachineType):
         self._data = await self._handler.mark_broken(**params)
         return self
 
-    async def mark_fixed(self, *, comment: str=None):
+    async def mark_fixed(self, *, comment: str = None):
         """Mark fixes.
 
         :param comment: Reason machine is fixed.
@@ -647,9 +649,9 @@ class Machine(Node, metaclass=MachineType):
         return self
 
     async def release(
-            self, *, comment: str=None, erase: bool=None,
-            secure_erase: bool=None, quick_erase: bool=None,
-            wait: bool=False, wait_interval: int=5):
+            self, *, comment: str = None, erase: bool = None,
+            secure_erase: bool = None, quick_erase: bool = None,
+            wait: bool = False, wait_interval: int = 5):
         """
         Release the machine.
 
@@ -705,7 +707,8 @@ class Machine(Node, metaclass=MachineType):
             return self
 
     async def power_on(
-            self, comment: str=None, wait: bool=False, wait_interval: int=5):
+            self, comment: str = None,
+            wait: bool = False, wait_interval: int = 5):
         """
         Power on.
 
@@ -744,8 +747,8 @@ class Machine(Node, metaclass=MachineType):
             return self
 
     async def power_off(
-            self, stop_mode: PowerStopMode=PowerStopMode.HARD,
-            comment: str=None, wait: bool=False, wait_interval: int=5):
+            self, stop_mode: PowerStopMode = PowerStopMode.HARD,
+            comment: str = None, wait: bool = False, wait_interval: int = 5):
         """
         Power off.
 
