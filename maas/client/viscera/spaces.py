@@ -23,7 +23,7 @@ class SpacesType(ObjectType):
         return cls(map(cls._object, data))
 
     async def create(
-            cls, *, name: str=None, description: str=None):
+            cls, *, name: str = None, description: str = None):
         """
         Create a `Space` in MAAS.
 

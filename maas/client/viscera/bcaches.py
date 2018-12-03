@@ -90,7 +90,7 @@ class BcachesType(ObjectType):
             backing_device: Union[BlockDevice, Partition],
             cache_set: Union[BcacheCacheSet, int],
             cache_mode: CacheMode, *,
-            uuid: str=None):
+            uuid: str = None):
         """
         Create a Bcache on a Node.
 

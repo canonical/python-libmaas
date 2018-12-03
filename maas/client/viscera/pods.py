@@ -29,11 +29,11 @@ class PodsType(ObjectType):
     async def create(
             cls, *, type: str,
             power_address: str,
-            power_user: str=None,
-            power_pass: str=None,
-            name: str=None,
-            zone: typing.Union[str, Zone]=None,
-            tags: typing.Sequence[str]=None):
+            power_user: str = None,
+            power_pass: str = None,
+            name: str = None,
+            zone: typing.Union[str, Zone] = None,
+            tags: typing.Sequence[str] = None):
         """Create a `Pod` in MAAS.
 
         :param type: Type of pod to create (rsd, virsh) (required).
@@ -148,12 +148,12 @@ class Pod(Object, metaclass=PodType):
         return await self._handler.parameters(id=self.id)
 
     async def compose(
-            self, *, cores: int=None, memory: int=None,
-            cpu_speed: int=None, architecture: str=None,
-            storage: typing.Sequence[str]=None, hostname: str=None,
-            domain: typing.Union[int, str]=None,
-            zone: typing.Union[int, str, Zone]=None,
-            interfaces: typing.Sequence[str]=None):
+            self, *, cores: int = None, memory: int = None,
+            cpu_speed: int = None, architecture: str = None,
+            storage: typing.Sequence[str] = None, hostname: str = None,
+            domain: typing.Union[int, str] = None,
+            zone: typing.Union[int, str, Zone] = None,
+            interfaces: typing.Sequence[str] = None):
         """Compose a machine from `Pod`.
 
         All fields below are optional:

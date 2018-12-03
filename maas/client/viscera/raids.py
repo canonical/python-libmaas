@@ -89,7 +89,7 @@ class RaidsType(ObjectType):
             cls, node: Union[Node, str],
             level: Union[RaidLevel, str],
             devices: Iterable[Union[BlockDevice, Partition]], *,
-            name: str=None, uuid: str=None,
+            name: str = None, uuid: str = None,
             spare_devices: Iterable[Union[BlockDevice, Partition]]):
         """
         Create a RAID on a Node.

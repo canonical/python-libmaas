@@ -144,11 +144,11 @@ class VlansType(ObjectType):
 
     async def create(
             cls, fabric: Union[Fabric, int], vid: int, *,
-            name: str=None, description: str=None, mtu: int=None,
-            relay_vlan: Union[Vlan, int]=None, dhcp_on: bool=False,
-            primary_rack: Union[RackController, str]=None,
-            secondary_rack: Union[RackController, str]=None,
-            space: Union[Space, int]=None):
+            name: str = None, description: str = None, mtu: int = None,
+            relay_vlan: Union[Vlan, int] = None, dhcp_on: bool = False,
+            primary_rack: Union[RackController, str] = None,
+            secondary_rack: Union[RackController, str] = None,
+            space: Union[Space, int] = None):
         """
         Create a `Vlan` in MAAS.
 

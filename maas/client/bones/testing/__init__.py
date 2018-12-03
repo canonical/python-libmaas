@@ -29,7 +29,7 @@ def list_api_descriptions():
     number of the API.
     """
     for filename in resource_listdir(__name__, "."):
-        match = re.match("api(\d)(\d)[.]json", filename)
+        match = re.match(r'api(\d)(\d)[.]json', filename)
         if match is not None:
             version = tuple(map(int, match.groups()))
             path = resource_filename(__name__, filename)
