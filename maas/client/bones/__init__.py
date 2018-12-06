@@ -296,6 +296,11 @@ class ActionAPI:
         """
         data = dict(data)
         params = {name: data.pop(name) for name in self.handler.params}
+        # Extract the power parameters if they exist.
+        if 'power_parameters' in data:
+            power_parameters = data.pop('power_parameters')
+            for name, value in power_parameters.items():
+                data['power_parameters_%s' % name] = value
         for key, value in data.items():
             if key.startswith('_'):
                 data[key[1:]] = data.pop(key)

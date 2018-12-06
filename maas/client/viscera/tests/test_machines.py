@@ -84,6 +84,22 @@ class TestMachine(TestCase):
             system_id=machine.system_id
         )
 
+    def test__set_power_parameters(self):
+        machine = make_machines_origin().Machine({
+            "system_id": make_name_without_spaces("system-id"),
+            "hostname": make_name_without_spaces("hostname"),
+        })
+        power_type = make_name_without_spaces("power_type")
+        power_parameters = {
+            "key": make_name_without_spaces("value"),
+        }
+        machine.set_power_parameters(power_type, power_parameters)
+        machine._handler.update.assert_called_once_with(
+            system_id=machine.system_id,
+            power_type=power_type,
+            power_parameters=power_parameters,
+        )
+
     def test__abort(self):
         data = {
             "system_id": make_name_without_spaces("system-id"),

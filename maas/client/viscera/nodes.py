@@ -18,7 +18,10 @@ from . import (
     ObjectType,
     to,
 )
-from ..enum import NodeType
+from ..enum import (
+    NodeType,
+    PowerState,
+)
 
 
 def normalize_hostname(hostname):
@@ -74,6 +77,10 @@ class Node(Object, metaclass=NodeTypeMeta):
     node_type = ObjectField.Checked(
         "node_type", to(NodeType), readonly=True)
     owner = ObjectFieldRelated("owner", "User")
+    power_state = ObjectField.Checked(
+        "power_state", to(PowerState), readonly=True)
+    power_type = ObjectField.Checked(
+        "power_type", check(str), readonly=True)
     system_id = ObjectField.Checked(
         "system_id", check(str), readonly=True, pk=True)
     tags = ObjectField.Checked(  # List[str]
@@ -130,3 +137,14 @@ class Node(Object, metaclass=NodeTypeMeta):
                 'Cannot convert to `RegionController`, node_type is not a '
                 'region controller.')
         return self._origin.RegionController(self._data)
+
+    async def get_power_parameters(self):
+        """Get the power paramters for this node."""
+        data = await self._handler.power_parameters(system_id=self.system_id)
+        return data
+
+    async def set_power_parameters(self, power_type, power_parameters={}):
+        """Set the power parameters for this node."""
+        await self._handler.update(
+            system_id=self.system_id, power_type=power_type,
+            power_parameters=power_parameters)
