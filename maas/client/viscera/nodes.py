@@ -79,8 +79,7 @@ class Node(Object, metaclass=NodeTypeMeta):
     owner = ObjectFieldRelated("owner", "User")
     power_state = ObjectField.Checked(
         "power_state", to(PowerState), readonly=True)
-    power_type = ObjectField.Checked(
-        "power_type", check(str), readonly=True)
+    power_type = ObjectField.Checked("power_type", check(str))
     system_id = ObjectField.Checked(
         "system_id", check(str), readonly=True, pk=True)
     tags = ObjectField.Checked(  # List[str]
@@ -143,8 +142,11 @@ class Node(Object, metaclass=NodeTypeMeta):
         data = await self._handler.power_parameters(system_id=self.system_id)
         return data
 
-    async def set_power_parameters(self, power_type, power_parameters={}):
-        """Set the power parameters for this node."""
-        await self._handler.update(
+    async def set_power(
+            self, power_type: str,
+            power_parameters: typing.Mapping[str, typing.Any] = {}):
+        """Set the power type and power parameters for this node."""
+        data = await self._handler.update(
             system_id=self.system_id, power_type=power_type,
             power_parameters=power_parameters)
+        self.power_type = data['power_type']

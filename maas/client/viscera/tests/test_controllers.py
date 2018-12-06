@@ -48,21 +48,27 @@ class TestRackController(TestCase):
             system_id=rack_controller.system_id
         )
 
-    def test__set_power_parameters(self):
+    def test__set_power(self):
+        orig_power_type = make_name_without_spaces("power_type")
+        new_power_type = make_name_without_spaces("power_type")
         rack_controller = make_origin().RackController({
             "system_id": make_name_without_spaces("system-id"),
             "hostname": make_name_without_spaces("hostname"),
+            "power_type": orig_power_type,
         })
-        power_type = make_name_without_spaces("power_type")
         power_parameters = {
             "key": make_name_without_spaces("value"),
         }
-        rack_controller.set_power_parameters(power_type, power_parameters)
+        rack_controller._handler.update.return_value = {
+            "power_type": new_power_type}
+        rack_controller.set_power(new_power_type, power_parameters)
         rack_controller._handler.update.assert_called_once_with(
             system_id=rack_controller.system_id,
-            power_type=power_type,
+            power_type=new_power_type,
             power_parameters=power_parameters,
         )
+        self.assertThat(
+            rack_controller.power_type, Equals(new_power_type))
 
 
 class TestRegionController(TestCase):
@@ -94,18 +100,24 @@ class TestRegionController(TestCase):
             system_id=region_controller.system_id
         )
 
-    def test__set_power_parameters(self):
+    def test__set_power(self):
+        orig_power_type = make_name_without_spaces("power_type")
+        new_power_type = make_name_without_spaces("power_type")
         region_controller = make_origin().RegionController({
             "system_id": make_name_without_spaces("system-id"),
             "hostname": make_name_without_spaces("hostname"),
+            "power_type": orig_power_type,
         })
-        power_type = make_name_without_spaces("power_type")
         power_parameters = {
             "key": make_name_without_spaces("value"),
         }
-        region_controller.set_power_parameters(power_type, power_parameters)
+        region_controller._handler.update.return_value = {
+            "power_type": new_power_type}
+        region_controller.set_power(new_power_type, power_parameters)
         region_controller._handler.update.assert_called_once_with(
             system_id=region_controller.system_id,
-            power_type=power_type,
+            power_type=new_power_type,
             power_parameters=power_parameters,
         )
+        self.assertThat(
+            region_controller.power_type, Equals(new_power_type))
