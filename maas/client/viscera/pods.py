@@ -29,11 +29,11 @@ class PodsType(ObjectType):
     async def create(
             cls, *, type: str,
             power_address: str,
-            power_user: str=None,
-            power_pass: str=None,
-            name: str=None,
-            zone: typing.Union[str, Zone]=None,
-            tags: typing.Sequence[str]=None):
+            power_user: str = None,
+            power_pass: str = None,
+            name: str = None,
+            zone: typing.Union[str, Zone] = None,
+            tags: typing.Sequence[str] = None):
         """Create a `Pod` in MAAS.
 
         :param type: Type of pod to create (rsd, virsh) (required).
@@ -119,6 +119,9 @@ class Pod(Object, metaclass=PodType):
         "used", check(dict), check(dict))
     total = ObjectField.Checked(
         "total", check(dict), check(dict))
+    default_macvlan_mode = ObjectField.Checked(
+        "default_macvlan_mode", check(str), check(str))
+    host = ObjectFieldRelated("host", "Node", readonly=True)
 
     async def save(self):
         """Save the `Pod`."""
@@ -145,11 +148,12 @@ class Pod(Object, metaclass=PodType):
         return await self._handler.parameters(id=self.id)
 
     async def compose(
-            self, *, cores: int=None, memory: int=None,
-            cpu_speed: int=None, architecture: str=None,
-            storage: typing.Sequence[str]=None, hostname: str=None,
-            domain: typing.Union[int, str]=None,
-            zone: typing.Union[int, str, Zone]=None):
+            self, *, cores: int = None, memory: int = None,
+            cpu_speed: int = None, architecture: str = None,
+            storage: typing.Sequence[str] = None, hostname: str = None,
+            domain: typing.Union[int, str] = None,
+            zone: typing.Union[int, str, Zone] = None,
+            interfaces: typing.Sequence[str] = None):
         """Compose a machine from `Pod`.
 
         All fields below are optional:
@@ -172,6 +176,36 @@ class Pod(Object, metaclass=PodType):
         :type domain: `int` or `str`
         :param zone: The zone ID for the machine (optional).
         :type zone: `int` or 'str' or `Zone`
+        :param interfaces: A labeled constraint map associating constraint
+            labels with interface properties that should be matched. Returned
+            nodes must have one or more interface matching the specified
+            constraints. The labeled constraint map must be in the format:
+            ``<label>:<key>=<value>[,<key2>=<value2>[,...]]``
+
+            Each key can be one of the following:
+
+            - id: Matches an interface with the specific id
+            - fabric: Matches an interface attached to the specified fabric.
+            - fabric_class: Matches an interface attached to a fabric
+              with the specified class.
+            - ip: Matches an interface with the specified IP address
+              assigned to it.
+            - mode: Matches an interface with the specified mode. (Currently,
+              the only supported mode is "unconfigured".)
+            - name: Matches an interface with the specified name.
+              (For example, "eth0".)
+            - hostname: Matches an interface attached to the node with
+              the specified hostname.
+            - subnet: Matches an interface attached to the specified subnet.
+            - space: Matches an interface attached to the specified space.
+            - subnet_cidr: Matches an interface attached to the specified
+              subnet CIDR. (For example, "192.168.0.0/24".)
+            - type: Matches an interface of the specified type. (Valid
+              types: "physical", "vlan", "bond", "bridge", or "unknown".)
+            - vlan: Matches an interface on the specified VLAN.
+            - vid: Matches an interface on a VLAN with the specified VID.
+            - tag: Matches an interface tagged with the specified tag.
+        :type interfaces: `str`
         :returns: The created Machine
         :rtype: `Machine`
         """
@@ -183,6 +217,7 @@ class Pod(Object, metaclass=PodType):
             'storage': storage,
             'hostname': hostname,
             'domain': str(domain) if domain else None,
+            'interfaces': interfaces,
         })
         if zone is not None:
             if isinstance(zone, Zone):
@@ -196,42 +231,6 @@ class Pod(Object, metaclass=PodType):
                     "zone must be an int, str or Zone, not %s" %
                     type(zone).__name__)
         return await self._handler.compose(**params, id=self.id)
-
-    async def update(
-            self, *, name: str=None,
-            default_storage_pool: str=None,
-            cpu_over_commit_ratio: float=None,
-            memory_over_commit_ratio: float=None):
-        """Update the `Pod`.
-
-        :param name: Name for the pod (optional).
-        :type name: `str`
-        :param default_storage_pool: Default storage pool for Virsh pod
-            (optional).
-        :type default_storage_pool: `str`
-        :param cpu_over_commit_ratio: CPU over commit ratio (optional).
-        :type cpu_over_commit_ratio: `float`
-        :param memory_over_commit_ratio: Memory over commit ratio (optional).
-        :type memory_over_commit_ratio: `float`
-
-        Note: 'type' cannot be updated on a Pod. The Pod must be deleted and
-        re-added to change the type.
-        """
-        params = remove_None({
-            'name': name,
-            'default_storage_pool': default_storage_pool,
-            'cpu_over_commit_ratio': (
-                str(cpu_over_commit_ratio)
-                if cpu_over_commit_ratio else None),
-            'memory_over_commit_ratio': (
-                str(memory_over_commit_ratio)
-                if memory_over_commit_ratio else None),
-        })
-        if self.type != 'virsh' and default_storage_pool is not None:
-            message = (
-                "'default_storage_pool' only compatiable for pod type `virsh`")
-            raise OperationNotAllowed(message)
-        return await self._handler.update(**params, id=self.id)
 
     async def delete(self):
         """Delete the `Pod`."""

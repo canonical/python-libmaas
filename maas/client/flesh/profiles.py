@@ -25,7 +25,7 @@ from ..utils import (
     auth,
     profiles,
 )
-from ..utils.async import asynchronous
+from ..utils.maas_async import asynchronous
 
 
 class cmd_login(Command):
@@ -96,9 +96,19 @@ class cmd_login(Command):
                 password = options.password
                 if password == '-':
                     password = sys.stdin.readline().strip()
-            profile = await helpers.login(
-                url, anonymous=options.anonymous, username=options.username,
-                password=password, insecure=options.insecure)
+            try:
+                profile = await helpers.login(
+                    url, anonymous=options.anonymous,
+                    username=options.username,
+                    password=password, insecure=options.insecure)
+            except helpers.MacaroonLoginNotSupported:
+                # the server doesn't have external authentication enabled,
+                # propmt for username/password
+                username = read_input("Username")
+                password = read_input("Password", password=True)
+                profile = await helpers.login(
+                    url, username=username, password=password,
+                    insecure=options.insecure)
         else:
             credentials = auth.obtain_credentials(options.apikey)
             session = await bones.SessionAPI.fromURL(

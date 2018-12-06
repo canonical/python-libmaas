@@ -31,7 +31,7 @@ def normalize_hostname(hostname):
 class NodesType(ObjectType):
     """Metaclass for `Nodes`."""
 
-    async def read(cls, *, hostnames: typing.Sequence[str]=None):
+    async def read(cls, *, hostnames: typing.Sequence[str] = None):
         """List nodes.
 
         :param hostnames: Sequence of hostnames to only return.

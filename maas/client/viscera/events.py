@@ -23,7 +23,7 @@ from . import (
     ObjectSet,
     ObjectType,
 )
-from ..utils.async import is_loop_running
+from ..utils.maas_async import is_loop_running
 
 #
 # The query API call returns:
@@ -87,17 +87,17 @@ class EventsType(ObjectType):
 
     async def query(
             cls, *,
-            hostnames: typing.Iterable[str]=None,
-            domains: typing.Iterable[str]=None,
-            zones: typing.Iterable[str]=None,
-            macs: typing.Iterable[str]=None,
-            system_ids: typing.Iterable[str]=None,
-            agent_name: str=None,
-            level: typing.Union[Level, int, str]=None,
-            before: int=None,
-            after: int=None,
-            limit: int=None,
-            owner: typing.Union[User, str]=None):
+            hostnames: typing.Iterable[str] = None,
+            domains: typing.Iterable[str] = None,
+            zones: typing.Iterable[str] = None,
+            macs: typing.Iterable[str] = None,
+            system_ids: typing.Iterable[str] = None,
+            agent_name: str = None,
+            level: typing.Union[Level, int, str] = None,
+            before: int = None,
+            after: int = None,
+            limit: int = None,
+            owner: typing.Union[User, str] = None):
         """Query MAAS for matching events."""
 
         if before is not None and after is not None:

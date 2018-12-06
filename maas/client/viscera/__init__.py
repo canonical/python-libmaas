@@ -46,7 +46,7 @@ from ..utils import (
     get_all_subclasses,
     vars_class,
 )
-from ..utils.async import Asynchronous
+from ..utils.maas_async import Asynchronous
 
 
 undefined = object()
@@ -1193,6 +1193,7 @@ class Origin(OriginBase, metaclass=OriginType):
             ".partitions",
             ".pods",
             ".raids",
+            ".resource_pools",
             ".spaces",
             ".sshkeys",
             ".static_routes",

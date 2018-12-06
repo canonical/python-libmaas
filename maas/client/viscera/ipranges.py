@@ -30,8 +30,8 @@ class IPRangesType(ObjectType):
 
     async def create(
             cls, start_ip: str, end_ip: str, *,
-            type: IPRangeType=IPRangeType.RESERVED,
-            comment: str=None, subnet: Union[Subnet, int]=None):
+            type: IPRangeType = IPRangeType.RESERVED,
+            comment: str = None, subnet: Union[Subnet, int] = None):
         """
         Create a `IPRange` in MAAS.
 

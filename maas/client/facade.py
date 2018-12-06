@@ -245,3 +245,11 @@ class Client:
             "get": origin.Zone.read,
             "list": origin.Zones.read,
         }
+
+    @facade
+    def resource_pools(origin):
+        return {
+            "create": origin.ResourcePools.create,
+            "get": origin.ResourcePool.read,
+            "list": origin.ResourcePools.read,
+        }

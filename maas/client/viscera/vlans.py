@@ -93,7 +93,20 @@ class Vlan(Object, metaclass=VlanType):
                 # Allow the update of the fabric by setting the 'fabric' field
                 # with the new 'fabric_id'.
                 self._changed_data['fabric'] = self._changed_data['fabric_id']
-        await super(Vlan, self).save()
+
+        # Don't call `super().save()` because `vid` can be changed and it has
+        # to be handled specially because its in the resource_uri path.
+        if self._changed_data:
+            update_data = dict(self._changed_data)
+            update_data.update({
+                key: self._orig_data[key]
+                for key in self._handler.params
+            })
+            update_data['vid'] = update_data['_vid'] = self._orig_data['vid']
+            if 'vid' in self._changed_data:
+                update_data['_vid'] = self._changed_data['vid']
+            self._data = await self._handler.update(**update_data)
+
         # Set fabric_id because it was lost from the `save`.
         self._data['fabric_id'] = fabric_id
 
@@ -131,11 +144,11 @@ class VlansType(ObjectType):
 
     async def create(
             cls, fabric: Union[Fabric, int], vid: int, *,
-            name: str=None, description: str=None, mtu: int=None,
-            relay_vlan: Union[Vlan, int]=None, dhcp_on: bool=False,
-            primary_rack: Union[RackController, str]=None,
-            secondary_rack: Union[RackController, str]=None,
-            space: Union[Space, int]=None):
+            name: str = None, description: str = None, mtu: int = None,
+            relay_vlan: Union[Vlan, int] = None, dhcp_on: bool = False,
+            primary_rack: Union[RackController, str] = None,
+            secondary_rack: Union[RackController, str] = None,
+            space: Union[Space, int] = None):
         """
         Create a `Vlan` in MAAS.
 

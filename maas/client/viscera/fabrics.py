@@ -23,8 +23,8 @@ class FabricsType(ObjectType):
         data = await cls._handler.read()
         return cls(map(cls._object, data))
 
-    async def create(cls, *, name: str=None,
-                     description: str=None, class_type: str=None):
+    async def create(cls, *, name: str = None,
+                     description: str = None, class_type: str = None):
         """
         Create a `Fabric` in MAAS.
 

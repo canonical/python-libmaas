@@ -165,9 +165,9 @@ class BlockDevicesType(ObjectType):
 
     async def create(
             cls, node: Union[Node, str], name: str,
-            *, model: str=None, serial: str=None,
-            id_path: str=None, size: int=None, block_size: int=512,
-            tags: Iterable[str]=None):
+            *, model: str = None, serial: str = None,
+            id_path: str = None, size: int = None, block_size: int = 512,
+            tags: Iterable[str] = None):
         """
         Create a physical block device on a Node.
 
