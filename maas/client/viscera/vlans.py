@@ -94,8 +94,8 @@ class Vlan(Object, metaclass=VlanType):
                 # with the new 'fabric_id'.
                 self._changed_data['fabric'] = self._changed_data['fabric_id']
 
-        if ('relay_vlan' in self._changed_data
-                and self._changed_data['relay_vlan']):
+        if ('relay_vlan' in self._changed_data and
+                self._changed_data['relay_vlan']):
             # Update uses the ID of the VLAN, not the VLAN object.
             self._changed_data['relay_vlan'] = (
                 self._changed_data['relay_vlan']['id'])

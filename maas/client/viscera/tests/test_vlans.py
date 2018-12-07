@@ -194,7 +194,7 @@ class TestVlan(TestCase):
 
     def test__vlan_update_relay_vlan_with_object(self):
         origin = make_origin()
-        Fabric, Vlan = origin.Fabric, origin.Vlan
+        Vlan = origin.Vlan
         Vlan._handler.params = ['fabric_id', 'vid']
         fabric_id = random.randint(1, 100)
         vlan_id = random.randint(5001, 6000)
@@ -227,7 +227,7 @@ class TestVlan(TestCase):
     def test__vlan_update_relay_vlan_with_integer_id(self):
         self.skip('see https://github.com/maas/python-libmaas/issues/180')
         origin = make_origin()
-        Fabric, Vlan = origin.Fabric, origin.Vlan
+        Vlan = origin.Vlan
         Vlan._handler.params = ['fabric_id', 'vid']
         fabric_id = random.randint(1, 100)
         vlan_id = random.randint(5001, 6000)
