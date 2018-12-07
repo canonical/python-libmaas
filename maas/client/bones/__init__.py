@@ -9,6 +9,7 @@ __all__ = [
     "SessionAPI",
 ]
 
+import typing
 from collections import (
     Iterable,
     namedtuple,
@@ -296,6 +297,11 @@ class ActionAPI:
         """
         data = dict(data)
         params = {name: data.pop(name) for name in self.handler.params}
+        for key, value in data.copy().items():
+            if isinstance(value, typing.Mapping):
+                del data[key]
+                for nested_key, nested_value in value.items():
+                    data[key + '_' + nested_key] = nested_value
         for key, value in data.items():
             if key.startswith('_'):
                 data[key[1:]] = data.pop(key)

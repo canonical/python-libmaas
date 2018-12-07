@@ -344,6 +344,14 @@ class Machine(Node, metaclass=MachineType):
         "architecture", check_optional(str), check_optional(str))
     boot_disk = ObjectFieldRelated(
         "boot_disk", "BlockDevice", readonly=True)
+    boot_interface = ObjectFieldRelated(
+        "boot_interface", "Interface", readonly=True)
+    block_devices = ObjectFieldRelatedSet(
+        "blockdevice_set", "BlockDevices", reverse=None)
+    bcaches = ObjectFieldRelatedSet(
+        "bcaches", "Bcaches", reverse=None)
+    cache_sets = ObjectFieldRelatedSet(
+        "cache_sets", "BcacheCacheSets", reverse=None)
     cpus = ObjectField.Checked(
         "cpu_count", check(int), check(int))
     disable_ipv4 = ObjectField.Checked(
@@ -362,17 +370,6 @@ class Machine(Node, metaclass=MachineType):
         "osystem", check(str), readonly=True)
     owner_data = ObjectField.Checked(
         "owner_data", check(dict), check(dict))
-
-    boot_interface = ObjectFieldRelated(
-        "boot_interface", "Interface", readonly=True)
-    block_devices = ObjectFieldRelatedSet(
-        "blockdevice_set", "BlockDevices", reverse=None)
-
-    power_state = ObjectField.Checked(
-        "power_state", to(PowerState), readonly=True)
-    power_type = ObjectField.Checked(
-        "power_type", check(str), readonly=True)
-
     status = ObjectField.Checked(
         "status", to(NodeStatus), readonly=True)
     status_action = ObjectField.Checked(
@@ -381,17 +378,10 @@ class Machine(Node, metaclass=MachineType):
         "status_message", check_optional(str), readonly=True)
     status_name = ObjectField.Checked(
         "status_name", check(str), readonly=True)
-
-    bcaches = ObjectFieldRelatedSet(
-        "bcaches", "Bcaches", reverse=None)
-    cache_sets = ObjectFieldRelatedSet(
-        "cache_sets", "BcacheCacheSets", reverse=None)
     raids = ObjectFieldRelatedSet(
         "raids", "Raids", reverse=None)
     volume_groups = ObjectFieldRelatedSet(
         "volume_groups", "VolumeGroups", reverse=None)
-
-    # swap_size
 
     async def save(self):
         """Save the machine in MAAS."""
@@ -404,11 +394,6 @@ class Machine(Node, metaclass=MachineType):
             params_diff['system_id'] = self.system_id
             await self._handler.set_owner_data(**params_diff)
             self._data['owner_data'] = self._data['owner_data']
-
-    async def get_power_parameters(self):
-        """Get the power paramters for this machine."""
-        data = await self._handler.power_parameters(system_id=self.system_id)
-        return data
 
     async def abort(self, *, comment: str = None):
         """Abort the current action.
