@@ -40,6 +40,44 @@ class TestDevice(TestCase):
         device_expected = origin.Device(data)
         self.assertThat(device_observed, Equals(device_expected))
 
+    def test__get_power_parameters(self):
+        device = make_origin().Device({
+            "system_id": make_name_without_spaces("system-id"),
+            "hostname": make_name_without_spaces("hostname"),
+        })
+        power_parameters = {
+            "key": make_name_without_spaces("value"),
+        }
+        device._handler.power_parameters.return_value = power_parameters
+        self.assertThat(
+            device.get_power_parameters(),
+            Equals(power_parameters),
+        )
+        device._handler.power_parameters.assert_called_once_with(
+            system_id=device.system_id
+        )
+
+    def test__set_power(self):
+        orig_power_type = make_name_without_spaces("power_type")
+        new_power_type = make_name_without_spaces("power_type")
+        device = make_origin().Device({
+            "system_id": make_name_without_spaces("system-id"),
+            "hostname": make_name_without_spaces("hostname"),
+            "power_type": orig_power_type,
+        })
+        power_parameters = {
+            "key": make_name_without_spaces("value"),
+        }
+        device._handler.update.return_value = {"power_type": new_power_type}
+        device.set_power(new_power_type, power_parameters)
+        device._handler.update.assert_called_once_with(
+            system_id=device.system_id,
+            power_type=new_power_type,
+            power_parameters=power_parameters,
+        )
+        self.assertThat(
+            device.power_type, Equals(new_power_type))
+
 
 class TestDevices(TestCase):
 
