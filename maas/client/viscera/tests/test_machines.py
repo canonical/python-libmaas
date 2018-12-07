@@ -1,5 +1,6 @@
 """Test for `maas.client.viscera.machines`."""
 
+import random
 from http import HTTPStatus
 from unittest.mock import Mock
 from xml.etree import ElementTree
@@ -199,6 +200,25 @@ class TestMachine(TestCase):
         machine._handler.read.return_value = failed_commissioning_data
         self.assertRaises(machines.FailedCommissioning, machine.commission,
                           wait=True, wait_interval=0.1)
+
+    def test__commission_with_no_tests(self):
+        # Regression test for https://github.com/maas/python-libmaas/issues/185
+        system_id = make_name_without_spaces("system-id")
+        hostname = make_name_without_spaces("hostname")
+        data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "status": NodeStatus.COMMISSIONING,
+        }
+        machine = make_machines_origin().Machine(data)
+        machine._handler.commission.return_value = data
+        machine.commission(testing_scripts=random.choice([
+            "", [], "none"]))
+        self.assertThat(machine.status, Equals(NodeStatus.COMMISSIONING))
+        machine._handler.commission.assert_called_once_with(
+            system_id=machine.system_id,
+            testing_scripts=["none"],
+        )
 
     def test__deploy_with_wait(self):
         system_id = make_name_without_spaces("system-id")
