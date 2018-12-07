@@ -64,7 +64,7 @@ class Vlan(Object, metaclass=VlanType):
         "space", "Space",
         map_func=lambda _, data: {'name': data, '__incomplete__': True})
 
-    relay_vlan = ObjectFieldRelated("relay_vlan", "Vlan")
+    relay_vlan = ObjectFieldRelated("relay_vlan", "Vlan", use_data_setter=True)
     dhcp_on = ObjectField.Checked(
         "dhcp_on", check(bool), check(bool))
     primary_rack = ObjectFieldRelated("primary_rack", "RackController")
@@ -93,6 +93,23 @@ class Vlan(Object, metaclass=VlanType):
                 # Allow the update of the fabric by setting the 'fabric' field
                 # with the new 'fabric_id'.
                 self._changed_data['fabric'] = self._changed_data['fabric_id']
+
+        if ('relay_vlan' in self._changed_data
+                and self._changed_data['relay_vlan']):
+            # Update uses the ID of the VLAN, not the VLAN object.
+            self._changed_data['relay_vlan'] = (
+                self._changed_data['relay_vlan']['id'])
+            if ('relay_vlay' in self._orig_data and
+                    self._orig_data['relay_vlan'] and
+                    'id' in self._orig_data['relay_vlan'] and
+                    self._changed_data['relay_vlan'] == (
+                        self._orig_data['relay_vlan']['id'])):
+                # VLAN didn't really change, the object was just set to the
+                # same VLAN.
+                del self._changed_data['relay_vlan']
+            else:
+                self._changed_data['relay_vlan'] = (
+                    self._changed_data['relay_vlan'])
 
         # Don't call `super().save()` because `vid` can be changed and it has
         # to be handled specially because its in the resource_uri path.
