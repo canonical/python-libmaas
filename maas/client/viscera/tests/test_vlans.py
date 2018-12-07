@@ -191,3 +191,66 @@ class TestVlan(TestCase):
         Vlan._handler.update.assert_called_once_with(
             fabric_id=fabric_id, vid=vid, _vid=new_vid)
         self.assertThat(new_vid, Equals(new_vid))
+
+    def test__vlan_update_relay_vlan_with_object(self):
+        origin = make_origin()
+        Vlan = origin.Vlan
+        Vlan._handler.params = ['fabric_id', 'vid']
+        fabric_id = random.randint(1, 100)
+        vlan_id = random.randint(5001, 6000)
+        vid = random.randint(100, 200)
+        vlan = Vlan({
+            "id": vlan_id,
+            "fabric_id": fabric_id,
+            "vid": vid,
+            "name": '',
+            "relay_vlan": None,
+        })
+        relay_vlan = Vlan({
+            "id": vlan_id + 1,
+            "fabric_id": fabric_id,
+            "vid": vid + 10,
+            "name": '',
+        })
+        vlan.relay_vlan = relay_vlan
+        Vlan._handler.update.return_value = {
+            "id": vlan_id,
+            "vid": vid,
+            "name": '',
+            "relay_vlan": relay_vlan._data,
+        }
+        vlan.save()
+        Vlan._handler.update.assert_called_once_with(
+            fabric_id=fabric_id, vid=vid, _vid=vid, relay_vlan=relay_vlan.id)
+        self.assertThat(vlan.relay_vlan.id, Equals(relay_vlan.id))
+
+    def test__vlan_update_relay_vlan_with_integer_id(self):
+        self.skip('see https://github.com/maas/python-libmaas/issues/180')
+        origin = make_origin()
+        Vlan = origin.Vlan
+        Vlan._handler.params = ['fabric_id', 'vid']
+        fabric_id = random.randint(1, 100)
+        vlan_id = random.randint(5001, 6000)
+        vid = random.randint(100, 200)
+        vlan = Vlan({
+            "id": vlan_id,
+            "fabric_id": fabric_id,
+            "vid": vid,
+            "relay_vlan": None,
+        })
+        relay_vlan = Vlan({
+            "id": vlan_id + 1,
+            "fabric_id": fabric_id,
+            "vid": vid + 10,
+        })
+        vlan.relay_vlan = str(vlan_id + 1)
+        Vlan._handler.update.return_value = {
+            "id": vlan_id,
+            "vid": vid,
+            "name": '',
+            "relay_vlan": relay_vlan._data,
+        }
+        vlan.save()
+        Vlan._handler.update.assert_called_once_with(
+            fabric_id=fabric_id, vid=vid, _vid=vid, relay_vlan=relay_vlan.id)
+        self.assertThat(vlan.relay_vlan.id, Equals(relay_vlan.id))
