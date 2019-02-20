@@ -244,7 +244,8 @@ class ProfileStore:
 
     @classmethod
     @contextmanager
-    def open(cls, dbpath=Path("~/.maas.db").expanduser()):
+    def open(cls, dbpath=Path("~/.maas.db").expanduser(),
+             migrate_from=Path("~/.maascli.db").expanduser()):
         """Load a profiles database.
 
         Called without arguments this will open (and create) a database in the
@@ -254,11 +255,12 @@ class ProfileStore:
         database on exit, saving if the exit is clean.
 
         :param dbpath: The path to the database file to create and open.
+        :param migrate_from: Path to a database file to migrate from.
         """
         # Ensure we're working with a Path instance.
         dbpath = Path(dbpath)
+        migrate_from = Path(migrate_from)
         # See if we ought to do a one-time migration.
-        migrate_from = Path("~/.maascli.db").expanduser()
         migrate = migrate_from.is_file() and not dbpath.exists()
         # Initialise filename with restrictive permissions...
         dbpath.touch(mode=0o600, exist_ok=True)
