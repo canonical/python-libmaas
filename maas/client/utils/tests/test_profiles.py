@@ -197,17 +197,6 @@ class TestProfileStore(TestCase):
         dbpath_old = home.joinpath(".maascli.db")
         dbpath_new = home.joinpath(".maas.db")
 
-        # Path.expanduser() is used by ProfileStore.open(). We expect the
-        # paths to be expanded to be one of those below.
-        def expanduser(path):
-            if path == Path("~/.maas.db"):
-                return dbpath_new
-            if path == Path("~/.maascli.db"):
-                return dbpath_old
-            raise ValueError(path)
-
-        #self.patch(profiles.Path, "expanduser", expanduser)
-
         # A profile that will be migrated.
         profile = make_profile()
 
