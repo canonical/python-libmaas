@@ -25,7 +25,6 @@ from testtools.matchers import (
 )
 from twisted.python.filepath import FilePath
 
-from .. import profiles
 from ...testing import (
     make_name_without_spaces,
     TestCase,
