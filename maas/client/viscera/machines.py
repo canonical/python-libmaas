@@ -100,7 +100,7 @@ class MachinesType(NodesType):
             "power_type": power_type,
         }
         if power_parameters is not None:
-            params["power_parameters"] = json.dumps(power_parameters)
+            params["power_parameters"] = json.dumps(power_parameters, sort_keys=True)
         if subarchitecture is not None:
             params["subarchitecture"] = subarchitecture
         if min_hwe_kernel is not None:
