@@ -25,7 +25,6 @@ from testtools.matchers import (
 )
 from twisted.python.filepath import FilePath
 
-from .. import profiles
 from ...testing import (
     make_name_without_spaces,
     TestCase,
@@ -96,6 +95,10 @@ class TestProfile(TestCase):
 
 class TestProfileStore(TestCase):
     """Tests for `ProfileStore`."""
+
+    def setUp(self):
+        super(TestProfileStore, self).setUp()
+        self.null_profile = Path('/dev/null')
 
     def test_init(self):
         database = sqlite3.connect(":memory:")
@@ -174,7 +177,7 @@ class TestProfileStore(TestCase):
         # ProfileStore.open() applies restrictive file permissions to newly
         # created configuration databases.
         config_file = self.makeDir().joinpath("config")
-        with ProfileStore.open(config_file):
+        with ProfileStore.open(config_file, self.null_profile):
             perms = FilePath(str(config_file)).getPermissions()
             self.assertEqual("rw-------", perms.shorthand())
 
@@ -184,7 +187,7 @@ class TestProfileStore(TestCase):
         config_file = self.makeDir().joinpath("config")
         config_file.touch()
         config_file.chmod(0o644)  # u=rw,go=r
-        with ProfileStore.open(config_file):
+        with ProfileStore.open(config_file, self.null_profile):
             perms = FilePath(str(config_file)).getPermissions()
             self.assertEqual("rw-r--r--", perms.shorthand())
 
@@ -193,28 +196,17 @@ class TestProfileStore(TestCase):
         dbpath_old = home.joinpath(".maascli.db")
         dbpath_new = home.joinpath(".maas.db")
 
-        # Path.expanduser() is used by ProfileStore.open(). We expect the
-        # paths to be expanded to be one of those below.
-        def expanduser(path):
-            if path == Path("~/.maas.db"):
-                return dbpath_new
-            if path == Path("~/.maascli.db"):
-                return dbpath_old
-            raise ValueError(path)
-
-        self.patch(profiles.Path, "expanduser", expanduser)
-
         # A profile that will be migrated.
         profile = make_profile()
 
         # Populate the old database with a profile. We're using the new
         # ProfileStore but that's okay; the schemas are compatible.
-        with ProfileStore.open(dbpath_old) as config_old:
+        with ProfileStore.open(dbpath_old, self.null_profile) as config_old:
             config_old.save(profile)
 
         # Immediately as we open the new database, profiles from the old
         # database are migrated.
-        with ProfileStore.open(dbpath_new) as config_new:
+        with ProfileStore.open(dbpath_new, dbpath_old) as config_new:
             self.assertEqual({profile.name}, set(config_new))
             profile_migrated = config_new.load(profile.name)
             self.assertEqual(profile, profile_migrated)
@@ -223,11 +215,11 @@ class TestProfileStore(TestCase):
 
         # After reopening the new database we see the migrated profile that we
         # deleted has stayed deleted; it has not been migrated a second time.
-        with ProfileStore.open(dbpath_new) as config_new:
+        with ProfileStore.open(dbpath_new, self.null_profile) as config_new:
             self.assertRaises(ProfileNotFound, config_new.load, profile.name)
 
         # It is still present and correct in the old database.
-        with ProfileStore.open(dbpath_old) as config_old:
+        with ProfileStore.open(dbpath_old, self.null_profile) as config_old:
             self.assertEqual(profile, config_old.load(profile.name))
 
 
