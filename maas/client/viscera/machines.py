@@ -8,6 +8,7 @@ __all__ = [
 import asyncio
 import base64
 import bson
+import json
 from http import HTTPStatus
 import typing
 
@@ -99,7 +100,7 @@ class MachinesType(NodesType):
             "power_type": power_type,
         }
         if power_parameters is not None:
-            params["power_parameters"] = power_parameters
+            params["power_parameters"] = json.dumps(power_parameters)
         if subarchitecture is not None:
             params["subarchitecture"] = subarchitecture
         if min_hwe_kernel is not None:
