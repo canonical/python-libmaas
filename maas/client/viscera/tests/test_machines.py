@@ -923,8 +923,10 @@ class TestMachines(TestCase):
             architecture='amd64',
             mac_addresses=['00:11:22:33:44:55', '00:11:22:33:44:AA'],
             power_type='ipmi',
-            power_parameters=('{"power_address": "localhost", '
-                '"power_user": "root"}'),
+            power_parameters=(
+                '{"power_address": "localhost", '
+                '"power_user": "root"}'
+            ),
             subarchitecture='generic',
             min_hwe_kernel='hwe-x',
             hostname='new-machine',
