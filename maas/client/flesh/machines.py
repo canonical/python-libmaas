@@ -697,6 +697,11 @@ class cmd_deploy(cmd_allocate, MachineSSHMixin, MachineReleaseMixin):
                     while machine.status == NodeStatus.DEPLOYING:
                         time.sleep(15)
                         machine.refresh()
+                        context.msg = colorized(
+                            "{autoblue}Deploying{/autoblue} %s on %s: %s") % (
+                                machine.distro_series,
+                                machine.hostname,
+                                machine.status_message)
         except KeyboardInterrupt:
             if sys.stdout.isatty() and machine is not None:
                 self._handle_abort(machine, allocated)
