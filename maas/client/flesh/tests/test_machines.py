@@ -19,12 +19,14 @@ from ...viscera.machines import (
     Machine,
     Machines
 )
+from ...viscera.resource_pools import ResourcePool
 from ...viscera.users import User
+from ...viscera.zones import Zone
 
 
 def make_origin():
     """Make origin for machines."""
-    return bind(Machines, Machine, User)
+    return bind(Machines, Machine, User, ResourcePool, Zone)
 
 
 class TestMachines(TestCaseWithProfile):
@@ -43,6 +45,16 @@ class TestMachines(TestCaseWithProfile):
                 'power_state': PowerState.OFF.value,
                 'cpu_count': 2,
                 'memory': 1024,
+                'pool': {
+                    'id': 1,
+                    'name': 'pool1',
+                    'description': 'pool1',
+                },
+                'zone': {
+                    'id': 1,
+                    'name': 'zone1',
+                    'description': 'zone1',
+                },
             },
             {
                 'hostname': make_name_without_spaces(),
@@ -53,6 +65,16 @@ class TestMachines(TestCaseWithProfile):
                 'power_state': PowerState.ON.value,
                 'cpu_count': 4,
                 'memory': 4096,
+                'pool': {
+                    'id': 2,
+                    'name': 'pool2',
+                    'description': 'pool2',
+                },
+                'zone': {
+                    'id': 2,
+                    'name': 'zone2',
+                    'description': 'zone2',
+                },
             },
         ]
         origin.Machines._handler.read.return_value = machine_objs
@@ -69,6 +91,8 @@ class TestMachines(TestCaseWithProfile):
             {'name': 'architecture', 'title': 'Arch'},
             {'name': 'cpus', 'title': '#CPUs'},
             {'name': 'memory', 'title': 'RAM'},
+            {'name': 'pool', 'title': 'Resource pool'},
+            {'name': 'zone', 'title': 'Zone'},
         ], output['columns'])
         machines_output = sorted([
             {
@@ -79,6 +103,8 @@ class TestMachines(TestCaseWithProfile):
                 'architecture': machine['architecture'],
                 'cpus': machine['cpu_count'],
                 'memory': machine['memory'],
+                'pool': machine['pool']['name'],
+                'zone': machine['zone']['name'],
             }
             for machine in machine_objs
         ], key=itemgetter('hostname'))

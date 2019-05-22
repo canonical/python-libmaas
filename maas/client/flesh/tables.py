@@ -179,6 +179,12 @@ class NodeZoneColumn(Column):
         return super().render(target, data.name)
 
 
+class NodeResourcePoolColumn(Column):
+
+    def render(self, target, data):
+        return super().render(target, data.name)
+
+
 class NodesTable(Table):
 
     def __init__(self):
@@ -206,6 +212,8 @@ class MachinesTable(Table):
             NodeArchitectureColumn("architecture", "Arch"),
             NodeCPUsColumn("cpus", "#CPUs"),
             NodeMemoryColumn("memory", "RAM"),
+            NodeResourcePoolColumn("pool", "Resource pool"),
+            NodeZoneColumn("zone", "Zone"),
         )
 
     def get_rows(self, target, machines):
@@ -218,6 +226,8 @@ class MachinesTable(Table):
                 machine.architecture,
                 machine.cpus,
                 machine.memory,
+                machine.pool,
+                machine.zone,
             )
             for machine in machines
         )
@@ -239,6 +249,7 @@ class MachineDetail(DetailTable):
             NodeMemoryColumn("memory", "RAM"),
             NodeInterfacesColumn("interfaces", "Interfaces"),
             Column("ip_addresses", "IP addresses"),
+            NodeResourcePoolColumn("pool", "Resource pool"),
             NodeZoneColumn("zone", "Zone"),
             NodeOwnerColumn("owner", "Owner"),
             Column("tags", "Tags"),
@@ -264,6 +275,7 @@ class MachineDetail(DetailTable):
                 for link in interface.links
                 if link.ip_address
             ],
+            machine.pool,
             machine.zone,
             machine.owner,
             machine.tags,
