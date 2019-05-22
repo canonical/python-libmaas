@@ -105,7 +105,7 @@ class TestDirClass(TestCase):
             attribute = Disabled("foobar")
 
         class Example(metaclass=ExampleType):
-            "Example class with metaclass."""
+            """Example class with metaclass."""
 
         self.assertThat(
             list(dir_class(Example)),
