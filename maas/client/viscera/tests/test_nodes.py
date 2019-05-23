@@ -1,5 +1,7 @@
 """Test for `maas.client.viscera.nodes`."""
 
+from copy import deepcopy
+
 from testtools.matchers import Equals
 
 from .. import nodes
@@ -9,6 +11,7 @@ from ..controllers import (
 )
 from ..devices import Device
 from ..machines import Machine
+from ..resource_pools import ResourcePool
 from ..testing import bind
 from ...enum import NodeType
 from ...testing import (
@@ -22,7 +25,7 @@ def make_origin():
     # latter via the origin, hence why it must be bound.
     return bind(
         nodes.Nodes, nodes.Node, Device, Machine,
-        RackController, RegionController)
+        RackController, RegionController, ResourcePool)
 
 
 class TestNode(TestCase):
@@ -48,6 +51,31 @@ class TestNode(TestCase):
         node_observed = origin.Node.read(data["system_id"])
         node_expected = origin.Node(data)
         self.assertThat(node_observed, Equals(node_expected))
+
+    def test__save_change_pool(self):
+        pool_data = {"id": 1, "name": "pool1", "description": "pool1"}
+        new_pool_data = {"id": 2, "name": "pool2", "description": "pool2"}
+        system_id = make_name_without_spaces("system-id")
+        node_data = {
+            "id": 1,
+            "system_id": system_id,
+            "hostname": make_name_without_spaces("hostname"),
+            "pool": pool_data,
+        }
+
+        origin = make_origin()
+        origin.ResourcePool._handler.read.return_value = new_pool_data
+        origin.Node._handler.params = ['system_id', 'id']
+        origin.Node._handler.read.return_value = node_data
+        origin.Node._handler.update.return_value = deepcopy(node_data)
+        origin.Node._handler.update.return_value['pool'] = new_pool_data
+
+        new_pool = origin.ResourcePool.read(2)
+        node = origin.Node.read(system_id)
+        node.pool = new_pool
+        node.save()
+        origin.Node._handler.update.assert_called_once_with(
+            id=1, pool="pool2", system_id=system_id)
 
     def test__as_machine_requires_machine_type(self):
         origin = make_origin()
