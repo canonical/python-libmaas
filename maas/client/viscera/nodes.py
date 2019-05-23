@@ -80,6 +80,7 @@ class Node(Object, metaclass=NodeTypeMeta):
     power_state = ObjectField.Checked(
         "power_state", to(PowerState), readonly=True)
     power_type = ObjectField.Checked("power_type", check(str))
+    pool = ObjectFieldRelated("pool", "ResourcePool", use_data_setter=True)
     system_id = ObjectField.Checked(
         "system_id", check(str), readonly=True, pk=True)
     tags = ObjectField.Checked(  # List[str]
@@ -150,3 +151,11 @@ class Node(Object, metaclass=NodeTypeMeta):
             system_id=self.system_id, power_type=power_type,
             power_parameters=power_parameters)
         self.power_type = data['power_type']
+
+    async def save(self):
+        # the resource pool uses the name in the API, not the id. The field is
+        # defined with use_data_setter=True, so the value in self._changed_data
+        # is the full data dict, not just the id.
+        if 'pool' in self._changed_data:
+            self._changed_data['pool'] = self._changed_data['pool']['name']
+        return await super().save()
