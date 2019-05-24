@@ -25,10 +25,7 @@ from collections import (
     Mapping,
     Sequence,
 )
-from copy import (
-    copy,
-    deepcopy,
-)
+from copy import copy
 from datetime import datetime
 from functools import wraps
 from importlib import import_module
@@ -246,22 +243,23 @@ class Object(ObjectBasics, metaclass=ObjectType):
 
     def __init__(self, data, local_data=None):
         super(Object, self).__init__()
+        self._data = data
         self._changed_data = {}
         self._loaded = False
         if isinstance(data, Mapping) and not data.get('__incomplete__', False):
-            self._data = data
+            self._reset(data)
             self._loaded = True
         else:
             descriptors, alt_descriptors = get_pk_descriptors(type(self))
             if len(descriptors) == 1:
                 if isinstance(data, Mapping):
-                    self._data = {}
+                    new_data = {}
                     try:
-                        self._data[descriptors[0][1].name] = (
+                        new_data[descriptors[0][1].name] = (
                             data[descriptors[0][1].name])
                     except KeyError:
                         found_name = set_alt_pk_value(
-                            alt_descriptors[0], self._data, data)
+                            alt_descriptors[0], new_data, data)
                         if found_name:
                             # Validate that the set data is correct and
                             # can be converted to the python value.
@@ -272,13 +270,11 @@ class Object(ObjectBasics, metaclass=ObjectType):
                         # Validate that the set data is correct and
                         # can be converted to the python value.
                         getattr(self, descriptors[0][0])
-                    # Reset self._data so _orig_data and _changed_data is
-                    # correct.
-                    self._data = self._data
+                    self._reset(new_data)
                 else:
-                    self._data = {
+                    self._reset({
                         descriptors[0][1].name: data
-                    }
+                    })
                     # Validate that the primary key is correct and
                     # can be converted to the python value.
                     getattr(self, descriptors[0][0])
@@ -298,7 +294,7 @@ class Object(ObjectBasics, metaclass=ObjectType):
                                 raise
                         else:
                             found_names.append(name)
-                    self._data = obj_data
+                    self._reset(obj_data)
                     # Validate that all set data is correct and can be
                     # converted to the python value.
                     for name in found_names:
@@ -307,7 +303,7 @@ class Object(ObjectBasics, metaclass=ObjectType):
                     obj_data = {}
                     for idx, (name, descriptor) in enumerate(descriptors):
                         obj_data[descriptor.name] = data[idx]
-                    self._data = obj_data
+                    self._reset(obj_data)
                     for name, _ in descriptors:
                         # Validate that the primary key is correct and
                         # can be converted to the python value.
@@ -325,7 +321,6 @@ class Object(ObjectBasics, metaclass=ObjectType):
                     raise ValueError(
                         "data cannot be incomplete without any primary keys "
                         "defined")
-        self._orig_data = deepcopy(self._data)
         if local_data is not None:
             if isinstance(local_data, Mapping):
                 self._data.update(local_data)
@@ -333,6 +328,22 @@ class Object(ObjectBasics, metaclass=ObjectType):
                 raise TypeError(
                     "local_data must be a mapping, not %s"
                     % type(data).__name__)
+
+    def _reset(self, data):
+        """Reset the object to look pristine with the given data.
+
+        All tracked changes will be discarded, and the object will be
+        ready to track new changes.
+        """
+        self._data = data
+        # Make a shallow copy of each item in the original data so that
+        # we can keep track of the changes. A shallow copy is enough,
+        # since we only care about changes that are directly related to
+        # this object.
+        self._orig_data = {
+            key: copy(value) for key, value in data.items()
+        }
+        self._changed_data = {}
 
     def __getattribute__(self, name):
         """Prevent access to fields that are not defined as primary keys on
@@ -343,7 +354,7 @@ class Object(ObjectBasics, metaclass=ObjectType):
             if isinstance(descriptor, ObjectField)
         }
         if name in fields:
-            if self.loaded:
+            if super().__getattribute__('_loaded'):
                 return super(Object, self).__getattribute__(name)
             elif is_pk_descriptor(fields[name], include_alt=True):
                 return super(Object, self).__getattribute__(name)
@@ -353,18 +364,6 @@ class Object(ObjectBasics, metaclass=ObjectType):
                         name, type(self).__name__))
         else:
             return super(Object, self).__getattribute__(name)
-
-    def __setattr__(self, name, value):
-        """Handle `_data` being set directly.
-
-        When `_data` is set directly we update the `_orig_data` and
-        `_changed_data`.
-        """
-        ret = super(Object, self).__setattr__(name, value)
-        if name == '_data':
-            self._orig_data = deepcopy(value)
-            self._changed_data = {}
-        return ret
 
     def __eq__(self, other):
         """Strict equality check.
@@ -460,7 +459,7 @@ class Object(ObjectBasics, metaclass=ObjectType):
                     "unable to perform 'refresh' no primary key "
                     "fields defined.")
             if type(obj) is cls:
-                self._data = obj._data
+                self._reset(obj._data)
                 self._loaded = True
             else:
                 raise TypeError(
@@ -479,7 +478,8 @@ class Object(ObjectBasics, metaclass=ObjectType):
                     key: self._orig_data[key]
                     for key in self._handler.params
                 })
-                self._data = await self._handler.update(**update_data)
+                data = await self._handler.update(**update_data)
+                self._reset(data)
         else:
             raise AttributeError(
                 "'%s' object doesn't support save." % type(self).__name__)
