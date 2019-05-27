@@ -105,6 +105,14 @@ class Client:
         }
 
     @facade
+    def domains(origin):
+        return {
+            'create': origin.Domains.create,
+            "get": origin.Domain.read,
+            "list": origin.Domains.read,
+        }
+
+    @facade
     def events(origin):
         namespace = {
             "query": origin.Events.query,

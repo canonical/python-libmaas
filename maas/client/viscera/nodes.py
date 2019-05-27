@@ -65,8 +65,7 @@ class NodeTypeMeta(ObjectType):
 class Node(Object, metaclass=NodeTypeMeta):
     """A node stored in MAAS."""
 
-    # domain
-
+    domain = ObjectFieldRelated("domain", "Domain")
     fqdn = ObjectField.Checked(
         "fqdn", check(str), readonly=True)
     hostname = ObjectField.Checked(

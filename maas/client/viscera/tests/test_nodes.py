@@ -10,6 +10,7 @@ from ..controllers import (
     RegionController,
 )
 from ..devices import Device
+from ..domains import Domain
 from ..machines import Machine
 from ..resource_pools import ResourcePool
 from ..testing import bind
@@ -24,7 +25,7 @@ def make_origin():
     # Create a new origin with Nodes and Node. The former refers to the
     # latter via the origin, hence why it must be bound.
     return bind(
-        nodes.Nodes, nodes.Node, Device, Machine,
+        nodes.Nodes, nodes.Node, Device, Domain, Machine,
         RackController, RegionController, ResourcePool)
 
 
@@ -52,6 +53,21 @@ class TestNode(TestCase):
         node_expected = origin.Node(data)
         self.assertThat(node_observed, Equals(node_expected))
 
+    def test__read_domain(self):
+        domain = {
+            "name": make_name_without_spaces("domain")
+        }
+        data = {
+            "system_id": make_name_without_spaces("system-id"),
+            "hostname": make_name_without_spaces("hostname"),
+            "domain": domain,
+        }
+        origin = make_origin()
+        origin.Node._handler.read.return_value = data
+        node = origin.Node.read(data["system_id"])
+        domain = origin.Domain(domain)
+        self.assertThat(node.domain, Equals(domain))
+
     def test__save_change_pool(self):
         pool_data = {"id": 1, "name": "pool1", "description": "pool1"}
         new_pool_data = {"id": 2, "name": "pool2", "description": "pool2"}
@@ -76,6 +92,31 @@ class TestNode(TestCase):
         node.save()
         origin.Node._handler.update.assert_called_once_with(
             id=1, pool="pool2", system_id=system_id)
+
+    def test__save_change_domain(self):
+        domain_data = {"id": 1, "name": "domain1"}
+        new_domain_data = {"id": 2, "name": "domain2"}
+        system_id = make_name_without_spaces("system-id")
+        node_data = {
+            "id": 1,
+            "system_id": system_id,
+            "hostname": make_name_without_spaces("hostname"),
+            "domain": domain_data,
+        }
+
+        origin = make_origin()
+        origin.Domain._handler.read.return_value = new_domain_data
+        origin.Node._handler.params = ['system_id', 'id']
+        origin.Node._handler.read.return_value = node_data
+        origin.Node._handler.update.return_value = deepcopy(node_data)
+        origin.Node._handler.update.return_value['domain'] = new_domain_data
+
+        new_domain = origin.Domain.read(2)
+        node = origin.Node.read(system_id)
+        node.domain = new_domain
+        node.save()
+        origin.Node._handler.update.assert_called_once_with(
+            id=1, domain=2, system_id=system_id)
 
     def test__as_machine_requires_machine_type(self):
         origin = make_origin()

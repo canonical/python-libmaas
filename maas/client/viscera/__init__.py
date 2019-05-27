@@ -1178,6 +1178,7 @@ class Origin(OriginBase, metaclass=OriginType):
             ".boot_sources",
             ".controllers",
             ".devices",
+            ".domains",
             ".events",
             ".subnets",
             ".fabrics",
