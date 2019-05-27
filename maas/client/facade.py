@@ -99,6 +99,7 @@ class Client:
     @facade
     def devices(origin):
         return {
+            "create": origin.Devices.create,
             "get": origin.Device.read,
             "list": origin.Devices.read,
         }

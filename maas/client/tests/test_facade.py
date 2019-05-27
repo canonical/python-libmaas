@@ -61,6 +61,7 @@ class TestClient(TestCase):
     def test__client_maps_devices(self):
         self.assertThat(self.client, MatchesClient(
             devices=MatchesFacade(
+                create=self.origin.Devices.create,
                 get=self.origin.Device.read,
                 list=self.origin.Devices.read,
             ),
