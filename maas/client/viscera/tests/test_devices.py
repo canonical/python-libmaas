@@ -1,6 +1,9 @@
 """Test for `maas.client.viscera.devices`."""
 
-from testtools.matchers import Equals
+from testtools.matchers import (
+    Equals,
+    IsInstance,
+)
 
 from .. import devices
 from ...testing import (
@@ -80,6 +83,30 @@ class TestDevice(TestCase):
 
 
 class TestDevices(TestCase):
+
+    def test__create(self):
+        origin = make_origin()
+        Devices = origin.Devices
+        Devices._handler.create.return_value = {}
+        observed = Devices.create(
+            ['00:11:22:33:44:55', '00:11:22:33:44:AA'],
+            hostname='new-machine', domain='maas', zone='zone1')
+        self.assertThat(observed, IsInstance(devices.Device))
+        Devices._handler.create.assert_called_once_with(
+            mac_addresses=['00:11:22:33:44:55', '00:11:22:33:44:AA'],
+            hostname='new-machine',
+            domain='maas',
+            zone='zone1')
+
+    def test__create_no_optional(self):
+        origin = make_origin()
+        Devices = origin.Devices
+        Devices._handler.create.return_value = {}
+        observed = Devices.create(
+            ['00:11:22:33:44:55', '00:11:22:33:44:AA'])
+        self.assertThat(observed, IsInstance(devices.Device))
+        Devices._handler.create.assert_called_once_with(
+            mac_addresses=['00:11:22:33:44:55', '00:11:22:33:44:AA'])
 
     def test__read(self):
         data = {
