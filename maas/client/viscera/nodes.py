@@ -31,6 +31,14 @@ def normalize_hostname(hostname):
     return hostname
 
 
+def map_tag_name_to_dict(instance, value):
+    """Convert a tag name into a dictionary for Tag."""
+    return {
+        'name': value,
+        '__incomplete__': True
+    }
+
+
 class NodesType(ObjectType):
     """Metaclass for `Nodes`."""
 
@@ -82,8 +90,8 @@ class Node(Object, metaclass=NodeTypeMeta):
     pool = ObjectFieldRelated("pool", "ResourcePool", use_data_setter=True)
     system_id = ObjectField.Checked(
         "system_id", check(str), readonly=True, pk=True)
-    tags = ObjectField.Checked(  # List[str]
-        "tag_names", check(Sequence), readonly=True)
+    tags = ObjectFieldRelatedSet(
+        "tag_names", "Tags", reverse=None, map_func=map_tag_name_to_dict)
     zone = ObjectFieldRelated("zone", "Zone")
 
     def __repr__(self):

@@ -2,13 +2,20 @@
 
 from copy import deepcopy
 
-from testtools.matchers import Equals
+from testtools.matchers import (
+    Equals,
+    IsInstance,
+    MatchesAll,
+    MatchesListwise,
+    MatchesStructure,
+)
 
 from .. import nodes
 from ..controllers import (
     RackController,
     RegionController,
 )
+from ..tags import Tags, Tag
 from ..devices import Device
 from ..domains import Domain
 from ..machines import Machine
@@ -26,7 +33,7 @@ def make_origin():
     # latter via the origin, hence why it must be bound.
     return bind(
         nodes.Nodes, nodes.Node, Device, Domain, Machine,
-        RackController, RegionController, ResourcePool)
+        RackController, RegionController, ResourcePool, Tags, Tag)
 
 
 class TestNode(TestCase):
@@ -280,6 +287,133 @@ class TestNode(TestCase):
 
         node.delete()
         Node._handler.delete.assert_called_once_with(system_id=node.system_id)
+
+    def test__tags(self):
+        origin = make_origin()
+
+        tag_names = [
+            make_name_without_spaces("tag")
+            for _ in range(3)
+        ]
+
+        system_id = make_name_without_spaces("system-id")
+        node = origin.Node({
+            "id": 1,
+            "system_id": system_id,
+            "hostname": make_name_without_spaces("hostname"),
+            "tag_names": tag_names,
+        })
+
+        self.assertThat(node.tags, MatchesListwise([
+            MatchesAll(
+                IsInstance(origin.Tag),
+                MatchesStructure(name=Equals(tag_name)))
+            for tag_name in tag_names
+        ]))
+
+    def test__tags_add(self):
+        origin = make_origin()
+
+        tag_names = [
+            make_name_without_spaces("tag")
+            for _ in range(3)
+        ]
+
+        system_id = make_name_without_spaces("system-id")
+        node = origin.Node({
+            "id": 1,
+            "system_id": system_id,
+            "hostname": make_name_without_spaces("hostname"),
+            "tag_names": list(tag_names),
+        })
+
+        tag = origin.Tag({
+            "name": make_name_without_spaces("newtag")
+        })
+        node.tags.add(tag)
+
+        origin.Tag._handler.update_nodes.assert_called_once_with(
+            name=tag.name, add=node.system_id)
+
+        self.assertThat(node.tags, MatchesListwise([
+            MatchesAll(
+                IsInstance(origin.Tag),
+                MatchesStructure(name=Equals(tag_name)))
+            for tag_name in tag_names + [tag.name]
+        ]))
+
+    def test__tags_add_requires_Tag(self):
+        origin = make_origin()
+
+        tag_names = [
+            make_name_without_spaces("tag")
+            for _ in range(3)
+        ]
+
+        system_id = make_name_without_spaces("system-id")
+        node = origin.Node({
+            "id": 1,
+            "system_id": system_id,
+            "hostname": make_name_without_spaces("hostname"),
+            "tag_names": list(tag_names),
+        })
+
+        tag = origin.Tag({
+            "name": make_name_without_spaces("newtag")
+        })
+        self.assertRaises(TypeError, node.tags.add, tag.name)
+
+    def test__tags_remove(self):
+        origin = make_origin()
+
+        tag_names = [
+            make_name_without_spaces("tag")
+            for _ in range(3)
+        ]
+
+        system_id = make_name_without_spaces("system-id")
+        node = origin.Node({
+            "id": 1,
+            "system_id": system_id,
+            "hostname": make_name_without_spaces("hostname"),
+            "tag_names": list(tag_names),
+        })
+
+        tag = origin.Tag({
+            "name": tag_names[0]
+        })
+        node.tags.remove(tag)
+
+        origin.Tag._handler.update_nodes.assert_called_once_with(
+            name=tag.name, remove=node.system_id)
+
+        self.assertThat(node.tags, MatchesListwise([
+            MatchesAll(
+                IsInstance(origin.Tag),
+                MatchesStructure(name=Equals(tag_name)))
+            for tag_name in tag_names[1:]
+        ]))
+
+    def test__tags_remove_requires_Tag(self):
+        origin = make_origin()
+
+        tag_names = [
+            make_name_without_spaces("tag")
+            for _ in range(3)
+        ]
+
+        system_id = make_name_without_spaces("system-id")
+        node = origin.Node({
+            "id": 1,
+            "system_id": system_id,
+            "hostname": make_name_without_spaces("hostname"),
+            "tag_names": list(tag_names),
+        })
+
+        tag = origin.Tag({
+            "name": tag_names[0]
+        })
+        self.assertRaises(TypeError, node.tags.remove, tag.name)
 
 
 class TestNodes(TestCase):
