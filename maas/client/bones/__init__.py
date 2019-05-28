@@ -15,6 +15,7 @@ from collections import (
     namedtuple,
 )
 import json
+from urllib.parse import urlparse
 
 import aiohttp
 
@@ -44,6 +45,7 @@ class SessionAPI:
             raise SessionError(str(error))
         else:
             session = cls(description, credentials)
+            session.scheme = urlparse(url).scheme
             session.insecure = insecure
             return session
 
@@ -53,7 +55,10 @@ class SessionAPI:
 
         :see: `ProfileStore`.
         """
-        return cls(profile.description, profile.credentials)
+        session = cls(profile.description, profile.credentials)
+        session.scheme = urlparse(profile.url).scheme
+        session.insecure = profile.other.get('insecure', False)
+        return session
 
     @classmethod
     def fromProfileName(cls, name):
@@ -77,6 +82,7 @@ class SessionAPI:
         profile = await helpers.login(
             url=url, username=username, password=password, insecure=insecure)
         session = cls(profile.description, profile.credentials)
+        session.scheme = urlparse(url).scheme
         session.insecure = insecure
         return profile, session
 
@@ -93,10 +99,12 @@ class SessionAPI:
         profile = await helpers.connect(
             url=url, apikey=apikey, insecure=insecure)
         session = cls(profile.description, profile.credentials)
+        session.scheme = urlparse(url).scheme
         session.insecure = insecure
         return profile, session
 
     # Set these on instances.
+    scheme = 'http'
     insecure = False
     debug = False
 
@@ -377,7 +385,10 @@ class CallAPI:
         # TODO: this is el-cheapo URI Template
         # <http://tools.ietf.org/html/rfc6570> support; use uritemplate-py
         # <https://github.com/uri-templates/uritemplate-py> here?
-        return self.action.handler.uri.format(**self.__params)
+        uri = urlparse(self.action.handler.uri)
+        if uri.scheme != self.action.handler.session.scheme:
+            uri = uri._replace(scheme=self.action.handler.session.scheme)
+        return uri.geturl().format(**self.__params)
 
     def rebind(self, **params):
         """Rebind the parameters into the URI.

@@ -154,9 +154,11 @@ class TestConnect(TestCase):
         self.assertThat(profile.description, Equals(description))
 
     def test__API_description_is_fetched_insecurely_if_requested(self):
-        helpers.connect("http://example.org:5240/MAAS/", insecure=True)
+        profile = helpers.connect(
+            "http://example.org:5240/MAAS/", insecure=True)
         helpers.fetch_api_description.assert_called_once_with(
             urlparse("http://example.org:5240/MAAS/api/2.0/"), True)
+        self.assertTrue(profile.other['insecure'])
 
 
 class TestLogin(TestCase):
@@ -260,10 +262,12 @@ class TestLogin(TestCase):
         self.assertThat(profile.description, Equals(description))
 
     def test__API_token_is_fetched_insecurely_if_requested(self):
-        helpers.login("http://foo:bar@example.org:5240/MAAS/", insecure=True)
+        profile = helpers.login(
+            "http://foo:bar@example.org:5240/MAAS/", insecure=True)
         helpers.authenticate.assert_called_once_with(
             "http://example.org:5240/MAAS/api/2.0/",
             "foo", "bar", insecure=True)
+        self.assertTrue(profile.other['insecure'])
 
     def test__API_description_is_fetched_insecurely_if_requested(self):
         helpers.login(
