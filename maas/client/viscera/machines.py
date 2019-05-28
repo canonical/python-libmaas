@@ -810,3 +810,31 @@ class Machine(Node, metaclass=MachineType):
         """
         self._data = await self._handler.restore_storage_configuration(
             system_id=self.system_id)
+
+    async def lock(self, *, comment: str = None):
+        """Lock the machine to prevent changes.
+
+        :param comment: Reason machine was locked.
+        :type comment: `str`
+        """
+        params = {
+            "system_id": self.system_id
+        }
+        if comment:
+            params["comment"] = comment
+        self._data = await self._handler.lock(**params)
+        return self
+
+    async def unlock(self, *, comment: str = None):
+        """Unlock the machine allowing changes.
+
+        :param comment: Reason machine was unlocked.
+        :type comment: `str`
+        """
+        params = {
+            "system_id": self.system_id
+        }
+        if comment:
+            params["comment"] = comment
+        self._data = await self._handler.unlock(**params)
+        return self
