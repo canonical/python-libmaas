@@ -869,6 +869,36 @@ class TestMachine(TestCase):
             system_id=machine.system_id, delete='',
             hello='whole new world', new='brand-new')
 
+    def test__lock(self):
+        data = {
+            "system_id": make_name_without_spaces("system-id"),
+            "hostname": make_name_without_spaces("hostname"),
+        }
+        origin = make_machines_origin()
+        machine = origin.Machine(data)
+        machine._handler.lock.return_value = data
+        comment = make_name_without_spaces("comment")
+        self.assertThat(
+            machine.lock(comment=comment),
+            Equals(origin.Machine(data)))
+        machine._handler.lock.assert_called_once_with(
+            system_id=machine.system_id, comment=comment)
+
+    def test__unlock(self):
+        data = {
+            "system_id": make_name_without_spaces("system-id"),
+            "hostname": make_name_without_spaces("hostname"),
+        }
+        origin = make_machines_origin()
+        machine = origin.Machine(data)
+        machine._handler.unlock.return_value = data
+        comment = make_name_without_spaces("comment")
+        self.assertThat(
+            machine.unlock(comment=comment),
+            Equals(origin.Machine(data)))
+        machine._handler.unlock.assert_called_once_with(
+            system_id=machine.system_id, comment=comment)
+
 
 class TestMachine_APIVersion(TestCase):
 
