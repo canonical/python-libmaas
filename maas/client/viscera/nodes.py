@@ -158,3 +158,7 @@ class Node(Object, metaclass=NodeTypeMeta):
         if 'pool' in self._changed_data:
             self._changed_data['pool'] = self._changed_data['pool']['name']
         return await super().save()
+
+    async def delete(self):
+        """Deletes the node from MAAS."""
+        await self._handler.delete(system_id=self.system_id)

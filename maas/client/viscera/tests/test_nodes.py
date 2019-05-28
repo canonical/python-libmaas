@@ -268,6 +268,19 @@ class TestNode(TestCase):
         self.assertIsInstance(region, RegionController)
         self.assertIsInstance(region_rack, RegionController)
 
+    def test__delete(self):
+        Node = make_origin().Node
+
+        system_id = make_name_without_spaces("system-id")
+        node = Node({
+            "id": 1,
+            "system_id": system_id,
+            "hostname": make_name_without_spaces("hostname"),
+        })
+
+        node.delete()
+        Node._handler.delete.assert_called_once_with(system_id=node.system_id)
+
 
 class TestNodes(TestCase):
 
