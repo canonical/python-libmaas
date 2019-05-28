@@ -58,6 +58,13 @@ class TestSessionAPI(TestCase):
             fixture.url, insecure=insecure)
         self.assertThat(session.insecure, Is(insecure))
 
+    async def test__fromURL_sets_scheme_on_session(self):
+        insecure = random.choice((True, False))
+        fixture = self.useFixture(testing.DescriptionServer())
+        session = await bones.SessionAPI.fromURL(
+            fixture.url, insecure=insecure)
+        self.assertThat(session.scheme, Equals('http'))
+
 
 class TestSessionAPI_APIVersions(TestCase):
     """Tests for `SessionAPI` with multiple API versions."""

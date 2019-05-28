@@ -124,7 +124,7 @@ async def connect(url, *, apikey=None, insecure=False):
     # Return a new (unsaved) profile.
     return Profile(
         name=url.netloc, url=url.geturl(), credentials=credentials,
-        description=description)
+        description=description, insecure=insecure)
 
 
 class LoginError(Exception):
@@ -219,7 +219,7 @@ async def login(url, *, anonymous=False, username=None, password=None,
     # Return a new (unsaved) profile.
     return Profile(
         name=profile_name, url=url.geturl(), credentials=credentials,
-        description=description)
+        description=description, insecure=insecure)
 
 
 async def authenticate_with_macaroon(url, insecure=False):
