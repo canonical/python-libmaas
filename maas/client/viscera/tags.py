@@ -13,6 +13,7 @@ from . import (
     ObjectSet,
     ObjectType,
 )
+from .nodes import Node
 
 
 class TagsType(ObjectType):
@@ -40,6 +41,61 @@ class TagsType(ObjectType):
 class Tags(ObjectSet, metaclass=TagsType):
     """The set of tags."""
 
+    @classmethod
+    def Managed(cls, manager, field, items):
+        """Create a custom `Tags` that is managed by a related `Node.`
+
+        :param manager: The manager of the `ObjectSet`. This is the `Object`
+            that manages this set of objects.
+        :param field: The field on the `manager` that created this managed
+            `ObjectSet`.
+        :param items: The items in the `ObjectSet`.
+        """
+        if not isinstance(manager, Node):
+            raise TypeError(
+                "manager must be instance of Node, not %s",
+                type(manager).__name__)
+
+        async def add(self, tag: Tag):
+            """Add `tag` to node.
+
+            :param tag: Tag to add to the node.
+            :type tag: `Tag`.
+            """
+            if not isinstance(tag, Tag):
+                raise TypeError(
+                    "tag must be instance of Tag, not %s", type(tag).__name__)
+            await tag._handler.update_nodes(
+                name=tag.name, add=manager.system_id)
+            if tag.name not in manager._data[field.name]:
+                manager._data[field.name] += [tag.name]
+
+        async def remove(self, tag: Tag):
+            """Remove `tag` from node.
+
+            :param tag: Tag to from the node.
+            :type tag: `Tag`.
+            """
+            if not isinstance(tag, Tag):
+                raise TypeError(
+                    "tag must be instance of Tag, not %s", type(tag).__name__)
+            await tag._handler.update_nodes(
+                name=tag.name, remove=manager.system_id)
+            manager._data[field.name] = [
+                tag_name
+                for tag_name in manager._data[field.name]
+                if tag_name != tag.name
+            ]
+
+        attrs = {
+            "add": add,
+            "remove": remove,
+        }
+        cls = type(
+            "%s.Managed#%s" % (
+                cls.__name__, manager.__class__.__name__), (cls,), attrs)
+        return cls(items)
+
 
 class TagType(ObjectType):
 
@@ -52,7 +108,7 @@ class Tag(Object, metaclass=TagType):
     """A tag."""
 
     name = ObjectField.Checked(
-        "name", check(str), readonly=True)
+        "name", check(str), readonly=True, pk=True)
     comment = ObjectField.Checked(
         "comment", check(str), check(str), default="")
     definition = ObjectField.Checked(
