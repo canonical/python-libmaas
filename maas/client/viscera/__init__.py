@@ -151,11 +151,12 @@ class ObjectType(Asynchronous, metaclass=Asynchronous):
         attrs.setdefault("__slots__", ())
         return super(ObjectType, cls).__new__(cls, name, bases, attrs)
 
-    def bind(cls, origin, handler, *, name=None):
+    def bind(cls, origin, handler, handlers, *, name=None):
         """Bind this object to the given origin and handler.
 
         :param origin: An instance of `Origin`.
         :param handler: An instance of `bones.HandlerAPI`.
+        :param handlers: All handlers from `bones`.
         :return: A subclass of this class.
         """
         name = cls.__name__ if name is None else name
@@ -1029,7 +1030,7 @@ class OriginBase:
             handler = handlers.get(name, None)
             base = self.__objects.get(name, Object)
             assert issubclass(type(base), ObjectType)
-            obj = base.bind(self, handler, name=name)
+            obj = base.bind(self, handler, handlers, name=name)
             # Those objects without a custom class are "hidden" by prefixing
             # their name with an underscore.
             objname = "_%s" % name if base is Object else name
@@ -1188,6 +1189,7 @@ class Origin(OriginBase, metaclass=OriginType):
             ".filesystems",
             ".interfaces",
             ".ipranges",
+            ".logical_volumes",
             ".maas",
             ".machines",
             ".nodes",

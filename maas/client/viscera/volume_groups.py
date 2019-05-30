@@ -53,7 +53,7 @@ class VolumeGroup(FilesystemGroup, metaclass=VolumeGroupType):
 
     devices = DevicesField("devices")
     logical_volumes = ObjectFieldRelatedSet(
-        "logical_volumes", "BlockDevices", reverse=None)
+        "logical_volumes", "LogicalVolumes", reverse=None)
 
     def __repr__(self):
         return super(VolumeGroup, self).__repr__(
