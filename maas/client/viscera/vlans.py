@@ -82,7 +82,7 @@ class Vlan(Object, metaclass=VlanType):
         # by the API, this is stored through `local_data`.
         fabric_id = self._data['fabric_id']
         if ('fabric_id' in self._changed_data and
-                self._changed_data['fabric_id']):
+                self._changed_data['fabric_id'] is not None):
             if (self._orig_data['fabric_id'] and
                     self._changed_data['fabric_id'] == (
                         self._orig_data['fabric_id'])):
