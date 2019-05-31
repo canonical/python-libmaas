@@ -144,6 +144,31 @@ class TestVlan(TestCase):
         Vlan._handler.delete.assert_called_once_with(
             fabric_id=fabric_id, vid=10)
 
+    def test__vlan_update_fabric_to_default(self):
+        origin = make_origin()
+        Fabric, Vlan = origin.Fabric, origin.Vlan
+        Vlan._handler.params = ['fabric_id', 'vid']
+        fabric_id = random.randint(1, 100)
+        vlan_id = random.randint(5001, 6000)
+        vid = random.randint(100, 200)
+        vlan = Vlan({
+            "id": vlan_id,
+            "fabric_id": fabric_id,
+            "vid": vid,
+        })
+        default_fabric = Fabric({
+            "id": 0,
+        })
+        vlan.fabric = default_fabric
+        Vlan._handler.update.return_value = {
+            "id": vlan_id,
+            "vid": vid,
+        }
+        vlan.save()
+        Vlan._handler.update.assert_called_once_with(
+            fabric_id=fabric_id, vid=vid, _vid=vid, fabric=default_fabric.id)
+        self.assertThat(vlan.fabric.id, Equals(default_fabric.id))
+
     def test__vlan_update_fabric(self):
         origin = make_origin()
         Fabric, Vlan = origin.Fabric, origin.Vlan
