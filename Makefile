@@ -8,8 +8,9 @@ develop: bin/python setup.py
 dist: bin/python setup.py README
 	bin/python setup.py sdist bdist_wheel
 
-upload: bin/python setup.py README
-	bin/python setup.py sdist bdist_wheel upload
+upload: bin/python bin/twine setup.py README
+	bin/python setup.py sdist bdist_wheel
+	bin/twine upload dist/*
 
 test: bin/tox
 	@bin/tox
@@ -51,6 +52,9 @@ bin/python bin/pip:
 
 bin/mkdocs: bin/pip
 	bin/pip install --quiet --ignore-installed "mkdocs >= 0.14.0"
+
+bin/twine: bin/pip
+	bin/pip install --quiet --ignore-installed twine
 
 # ---
 
