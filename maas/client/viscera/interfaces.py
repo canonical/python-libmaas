@@ -158,8 +158,8 @@ class Interface(Object, metaclass=InterfaceTypeMeta):
 
     async def disconnect(self):
         """Disconnect this interface."""
-        self._data = await self._handler.disconnect(
-            system_id=self.node.system_id, id=self.id)
+        self._reset(await self._handler.disconnect(
+            system_id=self.node.system_id, id=self.id))
 
 
 class InterfaceDiscoveredLink(Object):

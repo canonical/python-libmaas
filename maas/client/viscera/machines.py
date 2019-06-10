@@ -408,13 +408,13 @@ class Machine(Node, metaclass=MachineType):
         }
         if comment:
             params["comment"] = comment
-        self._data = await self._handler.abort(**params)
+        self._reset(await self._handler.abort(**params))
         return self
 
     async def clear_default_gateways(self):
         """Clear default gateways."""
-        self._data = await self._handler.clear_default_gateways(
-            system_id=self.system_id)
+        self._reset(await self._handler.clear_default_gateways(
+            system_id=self.system_id))
         return self
 
     async def commission(
@@ -462,7 +462,7 @@ class Machine(Node, metaclass=MachineType):
                 params["testing_scripts"] = ["none"]
             else:
                 params["testing_scripts"] = ",".join(testing_scripts)
-        self._data = await self._handler.commission(**params)
+        self._reset(await self._handler.commission(**params))
         if not wait:
             return self
         else:
@@ -470,7 +470,7 @@ class Machine(Node, metaclass=MachineType):
             while self.status in [
                     NodeStatus.COMMISSIONING, NodeStatus.TESTING]:
                 await asyncio.sleep(wait_interval)
-                self._data = await self._handler.read(system_id=self.system_id)
+                self._reset(await self._handler.read(system_id=self.system_id))
             if self.status == NodeStatus.FAILED_COMMISSIONING:
                 msg = "{hostname} failed to commission.".format(
                     hostname=self.hostname)
@@ -512,14 +512,14 @@ class Machine(Node, metaclass=MachineType):
             params["hwe_kernel"] = hwe_kernel
         if comment is not None:
             params["comment"] = comment
-        self._data = await self._handler.deploy(**params)
+        self._reset(await self._handler.deploy(**params))
         if not wait:
             return self
         else:
             # Wait for the machine to be fully deployed
             while self.status == NodeStatus.DEPLOYING:
                 await asyncio.sleep(wait_interval)
-                self._data = await self._handler.read(system_id=self.system_id)
+                self._reset(await self._handler.read(system_id=self.system_id))
             if self.status == NodeStatus.FAILED_DEPLOYMENT:
                 msg = "{hostname} failed to deploy.".format(
                     hostname=self.hostname
@@ -536,8 +536,8 @@ class Machine(Node, metaclass=MachineType):
         :param wait_interval: How often to poll, defaults to 5 seconds
         """
         try:
-            self._data = await self._handler.rescue_mode(
-                system_id=self.system_id)
+            self._reset(await self._handler.rescue_mode(
+                system_id=self.system_id))
         except CallError as error:
             if error.status == HTTPStatus.FORBIDDEN:
                 message = "Not allowed to enter rescue mode"
@@ -551,7 +551,7 @@ class Machine(Node, metaclass=MachineType):
             # Wait for machine to finish entering rescue mode
             while self.status == NodeStatus.ENTERING_RESCUE_MODE:
                 await asyncio.sleep(wait)
-                self._data = await self._handler.read(system_id=self.system_id)
+                self._reset(await self._handler.read(system_id=self.system_id))
             if self.status == NodeStatus.FAILED_ENTERING_RESCUE_MODE:
                 msg = "{hostname} failed to enter rescue mode.".format(
                     hostname=self.hostname
@@ -568,9 +568,9 @@ class Machine(Node, metaclass=MachineType):
         :param wait_interval: How often to poll, defaults to 5 seconds
         """
         try:
-            self._data = await self._handler.exit_rescue_mode(
+            self._reset(await self._handler.exit_rescue_mode(
                 system_id=self.system_id
-            )
+            ))
         except CallError as error:
             if error.status == HTTPStatus.FORBIDDEN:
                 message = "Not allowed to exit rescue mode."
@@ -583,7 +583,7 @@ class Machine(Node, metaclass=MachineType):
             # Wait for machine to finish exiting rescue mode
             while self.status == NodeStatus.EXITING_RESCUE_MODE:
                 await asyncio.sleep(wait_interval)
-                self._data = await self._handler.read(system_id=self.system_id)
+                self._reset(await self._handler.read(system_id=self.system_id))
             if self.status == NodeStatus.FAILED_EXITING_RESCUE_MODE:
                 msg = "{hostname} failed to exit rescue mode.".format(
                     hostname=self.hostname
@@ -618,7 +618,7 @@ class Machine(Node, metaclass=MachineType):
         }
         if comment:
             params["comment"] = comment
-        self._data = await self._handler.mark_broken(**params)
+        self._reset(await self._handler.mark_broken(**params))
         return self
 
     async def mark_fixed(self, *, comment: str = None):
@@ -632,7 +632,7 @@ class Machine(Node, metaclass=MachineType):
         }
         if comment:
             params["comment"] = comment
-        self._data = await self._handler.mark_fixed(**params)
+        self._reset(await self._handler.mark_fixed(**params))
         return self
 
     async def release(
@@ -662,7 +662,7 @@ class Machine(Node, metaclass=MachineType):
             "secure_erase": secure_erase,
             "quick_erase": quick_erase,
         })
-        self._data = await self._handler.release(**params)
+        self._reset(await self._handler.release(**params))
         if not wait:
             return self
         else:
@@ -671,8 +671,8 @@ class Machine(Node, metaclass=MachineType):
                     NodeStatus.RELEASING, NodeStatus.DISK_ERASING]:
                 await asyncio.sleep(wait_interval)
                 try:
-                    self._data = await self._handler.read(
-                        system_id=self.system_id)
+                    self._reset(await self._handler.read(
+                        system_id=self.system_id))
                 except CallError as error:
                     if error.status == HTTPStatus.NOT_FOUND:
                         # Release must have been on a machine in a pod. This
@@ -710,7 +710,7 @@ class Machine(Node, metaclass=MachineType):
         if comment is not None:
             params["comment"] = comment
         try:
-            self._data = await self._handler.power_on(**params)
+            self._reset(await self._handler.power_on(**params))
         except CallError as error:
             if error.status == HTTPStatus.FORBIDDEN:
                 message = "Not allowed to power on machine."
@@ -725,7 +725,7 @@ class Machine(Node, metaclass=MachineType):
             # Wait for machine to be powered on.
             while self.power_state == PowerState.OFF:
                 await asyncio.sleep(wait_interval)
-                self._data = await self._handler.read(system_id=self.system_id)
+                self._reset(await self._handler.read(system_id=self.system_id))
             if self.power_state == PowerState.ERROR:
                 msg = "{hostname} failed to power on.".format(
                     hostname=self.hostname
@@ -752,7 +752,7 @@ class Machine(Node, metaclass=MachineType):
         if comment is not None:
             params["comment"] = comment
         try:
-            self._data = await self._handler.power_off(**params)
+            self._reset(await self._handler.power_off(**params))
         except CallError as error:
             if error.status == HTTPStatus.FORBIDDEN:
                 message = "Not allowed to power off machine."
@@ -767,7 +767,7 @@ class Machine(Node, metaclass=MachineType):
             # Wait for machine to be powered off.
             while self.power_state == PowerState.ON:
                 await asyncio.sleep(wait_interval)
-                self._data = await self._handler.read(system_id=self.system_id)
+                self._reset(await self._handler.read(system_id=self.system_id))
             if self.power_state == PowerState.ERROR:
                 msg = "{hostname} failed to power off.".format(
                     hostname=self.hostname
@@ -794,22 +794,22 @@ class Machine(Node, metaclass=MachineType):
         """
         Restore machine's configuration to its initial state.
         """
-        self._data = await self._handler.restore_default_configuration(
-            system_id=self.system_id)
+        self._reset(await self._handler.restore_default_configuration(
+            system_id=self.system_id))
 
     async def restore_networking_configuration(self):
         """
         Restore machine's networking configuration to its initial state.
         """
-        self._data = await self._handler.restore_networking_configuration(
-            system_id=self.system_id)
+        self._reset(await self._handler.restore_networking_configuration(
+            system_id=self.system_id))
 
     async def restore_storage_configuration(self):
         """
         Restore machine's storage configuration to its initial state.
         """
-        self._data = await self._handler.restore_storage_configuration(
-            system_id=self.system_id)
+        self._reset(await self._handler.restore_storage_configuration(
+            system_id=self.system_id))
 
     async def lock(self, *, comment: str = None):
         """Lock the machine to prevent changes.
@@ -822,7 +822,7 @@ class Machine(Node, metaclass=MachineType):
         }
         if comment:
             params["comment"] = comment
-        self._data = await self._handler.lock(**params)
+        self._reset(await self._handler.lock(**params))
         return self
 
     async def unlock(self, *, comment: str = None):
@@ -836,5 +836,5 @@ class Machine(Node, metaclass=MachineType):
         }
         if comment:
             params["comment"] = comment
-        self._data = await self._handler.unlock(**params)
+        self._reset(await self._handler.unlock(**params))
         return self
