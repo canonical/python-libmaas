@@ -217,6 +217,41 @@ class TestVlan(TestCase):
             fabric_id=fabric_id, vid=vid, _vid=new_vid)
         self.assertThat(new_vid, Equals(new_vid))
 
+    def test__vlan_update_vid_twice(self):
+        origin = make_origin()
+        Vlan = origin.Vlan
+        Vlan._handler.params = ['fabric_id', 'vid']
+        fabric_id = random.randint(1, 100)
+        vlan_id = random.randint(5001, 6000)
+        vid = random.randint(100, 200)
+        new_vid = random.randint(201, 300)
+        vlan = Vlan({
+            "id": vlan_id,
+            "fabric_id": fabric_id,
+            "vid": vid,
+        })
+        vlan.vid = new_vid
+        Vlan._handler.update.return_value = {
+            "id": vlan_id,
+            "vid": new_vid,
+        }
+        vlan.save()
+        Vlan._handler.update.assert_called_once_with(
+            fabric_id=fabric_id, vid=vid, _vid=new_vid)
+        self.assertThat(vlan.vid, Equals(new_vid))
+
+        # Second call should pass the new_vid as the vid, and not the old vid.
+        new_vid_2 = random.randint(301, 400)
+        vlan.vid = new_vid_2
+        Vlan._handler.update.return_value = {
+            "id": vlan_id,
+            "vid": new_vid_2,
+        }
+        vlan.save()
+        Vlan._handler.update.assert_called_with(
+            fabric_id=fabric_id, vid=new_vid, _vid=new_vid_2)
+        self.assertThat(vlan.vid, Equals(new_vid_2))
+
     def test__vlan_update_relay_vlan_with_object(self):
         origin = make_origin()
         Vlan = origin.Vlan

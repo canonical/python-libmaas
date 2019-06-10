@@ -122,10 +122,10 @@ class Vlan(Object, metaclass=VlanType):
             update_data['vid'] = update_data['_vid'] = self._orig_data['vid']
             if 'vid' in self._changed_data:
                 update_data['_vid'] = self._changed_data['vid']
-            self._data = await self._handler.update(**update_data)
-
-        # Set fabric_id because it was lost from the `save`.
-        self._data['fabric_id'] = fabric_id
+            data = await self._handler.update(**update_data)
+            # Set fabric_id because it was lost from the `update`.
+            data['fabric_id'] = fabric_id
+            self._reset(data)
 
     async def delete(self):
         """Delete this VLAN."""

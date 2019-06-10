@@ -123,25 +123,25 @@ class BlockDevice(Object, metaclass=BlockDeviceTypeMeta):
 
     async def format(self, fstype, *, uuid=None):
         """Format this block device."""
-        self._data = await self._handler.format(
+        self._reset(await self._handler.format(
             system_id=self.node.system_id, id=self.id,
-            fstype=fstype, uuid=uuid)
+            fstype=fstype, uuid=uuid))
 
     async def unformat(self):
         """Unformat this block device."""
-        self._data = await self._handler.unformat(
-            system_id=self.node.system_id, id=self.id)
+        self._reset(await self._handler.unformat(
+            system_id=self.node.system_id, id=self.id))
 
     async def mount(self, mount_point, *, mount_options=None):
         """Mount this block device."""
-        self._data = await self._handler.mount(
+        self._reset(await self._handler.mount(
             system_id=self.node.system_id, id=self.id, mount_point=mount_point,
-            mount_options=mount_options)
+            mount_options=mount_options))
 
     async def unmount(self):
         """Unmount this block device."""
-        self._data = await self._handler.unmount(
-            system_id=self.node.system_id, id=self.id)
+        self._reset(await self._handler.unmount(
+            system_id=self.node.system_id, id=self.id))
 
 
 class BlockDevicesType(ObjectType):

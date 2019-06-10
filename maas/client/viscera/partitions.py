@@ -83,30 +83,30 @@ class Partition(Object, metaclass=PartitionType):
 
     async def format(self, fstype, *, uuid=None):
         """Format this partition."""
-        self._data = await self._handler.format(
+        self._reset(await self._handler.format(
             system_id=self.block_device.node.system_id,
             device_id=self.block_device.id, id=self.id,
-            fstype=fstype, uuid=uuid)
+            fstype=fstype, uuid=uuid))
 
     async def unformat(self):
         """Unformat this partition."""
-        self._data = await self._handler.unformat(
+        self._reset(await self._handler.unformat(
             system_id=self.block_device.node.system_id,
-            device_id=self.block_device.id, id=self.id)
+            device_id=self.block_device.id, id=self.id))
 
     async def mount(self, mount_point, *, mount_options=None):
         """Mount this partition."""
-        self._data = await self._handler.mount(
+        self._reset(await self._handler.mount(
             system_id=self.block_device.node.system_id,
             device_id=self.block_device.id, id=self.id,
             mount_point=mount_point,
-            mount_options=mount_options)
+            mount_options=mount_options))
 
     async def umount(self):
         """Unmount this partition."""
-        self._data = await self._handler.unmount(
+        self._reset(await self._handler.unmount(
             system_id=self.block_device.node.system_id,
-            device_id=self.block_device.id, id=self.id)
+            device_id=self.block_device.id, id=self.id))
 
 
 class PartitionsType(ObjectType):
