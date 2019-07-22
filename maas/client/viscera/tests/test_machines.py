@@ -870,34 +870,54 @@ class TestMachine(TestCase):
             hello='whole new world', new='brand-new')
 
     def test__lock(self):
+        system_id = make_name_without_spaces("system-id")
+        hostname = make_name_without_spaces("hostname")
         data = {
-            "system_id": make_name_without_spaces("system-id"),
-            "hostname": make_name_without_spaces("hostname"),
+            "system_id": system_id,
+            "hostname": hostname,
+            "locked": False,
+        }
+        new_data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "locked": True,
         }
         origin = make_machines_origin()
         machine = origin.Machine(data)
-        machine._handler.lock.return_value = data
+        machine._handler.lock.return_value = new_data
         comment = make_name_without_spaces("comment")
         self.assertThat(
             machine.lock(comment=comment),
-            Equals(origin.Machine(data)))
+            Equals(origin.Machine(new_data)))
         machine._handler.lock.assert_called_once_with(
             system_id=machine.system_id, comment=comment)
+        self.assertThat(
+            machine.locked, Equals(new_data['locked']))
 
     def test__unlock(self):
+        system_id = make_name_without_spaces("system-id")
+        hostname = make_name_without_spaces("hostname")
         data = {
-            "system_id": make_name_without_spaces("system-id"),
-            "hostname": make_name_without_spaces("hostname"),
+            "system_id": system_id,
+            "hostname": hostname,
+            "locked": True,
+        }
+        new_data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "locked": False,
         }
         origin = make_machines_origin()
         machine = origin.Machine(data)
-        machine._handler.unlock.return_value = data
+        machine._handler.unlock.return_value = new_data
         comment = make_name_without_spaces("comment")
         self.assertThat(
             machine.unlock(comment=comment),
-            Equals(origin.Machine(data)))
+            Equals(origin.Machine(new_data)))
         machine._handler.unlock.assert_called_once_with(
             system_id=machine.system_id, comment=comment)
+        self.assertThat(
+            machine.locked, Equals(new_data['locked']))
 
 
 class TestMachine_APIVersion(TestCase):
