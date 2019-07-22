@@ -362,6 +362,8 @@ class Machine(Node, metaclass=MachineType):
         "distro_series", check(str), readonly=True)
     hwe_kernel = ObjectField.Checked(
         "hwe_kernel", check_optional(str), check_optional(str))
+    locked = ObjectField.Checked(
+        "locked", check(bool), readonly=True)
     memory = ObjectField.Checked(
         "memory", check(int), check(int))
     min_hwe_kernel = ObjectField.Checked(
