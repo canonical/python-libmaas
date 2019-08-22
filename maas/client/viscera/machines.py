@@ -486,7 +486,7 @@ class Machine(Node, metaclass=MachineType):
     async def deploy(
             self, *, user_data: typing.Union[bytes, str] = None,
             distro_series: str = None, hwe_kernel: str = None,
-            comment: str = None, wait: bool = False, wait_interval: int = 5):
+            comment: str = None, wait: bool = False, install_kvm: bool = False, wait_interval: int = 5):
         """Deploy this machine.
 
         :param user_data: User-data to provide to the machine when booting. If
@@ -500,7 +500,7 @@ class Machine(Node, metaclass=MachineType):
         :param wait: If specified, wait until the deploy is complete.
         :param wait_interval: How often to poll, defaults to 5 seconds
         """
-        params = {"system_id": self.system_id}
+        params = {"system_id": self.system_id, "install_kvm": install_kvm}
         if user_data is not None:
             if isinstance(user_data, bytes):
                 params["user_data"] = base64.encodebytes(user_data)
