@@ -500,7 +500,11 @@ class Machine(Node, metaclass=MachineType):
         :param wait: If specified, wait until the deploy is complete.
         :param wait_interval: How often to poll, defaults to 5 seconds
         """
-        params = {"system_id": self.system_id, "install_kvm": install_kvm}
+        params = {"system_id": self.system_id}
+
+        if install_kvm:
+            params["install_kvm"] = install_kvm
+
         if user_data is not None:
             if isinstance(user_data, bytes):
                 params["user_data"] = base64.encodebytes(user_data)
