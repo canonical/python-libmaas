@@ -486,7 +486,7 @@ class Machine(Node, metaclass=MachineType):
     async def deploy(
             self, *, user_data: typing.Union[bytes, str] = None,
             distro_series: str = None, hwe_kernel: str = None,
-            comment: str = None, wait: bool = False, 
+            comment: str = None, wait: bool = False,
             install_kvm: bool = False, wait_interval: int = 5):
         """Deploy this machine.
 
