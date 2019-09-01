@@ -629,6 +629,9 @@ class cmd_deploy(cmd_allocate, MachineSSHMixin, MachineReleaseMixin):
         parser.other.add_argument(
             "--no-wait", action="store_true", help=(
                 "Don't wait for the deploy to complete."))
+        parser.other.add_argument(
+            "--install-kvm", action="store_true", help=(
+                "Install KVM on machine"))
 
     def _get_deploy_options(self, options):
         """Return the deployment options based on command line."""
@@ -645,6 +648,7 @@ class cmd_deploy(cmd_allocate, MachineSSHMixin, MachineReleaseMixin):
             'hwe_kernel': options.hwe_kernel,
             'user_data': user_data,
             'comment': options.comment,
+            'install_kvm': options.install_kvm,
             'wait': False,
         })
 
