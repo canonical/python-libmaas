@@ -14,18 +14,11 @@
 
 """Asynchronous helpers, for use with `asyncio`."""
 
-__all__ = [
-    "asynchronous",
-    "Asynchronous",
-    "is_loop_running",
-]
+__all__ = ["asynchronous", "Asynchronous", "is_loop_running"]
 
 from asyncio import get_event_loop
 from functools import wraps
-from inspect import (
-    isawaitable,
-    iscoroutinefunction,
-)
+from inspect import isawaitable, iscoroutinefunction
 
 
 def asynchronous(func):
@@ -40,6 +33,7 @@ def asynchronous(func):
     function from outside of the event-loop, and so makes interactive use of
     these APIs far more intuitive.
     """
+
     @wraps(func)
     def wrapper(*args, **kwargs):
         eventloop = get_event_loop()

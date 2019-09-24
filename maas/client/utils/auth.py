@@ -14,10 +14,7 @@
 
 """MAAS CLI authentication."""
 
-__all__ = [
-    "obtain_credentials",
-    "try_getpass",
-]
+__all__ = ["obtain_credentials", "try_getpass"]
 
 from getpass import getpass
 import sys
@@ -42,8 +39,7 @@ def obtain_credentials(credentials):
     if credentials == "-":
         credentials = sys.stdin.readline().strip()
     elif credentials is None:
-        credentials = try_getpass(
-            "API key (leave empty for anonymous access): ")
+        credentials = try_getpass("API key (leave empty for anonymous access): ")
     # Ensure that the credentials have a valid form.
     if credentials and not credentials.isspace():
         return Credentials.parse(credentials)

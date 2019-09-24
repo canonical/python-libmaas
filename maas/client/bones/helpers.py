@@ -20,12 +20,7 @@ from getpass import getuser
 from http import HTTPStatus
 from socket import gethostname
 import typing
-from urllib.parse import (
-    ParseResult,
-    SplitResult,
-    urljoin,
-    urlparse,
-)
+from urllib.parse import ParseResult, SplitResult, urljoin, urlparse
 
 import aiohttp
 from macaroonbakery import httpbakery
@@ -41,21 +36,19 @@ class RemoteError(Exception):
 
 
 async def fetch_api_description(
-        url: typing.Union[str, ParseResult, SplitResult],
-        insecure: bool = False):
+    url: typing.Union[str, ParseResult, SplitResult], insecure: bool = False
+):
     """Fetch the API description from the remote MAAS instance."""
     url_describe = urljoin(_ensure_url_string(url), "describe/")
     connector = aiohttp.TCPConnector(verify_ssl=(not insecure))
     session = aiohttp.ClientSession(connector=connector)
     async with session, session.get(url_describe) as response:
         if response.status != HTTPStatus.OK:
-            raise RemoteError(
-                "{0} -> {1.status} {1.reason}".format(
-                    url, response))
+            raise RemoteError("{0} -> {1.status} {1.reason}".format(url, response))
         elif response.content_type != "application/json":
             raise RemoteError(
-                "Expected application/json, got: %s"
-                % response.content_type)
+                "Expected application/json, got: %s" % response.content_type
+            )
         else:
             return await response.json()
 
@@ -67,8 +60,7 @@ def _ensure_url_string(url):
     elif isinstance(url, (ParseResult, SplitResult)):
         return url.geturl()
     else:
-        raise TypeError(
-            "Could not convert %r to a string URL." % (url,))
+        raise TypeError("Could not convert %r to a string URL." % (url,))
 
 
 def derive_resource_name(name):
@@ -108,11 +100,13 @@ async def connect(url, *, apikey=None, insecure=False):
     if url.username is not None:
         raise ConnectError(
             "Cannot provide user-name explicitly in URL (%r) when connecting; "
-            "use login instead." % url.username)
+            "use login instead." % url.username
+        )
     if url.password is not None:
         raise ConnectError(
             "Cannot provide password explicitly in URL (%r) when connecting; "
-            "use login instead." % url.username)
+            "use login instead." % url.username
+        )
 
     if apikey is None:
         credentials = None  # Anonymous access.
@@ -123,8 +117,12 @@ async def connect(url, *, apikey=None, insecure=False):
 
     # Return a new (unsaved) profile.
     return Profile(
-        name=url.netloc, url=url.geturl(), credentials=credentials,
-        description=description, insecure=insecure)
+        name=url.netloc,
+        url=url.geturl(),
+        credentials=credentials,
+        description=description,
+        insecure=insecure,
+    )
 
 
 class LoginError(Exception):
@@ -148,8 +146,7 @@ class MacaroonLoginNotSupported(LoginError):
 
 
 @asynchronous
-async def login(url, *, anonymous=False, username=None, password=None,
-                insecure=False):
+async def login(url, *, anonymous=False, username=None, password=None, insecure=False):
     """Log-in to a remote MAAS instance.
 
     Returns a new :class:`Profile` which has NOT been saved. To log-in AND
@@ -180,7 +177,8 @@ async def login(url, *, anonymous=False, username=None, password=None,
         else:
             raise LoginError(
                 "User-name provided explicitly (%r) and in URL (%r); "
-                "provide only one." % (username, url.username))
+                "provide only one." % (username, url.username)
+            )
 
     if password is None:
         password = url.password
@@ -190,7 +188,8 @@ async def login(url, *, anonymous=False, username=None, password=None,
         else:
             raise LoginError(
                 "Password provided explicitly (%r) and in URL (%r); "
-                "provide only one." % (password, url.password))
+                "provide only one." % (password, url.password)
+            )
 
     # Remove user-name and password from the URL.
     userinfo, _, hostinfo = url.netloc.rpartition("@")
@@ -199,27 +198,35 @@ async def login(url, *, anonymous=False, username=None, password=None,
     if username is None:
         if password:
             raise PasswordWithoutUsername(
-                "Password provided without user-name; specify user-name.")
+                "Password provided without user-name; specify user-name."
+            )
         elif anonymous:
             credentials = None
         else:
             credentials = await authenticate_with_macaroon(
-                url.geturl(), insecure=insecure)
+                url.geturl(), insecure=insecure
+            )
     else:
         if password is None:
             raise UsernameWithoutPassword(
-                "User-name provided without password; specify password.")
+                "User-name provided without password; specify password."
+            )
         else:
             credentials = await authenticate(
-                url.geturl(), username, password, insecure=insecure)
+                url.geturl(), username, password, insecure=insecure
+            )
 
     description = await fetch_api_description(url, insecure)
     profile_name = username or url.netloc
 
     # Return a new (unsaved) profile.
     return Profile(
-        name=profile_name, url=url.geturl(), credentials=credentials,
-        description=description, insecure=insecure)
+        name=profile_name,
+        url=url.geturl(),
+        credentials=credentials,
+        description=description,
+        insecure=insecure,
+    )
 
 
 async def authenticate_with_macaroon(url, insecure=False):
@@ -229,17 +236,18 @@ async def authenticate_with_macaroon(url, insecure=False):
     def get_token():
         client = httpbakery.Client()
         resp = client.request(
-            'POST', '{}/account/?op=create_authorisation_token'.format(url),
-            verify=not insecure)
+            "POST",
+            "{}/account/?op=create_authorisation_token".format(url),
+            verify=not insecure,
+        )
         if resp.status_code == HTTPStatus.UNAUTHORIZED:
             # if the auteentication with Candid fails, an exception is raised
             # above so we don't get here
-            raise MacaroonLoginNotSupported(
-                'Macaroon authentication not supported')
+            raise MacaroonLoginNotSupported("Macaroon authentication not supported")
         if resp.status_code != HTTPStatus.OK:
-            raise LoginError('Login failed: {}'.format(resp.text))
+            raise LoginError("Login failed: {}".format(resp.text))
         result = resp.json()
-        return '{consumer_key}:{token_key}:{token_secret}'.format(**result)
+        return "{consumer_key}:{token_key}:{token_secret}".format(**result)
 
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(executor, get_token)
@@ -262,7 +270,9 @@ async def authenticate(url, username, password, *, insecure=False):
         if response.status != HTTPStatus.OK:
             raise RemoteError(
                 "{0} -> {1.status} {1.reason}".format(
-                    response.url_obj.human_repr(), response))
+                    response.url_obj.human_repr(), response
+                )
+            )
 
     connector = aiohttp.TCPConnector(verify_ssl=(not insecure))
     session = aiohttp.ClientSession(connector=connector)
@@ -275,12 +285,14 @@ async def authenticate(url, username, password, *, insecure=False):
         if "authenticate-api" not in version_info["capabilities"]:
             raise LoginNotSupported(
                 "Server does not support automated client log-in. "
-                "Please obtain an API token via the MAAS UI.")
+                "Please obtain an API token via the MAAS UI."
+            )
 
         # POST to the `authenticate` endpoint.
         data = {
-            "username": username, "password": password,
-            "consumer": "%s@%s" % (getuser(), gethostname())
+            "username": username,
+            "password": password,
+            "consumer": "%s@%s" % (getuser(), gethostname()),
         }
         async with session.post(url_authn, data=data) as response:
             check_response_is_okay(response)

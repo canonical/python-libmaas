@@ -1,9 +1,6 @@
 """Objects for machines."""
 
-__all__ = [
-    "Machine",
-    "Machines",
-]
+__all__ = ["Machine", "Machines"]
 
 import asyncio
 import base64
@@ -22,26 +19,13 @@ from . import (
 )
 from .fabrics import Fabric
 from .interfaces import Interface
-from .nodes import (
-    Node,
-    Nodes,
-    NodesType,
-    NodeTypeMeta,
-)
+from .nodes import Node, Nodes, NodesType, NodeTypeMeta
 from .pods import Pod
 from .subnets import Subnet
 from .zones import Zone
 from ..bones import CallError
-from ..enum import (
-    NodeStatus,
-    PowerState,
-    PowerStopMode
-)
-from ..errors import (
-    MAASException,
-    OperationNotAllowed,
-    PowerError
-)
+from ..enum import NodeStatus, PowerState, PowerStopMode
+from ..errors import MAASException, OperationNotAllowed, PowerError
 from ..utils import remove_None
 from ..utils.diff import calculate_dict_diff
 
@@ -52,7 +36,7 @@ SubnetParam = typing.Union[str, int, Subnet]
 ZoneParam = typing.Union[str, Zone]
 
 
-def get_param_arg(param, idx, klass, arg, attr='id'):
+def get_param_arg(param, idx, klass, arg, attr="id"):
     """Return the correct value for a fabric from `arg`."""
     if isinstance(arg, klass):
         return getattr(arg, attr)
@@ -60,19 +44,26 @@ def get_param_arg(param, idx, klass, arg, attr='id'):
         return arg
     else:
         raise TypeError(
-            "%s[%d] must be int, str, or %s, not %s" % (
-                param, idx, klass.__name__, type(arg).__name__))
+            "%s[%d] must be int, str, or %s, not %s"
+            % (param, idx, klass.__name__, type(arg).__name__)
+        )
 
 
 class MachinesType(NodesType):
     """Metaclass for `Machines`."""
 
     async def create(
-            cls, architecture: str, mac_addresses: typing.Sequence[str],
-            power_type: str,
-            power_parameters: typing.Mapping[str, typing.Any] = None, *,
-            subarchitecture: str = None, min_hwe_kernel: str = None,
-            hostname: str = None, domain: typing.Union[int, str] = None):
+        cls,
+        architecture: str,
+        mac_addresses: typing.Sequence[str],
+        power_type: str,
+        power_parameters: typing.Mapping[str, typing.Any] = None,
+        *,
+        subarchitecture: str = None,
+        min_hwe_kernel: str = None,
+        hostname: str = None,
+        domain: typing.Union[int, str] = None
+    ):
         """
         Create a new machine.
 
@@ -100,8 +91,7 @@ class MachinesType(NodesType):
             "power_type": power_type,
         }
         if power_parameters is not None:
-            params["power_parameters"] = json.dumps(
-                power_parameters, sort_keys=True)
+            params["power_parameters"] = json.dumps(power_parameters, sort_keys=True)
         if subarchitecture is not None:
             params["subarchitecture"] = subarchitecture
         if min_hwe_kernel is not None:
@@ -113,28 +103,34 @@ class MachinesType(NodesType):
         return cls._object(await cls._handler.create(**params))
 
     async def allocate(
-            cls, *,
-            hostname: str = None,
-            architectures: typing.Sequence[str] = None,
-            cpus: int = None,
-            fabrics: typing.Sequence[FabricParam] = None,
-            interfaces: typing.Sequence[InterfaceParam] = None,
-            memory: float = None,
-            pod: typing.Union[str, Pod] = None,
-            not_pod: typing.Union[str, Pod] = None,
-            pod_type: str = None,
-            not_pod_type: str = None,
-            storage: typing.Sequence[str] = None,
-            subnets: typing.Sequence[SubnetParam] = None,
-            tags: typing.Sequence[str] = None,
-            zone: typing.Union[str, Zone] = None,
-            not_fabrics: typing.Sequence[FabricParam] = None,
-            not_subnets: typing.Sequence[SubnetParam] = None,
-            not_tags: typing.Sequence[str] = None,
-            not_zones: typing.Sequence[ZoneParam] = None,
-            agent_name: str = None, comment: str = None,
-            bridge_all: bool = None, bridge_stp: bool = None,
-            bridge_fd: int = None, dry_run: bool = None, verbose: bool = None):
+        cls,
+        *,
+        hostname: str = None,
+        architectures: typing.Sequence[str] = None,
+        cpus: int = None,
+        fabrics: typing.Sequence[FabricParam] = None,
+        interfaces: typing.Sequence[InterfaceParam] = None,
+        memory: float = None,
+        pod: typing.Union[str, Pod] = None,
+        not_pod: typing.Union[str, Pod] = None,
+        pod_type: str = None,
+        not_pod_type: str = None,
+        storage: typing.Sequence[str] = None,
+        subnets: typing.Sequence[SubnetParam] = None,
+        tags: typing.Sequence[str] = None,
+        zone: typing.Union[str, Zone] = None,
+        not_fabrics: typing.Sequence[FabricParam] = None,
+        not_subnets: typing.Sequence[SubnetParam] = None,
+        not_tags: typing.Sequence[str] = None,
+        not_zones: typing.Sequence[ZoneParam] = None,
+        agent_name: str = None,
+        comment: str = None,
+        bridge_all: bool = None,
+        bridge_stp: bool = None,
+        bridge_fd: int = None,
+        dry_run: bool = None,
+        verbose: bool = None
+    ):
         """
         Allocate a machine.
 
@@ -195,32 +191,34 @@ class MachinesType(NodesType):
             which machine(s) matched).
         :type verbose: `bool`
         """
-        params = remove_None({
-            'name': hostname,
-            'arch': architectures,
-            'cpu_count': str(cpus) if cpus else None,
-            'mem': str(memory) if memory else None,
-            'pod_type': pod_type,
-            'not_pod_type': not_pod_type,
-            'storage': storage,
-            'tags': tags,
-            'not_tags': not_tags,
-            'agent_name': agent_name,
-            'comment': comment,
-            'bridge_all': bridge_all,
-            'bridge_stp': bridge_stp,
-            'bridge_fd': bridge_fd,
-            'dry_run': dry_run,
-            'verbose': verbose,
-        })
+        params = remove_None(
+            {
+                "name": hostname,
+                "arch": architectures,
+                "cpu_count": str(cpus) if cpus else None,
+                "mem": str(memory) if memory else None,
+                "pod_type": pod_type,
+                "not_pod_type": not_pod_type,
+                "storage": storage,
+                "tags": tags,
+                "not_tags": not_tags,
+                "agent_name": agent_name,
+                "comment": comment,
+                "bridge_all": bridge_all,
+                "bridge_stp": bridge_stp,
+                "bridge_fd": bridge_fd,
+                "dry_run": dry_run,
+                "verbose": verbose,
+            }
+        )
         if fabrics is not None:
             params["fabrics"] = [
-                get_param_arg('fabrics', idx, Fabric, fabric)
+                get_param_arg("fabrics", idx, Fabric, fabric)
                 for idx, fabric in enumerate(fabrics)
             ]
         if interfaces is not None:
             params["interfaces"] = [
-                get_param_arg('interfaces', idx, Interface, nic)
+                get_param_arg("interfaces", idx, Interface, nic)
                 for idx, nic in enumerate(interfaces)
             ]
         if pod is not None:
@@ -229,8 +227,7 @@ class MachinesType(NodesType):
             elif isinstance(pod, str):
                 params["pod"] = pod
             else:
-                raise TypeError(
-                    "pod must be a str or Pod, not %s" % type(pod).__name__)
+                raise TypeError("pod must be a str or Pod, not %s" % type(pod).__name__)
         if not_pod is not None:
             if isinstance(not_pod, Pod):
                 params["not_pod"] = not_pod.name
@@ -238,11 +235,11 @@ class MachinesType(NodesType):
                 params["not_pod"] = not_pod
             else:
                 raise TypeError(
-                    "not_pod must be a str or Pod, not %s" %
-                    type(not_pod).__name__)
+                    "not_pod must be a str or Pod, not %s" % type(not_pod).__name__
+                )
         if subnets is not None:
             params["subnets"] = [
-                get_param_arg('subnets', idx, Subnet, subnet)
+                get_param_arg("subnets", idx, Subnet, subnet)
                 for idx, subnet in enumerate(subnets)
             ]
         if zone is not None:
@@ -252,20 +249,21 @@ class MachinesType(NodesType):
                 params["zone"] = zone
             else:
                 raise TypeError(
-                    "zone must be a str or Zone, not %s" % type(zone).__name__)
+                    "zone must be a str or Zone, not %s" % type(zone).__name__
+                )
         if not_fabrics is not None:
             params["not_fabrics"] = [
-                get_param_arg('not_fabrics', idx, Fabric, fabric)
+                get_param_arg("not_fabrics", idx, Fabric, fabric)
                 for idx, fabric in enumerate(not_fabrics)
             ]
         if not_subnets is not None:
             params["not_subnets"] = [
-                get_param_arg('not_subnets', idx, Subnet, subnet)
+                get_param_arg("not_subnets", idx, Subnet, subnet)
                 for idx, subnet in enumerate(not_subnets)
             ]
         if not_zones is not None:
             params["not_in_zones"] = [
-                get_param_arg('not_zones', idx, Zone, zone, attr='name')
+                get_param_arg("not_zones", idx, Zone, zone, attr="name")
                 for idx, zone in enumerate(not_zones)
             ]
         try:
@@ -279,8 +277,7 @@ class MachinesType(NodesType):
         else:
             return cls._object(data)
 
-    async def get_power_parameters_for(
-            cls, system_ids: typing.Sequence[str]):
+    async def get_power_parameters_for(cls, system_ids: typing.Sequence[str]):
         """
         Get a list of power parameters for specified systems.
         *WARNING*: This method is considered 'alpha' and may be modified
@@ -343,61 +340,51 @@ class Machine(Node, metaclass=MachineType):
     """A machine stored in MAAS."""
 
     architecture = ObjectField.Checked(
-        "architecture", check_optional(str), check_optional(str))
-    boot_disk = ObjectFieldRelated(
-        "boot_disk", "BlockDevice", readonly=True)
-    boot_interface = ObjectFieldRelated(
-        "boot_interface", "Interface", readonly=True)
+        "architecture", check_optional(str), check_optional(str)
+    )
+    boot_disk = ObjectFieldRelated("boot_disk", "BlockDevice", readonly=True)
+    boot_interface = ObjectFieldRelated("boot_interface", "Interface", readonly=True)
     block_devices = ObjectFieldRelatedSet(
-        "blockdevice_set", "BlockDevices", reverse=None)
-    bcaches = ObjectFieldRelatedSet(
-        "bcaches", "Bcaches", reverse=None)
-    cache_sets = ObjectFieldRelatedSet(
-        "cache_sets", "BcacheCacheSets", reverse=None)
-    cpus = ObjectField.Checked(
-        "cpu_count", check(int), check(int))
-    disable_ipv4 = ObjectField.Checked(
-        "disable_ipv4", check(bool), check(bool))
-    distro_series = ObjectField.Checked(
-        "distro_series", check(str), readonly=True)
+        "blockdevice_set", "BlockDevices", reverse=None
+    )
+    bcaches = ObjectFieldRelatedSet("bcaches", "Bcaches", reverse=None)
+    cache_sets = ObjectFieldRelatedSet("cache_sets", "BcacheCacheSets", reverse=None)
+    cpus = ObjectField.Checked("cpu_count", check(int), check(int))
+    disable_ipv4 = ObjectField.Checked("disable_ipv4", check(bool), check(bool))
+    distro_series = ObjectField.Checked("distro_series", check(str), readonly=True)
     hwe_kernel = ObjectField.Checked(
-        "hwe_kernel", check_optional(str), check_optional(str))
-    locked = ObjectField.Checked(
-        "locked", check(bool), readonly=True)
-    memory = ObjectField.Checked(
-        "memory", check(int), check(int))
+        "hwe_kernel", check_optional(str), check_optional(str)
+    )
+    locked = ObjectField.Checked("locked", check(bool), readonly=True)
+    memory = ObjectField.Checked("memory", check(int), check(int))
     min_hwe_kernel = ObjectField.Checked(
-        "min_hwe_kernel", check_optional(str), check_optional(str))
-    netboot = ObjectField.Checked(
-        "netboot", check(bool), readonly=True)
-    osystem = ObjectField.Checked(
-        "osystem", check(str), readonly=True)
-    owner_data = ObjectField.Checked(
-        "owner_data", check(dict), check(dict))
-    status = ObjectField.Checked(
-        "status", to(NodeStatus), readonly=True)
+        "min_hwe_kernel", check_optional(str), check_optional(str)
+    )
+    netboot = ObjectField.Checked("netboot", check(bool), readonly=True)
+    osystem = ObjectField.Checked("osystem", check(str), readonly=True)
+    owner_data = ObjectField.Checked("owner_data", check(dict), check(dict))
+    status = ObjectField.Checked("status", to(NodeStatus), readonly=True)
     status_action = ObjectField.Checked(
-        "status_action", check_optional(str), readonly=True)
+        "status_action", check_optional(str), readonly=True
+    )
     status_message = ObjectField.Checked(
-        "status_message", check_optional(str), readonly=True)
-    status_name = ObjectField.Checked(
-        "status_name", check(str), readonly=True)
-    raids = ObjectFieldRelatedSet(
-        "raids", "Raids", reverse=None)
-    volume_groups = ObjectFieldRelatedSet(
-        "volume_groups", "VolumeGroups", reverse=None)
+        "status_message", check_optional(str), readonly=True
+    )
+    status_name = ObjectField.Checked("status_name", check(str), readonly=True)
+    raids = ObjectFieldRelatedSet("raids", "Raids", reverse=None)
+    volume_groups = ObjectFieldRelatedSet("volume_groups", "VolumeGroups", reverse=None)
 
     async def save(self):
         """Save the machine in MAAS."""
-        orig_owner_data = self._orig_data['owner_data']
-        new_owner_data = dict(self._data['owner_data'])
-        self._changed_data.pop('owner_data', None)
+        orig_owner_data = self._orig_data["owner_data"]
+        new_owner_data = dict(self._data["owner_data"])
+        self._changed_data.pop("owner_data", None)
         await super(Machine, self).save()
         params_diff = calculate_dict_diff(orig_owner_data, new_owner_data)
         if len(params_diff) > 0:
-            params_diff['system_id'] = self.system_id
+            params_diff["system_id"] = self.system_id
             await self._handler.set_owner_data(**params_diff)
-            self._data['owner_data'] = self._data['owner_data']
+            self._data["owner_data"] = self._data["owner_data"]
 
     async def abort(self, *, comment: str = None):
         """Abort the current action.
@@ -405,9 +392,7 @@ class Machine(Node, metaclass=MachineType):
         :param comment: Reason for aborting the action.
         :param type: `str`
         """
-        params = {
-            "system_id": self.system_id
-        }
+        params = {"system_id": self.system_id}
         if comment:
             params["comment"] = comment
         self._reset(await self._handler.abort(**params))
@@ -415,16 +400,22 @@ class Machine(Node, metaclass=MachineType):
 
     async def clear_default_gateways(self):
         """Clear default gateways."""
-        self._reset(await self._handler.clear_default_gateways(
-            system_id=self.system_id))
+        self._reset(
+            await self._handler.clear_default_gateways(system_id=self.system_id)
+        )
         return self
 
     async def commission(
-            self, *, enable_ssh: bool = None, skip_networking: bool = None,
-            skip_storage: bool = None,
-            commissioning_scripts: typing.Sequence[str] = None,
-            testing_scripts: typing.Sequence[str] = None,
-            wait: bool = False, wait_interval: int = 5):
+        self,
+        *,
+        enable_ssh: bool = None,
+        skip_networking: bool = None,
+        skip_storage: bool = None,
+        commissioning_scripts: typing.Sequence[str] = None,
+        testing_scripts: typing.Sequence[str] = None,
+        wait: bool = False,
+        wait_interval: int = 5
+    ):
         """Commission this machine.
 
         :param enable_ssh: Prevent the machine from powering off after running
@@ -456,8 +447,7 @@ class Machine(Node, metaclass=MachineType):
             params["skip_networking"] = skip_networking
         if skip_storage is not None:
             params["skip_storage"] = skip_storage
-        if (commissioning_scripts is not None and
-                len(commissioning_scripts) > 0):
+        if commissioning_scripts is not None and len(commissioning_scripts) > 0:
             params["commissioning_scripts"] = ",".join(commissioning_scripts)
         if testing_scripts is not None:
             if len(testing_scripts) == 0 or testing_scripts == "none":
@@ -469,25 +459,28 @@ class Machine(Node, metaclass=MachineType):
             return self
         else:
             # Wait for the machine to be fully commissioned.
-            while self.status in [
-                    NodeStatus.COMMISSIONING, NodeStatus.TESTING]:
+            while self.status in [NodeStatus.COMMISSIONING, NodeStatus.TESTING]:
                 await asyncio.sleep(wait_interval)
                 self._reset(await self._handler.read(system_id=self.system_id))
             if self.status == NodeStatus.FAILED_COMMISSIONING:
-                msg = "{hostname} failed to commission.".format(
-                    hostname=self.hostname)
+                msg = "{hostname} failed to commission.".format(hostname=self.hostname)
                 raise FailedCommissioning(msg, self)
             if self.status == NodeStatus.FAILED_TESTING:
-                msg = "{hostname} failed testing.".format(
-                    hostname=self.hostname)
+                msg = "{hostname} failed testing.".format(hostname=self.hostname)
                 raise FailedTesting(msg, self)
             return self
 
     async def deploy(
-            self, *, user_data: typing.Union[bytes, str] = None,
-            distro_series: str = None, hwe_kernel: str = None,
-            comment: str = None, wait: bool = False,
-            install_kvm: bool = False, wait_interval: int = 5):
+        self,
+        *,
+        user_data: typing.Union[bytes, str] = None,
+        distro_series: str = None,
+        hwe_kernel: str = None,
+        comment: str = None,
+        wait: bool = False,
+        install_kvm: bool = False,
+        wait_interval: int = 5
+    ):
         """Deploy this machine.
 
         :param user_data: User-data to provide to the machine when booting. If
@@ -528,14 +521,11 @@ class Machine(Node, metaclass=MachineType):
                 await asyncio.sleep(wait_interval)
                 self._reset(await self._handler.read(system_id=self.system_id))
             if self.status == NodeStatus.FAILED_DEPLOYMENT:
-                msg = "{hostname} failed to deploy.".format(
-                    hostname=self.hostname
-                )
+                msg = "{hostname} failed to deploy.".format(hostname=self.hostname)
                 raise FailedDeployment(msg, self)
             return self
 
-    async def enter_rescue_mode(
-            self, wait: bool = False, wait_interval: int = 5):
+    async def enter_rescue_mode(self, wait: bool = False, wait_interval: int = 5):
         """
         Send this machine into 'rescue mode'.
 
@@ -543,8 +533,7 @@ class Machine(Node, metaclass=MachineType):
         :param wait_interval: How often to poll, defaults to 5 seconds
         """
         try:
-            self._reset(await self._handler.rescue_mode(
-                system_id=self.system_id))
+            self._reset(await self._handler.rescue_mode(system_id=self.system_id))
         except CallError as error:
             if error.status == HTTPStatus.FORBIDDEN:
                 message = "Not allowed to enter rescue mode"
@@ -566,8 +555,7 @@ class Machine(Node, metaclass=MachineType):
                 raise RescueModeFailure(msg, self)
             return self
 
-    async def exit_rescue_mode(
-            self, wait: bool = False, wait_interval: int = 5):
+    async def exit_rescue_mode(self, wait: bool = False, wait_interval: int = 5):
         """
         Exit rescue mode.
 
@@ -575,9 +563,7 @@ class Machine(Node, metaclass=MachineType):
         :param wait_interval: How often to poll, defaults to 5 seconds
         """
         try:
-            self._reset(await self._handler.exit_rescue_mode(
-                system_id=self.system_id
-            ))
+            self._reset(await self._handler.exit_rescue_mode(system_id=self.system_id))
         except CallError as error:
             if error.status == HTTPStatus.FORBIDDEN:
                 message = "Not allowed to exit rescue mode."
@@ -620,9 +606,7 @@ class Machine(Node, metaclass=MachineType):
         :param comment: Reason machine is broken.
         :type comment: `str`
         """
-        params = {
-            "system_id": self.system_id
-        }
+        params = {"system_id": self.system_id}
         if comment:
             params["comment"] = comment
         self._reset(await self._handler.mark_broken(**params))
@@ -634,18 +618,22 @@ class Machine(Node, metaclass=MachineType):
         :param comment: Reason machine is fixed.
         :type comment: `str`
         """
-        params = {
-            "system_id": self.system_id
-        }
+        params = {"system_id": self.system_id}
         if comment:
             params["comment"] = comment
         self._reset(await self._handler.mark_fixed(**params))
         return self
 
     async def release(
-            self, *, comment: str = None, erase: bool = None,
-            secure_erase: bool = None, quick_erase: bool = None,
-            wait: bool = False, wait_interval: int = 5):
+        self,
+        *,
+        comment: str = None,
+        erase: bool = None,
+        secure_erase: bool = None,
+        quick_erase: bool = None,
+        wait: bool = False,
+        wait_interval: int = 5
+    ):
         """
         Release the machine.
 
@@ -662,24 +650,24 @@ class Machine(Node, metaclass=MachineType):
         :param wait_interval: How often to poll, defaults to 5 seconds.
         :type wait_interval: `int`
         """
-        params = remove_None({
-            "system_id": self.system_id,
-            "comment": comment,
-            "erase": erase,
-            "secure_erase": secure_erase,
-            "quick_erase": quick_erase,
-        })
+        params = remove_None(
+            {
+                "system_id": self.system_id,
+                "comment": comment,
+                "erase": erase,
+                "secure_erase": secure_erase,
+                "quick_erase": quick_erase,
+            }
+        )
         self._reset(await self._handler.release(**params))
         if not wait:
             return self
         else:
             # Wait for machine to be released
-            while self.status in [
-                    NodeStatus.RELEASING, NodeStatus.DISK_ERASING]:
+            while self.status in [NodeStatus.RELEASING, NodeStatus.DISK_ERASING]:
                 await asyncio.sleep(wait_interval)
                 try:
-                    self._reset(await self._handler.read(
-                        system_id=self.system_id))
+                    self._reset(await self._handler.read(system_id=self.system_id))
                 except CallError as error:
                     if error.status == HTTPStatus.NOT_FOUND:
                         # Release must have been on a machine in a pod. This
@@ -689,20 +677,16 @@ class Machine(Node, metaclass=MachineType):
                     else:
                         raise
             if self.status == NodeStatus.FAILED_RELEASING:
-                msg = "{hostname} failed to be released.".format(
-                    hostname=self.hostname
-                )
+                msg = "{hostname} failed to be released.".format(hostname=self.hostname)
                 raise FailedReleasing(msg, self)
             elif self.status == NodeStatus.FAILED_DISK_ERASING:
-                msg = "{hostname} failed to erase disk.".format(
-                    hostname=self.hostname
-                )
+                msg = "{hostname} failed to erase disk.".format(hostname=self.hostname)
                 raise FailedDiskErasing(msg, self)
             return self
 
     async def power_on(
-            self, comment: str = None,
-            wait: bool = False, wait_interval: int = 5):
+        self, comment: str = None, wait: bool = False, wait_interval: int = 5
+    ):
         """
         Power on.
 
@@ -734,15 +718,17 @@ class Machine(Node, metaclass=MachineType):
                 await asyncio.sleep(wait_interval)
                 self._reset(await self._handler.read(system_id=self.system_id))
             if self.power_state == PowerState.ERROR:
-                msg = "{hostname} failed to power on.".format(
-                    hostname=self.hostname
-                )
+                msg = "{hostname} failed to power on.".format(hostname=self.hostname)
                 raise PowerError(msg, self)
             return self
 
     async def power_off(
-            self, stop_mode: PowerStopMode = PowerStopMode.HARD,
-            comment: str = None, wait: bool = False, wait_interval: int = 5):
+        self,
+        stop_mode: PowerStopMode = PowerStopMode.HARD,
+        comment: str = None,
+        wait: bool = False,
+        wait_interval: int = 5,
+    ):
         """
         Power off.
 
@@ -755,7 +741,7 @@ class Machine(Node, metaclass=MachineType):
         :param wait_interval: How often to poll, defaults to 5 seconds.
         :type wait_interval: `int`
         """
-        params = {"system_id": self.system_id, 'stop_mode': stop_mode.value}
+        params = {"system_id": self.system_id, "stop_mode": stop_mode.value}
         if comment is not None:
             params["comment"] = comment
         try:
@@ -776,9 +762,7 @@ class Machine(Node, metaclass=MachineType):
                 await asyncio.sleep(wait_interval)
                 self._reset(await self._handler.read(system_id=self.system_id))
             if self.power_state == PowerState.ERROR:
-                msg = "{hostname} failed to power off.".format(
-                    hostname=self.hostname
-                )
+                msg = "{hostname} failed to power off.".format(hostname=self.hostname)
                 raise PowerError(msg, self)
             return self
 
@@ -789,34 +773,38 @@ class Machine(Node, metaclass=MachineType):
         :returns: Current power state.
         :rtype: `PowerState`
         """
-        power_data = await self._handler.query_power_state(
-            system_id=self.system_id)
+        power_data = await self._handler.query_power_state(system_id=self.system_id)
         # Update the internal state of this object as well, since we have the
         # updated power state from the BMC directly. MAAS server does this as
         # well, just do it client side to make it nice for a developer.
-        self._data['power_state'] = power_data['state']
-        return PowerState(power_data['state'])
+        self._data["power_state"] = power_data["state"]
+        return PowerState(power_data["state"])
 
     async def restore_default_configuration(self):
         """
         Restore machine's configuration to its initial state.
         """
-        self._reset(await self._handler.restore_default_configuration(
-            system_id=self.system_id))
+        self._reset(
+            await self._handler.restore_default_configuration(system_id=self.system_id)
+        )
 
     async def restore_networking_configuration(self):
         """
         Restore machine's networking configuration to its initial state.
         """
-        self._reset(await self._handler.restore_networking_configuration(
-            system_id=self.system_id))
+        self._reset(
+            await self._handler.restore_networking_configuration(
+                system_id=self.system_id
+            )
+        )
 
     async def restore_storage_configuration(self):
         """
         Restore machine's storage configuration to its initial state.
         """
-        self._reset(await self._handler.restore_storage_configuration(
-            system_id=self.system_id))
+        self._reset(
+            await self._handler.restore_storage_configuration(system_id=self.system_id)
+        )
 
     async def lock(self, *, comment: str = None):
         """Lock the machine to prevent changes.
@@ -824,9 +812,7 @@ class Machine(Node, metaclass=MachineType):
         :param comment: Reason machine was locked.
         :type comment: `str`
         """
-        params = {
-            "system_id": self.system_id
-        }
+        params = {"system_id": self.system_id}
         if comment:
             params["comment"] = comment
         self._reset(await self._handler.lock(**params))
@@ -838,9 +824,7 @@ class Machine(Node, metaclass=MachineType):
         :param comment: Reason machine was unlocked.
         :type comment: `str`
         """
-        params = {
-            "system_id": self.system_id
-        }
+        params = {"system_id": self.system_id}
         if comment:
             params["comment"] = comment
         self._reset(await self._handler.unlock(**params))

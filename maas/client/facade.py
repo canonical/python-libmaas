@@ -107,20 +107,15 @@ class Client:
     @facade
     def domains(origin):
         return {
-            'create': origin.Domains.create,
+            "create": origin.Domains.create,
             "get": origin.Domain.read,
             "list": origin.Domains.read,
         }
 
     @facade
     def events(origin):
-        namespace = {
-            "query": origin.Events.query,
-        }
-        namespace.update({
-            level.name: level
-            for level in origin.Events.Level
-        })
+        namespace = {"query": origin.Events.query}
+        namespace.update({level.name: level for level in origin.Events.Level})
         return namespace
 
     @facade
@@ -167,9 +162,7 @@ class Client:
 
     @facade
     def files(origin):
-        return {
-            "list": origin.Files.read,
-        }
+        return {"list": origin.Files.read}
 
     @facade
     def ip_ranges(origin):
@@ -187,9 +180,9 @@ class Client:
             if not name.startswith("_")
         )
         return {
-            name: attr for name, attr in attrs if
-            isinstance(attr, enum.EnumMeta) or
-            name.startswith(("get_", "set_"))
+            name: attr
+            for name, attr in attrs
+            if isinstance(attr, enum.EnumMeta) or name.startswith(("get_", "set_"))
         }
 
     @facade
@@ -199,16 +192,12 @@ class Client:
             "create": origin.Machines.create,
             "get": origin.Machine.read,
             "list": origin.Machines.read,
-            "get_power_parameters_for":
-                origin.Machines.get_power_parameters_for,
+            "get_power_parameters_for": origin.Machines.get_power_parameters_for,
         }
 
     @facade
     def rack_controllers(origin):
-        return {
-            "get": origin.RackController.read,
-            "list": origin.RackControllers.read,
-        }
+        return {"get": origin.RackController.read, "list": origin.RackControllers.read}
 
     @facade
     def region_controllers(origin):
@@ -243,9 +232,7 @@ class Client:
 
     @facade
     def version(origin):
-        return {
-            "get": origin.Version.read,
-        }
+        return {"get": origin.Version.read}
 
     @facade
     def zones(origin):

@@ -1,13 +1,8 @@
 """Commands for users."""
 
-__all__ = [
-    "register",
-]
+__all__ = ["register"]
 
-from . import (
-    OriginPagedTableCommand,
-    tables,
-)
+from . import OriginPagedTableCommand, tables
 
 
 class cmd_users(OriginPagedTableCommand):

@@ -14,17 +14,9 @@
 
 """Miscellaneous types."""
 
-__all__ = [
-    "JSONArray",
-    "JSONObject",
-    "JSONValue",
-]
+__all__ = ["JSONArray", "JSONObject", "JSONValue"]
 
-from typing import (
-    Dict,
-    Sequence,
-    Union,
-)
+from typing import Dict, Sequence, Union
 
 #
 # Types that can be represented in JSON.

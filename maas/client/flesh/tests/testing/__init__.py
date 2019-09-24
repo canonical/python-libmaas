@@ -1,8 +1,6 @@
 """Test helpers for `maas.client.flesh`."""
 
-__all__ = [
-    "capture_parse_error",
-]
+__all__ = ["capture_parse_error"]
 
 import argparse
 

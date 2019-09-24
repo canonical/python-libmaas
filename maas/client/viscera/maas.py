@@ -1,17 +1,12 @@
 """Objects for MAASs."""
 
-__all__ = [
-    "MAAS",
-]
+__all__ = ["MAAS"]
 
 import enum
 import re
 import typing
 
-from . import (
-    Object,
-    ObjectType,
-)
+from . import Object, ObjectType
 from ..bones import CallError
 
 
@@ -50,9 +45,7 @@ class DescriptiveEnum(enum.Enum):
             if member.parameter == parameter:
                 return member
         else:
-            raise KeyError(
-                "%s value %r not recognised."
-                % (cls.__name__, parameter))
+            raise KeyError("%s value %r not recognised." % (cls.__name__, parameter))
 
 
 class MAASType(ObjectType):
@@ -173,13 +166,13 @@ class MAASType(ObjectType):
         server config.
         """
         data = await cls.get_config("upstream_dns")
-        return [] if data is None else re.split(r'[,\s]+', data)
+        return [] if data is None else re.split(r"[,\s]+", data)
 
-    async def set_upstream_dns(
-            cls, addresses: typing.Optional[typing.Sequence[str]]):
+    async def set_upstream_dns(cls, addresses: typing.Optional[typing.Sequence[str]]):
         """See `get_upstream_dns`."""
-        await cls.set_config("upstream_dns", (
-            "" if addresses is None else",".join(addresses)))
+        await cls.set_config(
+            "upstream_dns", ("" if addresses is None else ",".join(addresses))
+        )
 
     class DNSSEC(DescriptiveEnum):
         """DNSSEC validation settings.
@@ -222,8 +215,7 @@ class MAASType(ObjectType):
 
     async def set_enable_disk_erasing_on_release(cls, erase: bool):
         """Should nodes' disks be erased prior to releasing."""
-        await cls.set_config(
-            "enable_disk_erasing_on_release", _django_boolean(erase))
+        await cls.set_config("enable_disk_erasing_on_release", _django_boolean(erase))
 
     async def get_windows_kms_host(cls) -> typing.Optional[str]:
         """Windows KMS activation host.
@@ -288,7 +280,8 @@ class MAASType(ObjectType):
     async def set_default_min_hwe_kernel(cls, version: typing.Optional[str]):
         """See `get_default_min_hwe_kernel`."""
         await cls.set_config(
-            "default_min_hwe_kernel", "" if version is None else version)
+            "default_min_hwe_kernel", "" if version is None else version
+        )
 
     async def get_enable_third_party_drivers(cls) -> bool:
         """Enable the installation of proprietary drivers, e.g. HPVSA."""
@@ -296,8 +289,7 @@ class MAASType(ObjectType):
 
     async def set_enable_third_party_drivers(cls, enabled: bool):
         """See `get_enable_third_party_drivers`."""
-        await cls.set_config(
-            "enable_third_party_drivers", _django_boolean(enabled))
+        await cls.set_config("enable_third_party_drivers", _django_boolean(enabled))
 
     async def get_config(cls, name: str):
         """Get a configuration value from MAAS.
@@ -318,11 +310,13 @@ class MAASType(ObjectType):
     async def _roundtrip(cls):
         """Testing helper: gets each value and sets it again."""
         getters = {
-            name[4:]: getattr(cls, name) for name in dir(cls)
+            name[4:]: getattr(cls, name)
+            for name in dir(cls)
             if name.startswith("get_") and name != "get_config"
         }
         setters = {
-            name[4:]: getattr(cls, name) for name in dir(cls)
+            name[4:]: getattr(cls, name)
+            for name in dir(cls)
             if name.startswith("set_") and name != "set_config"
         }
 
@@ -340,9 +334,7 @@ class MAASType(ObjectType):
             else:
                 value2 = await getter()
                 if value2 != value:
-                    print(
-                        "!!! Round-trip failed:", repr(value),
-                        "-->", repr(value2))
+                    print("!!! Round-trip failed:", repr(value), "-->", repr(value2))
 
 
 class MAAS(Object, metaclass=MAASType):

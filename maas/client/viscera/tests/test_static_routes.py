@@ -4,16 +4,10 @@ import random
 
 from testtools.matchers import Equals
 
-from ..static_routes import (
-    StaticRoute,
-    StaticRoutes,
-)
+from ..static_routes import StaticRoute, StaticRoutes
 
-from .. testing import bind
-from ...testing import (
-    make_string_without_spaces,
-    TestCase,
-)
+from ..testing import bind
+from ...testing import make_string_without_spaces, TestCase
 
 
 def make_origin():
@@ -25,7 +19,6 @@ def make_origin():
 
 
 class TestStaticRoutes(TestCase):
-
     def test__static_routes_create(self):
         StaticRoutes = make_origin().StaticRoutes
         destination = random.randint(0, 100)
@@ -37,19 +30,13 @@ class TestStaticRoutes(TestCase):
             "destination": destination,
             "source": source,
             "gateway_ip": gateway_ip,
-            "metric": metric
+            "metric": metric,
         }
         StaticRoutes.create(
-            destination=destination,
-            source=source,
-            gateway_ip=gateway_ip,
-            metric=metric,
+            destination=destination, source=source, gateway_ip=gateway_ip, metric=metric
         )
         StaticRoutes._handler.create.assert_called_once_with(
-            destination=destination,
-            source=source,
-            gateway_ip=gateway_ip,
-            metric=metric,
+            destination=destination, source=source, gateway_ip=gateway_ip, metric=metric
         )
 
     def test__static_routes_read(self):
@@ -71,7 +58,6 @@ class TestStaticRoutes(TestCase):
 
 
 class TestStaticRoute(TestCase):
-
     def test__static_route_read(self):
         StaticRoute = make_origin().StaticRoute
         static_route = {
@@ -82,20 +68,22 @@ class TestStaticRoute(TestCase):
             "metric": make_string_without_spaces(),
         }
         StaticRoute._handler.read.return_value = static_route
-        self.assertThat(StaticRoute.read(
-            id=static_route["id"]), Equals(StaticRoute(static_route)))
-        StaticRoute._handler.read.assert_called_once_with(
-            id=static_route["id"])
+        self.assertThat(
+            StaticRoute.read(id=static_route["id"]), Equals(StaticRoute(static_route))
+        )
+        StaticRoute._handler.read.assert_called_once_with(id=static_route["id"])
 
     def test__static_route_delete(self):
         StaticRoute = make_origin().StaticRoute
         static_route_id = random.randint(1, 100)
-        static_route = StaticRoute({
-            "id": static_route_id,
-            "destination": random.randint(0, 100),
-            "source": random.randint(0, 100),
-            "gateway_ip": make_string_without_spaces(),
-            "metric": make_string_without_spaces(),
-        })
+        static_route = StaticRoute(
+            {
+                "id": static_route_id,
+                "destination": random.randint(0, 100),
+                "source": random.randint(0, 100),
+                "gateway_ip": make_string_without_spaces(),
+                "metric": make_string_without_spaces(),
+            }
+        )
         static_route.delete()
         StaticRoute._handler.delete.assert_called_once_with(id=static_route_id)

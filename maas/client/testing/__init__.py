@@ -19,10 +19,7 @@ __all__ = [
 import asyncio
 import doctest
 from functools import partial
-from itertools import (
-    islice,
-    repeat,
-)
+from itertools import islice, repeat
 from pathlib import Path
 import random
 import string
@@ -36,11 +33,11 @@ from testtools.matchers import DocTestMatches
 from ..utils.maas_async import Asynchronous
 
 
-random_letters = map(
-    random.choice, repeat(string.ascii_letters + string.digits))
+random_letters = map(random.choice, repeat(string.ascii_letters + string.digits))
 
 random_letters_with_spaces = map(
-    random.choice, repeat(string.ascii_letters + string.digits + ' '))
+    random.choice, repeat(string.ascii_letters + string.digits + " ")
+)
 
 random_octet = partial(random.randint, 0, 255)
 
@@ -57,7 +54,7 @@ def make_string_without_spaces(size=10):
     return "".join(islice(random_letters, size))
 
 
-def make_name(prefix="name", sep='-', size=6):
+def make_name(prefix="name", sep="-", size=6):
     """Make a random name.
 
     :param prefix: Optional prefix. Defaults to "name".
@@ -69,7 +66,7 @@ def make_name(prefix="name", sep='-', size=6):
     return prefix + sep + make_string(size)
 
 
-def make_name_without_spaces(prefix="name", sep='-', size=6):
+def make_name_without_spaces(prefix="name", sep="-", size=6):
     """Make a random name WITHOUT spaces.
 
     :param prefix: Optional prefix. Defaults to "name".

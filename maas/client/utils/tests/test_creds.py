@@ -25,7 +25,7 @@ class TestCredentials(TestCase):
 
     def test_str_form_is_colon_separated_triple(self):
         creds = Credentials("foo", "bar", "baz")
-        self.assertEqual(':'.join(creds), str(creds))
+        self.assertEqual(":".join(creds), str(creds))
 
     def test_parse_reads_a_colon_separated_triple(self):
         creds = Credentials.parse("foo:bar:baz")

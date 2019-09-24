@@ -1,18 +1,8 @@
 """Objects for fabrics."""
 
-__all__ = [
-    "Fabrics",
-    "Fabric",
-]
+__all__ = ["Fabrics", "Fabric"]
 
-from . import (
-    check,
-    Object,
-    ObjectField,
-    ObjectFieldRelatedSet,
-    ObjectSet,
-    ObjectType,
-)
+from . import check, Object, ObjectField, ObjectFieldRelatedSet, ObjectSet, ObjectType
 from ..errors import CannotDelete
 
 
@@ -23,8 +13,9 @@ class FabricsType(ObjectType):
         data = await cls._handler.read()
         return cls(map(cls._object, data))
 
-    async def create(cls, *, name: str = None,
-                     description: str = None, class_type: str = None):
+    async def create(
+        cls, *, name: str = None, description: str = None, class_type: str = None
+    ):
         """
         Create a `Fabric` in MAAS.
 
@@ -73,10 +64,8 @@ class FabricType(ObjectType):
 class Fabric(Object, metaclass=FabricType):
     """A Fabric."""
 
-    id = ObjectField.Checked(
-        "id", check(int), readonly=True, pk=True)
-    name = ObjectField.Checked(
-        "name", check(str), check(str))
+    id = ObjectField.Checked("id", check(int), readonly=True, pk=True)
+    name = ObjectField.Checked("name", check(str), check(str))
     vlans = ObjectFieldRelatedSet("vlans", "Vlans")
 
     async def delete(self):

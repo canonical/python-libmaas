@@ -4,17 +4,11 @@ import random
 
 from testtools.matchers import Equals
 
-from ..ipranges import (
-    IPRange,
-    IPRanges,
-)
+from ..ipranges import IPRange, IPRanges
 
-from .. testing import bind
+from ..testing import bind
 from ...enum import IPRangeType
-from ...testing import (
-    make_string_without_spaces,
-    TestCase,
-)
+from ...testing import make_string_without_spaces, TestCase
 
 
 def make_origin():
@@ -26,7 +20,6 @@ def make_origin():
 
 
 class TestIPRanges(TestCase):
-
     def test__ipranges_create(self):
         IPRanges = make_origin().IPRanges
         start_ip = make_string_without_spaces()
@@ -40,17 +33,9 @@ class TestIPRanges(TestCase):
             "type": type.value,
             "comment": comment,
         }
-        IPRanges.create(
-            start_ip=start_ip,
-            end_ip=end_ip,
-            type=type,
-            comment=comment,
-        )
+        IPRanges.create(start_ip=start_ip, end_ip=end_ip, type=type, comment=comment)
         IPRanges._handler.create.assert_called_once_with(
-            start_ip=start_ip,
-            end_ip=end_ip,
-            type=type.value,
-            comment=comment,
+            start_ip=start_ip, end_ip=end_ip, type=type.value, comment=comment
         )
 
     def test__ipranges_create_requires_IPRangeType(self):
@@ -59,9 +44,13 @@ class TestIPRanges(TestCase):
         end_ip = make_string_without_spaces()
         comment = make_string_without_spaces()
         error = self.assertRaises(
-            TypeError, IPRanges.create,
-            start_ip=start_ip, end_ip=end_ip,
-            type=make_string_without_spaces(), comment=comment)
+            TypeError,
+            IPRanges.create,
+            start_ip=start_ip,
+            end_ip=end_ip,
+            type=make_string_without_spaces(),
+            comment=comment,
+        )
         self.assertEquals("type must be an IPRangeType, not str", str(error))
 
     def test__ipranges_read(self):
@@ -83,7 +72,6 @@ class TestIPRanges(TestCase):
 
 
 class TestIPRange(TestCase):
-
     def test__iprange_read(self):
         IPRange = make_origin().IPRange
         iprange = {
@@ -94,19 +82,20 @@ class TestIPRange(TestCase):
             "comment": make_string_without_spaces(),
         }
         IPRange._handler.read.return_value = iprange
-        self.assertThat(IPRange.read(id=iprange["id"]),
-                        Equals(IPRange(iprange)))
+        self.assertThat(IPRange.read(id=iprange["id"]), Equals(IPRange(iprange)))
         IPRange._handler.read.assert_called_once_with(id=iprange["id"])
 
     def test__iprange_delete(self):
         IPRange = make_origin().IPRange
         iprange_id = random.randint(1, 100)
-        iprange = IPRange({
-            "id": iprange_id,
-            "start_ip": make_string_without_spaces(),
-            "end_ip": make_string_without_spaces(),
-            "type": make_string_without_spaces(),
-            "comment": make_string_without_spaces(),
-        })
+        iprange = IPRange(
+            {
+                "id": iprange_id,
+                "start_ip": make_string_without_spaces(),
+                "end_ip": make_string_without_spaces(),
+                "type": make_string_without_spaces(),
+                "comment": make_string_without_spaces(),
+            }
+        )
         iprange.delete()
         IPRange._handler.delete.assert_called_once_with(id=iprange_id)

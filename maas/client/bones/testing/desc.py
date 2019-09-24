@@ -1,9 +1,6 @@
 """Abstractions around API description documents."""
 
-__all__ = [
-    "Description",
-    "Action",
-]
+__all__ = ["Description", "Action"]
 
 from keyword import iskeyword
 from operator import itemgetter
@@ -49,10 +46,7 @@ class Description:
 
     def __repr__(self):
         title, body = self.doc
-        return "<%s %r %s>" % (
-            self.__class__.__name__,
-            title.rstrip("."), self.hash,
-        )
+        return "<%s %r %s>" % (self.__class__.__name__, title.rstrip("."), self.hash)
 
 
 class Resources:
@@ -109,10 +103,7 @@ class Resource:
 
     def __repr__(self):
         title, body = self["doc"]
-        return "<%s:%s %r>" % (
-            self.__class__.__name__,
-            self._name, title.rstrip("."),
-        )
+        return "<%s:%s %r>" % (self.__class__.__name__, self._name, title.rstrip("."))
 
 
 class Action:
@@ -178,7 +169,11 @@ class Action:
     def __repr__(self):
         title, body = self.doc
         return "<%s:%s.%s %r %s %s%s>" % (
-            self.__class__.__name__, self._resource._name,
-            self.name, title.rstrip("."), self.method, self.path,
-            ("" if self.op is None else "?op=" + self.op)
+            self.__class__.__name__,
+            self._resource._name,
+            self.name,
+            title.rstrip("."),
+            self.method,
+            self.path,
+            ("" if self.op is None else "?op=" + self.op),
         )

@@ -17,11 +17,7 @@
 import asyncio
 from inspect import isawaitable
 
-from testtools.matchers import (
-    Equals,
-    Is,
-    MatchesPredicate,
-)
+from testtools.matchers import Equals, Is, MatchesPredicate
 
 from .. import maas_async
 from ...testing import TestCase
@@ -47,9 +43,7 @@ class TestAsynchronousWrapper(TestCase):
             self.assertTrue(loop.is_running())
             return func()
 
-        self.assertThat(
-            self.loop.run_until_complete(within_event_loop()),
-            Is(token))
+        self.assertThat(self.loop.run_until_complete(within_event_loop()), Is(token))
 
     def test_blocks_on_awaitable_result_when_loop_not_running(self):
         token = asyncio.sleep(0.0)

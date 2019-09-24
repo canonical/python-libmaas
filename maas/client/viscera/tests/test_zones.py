@@ -2,20 +2,12 @@
 
 import random
 
-from testtools.matchers import (
-    Equals,
-    IsInstance,
-    MatchesStructure,
-)
+from testtools.matchers import Equals, IsInstance, MatchesStructure
 
 from .. import zones
 
 from ..testing import bind
-from ...testing import (
-    make_name,
-    make_string_without_spaces,
-    TestCase,
-)
+from ...testing import make_name, make_string_without_spaces, TestCase
 
 
 def make_origin():
@@ -27,7 +19,6 @@ def make_origin():
 
 
 class TestZones(TestCase):
-
     def test__zones_create(self):
         origin = make_origin()
         zone_id = random.randint(0, 100)
@@ -38,18 +29,15 @@ class TestZones(TestCase):
             "name": name,
             "description": description,
         }
-        zone = origin.Zones.create(
-            name=name,
-            description=description,
-        )
+        zone = origin.Zones.create(name=name, description=description)
         origin.Zones._handler.create.assert_called_once_with(
-            name=name,
-            description=description,
+            name=name, description=description
         )
         self.assertThat(zone, IsInstance(origin.Zone))
-        self.assertThat(zone, MatchesStructure.byEquality(
-            id=zone_id, name=name, description=description
-        ))
+        self.assertThat(
+            zone,
+            MatchesStructure.byEquality(id=zone_id, name=name, description=description),
+        )
 
     def test__zones_create_without_description(self):
         origin = make_origin()
@@ -64,9 +52,10 @@ class TestZones(TestCase):
         zone = origin.Zones.create(name=name)
         origin.Zones._handler.create.assert_called_once_with(name=name)
         self.assertThat(zone, IsInstance(origin.Zone))
-        self.assertThat(zone, MatchesStructure.byEquality(
-            id=zone_id, name=name, description=description
-        ))
+        self.assertThat(
+            zone,
+            MatchesStructure.byEquality(id=zone_id, name=name, description=description),
+        )
 
     def test__zones_read(self):
         """Zones.read() returns a list of Zones."""
@@ -85,7 +74,6 @@ class TestZones(TestCase):
 
 
 class TestZone(TestCase):
-
     def test__zone_unloaded(self):
         Zone = make_origin().Zone
         name = make_name("zone")
@@ -107,10 +95,12 @@ class TestZone(TestCase):
     def test__zone_delete(self):
         Zone = make_origin().Zone
         zone_name = make_string_without_spaces()
-        zone = Zone({
-            "id": random.randint(0, 100),
-            "name": zone_name,
-            "description": make_string_without_spaces(),
-        })
+        zone = Zone(
+            {
+                "id": random.randint(0, 100),
+                "name": zone_name,
+                "description": make_string_without_spaces(),
+            }
+        )
         zone.delete()
         Zone._handler.delete.assert_called_once_with(name=zone_name)

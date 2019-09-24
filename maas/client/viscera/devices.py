@@ -1,18 +1,10 @@
 """Objects for devices."""
 
-__all__ = [
-    "Device",
-    "Devices",
-]
+__all__ = ["Device", "Devices"]
 
 import typing
 
-from .nodes import (
-    Node,
-    Nodes,
-    NodesType,
-    NodeTypeMeta,
-)
+from .nodes import Node, Nodes, NodesType, NodeTypeMeta
 from .zones import Zone
 
 
@@ -20,11 +12,12 @@ class DevicesType(NodesType):
     """Metaclass for `Devices`."""
 
     async def create(
-            cls,
-            mac_addresses: typing.Sequence[str],
-            hostname: str = None,
-            domain: typing.Union[int, str] = None,
-            zone: typing.Union[str, Zone] = None):
+        cls,
+        mac_addresses: typing.Sequence[str],
+        hostname: str = None,
+        domain: typing.Union[int, str] = None,
+        zone: typing.Union[str, Zone] = None,
+    ):
         """Create a new device.
 
         :param mac_addresses: The MAC address(es) of the device (required).
@@ -37,13 +30,11 @@ class DevicesType(NodesType):
         :type zone: `Zone` or `str`
 
         """
-        params = {
-            'mac_addresses': mac_addresses,
-        }
+        params = {"mac_addresses": mac_addresses}
         if hostname is not None:
-            params['hostname'] = hostname
+            params["hostname"] = hostname
         if domain is not None:
-            params['domain'] = domain
+            params["domain"] = domain
         if zone is not None:
             if isinstance(zone, Zone):
                 params["zone"] = zone.name
@@ -51,7 +42,8 @@ class DevicesType(NodesType):
                 params["zone"] = zone
             else:
                 raise TypeError(
-                    "zone must be a str or Zone, not %s" % type(zone).__name__)
+                    "zone must be a str or Zone, not %s" % type(zone).__name__
+                )
         return cls._object(await cls._handler.create(**params))
 
 

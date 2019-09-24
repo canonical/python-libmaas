@@ -1,19 +1,9 @@
 """Objects for pods."""
 
-__all__ = [
-    "Pod",
-    "Pods",
-]
+__all__ = ["Pod", "Pods"]
 
 import typing
-from . import (
-    check,
-    Object,
-    ObjectField,
-    ObjectFieldRelated,
-    ObjectSet,
-    ObjectType,
-)
+from . import check, Object, ObjectField, ObjectFieldRelated, ObjectSet, ObjectType
 from .zones import Zone
 from ..utils import remove_None
 from ..errors import OperationNotAllowed
@@ -27,13 +17,16 @@ class PodsType(ObjectType):
         return cls(map(cls._object, data))
 
     async def create(
-            cls, *, type: str,
-            power_address: str,
-            power_user: str = None,
-            power_pass: str = None,
-            name: str = None,
-            zone: typing.Union[str, Zone] = None,
-            tags: typing.Sequence[str] = None):
+        cls,
+        *,
+        type: str,
+        power_address: str,
+        power_user: str = None,
+        power_pass: str = None,
+        name: str = None,
+        zone: typing.Union[str, Zone] = None,
+        tags: typing.Sequence[str] = None
+    ):
         """Create a `Pod` in MAAS.
 
         :param type: Type of pod to create (rsd, virsh) (required).
@@ -55,18 +48,20 @@ class PodsType(ObjectType):
         :returns: The created Pod.
         :rtype: `Pod`
         """
-        params = remove_None({
-            'type': type,
-            'power_address': power_address,
-            'power_user': power_user,
-            'power_pass': power_pass,
-            'name': name,
-            'tags': tags,
-        })
-        if type == 'rsd' and power_user is None:
+        params = remove_None(
+            {
+                "type": type,
+                "power_address": power_address,
+                "power_user": power_user,
+                "power_pass": power_pass,
+                "name": name,
+                "tags": tags,
+            }
+        )
+        if type == "rsd" and power_user is None:
             message = "'power_user' is required for pod type `rsd`"
             raise OperationNotAllowed(message)
-        if type == 'rsd' and power_pass is None:
+        if type == "rsd" and power_pass is None:
             message = "'power_pass' is required for pod type `rsd`"
             raise OperationNotAllowed(message)
         if zone is not None:
@@ -76,7 +71,8 @@ class PodsType(ObjectType):
                 params["zone"] = zone
             else:
                 raise TypeError(
-                    "zone must be a str or Zone, not %s" % type(zone).__name__)
+                    "zone must be a str or Zone, not %s" % type(zone).__name__
+                )
         return cls._object(await cls._handler.create(**params))
 
 
@@ -96,38 +92,32 @@ class PodType(ObjectType):
 class Pod(Object, metaclass=PodType):
     """A `Pod` stored in MAAS."""
 
-    id = ObjectField.Checked(
-        "id", check(int), readonly=True, pk=True)
-    type = ObjectField.Checked(
-        "type", check(str), check(str))
-    name = ObjectField.Checked(
-        "name", check(str), check(str))
-    architectures = ObjectField.Checked(
-        "architectures", check(list), check(list))
-    capabilities = ObjectField.Checked(
-        "capabilities", check(list), check(list))
+    id = ObjectField.Checked("id", check(int), readonly=True, pk=True)
+    type = ObjectField.Checked("type", check(str), check(str))
+    name = ObjectField.Checked("name", check(str), check(str))
+    architectures = ObjectField.Checked("architectures", check(list), check(list))
+    capabilities = ObjectField.Checked("capabilities", check(list), check(list))
     zone = ObjectFieldRelated("zone", "Zone", readonly=True)
-    tags = ObjectField.Checked(
-        "tags", check(list), check(list))
+    tags = ObjectField.Checked("tags", check(list), check(list))
     cpu_over_commit_ratio = ObjectField.Checked(
-        "cpu_over_commit_ratio", check(float), check(float))
+        "cpu_over_commit_ratio", check(float), check(float)
+    )
     memory_over_commit_ratio = ObjectField.Checked(
-        "memory_over_commit_ratio", check(float), check(float))
-    available = ObjectField.Checked(
-        "available", check(dict), check(dict))
-    used = ObjectField.Checked(
-        "used", check(dict), check(dict))
-    total = ObjectField.Checked(
-        "total", check(dict), check(dict))
+        "memory_over_commit_ratio", check(float), check(float)
+    )
+    available = ObjectField.Checked("available", check(dict), check(dict))
+    used = ObjectField.Checked("used", check(dict), check(dict))
+    total = ObjectField.Checked("total", check(dict), check(dict))
     default_macvlan_mode = ObjectField.Checked(
-        "default_macvlan_mode", check(str), check(str))
+        "default_macvlan_mode", check(str), check(str)
+    )
     host = ObjectFieldRelated("host", "Node", readonly=True)
 
     async def save(self):
         """Save the `Pod`."""
-        old_tags = list(self._orig_data['tags'])
+        old_tags = list(self._orig_data["tags"])
         new_tags = list(self.tags)
-        self._changed_data.pop('tags', None)
+        self._changed_data.pop("tags", None)
         await super(Pod, self).save()
         for tag_name in new_tags:
             if tag_name not in old_tags:
@@ -136,8 +126,8 @@ class Pod(Object, metaclass=PodType):
                 old_tags.remove(tag_name)
         for tag_name in old_tags:
             await self._handler.remove_tag(id=self.id, tag=tag_name)
-        self._orig_data['tags'] = new_tags
-        self._data['tags'] = list(new_tags)
+        self._orig_data["tags"] = new_tags
+        self._data["tags"] = list(new_tags)
 
     async def refresh(self):
         """Refresh the `Pod`."""
@@ -148,12 +138,18 @@ class Pod(Object, metaclass=PodType):
         return await self._handler.parameters(id=self.id)
 
     async def compose(
-            self, *, cores: int = None, memory: int = None,
-            cpu_speed: int = None, architecture: str = None,
-            storage: typing.Sequence[str] = None, hostname: str = None,
-            domain: typing.Union[int, str] = None,
-            zone: typing.Union[int, str, Zone] = None,
-            interfaces: typing.Sequence[str] = None):
+        self,
+        *,
+        cores: int = None,
+        memory: int = None,
+        cpu_speed: int = None,
+        architecture: str = None,
+        storage: typing.Sequence[str] = None,
+        hostname: str = None,
+        domain: typing.Union[int, str] = None,
+        zone: typing.Union[int, str, Zone] = None,
+        interfaces: typing.Sequence[str] = None
+    ):
         """Compose a machine from `Pod`.
 
         All fields below are optional:
@@ -209,16 +205,18 @@ class Pod(Object, metaclass=PodType):
         :returns: The created Machine
         :rtype: `Machine`
         """
-        params = remove_None({
-            'cores': str(cores) if cores else None,
-            'memory': str(memory) if memory else None,
-            'cpu_speed': str(cpu_speed) if cpu_speed else None,
-            'architecture': architecture,
-            'storage': storage,
-            'hostname': hostname,
-            'domain': str(domain) if domain else None,
-            'interfaces': interfaces,
-        })
+        params = remove_None(
+            {
+                "cores": str(cores) if cores else None,
+                "memory": str(memory) if memory else None,
+                "cpu_speed": str(cpu_speed) if cpu_speed else None,
+                "architecture": architecture,
+                "storage": storage,
+                "hostname": hostname,
+                "domain": str(domain) if domain else None,
+                "interfaces": interfaces,
+            }
+        )
         if zone is not None:
             if isinstance(zone, Zone):
                 params["zone"] = str(zone.id)
@@ -228,8 +226,8 @@ class Pod(Object, metaclass=PodType):
                 params["zone"] = zone
             else:
                 raise TypeError(
-                    "zone must be an int, str or Zone, not %s" %
-                    type(zone).__name__)
+                    "zone must be an int, str or Zone, not %s" % type(zone).__name__
+                )
         return await self._handler.compose(**params, id=self.id)
 
     async def delete(self):

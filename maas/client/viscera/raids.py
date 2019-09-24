@@ -1,27 +1,14 @@
 """Objects for RAIDs."""
 
-__all__ = [
-    "Raid",
-    "Raids",
-]
+__all__ = ["Raid", "Raids"]
 
 from typing import Iterable, Union
 
-from . import (
-    check,
-    ObjectField,
-    ObjectFieldRelated,
-    ObjectSet,
-    ObjectType,
-    to,
-)
+from . import check, ObjectField, ObjectFieldRelated, ObjectSet, ObjectType, to
 from .nodes import Node
 from .block_devices import BlockDevice
 from .partitions import Partition
-from .filesystem_groups import (
-    DevicesField,
-    FilesystemGroup,
-)
+from .filesystem_groups import DevicesField, FilesystemGroup
 from ..enum import RaidLevel
 
 
@@ -35,9 +22,7 @@ class RaidType(ObjectType):
         elif isinstance(node, Node):
             system_id = node.system_id
         else:
-            raise TypeError(
-                "node must be a Node or str, not %s"
-                % type(node).__name__)
+            raise TypeError("node must be a Node or str, not %s" % type(node).__name__)
         return cls(await cls._handler.read(system_id=system_id, id=id))
 
 
@@ -46,24 +31,21 @@ class Raid(FilesystemGroup, metaclass=RaidType):
 
     uuid = ObjectField.Checked("uuid", check(str), check(str))
 
-    level = ObjectField.Checked(
-        "level", to(RaidLevel), readonly=True)
-    size = ObjectField.Checked(
-        "size", check(int), check(int), readonly=True)
+    level = ObjectField.Checked("level", to(RaidLevel), readonly=True)
+    size = ObjectField.Checked("size", check(int), check(int), readonly=True)
 
     devices = DevicesField("devices")
     spare_devices = DevicesField("spare_devices")
     virtual_device = ObjectFieldRelated(
-        "virtual_device", "BlockDevice", reverse=None, readonly=True)
+        "virtual_device", "BlockDevice", reverse=None, readonly=True
+    )
 
     def __repr__(self):
-        return super(Raid, self).__repr__(
-            fields={"name", "level", "size"})
+        return super(Raid, self).__repr__(fields={"name", "level", "size"})
 
     async def delete(self):
         """Delete this RAID."""
-        await self._handler.delete(
-            system_id=self.node.system_id, id=self.id)
+        await self._handler.delete(system_id=self.node.system_id, id=self.id)
 
 
 class RaidsType(ObjectType):
@@ -76,21 +58,22 @@ class RaidsType(ObjectType):
         elif isinstance(node, Node):
             system_id = node.system_id
         else:
-            raise TypeError(
-                "node must be a Node or str, not %s"
-                % type(node).__name__)
+            raise TypeError("node must be a Node or str, not %s" % type(node).__name__)
         data = await cls._handler.read(system_id=system_id)
         return cls(
-            cls._object(
-                item, local_data={"node_system_id": system_id})
-            for item in data)
+            cls._object(item, local_data={"node_system_id": system_id}) for item in data
+        )
 
     async def create(
-            cls, node: Union[Node, str],
-            level: Union[RaidLevel, str],
-            devices: Iterable[Union[BlockDevice, Partition]], *,
-            name: str = None, uuid: str = None,
-            spare_devices: Iterable[Union[BlockDevice, Partition]]):
+        cls,
+        node: Union[Node, str],
+        level: Union[RaidLevel, str],
+        devices: Iterable[Union[BlockDevice, Partition]],
+        *,
+        name: str = None,
+        uuid: str = None,
+        spare_devices: Iterable[Union[BlockDevice, Partition]]
+    ):
         """
         Create a RAID on a Node.
 
@@ -112,17 +95,15 @@ class RaidsType(ObjectType):
         """
         if isinstance(level, RaidLevel):
             level = level.value
-        params = {
-            'level': str(level),
-        }
+        params = {"level": str(level)}
         if isinstance(node, str):
-            params['system_id'] = node
+            params["system_id"] = node
         elif isinstance(node, Node):
-            params['system_id'] = node.system_id
+            params["system_id"] = node.system_id
         else:
             raise TypeError(
-                'node must be a Node or str, not %s' % (
-                    type(node).__name__))
+                "node must be a Node or str, not %s" % (type(node).__name__)
+            )
 
         if len(devices) == 0:
             raise ValueError("devices must contain at least one device.")
@@ -137,11 +118,12 @@ class RaidsType(ObjectType):
             else:
                 raise TypeError(
                     "devices[%d] must be a BlockDevice or "
-                    "Partition, not %s" % type(device).__name__)
+                    "Partition, not %s" % type(device).__name__
+                )
         if len(block_devices) > 0:
-            params['block_devices'] = block_devices
+            params["block_devices"] = block_devices
         if len(partitions) > 0:
-            params['partitions'] = partitions
+            params["partitions"] = partitions
 
         spare_block_devices = []
         spare_partitions = []
@@ -153,16 +135,17 @@ class RaidsType(ObjectType):
             else:
                 raise TypeError(
                     "spare_devices[%d] must be a BlockDevice or "
-                    "Partition, not %s" % type(device).__name__)
+                    "Partition, not %s" % type(device).__name__
+                )
         if len(spare_block_devices) > 0:
-            params['spare_devices'] = spare_block_devices
+            params["spare_devices"] = spare_block_devices
         if len(spare_partitions) > 0:
-            params['spare_partitions'] = spare_partitions
+            params["spare_partitions"] = spare_partitions
 
         if name is not None:
-            params['name'] = name
+            params["name"] = name
         if uuid is not None:
-            params['uuid'] = uuid
+            params["uuid"] = uuid
         return cls._object(await cls._handler.create(**params))
 
 
@@ -172,10 +155,7 @@ class Raids(ObjectSet, metaclass=RaidsType):
     @property
     def by_name(self):
         """Return mapping of name to `Raid`."""
-        return {
-            raid.name: raid
-            for raid in self
-        }
+        return {raid.name: raid for raid in self}
 
     def get_by_name(self, name):
         """Return a `Raid` by its name."""

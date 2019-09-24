@@ -1,17 +1,8 @@
 """Objects for files."""
 
-__all__ = [
-    "File",
-    "Files",
-]
+__all__ = ["File", "Files"]
 
-from . import (
-    check,
-    Object,
-    ObjectField,
-    ObjectSet,
-    ObjectType,
-)
+from . import check, Object, ObjectField, ObjectSet, ObjectType
 
 
 class FilesType(ObjectType):
@@ -29,5 +20,4 @@ class Files(ObjectSet, metaclass=FilesType):
 class File(Object):
     """A file stored in MAAS."""
 
-    filename = ObjectField.Checked(
-        "filename", check(str), readonly=True)
+    filename = ObjectField.Checked("filename", check(str), readonly=True)

@@ -14,11 +14,7 @@
 
 """Profile configuration."""
 
-__all__ = [
-    "Profile",
-    "ProfileStore",
-    "ProfileNotFound",
-]
+__all__ = ["Profile", "ProfileStore", "ProfileNotFound"]
 
 from contextlib import contextmanager
 from copy import deepcopy
@@ -39,12 +35,18 @@ class Profile(tuple):
     __slots__ = ()
 
     def __new__(
-            cls, name: str, url: str, *,
-            credentials: typing.Union[Credentials, typing.Sequence, str, None],
-            description: dict, **other: JSONObject):
-        return super(Profile, cls).__new__(cls, (
-            name, api_url(url), Credentials.parse(credentials),
-            description, other))
+        cls,
+        name: str,
+        url: str,
+        *,
+        credentials: typing.Union[Credentials, typing.Sequence, str, None],
+        description: dict,
+        **other: JSONObject
+    ):
+        return super(Profile, cls).__new__(
+            cls,
+            (name, api_url(url), Credentials.parse(credentials), description, other),
+        )
 
     @property
     def name(self) -> str:
@@ -101,25 +103,29 @@ class Profile(tuple):
         Use this value when persisting a profile.
         """
         return dict(
-            self.other, name=self.name, url=self.url,
-            credentials=self.credentials, description=self.description,
+            self.other,
+            name=self.name,
+            url=self.url,
+            credentials=self.credentials,
+            description=self.description,
         )
 
     def __repr__(self):
         if self.credentials is None:
             return "<%s %s (anonymous) %s>" % (
-                self.__class__.__name__, self.name, self.url)
+                self.__class__.__name__,
+                self.name,
+                self.url,
+            )
         else:
-            return "<%s %s %s>" % (
-                self.__class__.__name__, self.name, self.url)
+            return "<%s %s %s>" % (self.__class__.__name__, self.name, self.url)
 
 
 class ProfileNotFound(Exception):
     """The named profile was not found."""
 
     def __init__(self, name):
-        super(ProfileNotFound, self).__init__(
-            "Profile '%s' not found." % (name,))
+        super(ProfileNotFound, self).__init__("Profile '%s' not found." % (name,))
 
 
 def schema_create(conn):
@@ -130,13 +136,17 @@ def schema_create(conn):
 
     :param conn: A connection to an SQLite3 database.
     """
-    conn.execute(dedent("""\
+    conn.execute(
+        dedent(
+            """\
     CREATE TABLE IF NOT EXISTS profiles
       (id INTEGER PRIMARY KEY,
        name TEXT NOT NULL UNIQUE,
        data BLOB NOT NULL,
        selected BOOLEAN NOT NULL DEFAULT FALSE)
-    """))
+    """
+        )
+    )
     # Partial indexes are only available in >=3.8.0 and expressions in indexes
     # are only available in >=3.9.0 (https://www.sqlite.org/partialindex.html
     # & https://www.sqlite.org/expridx.html). Don't bother with any kind of
@@ -144,11 +154,15 @@ def schema_create(conn):
     if sqlite3.sqlite_version_info >= (3, 9, 0):
         # This index is for data integrity -- ensuring that only one profile
         # is the default ("selected") profile -- and speed a distant second.
-        conn.execute(dedent("""\
+        conn.execute(
+            dedent(
+                """\
         CREATE UNIQUE INDEX IF NOT EXISTS
           only_one_profile_selected ON profiles
           (selected IS NOT NULL) WHERE selected
-        """))
+        """
+            )
+        )
 
 
 def schema_import(conn, dbpath):
@@ -162,15 +176,14 @@ def schema_import(conn, dbpath):
         profiles.
     :param dbpath: The filesystem path to the source SQLite3 database.
     """
-    conn.execute(
-        "ATTACH DATABASE ? AS source", (str(dbpath),))
+    conn.execute("ATTACH DATABASE ? AS source", (str(dbpath),))
     conn.execute(
         "INSERT OR IGNORE INTO profiles (name, data)"
         " SELECT name, data FROM source.profiles"
-        " WHERE data IS NOT NULL")
+        " WHERE data IS NOT NULL"
+    )
     conn.commit()  # need to commit before detaching the other db
-    conn.execute(
-        "DETACH DATABASE source")
+    conn.execute("DETACH DATABASE source")
 
 
 class ProfileStore:
@@ -186,8 +199,8 @@ class ProfileStore:
 
     def load(self, name: str) -> Profile:
         found = self.database.execute(
-            "SELECT data FROM profiles"
-            " WHERE name = ?", (name,)).fetchone()
+            "SELECT data FROM profiles" " WHERE name = ?", (name,)
+        ).fetchone()
         if found is None:
             raise ProfileNotFound(name)
         else:
@@ -206,22 +219,22 @@ class ProfileStore:
             # Ensure there's a row for this profile.
             self.database.execute(
                 "INSERT OR IGNORE INTO profiles (name, data) VALUES (?, '')",
-                (profile.name,))
+                (profile.name,),
+            )
             # Update the row's data.
             self.database.execute(
-                "UPDATE profiles SET data = ? WHERE name = ?",
-                (data, profile.name))
+                "UPDATE profiles SET data = ? WHERE name = ?", (data, profile.name)
+            )
 
     def delete(self, name: str):
-        self.database.execute(
-            "DELETE FROM profiles WHERE name = ?", (name,))
+        self.database.execute("DELETE FROM profiles WHERE name = ?", (name,))
 
     @property
     def default(self) -> typing.Optional[Profile]:
         """The name of the default profile to use, or `None`."""
         found = self.database.execute(
-            "SELECT name, data FROM profiles WHERE selected"
-            " ORDER BY name LIMIT 1").fetchone()
+            "SELECT name, data FROM profiles WHERE selected" " ORDER BY name LIMIT 1"
+        ).fetchone()
         if found is None:
             return None
         else:
@@ -235,8 +248,8 @@ class ProfileStore:
             self.save(profile)
             del self.default
             self.database.execute(
-                "UPDATE profiles SET selected = (name = ?)",
-                (profile.name,))
+                "UPDATE profiles SET selected = (name = ?)", (profile.name,)
+            )
 
     @default.deleter
     def default(self):
@@ -244,8 +257,11 @@ class ProfileStore:
 
     @classmethod
     @contextmanager
-    def open(cls, dbpath=Path("~/.maas.db").expanduser(),
-             migrate_from=Path("~/.maascli.db").expanduser()):
+    def open(
+        cls,
+        dbpath=Path("~/.maas.db").expanduser(),
+        migrate_from=Path("~/.maascli.db").expanduser(),
+    ):
         """Load a profiles database.
 
         Called without arguments this will open (and create) a database in the

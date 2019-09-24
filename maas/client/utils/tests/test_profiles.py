@@ -18,22 +18,11 @@ import contextlib
 from pathlib import Path
 import sqlite3
 
-from testtools.matchers import (
-    Equals,
-    Is,
-    Not,
-)
+from testtools.matchers import Equals, Is, Not
 from twisted.python.filepath import FilePath
 
-from ...testing import (
-    make_name_without_spaces,
-    TestCase,
-)
-from ..profiles import (
-    Profile,
-    ProfileNotFound,
-    ProfileStore,
-)
+from ...testing import make_name_without_spaces, TestCase
+from ..profiles import Profile, ProfileNotFound, ProfileStore
 from ..testing import make_Credentials
 
 
@@ -41,13 +30,15 @@ def make_profile(name=None):
     if name is None:
         name = make_name_without_spaces("name")
     return Profile(
-        name=name, url="http://example.com:5240/",
-        credentials=make_Credentials(), description={"resources": []},
-        something=make_name_without_spaces("something"))
+        name=name,
+        url="http://example.com:5240/",
+        credentials=make_Credentials(),
+        description={"resources": []},
+        something=make_name_without_spaces("something"),
+    )
 
 
 class TestProfile(TestCase):
-
     def test__instances_are_immutable(self):
         profile = make_profile()
         self.assertRaises(AttributeError, setattr, profile, "name", "foo")
@@ -66,31 +57,37 @@ class TestProfile(TestCase):
 
     def test__replace_returns_a_new_profile_with_modifications(self):
         profile1 = make_profile()
-        profile2 = profile1.replace(
-            name=profile1.name + "basil", hello="world")
+        profile2 = profile1.replace(name=profile1.name + "basil", hello="world")
         self.assertThat(profile2.name, Equals(profile1.name + "basil"))
-        self.assertThat(profile2.other, Equals(
-            dict(profile1.other, hello="world")))
+        self.assertThat(profile2.other, Equals(dict(profile1.other, hello="world")))
 
     def test__dump_returns_dict_with_all_state(self):
         profile = make_profile()
-        self.assertThat(profile.dump(), Equals({
-            "name": profile.name,
-            "url": profile.url,
-            "credentials": profile.credentials,
-            "description": profile.description,
-            "something": profile.other["something"],
-        }))
+        self.assertThat(
+            profile.dump(),
+            Equals(
+                {
+                    "name": profile.name,
+                    "url": profile.url,
+                    "credentials": profile.credentials,
+                    "description": profile.description,
+                    "something": profile.other["something"],
+                }
+            ),
+        )
 
     def test__representation(self):
         profile = make_profile()
-        self.assertThat(repr(profile), Equals(
-            "<Profile {0.name} {0.url}>".format(profile)))
+        self.assertThat(
+            repr(profile), Equals("<Profile {0.name} {0.url}>".format(profile))
+        )
 
     def test__representation_of_anonymous_profile(self):
         profile = make_profile().replace(credentials=None)
-        self.assertThat(repr(profile), Equals(
-            "<Profile {0.name} (anonymous) {0.url}>".format(profile)))
+        self.assertThat(
+            repr(profile),
+            Equals("<Profile {0.name} (anonymous) {0.url}>".format(profile)),
+        )
 
 
 class TestProfileStore(TestCase):
@@ -98,7 +95,7 @@ class TestProfileStore(TestCase):
 
     def setUp(self):
         super(TestProfileStore, self).setUp()
-        self.null_profile = Path('/dev/null')
+        self.null_profile = Path("/dev/null")
 
     def test_init(self):
         database = sqlite3.connect(":memory:")
@@ -108,8 +105,10 @@ class TestProfileStore(TestCase):
             config.database.execute(
                 "SELECT COUNT(*) FROM sqlite_master"
                 " WHERE type = 'table'"
-                "   AND name = 'profiles'").fetchone(),
-            (1,))
+                "   AND name = 'profiles'"
+            ).fetchone(),
+            (1,),
+        )
 
     def test_profiles_pristine(self):
         # A pristine configuration has no profiles.
@@ -167,11 +166,8 @@ class TestProfileStore(TestCase):
         self.assertIsInstance(config, contextlib._GeneratorContextManager)
         with config as config:
             self.assertIsInstance(config, ProfileStore)
-            self.assertEqual(
-                (1,), config.database.execute("SELECT 1").fetchone())
-        self.assertRaises(
-            sqlite3.ProgrammingError, config.database.execute,
-            "SELECT 1")
+            self.assertEqual((1,), config.database.execute("SELECT 1").fetchone())
+        self.assertRaises(sqlite3.ProgrammingError, config.database.execute, "SELECT 1")
 
     def test_open_permissions_new_database(self):
         # ProfileStore.open() applies restrictive file permissions to newly

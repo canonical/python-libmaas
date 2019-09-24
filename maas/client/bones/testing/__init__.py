@@ -1,10 +1,6 @@
 """Testing helpers for the Bones API."""
 
-__all__ = [
-    "api_descriptions",
-    "DescriptionServer",
-    "list_api_descriptions",
-]
+__all__ = ["api_descriptions", "DescriptionServer", "list_api_descriptions"]
 
 import http
 import http.server
@@ -15,10 +11,7 @@ import re
 import threading
 
 import fixtures
-from pkg_resources import (
-    resource_filename,
-    resource_listdir,
-)
+from pkg_resources import resource_filename, resource_listdir
 
 
 def list_api_descriptions():
@@ -29,7 +22,7 @@ def list_api_descriptions():
     number of the API.
     """
     for filename in resource_listdir(__name__, "."):
-        match = re.match(r'api(\d)(\d)[.]json', filename)
+        match = re.match(r"api(\d)(\d)[.]json", filename)
         if match is not None:
             version = tuple(map(int, match.groups()))
             path = resource_filename(__name__, filename)
@@ -64,10 +57,7 @@ class DescriptionHandler(http.server.BaseHTTPRequestHandler):
 
     @classmethod
     def make(cls, description=description):
-        return type(
-            "DescriptionHandler", (cls, ),
-            {"description": description},
-        )
+        return type("DescriptionHandler", (cls,), {"description": description})
 
     def setup(self):
         super(DescriptionHandler, self).setup()

@@ -2,22 +2,12 @@
 
 import random
 
-from testtools.matchers import (
-    Equals,
-    IsInstance,
-)
+from testtools.matchers import Equals, IsInstance
 
 from ...errors import OperationNotAllowed
-from ..pods import (
-    Pod,
-    Pods,
-)
-from .. testing import bind
-from ...testing import (
-    make_name_without_spaces,
-    make_string_without_spaces,
-    TestCase,
-)
+from ..pods import Pod, Pods
+from ..testing import bind
+from ...testing import make_name_without_spaces, make_string_without_spaces, TestCase
 
 
 def make_origin():
@@ -34,23 +24,14 @@ def make_pod():
         "id": random.randint(1, 100),
         "type": make_name_without_spaces("type"),
         "name": make_name_without_spaces("name"),
-        "architectures": [
-            make_string_without_spaces()
-            for _ in range(3)
-        ],
-        "capabilities": [
-            make_string_without_spaces()
-            for _ in range(3)
-        ],
+        "architectures": [make_string_without_spaces() for _ in range(3)],
+        "capabilities": [make_string_without_spaces() for _ in range(3)],
         "zone": {
             "id": random.randint(1, 100),
             "name": make_name_without_spaces("name"),
             "description": make_name_without_spaces("description"),
         },
-        "tags": [
-            make_string_without_spaces()
-            for _ in range(3)
-        ],
+        "tags": [make_string_without_spaces() for _ in range(3)],
         "cpu_over_commit_ratio": random.uniform(0, 10),
         "memory_over_commit_ratio": random.uniform(0, 10),
         "available": {
@@ -72,7 +53,6 @@ def make_pod():
 
 
 class TestPods(TestCase):
-
     def test__pods_create(self):
         type = make_string_without_spaces()
         power_address = make_string_without_spaces()
@@ -85,8 +65,14 @@ class TestPods(TestCase):
         Pods, Pod = origin.Pods, origin.Pod
         Pods._handler.create.return_value = {}
         observed = Pods.create(
-            type=type, power_address=power_address, power_user=power_user,
-            power_pass=power_pass, name=name, zone=zone, tags=tags)
+            type=type,
+            power_address=power_address,
+            power_user=power_user,
+            power_pass=power_pass,
+            name=name,
+            zone=zone,
+            tags=tags,
+        )
         self.assertThat(observed, IsInstance(Pod))
         Pods._handler.create.assert_called_once_with(
             type=type,
@@ -95,46 +81,52 @@ class TestPods(TestCase):
             power_pass=power_pass,
             name=name,
             zone=zone,
-            tags=tags)
+            tags=tags,
+        )
 
     def test__pods_create_raises_error_for_rsd_and_no_power_user(self):
         origin = make_origin()
         origin.Pods._handler.create.return_value = {}
         self.assertRaises(
-            OperationNotAllowed, origin.Pods.create, type='rsd',
-            power_address=make_string_without_spaces())
+            OperationNotAllowed,
+            origin.Pods.create,
+            type="rsd",
+            power_address=make_string_without_spaces(),
+        )
 
     def test__pods_create_raises_error_for_rsd_and_no_power_pass(self):
         origin = make_origin()
         origin.Pods._handler.create.return_value = {}
         self.assertRaises(
-            OperationNotAllowed, origin.Pods.create, type='rsd',
+            OperationNotAllowed,
+            origin.Pods.create,
+            type="rsd",
             power_address=make_string_without_spaces(),
-            power_user=make_string_without_spaces())
+            power_user=make_string_without_spaces(),
+        )
 
     def test__pods_create_raises_type_error_for_zone(self):
         origin = make_origin()
         origin.Pods._handler.create.return_value = {}
         self.assertRaises(
-            TypeError, origin.Pods.create, type=make_string_without_spaces(),
+            TypeError,
+            origin.Pods.create,
+            type=make_string_without_spaces(),
             power_address=make_string_without_spaces(),
             power_user=make_string_without_spaces(),
             power_pass=make_string_without_spaces(),
-            zone=0.1)
+            zone=0.1,
+        )
 
     def test__pods_read(self):
         Pods = make_origin().Pods
-        pods = [
-            make_pod()
-            for _ in range(3)
-        ]
+        pods = [make_pod() for _ in range(3)]
         Pods._handler.read.return_value = pods
         pods = Pods.read()
         self.assertThat(len(pods), Equals(3))
 
 
 class TestPod(TestCase):
-
     def test__pod_read(self):
         Pod = make_origin().Pod
         pod = make_pod()
@@ -170,15 +162,28 @@ class TestPod(TestCase):
         zone = random.randint(1, 10)
         interfaces = make_string_without_spaces()
         pod.compose(
-            cores=cores, memory=memory, cpu_speed=cpu_speed,
-            architecture=architecture, storage=storage,
-            hostname=hostname, domain=domain, zone=zone,
-            interfaces=interfaces)
+            cores=cores,
+            memory=memory,
+            cpu_speed=cpu_speed,
+            architecture=architecture,
+            storage=storage,
+            hostname=hostname,
+            domain=domain,
+            zone=zone,
+            interfaces=interfaces,
+        )
         Pod._handler.compose.assert_called_once_with(
-            id=pod_data["id"], cores=str(cores), memory=str(memory),
-            cpu_speed=str(cpu_speed), architecture=architecture,
-            storage=storage, hostname=hostname, domain=str(domain),
-            zone=str(zone), interfaces=interfaces)
+            id=pod_data["id"],
+            cores=str(cores),
+            memory=str(memory),
+            cpu_speed=str(cpu_speed),
+            architecture=architecture,
+            storage=storage,
+            hostname=hostname,
+            domain=str(domain),
+            zone=str(zone),
+            interfaces=interfaces,
+        )
 
     def test__pod_compose_raises_type_error_for_zone(self):
         Pod = make_origin().Pod
@@ -194,9 +199,18 @@ class TestPod(TestCase):
         zone = 0.1
         interfaces = make_string_without_spaces()
         self.assertRaises(
-            TypeError, pod.compose, cores=cores, memory=memory,
-            cpu_speed=cpu_speed, architecture=architecture, storage=storage,
-            hostname=hostname, domain=domain, zone=zone, interfaces=interfaces)
+            TypeError,
+            pod.compose,
+            cores=cores,
+            memory=memory,
+            cpu_speed=cpu_speed,
+            architecture=architecture,
+            storage=storage,
+            hostname=hostname,
+            domain=domain,
+            zone=zone,
+            interfaces=interfaces,
+        )
 
     def test__pod_delete(self):
         Pod = make_origin().Pod
@@ -219,7 +233,7 @@ class TestPod(TestCase):
         Pod = make_origin().Pod
         pod_data = make_pod()
         tag = make_string_without_spaces()
-        pod_data['tags'] = [tag]
+        pod_data["tags"] = [tag]
         pod = Pod(pod_data)
         pod.tags.remove(tag)
         Pod._handler.remove_tag.return_value = None

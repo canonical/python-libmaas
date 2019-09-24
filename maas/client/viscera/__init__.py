@@ -19,30 +19,19 @@ __all__ = [
     "OriginBase",
 ]
 
-from collections import (
-    defaultdict,
-    Iterable,
-    Mapping,
-    Sequence,
-)
+from collections import defaultdict, Iterable, Mapping, Sequence
 from copy import copy
 from datetime import datetime
 from functools import wraps
 from importlib import import_module
-from itertools import (
-    chain,
-    starmap,
-)
+from itertools import chain, starmap
 from types import MethodType
 
 import pytz
 
 from .. import bones
 from ..errors import ObjectNotLoaded
-from ..utils import (
-    get_all_subclasses,
-    vars_class,
-)
+from ..utils import get_all_subclasses, vars_class
 from ..utils.maas_async import Asynchronous
 
 
@@ -61,8 +50,8 @@ class Disabled:
             raise RuntimeError("%s has been disabled" % (self.name,))
         else:
             raise RuntimeError(
-                "%s has been disabled; use %s instead" % (
-                    self.name, self.alternative))
+                "%s has been disabled; use %s instead" % (self.name, self.alternative)
+            )
 
 
 def dir_class(cls):
@@ -133,7 +122,7 @@ class OriginObjectRef:
 
     def __get__(self, instance, owner):
         if self.name is None:
-            name = owner.__name__.split('.')[0]
+            name = owner.__name__.split(".")[0]
             return getattr(owner._origin, name.rstrip("s"))
         else:
             return getattr(owner._origin, self.name)
@@ -143,7 +132,6 @@ class OriginObjectRef:
 
 
 class ObjectType(Asynchronous, metaclass=Asynchronous):
-
     def __dir__(cls):
         return dir_class(cls)
 
@@ -161,7 +149,8 @@ class ObjectType(Asynchronous, metaclass=Asynchronous):
         """
         name = cls.__name__ if name is None else name
         attrs = {
-            "_origin": origin, "_handler": handler,
+            "_origin": origin,
+            "_handler": handler,
             "__module__": "origin",  # Could do better?
         }
         return type(name, (cls,), attrs)
@@ -213,15 +202,17 @@ def get_pk_descriptors(cls):
         }
         if unique_pk_fields:
             raise AttributeError(
-                "more than one field is marked as unique primary key: %s" % (
-                    ', '.join(sorted(pk_fields))))
-        pk_descriptors = tuple(sorted((
-            (name, descriptor)
-            for name, descriptor in pk_fields.items()
-        ), key=lambda item: item[1].pk))
+                "more than one field is marked as unique primary key: %s"
+                % (", ".join(sorted(pk_fields)))
+            )
+        pk_descriptors = tuple(
+            sorted(
+                ((name, descriptor) for name, descriptor in pk_fields.items()),
+                key=lambda item: item[1].pk,
+            )
+        )
         alt_pk_descriptors = tuple(
-            alt_pk_fields[idx]
-            for idx, (name, descriptor) in enumerate(pk_descriptors)
+            alt_pk_fields[idx] for idx, (name, descriptor) in enumerate(pk_descriptors)
         )
         return pk_descriptors, alt_pk_descriptors
     else:
@@ -239,15 +230,14 @@ def set_alt_pk_value(alt_descriptors, obj_data, data):
 class Object(ObjectBasics, metaclass=ObjectType):
     """An object in a MAAS installation."""
 
-    __slots__ = (
-        "__weakref__", "_data", "_orig_data", "_changed_data", "_loaded")
+    __slots__ = ("__weakref__", "_data", "_orig_data", "_changed_data", "_loaded")
 
     def __init__(self, data, local_data=None):
         super(Object, self).__init__()
         self._data = data
         self._changed_data = {}
         self._loaded = False
-        if isinstance(data, Mapping) and not data.get('__incomplete__', False):
+        if isinstance(data, Mapping) and not data.get("__incomplete__", False):
             self._reset(data)
             self._loaded = True
         else:
@@ -256,11 +246,11 @@ class Object(ObjectBasics, metaclass=ObjectType):
                 if isinstance(data, Mapping):
                     new_data = {}
                     try:
-                        new_data[descriptors[0][1].name] = (
-                            data[descriptors[0][1].name])
+                        new_data[descriptors[0][1].name] = data[descriptors[0][1].name]
                     except KeyError:
                         found_name = set_alt_pk_value(
-                            alt_descriptors[0], new_data, data)
+                            alt_descriptors[0], new_data, data
+                        )
                         if found_name:
                             # Validate that the set data is correct and
                             # can be converted to the python value.
@@ -273,9 +263,7 @@ class Object(ObjectBasics, metaclass=ObjectType):
                         getattr(self, descriptors[0][0])
                     self._reset(new_data)
                 else:
-                    self._reset({
-                        descriptors[0][1].name: data
-                    })
+                    self._reset({descriptors[0][1].name: data})
                     # Validate that the primary key is correct and
                     # can be converted to the python value.
                     getattr(self, descriptors[0][0])
@@ -288,7 +276,8 @@ class Object(ObjectBasics, metaclass=ObjectType):
                             obj_data[descriptor.name] = data[descriptor.name]
                         except KeyError:
                             found_name = set_alt_pk_value(
-                                alt_descriptors[idx], obj_data, data)
+                                alt_descriptors[idx], obj_data, data
+                            )
                             if found_name:
                                 found_names.append(found_name)
                             else:
@@ -311,24 +300,25 @@ class Object(ObjectBasics, metaclass=ObjectType):
                         getattr(self, name)
                 else:
                     raise TypeError(
-                        "data must be a mapping or a sequence, not %s" % (
-                            type(data).__name__))
+                        "data must be a mapping or a sequence, not %s"
+                        % (type(data).__name__)
+                    )
             else:
                 if not isinstance(data, Mapping):
                     raise TypeError(
-                        "data must be a mapping, not %s"
-                        % type(data).__name__)
+                        "data must be a mapping, not %s" % type(data).__name__
+                    )
                 else:
                     raise ValueError(
-                        "data cannot be incomplete without any primary keys "
-                        "defined")
+                        "data cannot be incomplete without any primary keys " "defined"
+                    )
         if local_data is not None:
             if isinstance(local_data, Mapping):
                 self._data.update(local_data)
             else:
                 raise TypeError(
-                    "local_data must be a mapping, not %s"
-                    % type(data).__name__)
+                    "local_data must be a mapping, not %s" % type(data).__name__
+                )
 
     def _reset(self, data):
         """Reset the object to look pristine with the given data.
@@ -341,9 +331,7 @@ class Object(ObjectBasics, metaclass=ObjectType):
         # we can keep track of the changes. A shallow copy is enough,
         # since we only care about changes that are directly related to
         # this object.
-        self._orig_data = {
-            key: copy(value) for key, value in data.items()
-        }
+        self._orig_data = {key: copy(value) for key, value in data.items()}
         self._changed_data = {}
 
     def __getattribute__(self, name):
@@ -355,14 +343,15 @@ class Object(ObjectBasics, metaclass=ObjectType):
             if isinstance(descriptor, ObjectField)
         }
         if name in fields:
-            if super().__getattribute__('_loaded'):
+            if super().__getattribute__("_loaded"):
                 return super(Object, self).__getattribute__(name)
             elif is_pk_descriptor(fields[name], include_alt=True):
                 return super(Object, self).__getattribute__(name)
             else:
                 raise ObjectNotLoaded(
-                    "cannot access attribute '%s' of object '%s'" % (
-                        name, type(self).__name__))
+                    "cannot access attribute '%s' of object '%s'"
+                    % (name, type(self).__name__)
+                )
         else:
             return super(Object, self).__getattribute__(name)
 
@@ -394,8 +383,10 @@ class Object(ObjectBasics, metaclass=ObjectType):
                 fields = []
         if fields is None:
             fields = sorted(
-                name for name, value in vars_class(type(self)).items()
-                if isinstance(value, ObjectField))
+                name
+                for name, value in vars_class(type(self)).items()
+                if isinstance(value, ObjectField)
+            )
         else:
             fields = sorted(fields)
         values = (getattr(self, name) for name in fields)
@@ -408,9 +399,9 @@ class Object(ObjectBasics, metaclass=ObjectType):
 
     def __hash__(self):
         name = str(self.__class__.__name__)
-        if hasattr(self, 'id'):
+        if hasattr(self, "id"):
             return hash((name, self.id))
-        if hasattr(self, 'system_id'):
+        if hasattr(self, "system_id"):
             return hash((name, self.system_id))
         return None
 
@@ -426,7 +417,7 @@ class Object(ObjectBasics, metaclass=ObjectType):
     async def refresh(self):
         """Refresh the object from MAAS."""
         cls = type(self)
-        if hasattr(cls, 'read'):
+        if hasattr(cls, "read"):
             descriptors, alt_descriptors = get_pk_descriptors(cls)
             if len(descriptors) == 1:
                 try:
@@ -457,33 +448,33 @@ class Object(ObjectBasics, metaclass=ObjectType):
                 obj = await cls.read(*args)
             else:
                 raise AttributeError(
-                    "unable to perform 'refresh' no primary key "
-                    "fields defined.")
+                    "unable to perform 'refresh' no primary key " "fields defined."
+                )
             if type(obj) is cls:
                 self._reset(obj._data)
                 self._loaded = True
             else:
                 raise TypeError(
-                    "result of '%s.read' must be '%s', not '%s'" % (
-                        cls.__name__, cls.__name__, type(obj).__name__))
+                    "result of '%s.read' must be '%s', not '%s'"
+                    % (cls.__name__, cls.__name__, type(obj).__name__)
+                )
         else:
-            raise AttributeError(
-                "'%s' object doesn't support refresh." % cls.__name__)
+            raise AttributeError("'%s' object doesn't support refresh." % cls.__name__)
 
     async def save(self):
         """Save the object in MAAS."""
         if hasattr(self._handler, "update"):
             if self._changed_data:
                 update_data = dict(self._changed_data)
-                update_data.update({
-                    key: self._orig_data[key]
-                    for key in self._handler.params
-                })
+                update_data.update(
+                    {key: self._orig_data[key] for key in self._handler.params}
+                )
                 data = await self._handler.update(**update_data)
                 self._reset(data)
         else:
             raise AttributeError(
-                "'%s' object doesn't support save." % type(self).__name__)
+                "'%s' object doesn't support save." % type(self).__name__
+            )
 
 
 def ManagedCreate(super_cls):
@@ -499,23 +490,25 @@ def ManagedCreate(super_cls):
     @wraps(super_cls.create)
     async def _create(self, *args, **kwargs):
         cls = type(self)
-        manager = getattr(cls, '_manager', None)
-        manager_field = getattr(cls, '_manager_field', None)
+        manager = getattr(cls, "_manager", None)
+        manager_field = getattr(cls, "_manager_field", None)
         if manager is not None and manager_field is not None:
             args = (manager,) + args
             new_obj = await super_cls.create(*args, **kwargs)
             self._items = self._items + [new_obj]
-            manager._data[manager_field.name] = (
-                manager._data[manager_field.name] +
-                [new_obj._data])
-            manager._orig_data[manager_field.name] = (
-                manager._orig_data[manager_field.name] +
-                [new_obj._data])
+            manager._data[manager_field.name] = manager._data[manager_field.name] + [
+                new_obj._data
+            ]
+            manager._orig_data[manager_field.name] = manager._orig_data[
+                manager_field.name
+            ] + [new_obj._data]
             return new_obj
         else:
             raise AttributeError(
-                'create is not supported; %s is not a managed set' % (
-                    super_cls.__name__))
+                "create is not supported; %s is not a managed set"
+                % (super_cls.__name__)
+            )
+
     return _create
 
 
@@ -536,31 +529,24 @@ class ObjectSet(ObjectBasics, metaclass=ObjectType):
             `ObjectSet`.
         :param items: The items in the `ObjectSet`.
         """
-        attrs = {
-            "_manager": manager,
-            "_manager_field": field,
-        }
+        attrs = {"_manager": manager, "_manager_field": field}
         if hasattr(cls, "create"):
-            attrs['create'] = ManagedCreate(cls)
+            attrs["create"] = ManagedCreate(cls)
         cls = type(
-            "%s.Managed#%s" % (
-                cls.__name__, manager.__class__.__name__), (cls,), attrs)
+            "%s.Managed#%s" % (cls.__name__, manager.__class__.__name__), (cls,), attrs
+        )
         return cls(items)
 
     def __init__(self, items):
         super(ObjectSet, self).__init__()
         if isinstance(items, (Mapping, str, bytes)):
-            raise TypeError(
-                "data must be sequence-like, not %s"
-                % type(items).__name__)
+            raise TypeError("data must be sequence-like, not %s" % type(items).__name__)
         elif isinstance(items, Sequence):
             self._items = items
         elif isinstance(items, Iterable):
             self._items = list(items)
         else:
-            raise TypeError(
-                "data must be sequence-like, not %s"
-                % type(items).__name__)
+            raise TypeError("data must be sequence-like, not %s" % type(items).__name__)
 
     def __len__(self):
         """Return the count of items contained herein."""
@@ -610,7 +596,10 @@ class ObjectSet(ObjectBasics, metaclass=ObjectType):
 
     def __repr__(self):
         return "<%s length=%d items=%r>" % (
-            self.__class__.__name__, len(self._items), self._items)
+            self.__class__.__name__,
+            len(self._items),
+            self._items,
+        )
 
 
 class ObjectField:
@@ -662,21 +651,25 @@ class ObjectField:
         """
         attrs = {}
         if datum_to_value is not None:
+
             @wraps(datum_to_value)
             def datum_to_value_method(instance, datum):
                 return datum_to_value(datum)
+
             attrs["datum_to_value"] = staticmethod(datum_to_value_method)
         if value_to_datum is not None:
+
             @wraps(value_to_datum)
             def value_to_datum_method(instance, value):
                 return value_to_datum(value)
+
             attrs["value_to_datum"] = staticmethod(value_to_datum_method)
         cls = type("%s.Checked#%s" % (cls.__name__, name), (cls,), attrs)
         return cls(name, **other)
 
     def __init__(
-            self, name, *, default=undefined, readonly=False,
-            pk=False, alt_pk=False):
+        self, name, *, default=undefined, readonly=False, pk=False, alt_pk=False
+    ):
         """Create a `ObjectField` with an optional default.
 
         :param name: The name of the field. This is the name that's used to
@@ -696,22 +689,19 @@ class ObjectField:
         self.name = name
         self.default = default
         if not isinstance(readonly, bool):
-            raise TypeError(
-                'readonly must be a bool, not %s' % type(readonly).__name__)
+            raise TypeError("readonly must be a bool, not %s" % type(readonly).__name__)
         else:
             self.readonly = readonly
         if not isinstance(pk, (bool, int)):
-            raise TypeError(
-                'pk must be a bool or an int, not %s' % type(pk).__name__)
+            raise TypeError("pk must be a bool or an int, not %s" % type(pk).__name__)
         else:
             self.pk = pk
         if self.pk is not False and alt_pk is not False:
-            raise ValueError(
-                'pk and alt_pk cannot be defined on the same field.')
+            raise ValueError("pk and alt_pk cannot be defined on the same field.")
         elif not isinstance(alt_pk, (bool, int)):
             raise TypeError(
-                'alt_pk must be a bool or an int, not %s' % (
-                    type(alt_pk).__name__))
+                "alt_pk must be a bool or an int, not %s" % (type(alt_pk).__name__)
+            )
         else:
             self.alt_pk = alt_pk
 
@@ -787,11 +777,19 @@ class ObjectField:
 
 
 class ObjectFieldRelated(ObjectField):
-
     def __init__(
-            self, name, cls, *,
-            default=undefined, readonly=False, pk=False, alt_pk=False,
-            reverse=undefined, use_data_setter=False, map_func=None):
+        self,
+        name,
+        cls,
+        *,
+        default=undefined,
+        readonly=False,
+        pk=False,
+        alt_pk=False,
+        reverse=undefined,
+        use_data_setter=False,
+        map_func=None
+    ):
         """Create a `ObjectFieldRelated` with `cls`.
 
         :param name: The name of the field. This is the name that's used to
@@ -814,7 +812,8 @@ class ObjectFieldRelated(ObjectField):
             set on the object.
         """
         super(ObjectFieldRelated, self).__init__(
-            name, default=default, readonly=readonly, pk=pk, alt_pk=alt_pk)
+            name, default=default, readonly=readonly, pk=pk, alt_pk=alt_pk
+        )
         self.reverse = reverse
         self.use_data_setter = use_data_setter
         self.map_func = map_func
@@ -822,8 +821,7 @@ class ObjectFieldRelated(ObjectField):
             self.map_func = lambda instance, value: value
         if not isinstance(cls, str):
             if not issubclass(cls, Object):
-                raise TypeError(
-                    "%s is not a subclass of Object" % cls)
+                raise TypeError("%s is not a subclass of Object" % cls)
             else:
                 self.cls = cls.__name__
         else:
@@ -876,24 +874,20 @@ class ObjectFieldRelated(ObjectField):
                 if len(descriptors) == 1:
                     return getattr(value, descriptors[0][0])
                 elif len(descriptors) > 1:
-                    return tuple(
-                        getattr(value, name)
-                        for name, _ in descriptors
-                    )
+                    return tuple(getattr(value, name) for name, _ in descriptors)
                 else:
                     raise AttributeError(
                         "unable to perform set object no primary key "
-                        "fields defined for %s" % self.cls)
+                        "fields defined for %s" % self.cls
+                    )
         else:
-            raise TypeError(
-                "must be %s, not %s" % (self.cls, type(value).__name__))
+            raise TypeError("must be %s, not %s" % (self.cls, type(value).__name__))
 
 
 class ObjectFieldRelatedSet(ObjectField):
-
     def __init__(
-            self, name, cls, *, reverse=undefined, default=undefined,
-            map_func=None):
+        self, name, cls, *, reverse=undefined, default=undefined, map_func=None
+    ):
         """Create a `ObjectFieldRelatedSet` with `cls`.
 
         :param name: The name of the field. This is the name that's used to
@@ -908,15 +902,15 @@ class ObjectFieldRelatedSet(ObjectField):
         if default is undefined:
             default = []
         super(ObjectFieldRelatedSet, self).__init__(
-            name, default=default, readonly=True)
+            name, default=default, readonly=True
+        )
         self.reverse = reverse
         self.map_func = map_func
         if self.map_func is None:
             self.map_func = lambda instance, value: value
         if not isinstance(cls, str):
             if not issubclass(cls, ObjectSet):
-                raise TypeError(
-                    "%s is not a subclass of ObjectSet" % cls)
+                raise TypeError("%s is not a subclass of ObjectSet" % cls)
             else:
                 self.cls = cls.__name__
         else:
@@ -935,8 +929,7 @@ class ObjectFieldRelatedSet(ObjectField):
         if datum is None:
             return []
         if not isinstance(datum, Sequence):
-            raise TypeError(
-                "datum must be a sequence, not %s" % type(datum).__name__)
+            raise TypeError("datum must be a sequence, not %s" % type(datum).__name__)
         local_data = None
         if self.reverse is not None:
             local_data = {}
@@ -947,16 +940,16 @@ class ObjectFieldRelatedSet(ObjectField):
         # Get the class from the bound origin.
         bound = getattr(instance._origin, self.cls)
         return bound.Managed(
-            instance, self,
+            instance,
+            self,
             (
-                bound._object(
-                    self.map_func(instance, item), local_data=local_data)
+                bound._object(self.map_func(instance, item), local_data=local_data)
                 for item in datum
-            ))
+            ),
+        )
 
 
 class ObjectMethod:
-
     def __init__(self, _classmethod=None, _instancemethod=None):
         super(ObjectMethod, self).__init__()
         self.__classmethod = _classmethod
@@ -965,14 +958,14 @@ class ObjectMethod:
     def __get__(self, instance, owner):
         if instance is None:
             if self.__classmethod is None:
-                raise AttributeError(
-                    "%s has no matching class attribute" % (instance, ))
+                raise AttributeError("%s has no matching class attribute" % (instance,))
             else:
                 return MethodType(self.__classmethod, owner)
         else:
             if self.__instancemethod is None:
                 raise AttributeError(
-                    "%s has no matching instance attribute" % (instance, ))
+                    "%s has no matching instance attribute" % (instance,)
+                )
             else:
                 return MethodType(self.__instancemethod, instance)
 
@@ -980,8 +973,7 @@ class ObjectMethod:
         # Non-data descriptors (those without __set__) can be shadowed by
         # instance attributes, so prevent that by making this a read-only data
         # descriptor.
-        raise AttributeError(
-            "%s has no matching instance attribute" % (instance, ))
+        raise AttributeError("%s has no matching instance attribute" % (instance,))
 
     def classmethod(self, func):
         """Set/modify the class method."""
@@ -1045,6 +1037,7 @@ class OriginBase:
 def to(cls):
     def to_cls(value):
         return cls(value)
+
     return to_cls
 
 
@@ -1053,8 +1046,8 @@ def check(expected):
         if issubclass(type(value), expected):
             return value
         else:
-            raise TypeError(
-                "%r is not of type %s" % (value, expected))
+            raise TypeError("%r is not of type %s" % (value, expected))
+
     return checker
 
 
@@ -1069,15 +1062,12 @@ def parse_timestamp(created):
 
 def mapping_of(cls):
     """Expects a mapping from some key to data for `cls` instances."""
+
     def mapper(data):
         if not isinstance(data, Mapping):
-            raise TypeError(
-                "data must be a mapping, not %s"
-                % type(data).__name__)
-        return {
-            key: cls(value)
-            for key, value in data.items()
-        }
+            raise TypeError("data must be a mapping, not %s" % type(data).__name__)
+        return {key: cls(value) for key, value in data.items()}
+
     return mapper
 
 
@@ -1095,10 +1085,7 @@ def find_objects(modules):
     """
     return {
         subclass.__name__: subclass
-        for subclass in chain(
-            get_all_subclasses(Object),
-            get_all_subclasses(ObjectSet),
-        )
+        for subclass in chain(get_all_subclasses(Object), get_all_subclasses(ObjectSet))
         if subclass.__module__ in modules
     }
 
@@ -1109,7 +1096,8 @@ class OriginType(Asynchronous):
     async def fromURL(cls, url, *, credentials=None, insecure=False):
         """Return an `Origin` for a given MAAS instance."""
         session = await bones.SessionAPI.fromURL(
-            url, credentials=credentials, insecure=insecure)
+            url, credentials=credentials, insecure=insecure
+        )
         return cls(session)
 
     def fromProfile(cls, profile):
@@ -1128,8 +1116,7 @@ class OriginType(Asynchronous):
         session = bones.SessionAPI.fromProfileName(name)
         return cls(session)
 
-    async def login(
-            cls, url, *, username=None, password=None, insecure=False):
+    async def login(cls, url, *, username=None, password=None, insecure=False):
         """Make an `Origin` by logging-in with a username and password.
 
         :return: A tuple of ``profile`` and ``origin``, where the former is an
@@ -1137,11 +1124,11 @@ class OriginType(Asynchronous):
             made using the profile.
         """
         profile, session = await bones.SessionAPI.login(
-            url=url, username=username, password=password, insecure=insecure)
+            url=url, username=username, password=password, insecure=insecure
+        )
         return profile, cls(session)
 
-    async def connect(
-            cls, url, *, apikey=None, insecure=False):
+    async def connect(cls, url, *, apikey=None, insecure=False):
         """Make an `Origin` by connecting with an apikey.
 
         :return: A tuple of ``profile`` and ``origin``, where the former is an
@@ -1149,7 +1136,8 @@ class OriginType(Asynchronous):
             made using the profile.
         """
         profile, session = await bones.SessionAPI.connect(
-            url=url, apikey=apikey, insecure=insecure)
+            url=url, apikey=apikey, insecure=insecure
+        )
         return profile, cls(session)
 
     def __dir__(cls):
@@ -1209,8 +1197,8 @@ class Origin(OriginBase, metaclass=OriginType):
             ".zones",
         }
         super(Origin, self).__init__(
-            session, objects=find_objects({
-                import_module(name, __name__).__name__
-                for name in modules
-            }),
+            session,
+            objects=find_objects(
+                {import_module(name, __name__).__name__ for name in modules}
+            ),
         )

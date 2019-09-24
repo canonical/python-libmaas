@@ -1,18 +1,8 @@
 """Objects for SSH Keys."""
 
-__all__ = [
-    "SSHKeys",
-    "SSHKey",
-]
+__all__ = ["SSHKeys", "SSHKey"]
 
-from . import (
-    check,
-    check_optional,
-    Object,
-    ObjectField,
-    ObjectSet,
-    ObjectType,
-)
+from . import check, check_optional, Object, ObjectField, ObjectSet, ObjectType
 
 
 class SSHKeysType(ObjectType):
@@ -39,7 +29,6 @@ class SSHKeys(ObjectSet, metaclass=SSHKeysType):
 
 
 class SSHKeyType(ObjectType):
-
     async def read(cls, id: int):
         """Get an `SSHKey` by its `id`."""
         data = await cls._handler.read(id=id)
@@ -48,12 +37,7 @@ class SSHKeyType(ObjectType):
 
 class SSHKey(Object, metaclass=SSHKeyType):
     """An SSH key."""
-    id = ObjectField.Checked(
-        "id", check(int), readonly=True
-    )
-    key = ObjectField.Checked(
-        "key", check(str), readonly=True
-    )
-    keysource = ObjectField.Checked(
-        "keysource", check_optional(str), readonly=True,
-    )
+
+    id = ObjectField.Checked("id", check(int), readonly=True)
+    key = ObjectField.Checked("key", check(str), readonly=True)
+    keysource = ObjectField.Checked("keysource", check_optional(str), readonly=True)

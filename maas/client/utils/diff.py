@@ -14,9 +14,7 @@
 
 """Helpers for calulating difference between objects."""
 
-__all__ = [
-    "calculate_dict_diff",
-]
+__all__ = ["calculate_dict_diff"]
 
 
 from . import remove_None
@@ -37,7 +35,7 @@ def calculate_dict_diff(old_params: dict, new_params: dict):
             if value != new_params[key]:
                 params_diff[key] = new_params[key]
         else:
-            params_diff[key] = ''
+            params_diff[key] = ""
     for key, value in new_params.items():
         if key not in old_params:
             params_diff[key] = value

@@ -3,20 +3,10 @@
 import random
 import sys
 
-from testtools.matchers import (
-    Contains,
-    Equals,
-    Is,
-)
+from testtools.matchers import Contains, Equals, Is
 
-from .. import (
-    ArgumentParser,
-    shell,
-)
-from ...testing import (
-    make_name_without_spaces,
-    TestCase,
-)
+from .. import ArgumentParser, shell
+from ...testing import make_name_without_spaces, TestCase
 from .testing import capture_parse_error
 
 
@@ -44,13 +34,12 @@ class TestShell(TestCase):
 
     def test_offers_profile_name_option_when_profiles_exist(self):
         profile_name_choices = tuple(
-            make_name_without_spaces("profile-name") for _ in range(5))
+            make_name_without_spaces("profile-name") for _ in range(5)
+        )
         profile_name_default = random.choice(profile_name_choices)
 
-        self.patch(
-            shell.cmd_shell, "profile_name_choices", profile_name_choices)
-        self.patch(
-            shell.cmd_shell, "profile_name_default", profile_name_default)
+        self.patch(shell.cmd_shell, "profile_name_choices", profile_name_choices)
+        self.patch(shell.cmd_shell, "profile_name_default", profile_name_default)
 
         parser = ArgumentParser()
         subparser = shell.cmd_shell.register(parser)
@@ -68,8 +57,9 @@ class TestShell(TestCase):
         self.patch(subparser, "error").side_effect = Exception
         profile_name = make_name_without_spaces("foo")
         error = capture_parse_error(subparser, "--profile-name", profile_name)
-        self.assertThat(str(error), Contains(
-            "argument --profile-name: invalid choice: "))
+        self.assertThat(
+            str(error), Contains("argument --profile-name: invalid choice: ")
+        )
 
     def electAttribute(self):
         # We're going to use an attribute in this module as the means for an
@@ -103,8 +93,10 @@ class TestShell(TestCase):
         # Mimic a non-interactive invocation of `maas shell`.
         self.patch(shell, "sys")
         shell.sys.stdin.isatty.return_value = False
-        shell.sys.stdin.read.return_value = (
-            "import %s as mod; mod.%s = __file__" % (__name__, attrname))
+        shell.sys.stdin.read.return_value = "import %s as mod; mod.%s = __file__" % (
+            __name__,
+            attrname,
+        )
         self.callShell()
 
         # That attribute has been updated.

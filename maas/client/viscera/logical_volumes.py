@@ -1,9 +1,6 @@
 """Objects for logical volumes."""
 
-__all__ = [
-    "LogicalVolume",
-    "LogicalVolumes",
-]
+__all__ = ["LogicalVolume", "LogicalVolumes"]
 
 from typing import Iterable
 
@@ -27,8 +24,14 @@ class LogicalVolumesType(BlockDevicesType):
         return super(LogicalVolumesType, cls).bind(origin, handler, handlers)
 
     async def create(
-            cls, volume_group: VolumeGroup, name: str, size: int,
-            *, uuid: str = None, tags: Iterable[str] = None):
+        cls,
+        volume_group: VolumeGroup,
+        name: str,
+        size: int,
+        *,
+        uuid: str = None,
+        tags: Iterable[str] = None
+    ):
         """
         Create a logical volume on the volume group.
 
@@ -45,30 +48,25 @@ class LogicalVolumesType(BlockDevicesType):
         """
         if not isinstance(volume_group, VolumeGroup):
             raise TypeError(
-                'volume_group must be a VolumeGroup, not %s' % (
-                    type(volume_group).__name__))
+                "volume_group must be a VolumeGroup, not %s"
+                % (type(volume_group).__name__)
+            )
 
-        params = {
-            'system_id': volume_group.node.system_id,
-            'id': volume_group.id,
-        }
+        params = {"system_id": volume_group.node.system_id, "id": volume_group.id}
         if not name:
             raise ValueError("name must be provided.")
         if not size or size < 0:
             raise ValueError("size must be provided and greater than zero.")
 
-        params.update(remove_None({
-            'name': name,
-            'size': size,
-            'uuid': uuid,
-        }))
+        params.update(remove_None({"name": name, "size": size, "uuid": uuid}))
         data = await volume_group._handler.create_logical_volume(**params)
         # Create logical volume doesn't return a full block device object.
         # Load the logical volume using the block device endpoint, ensures that
         # all the data present to access the fields.
         bd_handler = getattr(cls._origin, "BlockDevice")._handler
-        volume = cls._object(await bd_handler.read(
-            system_id=data['system_id'], id=data['id']))
+        volume = cls._object(
+            await bd_handler.read(system_id=data["system_id"], id=data["id"])
+        )
         if tags:
             volume.tags = tags
             await volume.save()
@@ -93,6 +91,4 @@ class LogicalVolume(BlockDevice, metaclass=LogicalVolumeType):
     """A logical volume on a volume group."""
 
     def __repr__(self):
-        return super(BlockDevice, self).__repr__(
-            name="LogicalVolume",
-            fields={"name", })
+        return super(BlockDevice, self).__repr__(name="LogicalVolume", fields={"name"})

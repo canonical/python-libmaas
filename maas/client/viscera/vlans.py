@@ -1,9 +1,6 @@
 """Objects for vlans."""
 
-__all__ = [
-    "Vlan",
-    "Vlans",
-]
+__all__ = ["Vlan", "Vlans"]
 
 from operator import attrgetter
 from typing import Union
@@ -39,8 +36,8 @@ class VlanType(ObjectType):
             fabric_id = fabric.id
         else:
             raise TypeError(
-                "fabric must be a Fabric or int, not %s"
-                % type(fabric).__name__)
+                "fabric must be a Fabric or int, not %s" % type(fabric).__name__
+            )
         data = await cls._handler.read(fabric_id=fabric_id, vid=vid)
         return cls(data, {"fabric_id": fabric_id})
 
@@ -48,83 +45,79 @@ class VlanType(ObjectType):
 class Vlan(Object, metaclass=VlanType):
     """A VLAN in a fabric."""
 
-    id = ObjectField.Checked(
-        "id", check(int), readonly=True)
+    id = ObjectField.Checked("id", check(int), readonly=True)
 
-    fabric = ObjectFieldRelated(
-        "fabric_id", "Fabric", pk=0)
-    vid = ObjectField.Checked(
-        "vid", check(int), check(int), pk=1)
+    fabric = ObjectFieldRelated("fabric_id", "Fabric", pk=0)
+    vid = ObjectField.Checked("vid", check(int), check(int), pk=1)
 
-    name = ObjectField.Checked(
-        "name", check_optional(str), check_optional(str))
-    mtu = ObjectField.Checked(
-        "mtu", check(int), check(int))
+    name = ObjectField.Checked("name", check_optional(str), check_optional(str))
+    mtu = ObjectField.Checked("mtu", check(int), check(int))
     space = ObjectFieldRelated(
-        "space", "Space",
-        map_func=lambda _, data: {'name': data, '__incomplete__': True})
+        "space",
+        "Space",
+        map_func=lambda _, data: {"name": data, "__incomplete__": True},
+    )
 
     relay_vlan = ObjectFieldRelated("relay_vlan", "Vlan", use_data_setter=True)
-    dhcp_on = ObjectField.Checked(
-        "dhcp_on", check(bool), check(bool))
+    dhcp_on = ObjectField.Checked("dhcp_on", check(bool), check(bool))
     primary_rack = ObjectFieldRelated("primary_rack", "RackController")
     secondary_rack = ObjectFieldRelated("secondary_rack", "RackController")
 
     external_dhcp = ObjectField.Checked(
-        "external_dhcp", check_optional(str), readonly=True)
+        "external_dhcp", check_optional(str), readonly=True
+    )
 
     def __repr__(self):
-        return super(Vlan, self).__repr__(
-            fields={"name", "vid"})
+        return super(Vlan, self).__repr__(fields={"name", "vid"})
 
     async def save(self):
         # Store fabric_id so its reset on save. `fabric_id` is not returned
         # by the API, this is stored through `local_data`.
-        fabric_id = self._data['fabric_id']
-        if ('fabric_id' in self._changed_data and
-                self._changed_data['fabric_id'] is not None):
-            if (self._orig_data['fabric_id'] and
-                    self._changed_data['fabric_id'] == (
-                        self._orig_data['fabric_id'])):
+        fabric_id = self._data["fabric_id"]
+        if (
+            "fabric_id" in self._changed_data
+            and self._changed_data["fabric_id"] is not None
+        ):
+            if self._orig_data["fabric_id"] and self._changed_data["fabric_id"] == (
+                self._orig_data["fabric_id"]
+            ):
                 # Fabric didn't really change, the object was just set to the
                 # same Fabric
-                del self._changed_data['fabric_id']
+                del self._changed_data["fabric_id"]
             else:
                 # Allow the update of the fabric by setting the 'fabric' field
                 # with the new 'fabric_id'.
-                self._changed_data['fabric'] = self._changed_data['fabric_id']
+                self._changed_data["fabric"] = self._changed_data["fabric_id"]
 
-        if ('relay_vlan' in self._changed_data and
-                self._changed_data['relay_vlan']):
+        if "relay_vlan" in self._changed_data and self._changed_data["relay_vlan"]:
             # Update uses the ID of the VLAN, not the VLAN object.
-            self._changed_data['relay_vlan'] = (
-                self._changed_data['relay_vlan']['id'])
-            if ('relay_vlay' in self._orig_data and
-                    self._orig_data['relay_vlan'] and
-                    'id' in self._orig_data['relay_vlan'] and
-                    self._changed_data['relay_vlan'] == (
-                        self._orig_data['relay_vlan']['id'])):
+            self._changed_data["relay_vlan"] = self._changed_data["relay_vlan"]["id"]
+            if (
+                "relay_vlay" in self._orig_data
+                and self._orig_data["relay_vlan"]
+                and "id" in self._orig_data["relay_vlan"]
+                and self._changed_data["relay_vlan"]
+                == (self._orig_data["relay_vlan"]["id"])
+            ):
                 # VLAN didn't really change, the object was just set to the
                 # same VLAN.
-                del self._changed_data['relay_vlan']
+                del self._changed_data["relay_vlan"]
             else:
-                self._changed_data['relay_vlan'] = (
-                    self._changed_data['relay_vlan'])
+                self._changed_data["relay_vlan"] = self._changed_data["relay_vlan"]
 
         # Don't call `super().save()` because `vid` can be changed and it has
         # to be handled specially because its in the resource_uri path.
         if self._changed_data:
             update_data = dict(self._changed_data)
-            update_data.update({
-                key: self._orig_data[key]
-                for key in self._handler.params
-            })
-            update_data['vid'] = update_data['_vid'] = self._orig_data['vid']
-            if 'vid' in self._changed_data:
-                update_data['_vid'] = self._changed_data['vid']
+            update_data.update(
+                {key: self._orig_data[key] for key in self._handler.params}
+            )
+            update_data["vid"] = update_data["_vid"] = self._orig_data["vid"]
+            if "vid" in self._changed_data:
+                update_data["_vid"] = self._changed_data["vid"]
             data = await self._handler.update(**update_data)
             # Set fabric_id because it was lost from the `update`.
-            data['fabric_id'] = fabric_id
+            data["fabric_id"] = fabric_id
             self._reset(data)
 
     async def delete(self):
@@ -132,8 +125,7 @@ class Vlan(Object, metaclass=VlanType):
         # Since the VID can be changed for the VLAN, we always use the vid
         # from the original data. That way if the user changes the vid the
         # delete still works, until the VLAN has been saved.
-        await self._handler.delete(
-            fabric_id=self.fabric.id, vid=self._orig_data['vid'])
+        await self._handler.delete(fabric_id=self.fabric.id, vid=self._orig_data["vid"])
 
 
 class VlansType(ObjectType):
@@ -151,21 +143,27 @@ class VlansType(ObjectType):
             fabric_id = fabric.id
         else:
             raise TypeError(
-                "fabric must be a Fabric or int, not %s"
-                % type(fabric).__name__)
+                "fabric must be a Fabric or int, not %s" % type(fabric).__name__
+            )
         data = await cls._handler.read(fabric_id=fabric_id)
         return cls(
-            cls._object(
-                item, local_data={"fabric_id": fabric_id})
-            for item in data)
+            cls._object(item, local_data={"fabric_id": fabric_id}) for item in data
+        )
 
     async def create(
-            cls, fabric: Union[Fabric, int], vid: int, *,
-            name: str = None, description: str = None, mtu: int = None,
-            relay_vlan: Union[Vlan, int] = None, dhcp_on: bool = False,
-            primary_rack: Union[RackController, str] = None,
-            secondary_rack: Union[RackController, str] = None,
-            space: Union[Space, int] = None):
+        cls,
+        fabric: Union[Fabric, int],
+        vid: int,
+        *,
+        name: str = None,
+        description: str = None,
+        mtu: int = None,
+        relay_vlan: Union[Vlan, int] = None,
+        dhcp_on: bool = False,
+        primary_rack: Union[RackController, str] = None,
+        secondary_rack: Union[RackController, str] = None,
+        space: Union[Space, int] = None
+    ):
         """
         Create a `Vlan` in MAAS.
 
@@ -195,57 +193,60 @@ class VlansType(ObjectType):
         """
         params = {}
         if isinstance(fabric, int):
-            params['fabric_id'] = fabric
+            params["fabric_id"] = fabric
         elif isinstance(fabric, Fabric):
-            params['fabric_id'] = fabric.id
+            params["fabric_id"] = fabric.id
         else:
             raise TypeError(
-                "fabric must be Fabric or int, not %s" % (
-                    type(fabric).__class__))
-        params['vid'] = vid
+                "fabric must be Fabric or int, not %s" % (type(fabric).__class__)
+            )
+        params["vid"] = vid
         if name is not None:
-            params['name'] = name
+            params["name"] = name
         if description is not None:
-            params['description'] = description
+            params["description"] = description
         if mtu is not None:
-            params['mtu'] = mtu
+            params["mtu"] = mtu
         if relay_vlan is not None:
             if isinstance(relay_vlan, int):
-                params['relay_vlan'] = relay_vlan
+                params["relay_vlan"] = relay_vlan
             elif isinstance(relay_vlan, Vlan):
-                params['relay_vlan'] = relay_vlan.id
+                params["relay_vlan"] = relay_vlan.id
             else:
                 raise TypeError(
-                    "relay_vlan must be Vlan or int, not %s" % (
-                        type(relay_vlan).__class__))
-        params['dhcp_on'] = dhcp_on
+                    "relay_vlan must be Vlan or int, not %s"
+                    % (type(relay_vlan).__class__)
+                )
+        params["dhcp_on"] = dhcp_on
         if primary_rack is not None:
             if isinstance(primary_rack, str):
-                params['primary_rack'] = primary_rack
+                params["primary_rack"] = primary_rack
             elif isinstance(primary_rack, RackController):
-                params['primary_rack'] = primary_rack.system_id
+                params["primary_rack"] = primary_rack.system_id
             else:
                 raise TypeError(
-                    "primary_rack must be RackController or str, not %s" % (
-                        type(primary_rack).__class__))
+                    "primary_rack must be RackController or str, not %s"
+                    % (type(primary_rack).__class__)
+                )
         if secondary_rack is not None:
             if isinstance(secondary_rack, str):
-                params['secondary_rack'] = secondary_rack
+                params["secondary_rack"] = secondary_rack
             elif isinstance(secondary_rack, RackController):
-                params['secondary_rack'] = secondary_rack.system_id
+                params["secondary_rack"] = secondary_rack.system_id
             else:
                 raise TypeError(
-                    "secondary_rack must be RackController or str, not %s" % (
-                        type(secondary_rack).__class__))
+                    "secondary_rack must be RackController or str, not %s"
+                    % (type(secondary_rack).__class__)
+                )
         if space is not None:
             if isinstance(space, int):
-                params['space'] = space
+                params["space"] = space
             elif isinstance(space, Space):
-                params['space'] = space.id
+                params["space"] = space.id
             else:
                 raise TypeError(
-                    "space must be Space or int, not %s" % (
-                        type(space).__class__))
+                    "space must be Space or int, not %s" % (type(space).__class__)
+                )
         return cls._object(await cls._handler.create(**params))
 
 
@@ -260,4 +261,4 @@ class Vlans(ObjectSet, metaclass=VlansType):
         elif length == 1:
             return self[0]
         else:
-            return sorted(self, key=attrgetter('id'))[0]
+            return sorted(self, key=attrgetter("id"))[0]

@@ -2,19 +2,12 @@
 
 import random
 
-from testtools.matchers import (
-    Equals,
-    IsInstance,
-    MatchesStructure,
-)
+from testtools.matchers import Equals, IsInstance, MatchesStructure
 
 from .. import resource_pools
 
 from ..testing import bind
-from ...testing import (
-    make_string_without_spaces,
-    TestCase,
-)
+from ...testing import make_string_without_spaces, TestCase
 
 
 def make_origin():
@@ -26,7 +19,6 @@ def make_origin():
 
 
 class TestResourcePools(TestCase):
-
     def test_resource_pools_create(self):
         origin = make_origin()
         pool_id = random.randint(0, 100)
@@ -37,41 +29,35 @@ class TestResourcePools(TestCase):
             "name": name,
             "description": description,
         }
-        pool = origin.ResourcePools.create(
-            name=name,
-            description=description,
-        )
+        pool = origin.ResourcePools.create(name=name, description=description)
         origin.ResourcePools._handler.create.assert_called_once_with(
-            name=name,
-            description=description,
+            name=name, description=description
         )
         self.assertThat(pool, IsInstance(origin.ResourcePool))
-        self.assertThat(pool, MatchesStructure.byEquality(
-            id=pool_id, name=name, description=description
-        ))
+        self.assertThat(
+            pool,
+            MatchesStructure.byEquality(id=pool_id, name=name, description=description),
+        )
 
     def test_resource_pools_create_without_description(self):
         origin = make_origin()
         pool_id = random.randint(0, 100)
         name = make_string_without_spaces()
-        description = ''
+        description = ""
         origin.ResourcePools._handler.create.return_value = {
             "id": pool_id,
             "name": name,
             "description": description,
         }
-        pool = origin.ResourcePools.create(
-            name=name,
-            description=description,
-        )
+        pool = origin.ResourcePools.create(name=name, description=description)
         origin.ResourcePools._handler.create.assert_called_once_with(
-            name=name,
-            description=description,
+            name=name, description=description
         )
         self.assertThat(pool, IsInstance(origin.ResourcePool))
-        self.assertThat(pool, MatchesStructure.byEquality(
-            id=pool_id, name=name, description=description
-        ))
+        self.assertThat(
+            pool,
+            MatchesStructure.byEquality(id=pool_id, name=name, description=description),
+        )
 
     def test_resource_pools_read(self):
         ResourcePools = make_origin().ResourcePools
@@ -89,7 +75,6 @@ class TestResourcePools(TestCase):
 
 
 class TestResourcePool(TestCase):
-
     def test_resource_pool_read(self):
         ResourcePool = make_origin().ResourcePool
         pool = {
@@ -98,17 +83,18 @@ class TestResourcePool(TestCase):
             "description": make_string_without_spaces(),
         }
         ResourcePool._handler.read.return_value = pool
-        self.assertThat(
-            ResourcePool.read(id=pool['id']), Equals(ResourcePool(pool)))
-        ResourcePool._handler.read.assert_called_once_with(id=pool['id'])
+        self.assertThat(ResourcePool.read(id=pool["id"]), Equals(ResourcePool(pool)))
+        ResourcePool._handler.read.assert_called_once_with(id=pool["id"])
 
     def test_resource_pool_delete(self):
         ResourcePool = make_origin().ResourcePool
         pool_id = random.randint(0, 100)
-        pool = ResourcePool({
-            "id": pool_id,
-            "name": make_string_without_spaces(),
-            "description": make_string_without_spaces(),
-        })
+        pool = ResourcePool(
+            {
+                "id": pool_id,
+                "name": make_string_without_spaces(),
+                "description": make_string_without_spaces(),
+            }
+        )
         pool.delete()
         ResourcePool._handler.delete.assert_called_once_with(id=pool_id)

@@ -1,25 +1,14 @@
 """Commands for running interactive and non-interactive shells."""
 
-__all__ = [
-    "register",
-]
+__all__ = ["register"]
 
 import code
 import sys
 import textwrap
 import tokenize
 
-from . import (
-    colorized,
-    Command,
-    PROFILE_DEFAULT,
-    PROFILE_NAMES,
-)
-from .. import (
-    bones,
-    facade,
-    viscera,
-)
+from . import colorized, Command, PROFILE_DEFAULT, PROFILE_NAMES
+from .. import bones, facade, viscera
 
 
 class cmd_shell(Command):
@@ -31,8 +20,7 @@ class cmd_shell(Command):
     """
 
     profile_name_choices = PROFILE_NAMES
-    profile_name_default = (
-        None if PROFILE_DEFAULT is None else PROFILE_DEFAULT.name)
+    profile_name_default = None if PROFILE_DEFAULT is None else PROFILE_DEFAULT.name
 
     def __init__(self, parser):
         super(cmd_shell, self).__init__(parser)
@@ -42,41 +30,64 @@ class cmd_shell(Command):
             # message instead of something more cryptic. Note that the help
             # string differs too.
             parser.add_argument(
-                "--profile-name", metavar="NAME", required=False,
-                default=None, help=(
+                "--profile-name",
+                metavar="NAME",
+                required=False,
+                default=None,
+                help=(
                     "The name of the remote MAAS instance to use. "
                     "No profiles are currently defined; use the `profiles` "
                     "command to create one."
-                ))
+                ),
+            )
         else:
             parser.add_argument(
-                "--profile-name", metavar="NAME", required=False,
+                "--profile-name",
+                metavar="NAME",
+                required=False,
                 choices=self.profile_name_choices,
-                default=self.profile_name_default, help=(
-                    "The name of the remote MAAS instance to use." + (
-                        "" if self.profile_name_default is None
+                default=self.profile_name_default,
+                help=(
+                    "The name of the remote MAAS instance to use."
+                    + (
+                        ""
+                        if self.profile_name_default is None
                         else " [default: %(default)s]"
                     )
-                ))
+                ),
+            )
         parser.add_argument(
-            "--viscera", action="store_true", default=False, help=(
+            "--viscera",
+            action="store_true",
+            default=False,
+            help=(
                 "Create a pre-canned viscera `Origin` for the selected "
                 "profile. This is available as `origin` in the shell's "
                 "namespace. You probably do not need this unless you're "
                 "developing python-libmaas itself."
-            ))
+            ),
+        )
         parser.add_argument(
-            "--bones", action="store_true", default=False, help=(
+            "--bones",
+            action="store_true",
+            default=False,
+            help=(
                 "Create a pre-canned bones `Session` for the selected "
                 "profile. This is available as `session` in the shell's "
                 "namespace. You probably do not need this unless you're "
                 "developing python-libmaas itself."
-            ))
+            ),
+        )
         parser.add_argument(
-            "script", metavar="SCRIPT", nargs="?", default=None, help=(
+            "script",
+            metavar="SCRIPT",
+            nargs="?",
+            default=None,
+            help=(
                 "Python script to run in the shell's namespace. An "
                 "interactive shell is started if none is given."
-            ))
+            ),
+        )
 
     def __call__(self, options):
         """Execute this command."""
@@ -93,19 +104,19 @@ class cmd_shell(Command):
             if options.bones:
                 namespace["session"] = session
                 descriptions["session"] = (
-                    "A pre-canned `bones` session for '%s'."
-                    % options.profile_name)
+                    "A pre-canned `bones` session for '%s'." % options.profile_name
+                )
             origin = viscera.Origin(session)
             if options.viscera:
                 namespace["origin"] = origin
                 descriptions["origin"] = (
-                    "A pre-canned `viscera` origin for '%s'."
-                    % options.profile_name)
+                    "A pre-canned `viscera` origin for '%s'." % options.profile_name
+                )
             client = facade.Client(origin)
             namespace["client"] = client
             descriptions["client"] = (
-                "A pre-canned client for '%s'."
-                % options.profile_name)
+                "A pre-canned client for '%s'." % options.profile_name
+            )
 
         if options.script is None:
             if sys.stdin.isatty() and sys.stdout.isatty():
@@ -137,8 +148,7 @@ class cmd_shell(Command):
         except ImportError:
             code.InteractiveConsole(namespace).interact(" ")
         else:
-            IPython.start_ipython(
-                argv=[], display_banner=False, user_ns=namespace)
+            IPython.start_ipython(argv=[], display_banner=False, user_ns=namespace)
 
     @staticmethod
     def _run_script(namespace, filename):

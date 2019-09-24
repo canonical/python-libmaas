@@ -15,10 +15,7 @@
 """Tests for `maas.client.utils.auth`."""
 
 import sys
-from unittest.mock import (
-    ANY,
-    sentinel,
-)
+from unittest.mock import ANY, sentinel
 
 from .. import auth
 from ...testing import TestCase
@@ -26,7 +23,6 @@ from ..testing import make_Credentials
 
 
 class TestAuth(TestCase):
-
     def test_try_getpass(self):
         getpass = self.patch(auth, "getpass")
         getpass.return_value = sentinel.credentials

@@ -4,16 +4,10 @@ These are low-level bindings that closely mirror the shape of MAAS's Web API,
 hence the name "bones".
 """
 
-__all__ = [
-    "CallError",
-    "SessionAPI",
-]
+__all__ = ["CallError", "SessionAPI"]
 
 import typing
-from collections import (
-    Iterable,
-    namedtuple,
-)
+from collections import Iterable, namedtuple
 import json
 from urllib.parse import urlparse
 
@@ -34,12 +28,10 @@ class SessionAPI:
 
     @classmethod
     @asynchronous
-    async def fromURL(
-            cls, url, *, credentials=None, insecure=False):
+    async def fromURL(cls, url, *, credentials=None, insecure=False):
         """Return a `SessionAPI` for a given MAAS instance."""
         try:
-            description = await helpers.fetch_api_description(
-                url, insecure=insecure)
+            description = await helpers.fetch_api_description(url, insecure=insecure)
         except helpers.RemoteError as error:
             # For now just re-raise as SessionError.
             raise SessionError(str(error))
@@ -57,7 +49,7 @@ class SessionAPI:
         """
         session = cls(profile.description, profile.credentials)
         session.scheme = urlparse(profile.url).scheme
-        session.insecure = profile.other.get('insecure', False)
+        session.insecure = profile.other.get("insecure", False)
         return session
 
     @classmethod
@@ -71,8 +63,7 @@ class SessionAPI:
 
     @classmethod
     @asynchronous
-    async def login(
-            cls, url, *, username=None, password=None, insecure=False):
+    async def login(cls, url, *, username=None, password=None, insecure=False):
         """Make a `SessionAPI` by logging-in with a username and password.
 
         :return: A tuple of ``profile`` and ``session``, where the former is
@@ -80,7 +71,8 @@ class SessionAPI:
             instance made using the profile.
         """
         profile = await helpers.login(
-            url=url, username=username, password=password, insecure=insecure)
+            url=url, username=username, password=password, insecure=insecure
+        )
         session = cls(profile.description, profile.credentials)
         session.scheme = urlparse(url).scheme
         session.insecure = insecure
@@ -88,23 +80,21 @@ class SessionAPI:
 
     @classmethod
     @asynchronous
-    async def connect(
-            cls, url, *, apikey=None, insecure=False):
+    async def connect(cls, url, *, apikey=None, insecure=False):
         """Make a `SessionAPI` by connecting with an apikey.
 
         :return: A tuple of ``profile`` and ``session``, where the former is
             an unsaved `Profile` instance, and the latter is a `SessionAPI`
             instance made using the profile.
         """
-        profile = await helpers.connect(
-            url=url, apikey=apikey, insecure=insecure)
+        profile = await helpers.connect(url=url, apikey=apikey, insecure=insecure)
         session = cls(profile.description, profile.credentials)
         session.scheme = urlparse(url).scheme
         session.insecure = insecure
         return profile, session
 
     # Set these on instances.
-    scheme = 'http'
+    scheme = "http"
     insecure = False
     debug = False
 
@@ -218,7 +208,8 @@ class HandlerAPI:
     @property
     def actions(self):
         return [
-            (name, value) for name, value in vars(self).items()
+            (name, value)
+            for name, value in vars(self).items()
             if not name.startswith("_") and isinstance(value, ActionAPI)
         ]
 
@@ -309,35 +300,40 @@ class ActionAPI:
             if isinstance(value, typing.Mapping):
                 del data[key]
                 for nested_key, nested_value in value.items():
-                    data[key + '_' + nested_key] = nested_value
+                    data[key + "_" + nested_key] = nested_value
         for key, value in data.items():
-            if key.startswith('_'):
+            if key.startswith("_"):
                 data[key[1:]] = data.pop(key)
         response = await self.bind(**params).call(**data)
         return response.data
 
     def __repr__(self):
         if self.op is None:
-            return "<Action %s %s %s>" % (
-                self.fullname, self.method, self.handler.uri)
+            return "<Action %s %s %s>" % (self.fullname, self.method, self.handler.uri)
         else:
             return "<Action %s %s %s op=%s>" % (
-                self.fullname, self.method, self.handler.uri, self.op)
+                self.fullname,
+                self.method,
+                self.handler.uri,
+                self.op,
+            )
 
 
 CallResult = namedtuple("CallResult", ("response", "content", "data"))
 
 
 class CallError(Exception):
-
     def __init__(self, request, response, content, call):
         desc_for_request = "%(method)s %(uri)s" % request
         desc_for_response = "HTTP %s %s" % (response.status, response.reason)
         desc_for_content = content.decode("utf-8", "replace")
         desc = "%s -> %s (%s)" % (
-            desc_for_request, desc_for_response,
-            desc_for_content if len(desc_for_content) <= 50 else (
-                desc_for_content[:49] + "…"))
+            desc_for_request,
+            desc_for_response,
+            desc_for_content
+            if len(desc_for_content) <= 50
+            else (desc_for_content[:49] + "…"),
+        )
         super(CallError, self).__init__(desc)
         self.request = request
         self.response = response
@@ -350,7 +346,6 @@ class CallError(Exception):
 
 
 class CallAPI:
-
     def __init__(self, params, action):
         """Create a new `CallAPI`.
 
@@ -370,9 +365,10 @@ class CallAPI:
                 raise TypeError("%s takes no arguments" % self.action.fullname)
             else:
                 params_expected_desc = ", ".join(sorted(params_expected))
-                raise TypeError("%s takes %d arguments: %s" % (
-                    self.action.fullname, len(params_expected),
-                    params_expected_desc))
+                raise TypeError(
+                    "%s takes %d arguments: %s"
+                    % (self.action.fullname, len(params_expected), params_expected_desc)
+                )
 
     @property
     def action(self):
@@ -416,6 +412,7 @@ class CallAPI:
         :param data: Data to pass in the *body* of the request.
         :type data: dict
         """
+
         def expand(data):
             for name, value in data.items():
                 if isinstance(value, Iterable):
@@ -434,7 +431,8 @@ class CallAPI:
 
         # Bundle things up ready to throw over the wire.
         uri, body, headers = utils.prepare_payload(
-            self.action.op, self.action.method, self.uri, data)
+            self.action.op, self.action.method, self.uri, data
+        )
 
         # Headers are returned as a list, but they must be a dict for
         # the signing machinery.
@@ -459,8 +457,8 @@ class CallAPI:
         session = aiohttp.ClientSession(connector=connector)
         async with session:
             response = await session.request(
-                self.action.method, uri, data=body,
-                headers=_prefer_json(headers))
+                self.action.method, uri, data=body, headers=_prefer_json(headers)
+            )
             async with response:
                 # Fetch the raw body content.
                 content = await response.read()
@@ -482,14 +480,14 @@ class CallAPI:
                 # Decode from JSON if that's what it's declared as.
                 if response.content_type is None:
                     data = await response.read()
-                elif response.content_type.endswith('/json'):
+                elif response.content_type.endswith("/json"):
                     data = await response.json()
                 else:
                     data = await response.read()
 
                 if response.content_type is None:
                     data = content
-                elif response.content_type.endswith('/json'):
+                elif response.content_type.endswith("/json"):
                     # JSON should always be UTF-8.
                     data = json.loads(content.decode("utf-8"))
                 else:

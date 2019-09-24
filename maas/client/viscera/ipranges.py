@@ -1,19 +1,8 @@
 """Objects for ipranges."""
 
-__all__ = [
-    "IPRanges",
-    "IPRange",
-]
+__all__ = ["IPRanges", "IPRange"]
 
-from . import (
-    check,
-    Object,
-    ObjectField,
-    ObjectFieldRelated,
-    ObjectSet,
-    ObjectType,
-    to,
-)
+from . import check, Object, ObjectField, ObjectFieldRelated, ObjectSet, ObjectType, to
 from .subnets import Subnet
 from ..enum import IPRangeType
 from typing import Union
@@ -29,9 +18,14 @@ class IPRangesType(ObjectType):
         return cls(map(cls._object, data))
 
     async def create(
-            cls, start_ip: str, end_ip: str, *,
-            type: IPRangeType = IPRangeType.RESERVED,
-            comment: str = None, subnet: Union[Subnet, int] = None):
+        cls,
+        start_ip: str,
+        end_ip: str,
+        *,
+        type: IPRangeType = IPRangeType.RESERVED,
+        comment: str = None,
+        subnet: Union[Subnet, int] = None
+    ):
         """
         Create a `IPRange` in MAAS.
 
@@ -51,15 +45,9 @@ class IPRangesType(ObjectType):
         :rtype: `IPRange`
         """
         if not isinstance(type, IPRangeType):
-            raise TypeError(
-                "type must be an IPRangeType, not %s"
-                % TYPE(type).__name__)
+            raise TypeError("type must be an IPRangeType, not %s" % TYPE(type).__name__)
 
-        params = {
-            'start_ip': start_ip,
-            'end_ip': end_ip,
-            'type': type.value,
-        }
+        params = {"start_ip": start_ip, "end_ip": end_ip, "type": type.value}
         if comment is not None:
             params["comment"] = comment
         if subnet is not None:
@@ -69,8 +57,8 @@ class IPRangesType(ObjectType):
                 params["subnet"] = subnet
             else:
                 raise TypeError(
-                    "subnet must be Subnet or int, not %s" % (
-                        TYPE(subnet).__class__))
+                    "subnet must be Subnet or int, not %s" % (TYPE(subnet).__class__)
+                )
         return cls._object(await cls._handler.create(**params))
 
 
@@ -90,16 +78,11 @@ class IPRangeTypeMeta(ObjectType):
 class IPRange(Object, metaclass=IPRangeTypeMeta):
     """A IPRange."""
 
-    id = ObjectField.Checked(
-        "id", check(int), readonly=True, pk=True)
-    start_ip = ObjectField.Checked(
-        "start_ip", check(str))
-    end_ip = ObjectField.Checked(
-        "end_ip", check(str))
-    type = ObjectField.Checked(
-        "type", to(IPRangeType), readonly=True)
-    comment = ObjectField.Checked(
-        "comment", check(str))
+    id = ObjectField.Checked("id", check(int), readonly=True, pk=True)
+    start_ip = ObjectField.Checked("start_ip", check(str))
+    end_ip = ObjectField.Checked("end_ip", check(str))
+    type = ObjectField.Checked("type", to(IPRangeType), readonly=True)
+    comment = ObjectField.Checked("comment", check(str))
     subnet = ObjectFieldRelated("subnet", "Subnet", readonly=True, pk=0)
 
     async def delete(self):

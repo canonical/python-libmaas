@@ -1,14 +1,8 @@
 """Commands for devices."""
 
-__all__ = [
-    "register",
-]
+__all__ = ["register"]
 
-from . import (
-    CommandError,
-    OriginPagedTableCommand,
-    tables,
-)
+from . import CommandError, OriginPagedTableCommand, tables
 
 
 class cmd_devices(OriginPagedTableCommand):
@@ -16,10 +10,10 @@ class cmd_devices(OriginPagedTableCommand):
 
     def __init__(self, parser):
         super(cmd_devices, self).__init__(parser)
-        parser.add_argument("hostname", nargs='*', help=(
-            "Hostname of the device."))
-        parser.add_argument("--owned", action="store_true", help=(
-            "Show only machines owned by you."))
+        parser.add_argument("hostname", nargs="*", help=("Hostname of the device."))
+        parser.add_argument(
+            "--owned", action="store_true", help=("Show only machines owned by you.")
+        )
 
     def execute(self, origin, options, target):
         hostnames = None
@@ -28,12 +22,13 @@ class cmd_devices(OriginPagedTableCommand):
         devices = origin.Devices.read(hostnames=hostnames)
         if options.owned:
             me = origin.Users.whoami()
-            devices = origin.Devices([
-                device
-                for device in devices
-                if device.owner is not None and
-                device.owner.username == me.username
-            ])
+            devices = origin.Devices(
+                [
+                    device
+                    for device in devices
+                    if device.owner is not None and device.owner.username == me.username
+                ]
+            )
         table = tables.DevicesTable()
         return table.render(target, devices)
 
@@ -43,14 +38,12 @@ class cmd_device(OriginPagedTableCommand):
 
     def __init__(self, parser):
         super(cmd_device, self).__init__(parser)
-        parser.add_argument("hostname", nargs=1, help=(
-            "Hostname of the device."))
+        parser.add_argument("hostname", nargs=1, help=("Hostname of the device."))
 
     def execute(self, origin, options, target):
         devices = origin.Devices.read(hostnames=options.hostname)
         if len(devices) == 0:
-            raise CommandError(
-                "Unable to find device %s." % options.hostname[0])
+            raise CommandError("Unable to find device %s." % options.hostname[0])
         device = devices[0]
         table = tables.DeviceDetail()
         return table.render(target, device)

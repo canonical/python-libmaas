@@ -1,18 +1,8 @@
 """Objects for spaces."""
 
-__all__ = [
-    "Spaces",
-    "Space",
-]
+__all__ = ["Spaces", "Space"]
 
-from . import (
-    check,
-    Object,
-    ObjectField,
-    ObjectFieldRelatedSet,
-    ObjectSet,
-    ObjectType,
-)
+from . import check, Object, ObjectField, ObjectFieldRelatedSet, ObjectSet, ObjectType
 
 
 class SpacesType(ObjectType):
@@ -22,8 +12,7 @@ class SpacesType(ObjectType):
         data = await cls._handler.read()
         return cls(map(cls._object, data))
 
-    async def create(
-            cls, *, name: str = None, description: str = None):
+    async def create(cls, *, name: str = None, description: str = None):
         """
         Create a `Space` in MAAS.
 
@@ -66,8 +55,7 @@ class Space(Object, metaclass=SpaceType):
     """A Space."""
 
     id = ObjectField.Checked("id", check(int), readonly=True, pk=True)
-    name = ObjectField.Checked(
-        "name", check(str), readonly=True, alt_pk=0)
+    name = ObjectField.Checked("name", check(str), readonly=True, alt_pk=0)
 
     # description is allowed in the create call and displayed in the UI
     # but never returned by the API.

@@ -11,10 +11,7 @@ __all__ = [
     "TableCommand",
 ]
 
-from abc import (
-    ABCMeta,
-    abstractmethod,
-)
+from abc import ABCMeta, abstractmethod
 import argparse
 from importlib import import_module
 import subprocess
@@ -26,16 +23,9 @@ import argcomplete
 import colorclass
 
 from . import tabular
-from .. import (
-    bones,
-    utils,
-    viscera,
-)
+from .. import bones, utils, viscera
 from ..utils.auth import try_getpass
-from ..utils.profiles import (
-    Profile,
-    ProfileStore,
-)
+from ..utils.profiles import Profile, ProfileStore
 
 
 PROG_DESCRIPTION = """\
@@ -83,9 +73,7 @@ def read_input(message, validator=None, password=False):
                 try:
                     validator(value)
                 except Exception as exc:
-                    print(
-                        colorized("{{autored}}Error: {{/autored}} %s") %
-                        str(exc))
+                    print(colorized("{{autored}}Error: {{/autored}} %s") % str(exc))
                 else:
                     return value
             else:
@@ -97,9 +85,9 @@ def yes_or_no(question):
     while True:
         value = input(question)
         value = value.lower()
-        if value in ['y', 'yes']:
+        if value in ["y", "yes"]:
             return True
-        elif value in ['n', 'no']:
+        elif value in ["n", "no"]:
             return False
 
 
@@ -108,14 +96,16 @@ def print_with_pager(output):
     if sys.stdout.isatty():
         try:
             pager = subprocess.Popen(
-                ['less', '-F', '-r', '-S', '-X', '-K'],
-                stdin=subprocess.PIPE, stdout=sys.stdout)
+                ["less", "-F", "-r", "-S", "-X", "-K"],
+                stdin=subprocess.PIPE,
+                stdout=sys.stdout,
+            )
         except subprocess.CalledProcessError:
             # Don't use the pager since starting it has failed.
             print(output)
             return
         else:
-            pager.stdin.write(output.encode('utf-8'))
+            pager.stdin.write(output.encode("utf-8"))
             pager.stdin.close()
             pager.wait()
     else:
@@ -124,7 +114,8 @@ def print_with_pager(output):
 
 
 def get_profile_names_and_default() -> (
-        typing.Tuple[typing.Sequence[str], typing.Optional[Profile]]):
+    typing.Tuple[typing.Sequence[str], typing.Optional[Profile]]
+):
     """Return the list of profile names and the default profile object.
 
     The list of names is sorted.
@@ -140,14 +131,12 @@ PROFILE_NAMES, PROFILE_DEFAULT = get_profile_names_and_default()
 
 
 class MinimalHelpAction(argparse._HelpAction):
-
     def __call__(self, parser, namespace, values, option_string=None):
         parser.print_minized_help()
         parser.exit()
 
 
 class PagedHelpAction(argparse._HelpAction):
-
     def __call__(self, parser, namespace, values, option_string=None):
         print_with_pager(parser.format_help())
         parser.exit()
@@ -161,8 +150,7 @@ class HelpFormatter(argparse.RawDescriptionHelpFormatter):
     def _format_usage(self, usage, actions, groups, prefix):
         if prefix is None:
             prefix = "Usage: "
-        return super(HelpFormatter, self)._format_usage(
-            usage, actions, groups, prefix)
+        return super(HelpFormatter, self)._format_usage(usage, actions, groups, prefix)
 
 
 class ArgumentParser(argparse.ArgumentParser):
@@ -177,8 +165,7 @@ class ArgumentParser(argparse.ArgumentParser):
     """
 
     def add_subparsers(self):
-        raise NotImplementedError(
-            "add_subparsers has been disabled")
+        raise NotImplementedError("add_subparsers has been disabled")
 
     @property
     def subparsers(self):
@@ -200,7 +187,8 @@ class ArgumentParser(argparse.ArgumentParser):
 
         if title not in groups:
             groups[title] = super().add_argument_group(
-                title=title, description=description)
+                title=title, description=description
+            )
 
         return groups[title]
 
@@ -228,9 +216,7 @@ class ArgumentParser(argparse.ArgumentParser):
         description. The `help` action is used for provide more detail.
         """
         formatter = self._get_formatter()
-        formatter.add_usage(
-            self.usage, self._actions,
-            self._mutually_exclusive_groups)
+        formatter.add_usage(self.usage, self._actions, self._mutually_exclusive_groups)
         formatter.add_text(self.description)
         if no_pager:
             print(formatter.format_help())
@@ -272,17 +258,21 @@ class Command(metaclass=ABCMeta):
         """
         help_title, help_body = utils.parse_docstring(cls)
         command_parser = parser.subparsers.add_parser(
-            cls.name() if name is None else name, help=help_title,
-            description=help_title, epilog=help_body, add_help=False,
-            formatter_class=HelpFormatter)
+            cls.name() if name is None else name,
+            help=help_title,
+            description=help_title,
+            epilog=help_body,
+            add_help=False,
+            formatter_class=HelpFormatter,
+        )
         command_parser.add_argument(
-            "-h", "--help", action=PagedHelpAction, help=argparse.SUPPRESS)
+            "-h", "--help", action=PagedHelpAction, help=argparse.SUPPRESS
+        )
         command_parser.set_defaults(execute=cls(command_parser))
         return command_parser
 
 
 class TableCommand(Command):
-
     def __init__(self, parser):
         super(TableCommand, self).__init__(parser)
         if sys.stdout.isatty():
@@ -290,8 +280,11 @@ class TableCommand(Command):
         else:
             default_target = tabular.RenderTarget.plain
         parser.other.add_argument(
-            "--format", type=tabular.RenderTarget,
-            choices=tabular.RenderTarget, default=default_target, help=(
+            "--format",
+            type=tabular.RenderTarget,
+            choices=tabular.RenderTarget,
+            default=default_target,
+            help=(
                 "Output tabular data as a formatted table (pretty), a "
                 "formatted table using only ASCII for borders (plain), or "
                 "one of several dump formats. Default: %(default)s."
@@ -300,55 +293,56 @@ class TableCommand(Command):
 
 
 class OriginCommandBase(Command):
-
     def __init__(self, parser):
         super(OriginCommandBase, self).__init__(parser)
         parser.other.add_argument(
-            "--profile", dest="profile_name", metavar="NAME",
-            choices=PROFILE_NAMES, required=(PROFILE_DEFAULT is None),
+            "--profile",
+            dest="profile_name",
+            metavar="NAME",
+            choices=PROFILE_NAMES,
+            required=(PROFILE_DEFAULT is None),
             help=(
                 "The name of the remote MAAS instance to use. Use "
-                "`profiles list` to obtain a list of valid profiles." +
-                ("" if PROFILE_DEFAULT is None else
-                 " [default: %s]" % PROFILE_DEFAULT.name)
-            ))
+                "`profiles list` to obtain a list of valid profiles."
+                + (
+                    ""
+                    if PROFILE_DEFAULT is None
+                    else " [default: %s]" % PROFILE_DEFAULT.name
+                )
+            ),
+        )
         if PROFILE_DEFAULT is not None:
             parser.set_defaults(profile=PROFILE_DEFAULT.name)
 
 
 class OriginCommand(OriginCommandBase):
-
     def __call__(self, options):
         session = bones.SessionAPI.fromProfileName(options.profile)
         origin = viscera.Origin(session)
         return self.execute(origin, options)
 
     def execute(self, origin, options):
-        raise NotImplementedError(
-            "Implement execute() in subclasses.")
+        raise NotImplementedError("Implement execute() in subclasses.")
 
 
 class OriginTableCommand(OriginCommandBase, TableCommand):
-
     def __call__(self, options):
         session = bones.SessionAPI.fromProfileName(options.profile)
         origin = viscera.Origin(session)
         return self.execute(origin, options, target=options.format)
 
     def execute(self, origin, options, *, target):
-        raise NotImplementedError(
-            "Implement execute() in subclasses.")
+        raise NotImplementedError("Implement execute() in subclasses.")
 
 
 class OriginPagedTableCommand(OriginTableCommand):
-
     def __init__(self, parser):
         super(OriginPagedTableCommand, self).__init__(parser)
         parser.other.add_argument(
-            "--no-pager", action='store_true',
-            help=(
-                "Don't use the pager when printing the output of the "
-                "command."))
+            "--no-pager",
+            action="store_true",
+            help=("Don't use the pager when printing the output of the " "command."),
+        )
 
     def __call__(self, options):
         return_code = 0
@@ -362,8 +356,9 @@ class OriginPagedTableCommand(OriginTableCommand):
             pass
         else:
             raise TypeError(
-                "execute must return either tuple, int or str, not %s" % (
-                    type(output).__name__))
+                "execute must return either tuple, int or str, not %s"
+                % (type(output).__name__)
+            )
         if output:
             if options.no_pager:
                 print(output)
@@ -379,27 +374,25 @@ class cmd_help(Command):
         self.parent_parser = parent_parser
         super(cmd_help, self).__init__(parser)
         parser.add_argument(
-            "-h", "--help", action=PagedHelpAction, help=argparse.SUPPRESS)
-        parser.add_argument(
-            'command', nargs='?', help="Show help for this command.")
+            "-h", "--help", action=PagedHelpAction, help=argparse.SUPPRESS
+        )
+        parser.add_argument("command", nargs="?", help="Show help for this command.")
         parser.other.add_argument(
-            "--no-pager", action='store_true',
-            help=(
-                "Don't use the pager when printing the output of the "
-                "command."))
+            "--no-pager",
+            action="store_true",
+            help=("Don't use the pager when printing the output of the " "command."),
+        )
 
     def __call__(self, options):
         if options.command is None:
             self.parent_parser.print_minized_help(no_pager=options.no_pager)
         else:
-            command = self.parent_parser.subparsers.choices.get(
-                options.command, None)
+            command = self.parent_parser.subparsers.choices.get(options.command, None)
             if command is None:
-                if options.command == 'commands':
+                if options.command == "commands":
                     self.print_all_commands(no_pager=options.no_pager)
                 else:
-                    self.parser.error(
-                        "unknown command %s" % options.command)
+                    self.parser.error("unknown command %s" % options.command)
             else:
                 if options.no_pager:
                     command.print_help()
@@ -419,14 +412,13 @@ class cmd_help(Command):
         for name in command_names:
             command = self.parent_parser.subparsers.choices[name]
             extra_padding = max_name_len - len(name)
-            command_line = '%s%s%s' % (
-                name, ' ' * extra_padding, command.description)
+            command_line = "%s%s%s" % (name, " " * extra_padding, command.description)
             while len(command_line) > formatter._width:
                 lines = textwrap.wrap(command_line, formatter._width)
                 commands += "%s\n" % lines[0]
                 if len(lines) > 1:
-                    lines[1] = (' ' * max_name_len) + lines[1]
-                    command_line = ' '.join(lines[1:])
+                    lines[1] = (" " * max_name_len) + lines[1]
+                    command_line = " ".join(lines[1:])
                 else:
                     command_line = None
             if command_line:
@@ -445,9 +437,13 @@ class cmd_help(Command):
         """
         help_title, help_body = utils.parse_docstring(cls)
         command_parser = parser.subparsers.add_parser(
-            cls.name() if name is None else name, help=help_title,
-            description=help_title, epilog=help_body, add_help=False,
-            formatter_class=HelpFormatter)
+            cls.name() if name is None else name,
+            help=help_title,
+            description=help_title,
+            epilog=help_body,
+            add_help=False,
+            formatter_class=HelpFormatter,
+        )
         command_parser.set_defaults(execute=cls(command_parser, parser))
         return command_parser
 
@@ -455,18 +451,30 @@ class cmd_help(Command):
 def prepare_parser(program):
     """Create and populate an argument parser."""
     parser = ArgumentParser(
-        description=PROG_DESCRIPTION, prog=program,
+        description=PROG_DESCRIPTION,
+        prog=program,
         formatter_class=HelpFormatter,
-        add_help=False)
+        add_help=False,
+    )
     parser.add_argument(
-        "-h", "--help", action=MinimalHelpAction, help=argparse.SUPPRESS)
+        "-h", "--help", action=MinimalHelpAction, help=argparse.SUPPRESS
+    )
 
     # Register sub-commands.
     submodules = (
-        "nodes", "machines", "devices", "controllers",
-        "fabrics", "vlans", "subnets", "spaces",
-        "files", "tags", "users",
-        "profiles", "shell",
+        "nodes",
+        "machines",
+        "devices",
+        "controllers",
+        "fabrics",
+        "vlans",
+        "subnets",
+        "spaces",
+        "files",
+        "tags",
+        "users",
+        "profiles",
+        "shell",
     )
     cmd_help.register(parser)
     for submodule in submodules:
@@ -475,8 +483,8 @@ def prepare_parser(program):
 
     # Register global options.
     parser.add_argument(
-        '--debug', action='store_true', default=False,
-        help=argparse.SUPPRESS)
+        "--debug", action="store_true", default=False, help=argparse.SUPPRESS
+    )
 
     return parser
 

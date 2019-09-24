@@ -1,18 +1,8 @@
 """Objects for domains."""
 
-__all__ = [
-    "Domain",
-    "Domains",
-]
+__all__ = ["Domain", "Domains"]
 
-from . import (
-    check,
-    check_optional,
-    Object,
-    ObjectField,
-    ObjectSet,
-    ObjectType,
-)
+from . import check, check_optional, Object, ObjectField, ObjectSet, ObjectType
 
 
 class DomainType(ObjectType):
@@ -22,8 +12,7 @@ class DomainType(ObjectType):
         data = await cls._handler.read()
         return cls(map(cls._object, data))
 
-    async def create(
-            cls, name: str, authoritative: bool = True, ttl: int = None):
+    async def create(cls, name: str, authoritative: bool = True, ttl: int = None):
         """
         Create a `Domain` in MAAS.
 
@@ -36,9 +25,9 @@ class DomainType(ObjectType):
         :returns: The created `Domain`
         :rtype: `Domain`
         """
-        params = {'name': name, 'authoritative': authoritative}
+        params = {"name": name, "authoritative": authoritative}
         if ttl is not None:
-            params['ttl'] = ttl
+            params["ttl"] = ttl
         return cls._object(await cls._handler.create(**params))
 
 
@@ -47,7 +36,6 @@ class Domains(ObjectSet, metaclass=DomainType):
 
 
 class DomainType(ObjectType):
-
     async def read(cls, id):
         data = await cls._handler.read(id=id)
         return cls(data)
@@ -56,17 +44,15 @@ class DomainType(ObjectType):
 class Domain(Object, metaclass=DomainType):
     """A domain stored in MAAS."""
 
-    id = ObjectField.Checked(
-        "id", check(int), readonly=True, pk=True)
+    id = ObjectField.Checked("id", check(int), readonly=True, pk=True)
     name = ObjectField.Checked("name", check(str), check(str))
     authoritative = ObjectField.Checked(
-        "authoritative", check_optional(bool), check_optional(bool))
-    ttl = ObjectField.Checked(
-        "ttl", check_optional(int), check_optional(int))
+        "authoritative", check_optional(bool), check_optional(bool)
+    )
+    ttl = ObjectField.Checked("ttl", check_optional(int), check_optional(int))
 
     def __repr__(self):
-        return super(Domain, self).__repr__(
-            fields={"name", "authoritative", "ttl"})
+        return super(Domain, self).__repr__(fields={"name", "authoritative", "ttl"})
 
     async def delete(self):
         """

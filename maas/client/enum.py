@@ -1,6 +1,4 @@
-__all__ = [
-    "NodeStatus",
-]
+__all__ = ["NodeStatus"]
 
 import enum
 
@@ -74,20 +72,20 @@ class NodeType(enum.IntEnum):
 
 class PowerState(enum.Enum):
     #: On
-    ON = 'on'
+    ON = "on"
     #: Off
-    OFF = 'off'
+    OFF = "off"
     #: Unknown
-    UNKNOWN = 'unknown'
+    UNKNOWN = "unknown"
     #: Error
-    ERROR = 'error'
+    ERROR = "error"
 
 
 class PowerStopMode(enum.Enum):
     #: Perform hard stop.
-    HARD = 'hard'
+    HARD = "hard"
     #: Perform soft stop.
-    SOFT = 'soft'
+    SOFT = "soft"
 
 
 class RDNSMode(enum.IntEnum):
@@ -101,66 +99,66 @@ class RDNSMode(enum.IntEnum):
 
 class IPRangeType(enum.Enum):
     #: Dynamic IP Range.
-    DYNAMIC = 'dynamic'
+    DYNAMIC = "dynamic"
     #: Reserved for exclusive use by MAAS or user.
-    RESERVED = 'reserved'
+    RESERVED = "reserved"
 
 
 class InterfaceType(enum.Enum):
     #: Physical interface.
-    PHYSICAL = 'physical'
+    PHYSICAL = "physical"
     #: Bonded interface.
-    BOND = 'bond'
+    BOND = "bond"
     #: Bridge interface.
-    BRIDGE = 'bridge'
+    BRIDGE = "bridge"
     #: VLAN interface.
-    VLAN = 'vlan'
+    VLAN = "vlan"
     #: Interface not linked to a node.
-    UNKNOWN = 'unknown'
+    UNKNOWN = "unknown"
 
 
 class LinkMode(enum.Enum):
     #: IP is auto assigned by MAAS.
-    AUTO = 'auto'
+    AUTO = "auto"
     #: IP is assigned by a DHCP server.
-    DHCP = 'dhcp'
+    DHCP = "dhcp"
     #: IP is statically assigned.
-    STATIC = 'static'
+    STATIC = "static"
     #: Connected to subnet with no IP address.
-    LINK_UP = 'link_up'
+    LINK_UP = "link_up"
 
 
 class BlockDeviceType(enum.Enum):
     #: Physical block device.
-    PHYSICAL = 'physical'
+    PHYSICAL = "physical"
     #: Virtual block device.
-    VIRTUAL = 'virtual'
+    VIRTUAL = "virtual"
 
 
 class PartitionTableType(enum.Enum):
     #: Master boot record
-    MBR = 'mbr'
+    MBR = "mbr"
     #: GUID Partition Table
-    GPT = 'gpt'
+    GPT = "gpt"
 
 
 class RaidLevel(enum.Enum):
     #: RAID level 0
-    RAID_0 = 'raid-0'
+    RAID_0 = "raid-0"
     #: RAID level 1
-    RAID_1 = 'raid-1'
+    RAID_1 = "raid-1"
     #: RAID level 5
-    RAID_5 = 'raid-5'
+    RAID_5 = "raid-5"
     #: RAID level 6
-    RAID_6 = 'raid-6'
+    RAID_6 = "raid-6"
     #: RAID level 10
-    RAID_10 = 'raid-10'
+    RAID_10 = "raid-10"
 
 
 class CacheMode(enum.Enum):
     #: Writeback
-    WRITEBACK = 'writeback'
+    WRITEBACK = "writeback"
     #: Writethough
-    WRITETHROUGH = 'writethrough'
+    WRITETHROUGH = "writethrough"
     #: Writearound
-    WRITEAROUND = 'writearound'
+    WRITEAROUND = "writearound"

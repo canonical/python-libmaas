@@ -1,9 +1,6 @@
 """Basic entry points."""
 
-__all__ = [
-    "connect",
-    "login",
-]
+__all__ = ["connect", "login"]
 
 from .utils.maas_async import asynchronous
 
@@ -21,8 +18,8 @@ async def connect(url, *, apikey=None, insecure=False):
     """
     from .facade import Client  # Lazy.
     from .viscera import Origin  # Lazy.
-    profile, origin = await Origin.connect(
-        url, apikey=apikey, insecure=insecure)
+
+    profile, origin = await Origin.connect(url, apikey=apikey, insecure=insecure)
     return Client(origin)
 
 
@@ -39,6 +36,8 @@ async def login(url, *, username=None, password=None, insecure=False):
     """
     from .facade import Client  # Lazy.
     from .viscera import Origin  # Lazy.
+
     profile, origin = await Origin.login(
-        url, username=username, password=password, insecure=insecure)
+        url, username=username, password=password, insecure=insecure
+    )
     return Client(origin)

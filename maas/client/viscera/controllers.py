@@ -1,24 +1,9 @@
 """Objects for region and rack controllers."""
 
-__all__ = [
-    "RackController",
-    "RackControllers",
-    "RegionController",
-    "RegionControllers",
-]
+__all__ = ["RackController", "RackControllers", "RegionController", "RegionControllers"]
 
-from . import (
-    check,
-    check_optional,
-    ObjectField,
-    to,
-)
-from .nodes import (
-    Node,
-    Nodes,
-    NodesType,
-    NodeTypeMeta,
-)
+from . import check, check_optional, ObjectField, to
+from .nodes import Node, Nodes, NodesType, NodeTypeMeta
 from ..enum import PowerState
 
 
@@ -38,17 +23,13 @@ class RackController(Node, metaclass=RackControllerType):
     """A rack-controller stored in MAAS."""
 
     architecture = ObjectField.Checked(
-        "architecture", check_optional(str), check_optional(str))
-    cpus = ObjectField.Checked(
-        "cpu_count", check(int), check(int))
-    distro_series = ObjectField.Checked(
-        "distro_series", check(str), check(str))
-    memory = ObjectField.Checked(
-        "memory", check(int), check(int))
-    osystem = ObjectField.Checked(
-        "osystem", check(str), readonly=True)
-    power_state = ObjectField.Checked(
-        "power_state", to(PowerState), readonly=True)
+        "architecture", check_optional(str), check_optional(str)
+    )
+    cpus = ObjectField.Checked("cpu_count", check(int), check(int))
+    distro_series = ObjectField.Checked("distro_series", check(str), check(str))
+    memory = ObjectField.Checked("memory", check(int), check(int))
+    osystem = ObjectField.Checked("osystem", check(str), readonly=True)
+    power_state = ObjectField.Checked("power_state", to(PowerState), readonly=True)
 
     # power_type
     # service_set
@@ -71,17 +52,13 @@ class RegionController(Node, metaclass=RegionControllerType):
     """A region-controller stored in MAAS."""
 
     architecture = ObjectField.Checked(
-        "architecture", check_optional(str), check_optional(str))
-    cpus = ObjectField.Checked(
-        "cpu_count", check(int), check(int))
-    distro_series = ObjectField.Checked(
-        "distro_series", check(str), check(str))
-    memory = ObjectField.Checked(
-        "memory", check(int), check(int))
-    osystem = ObjectField.Checked(
-        "osystem", check(str), readonly=True)
-    power_state = ObjectField.Checked(
-        "power_state", to(PowerState), readonly=True)
+        "architecture", check_optional(str), check_optional(str)
+    )
+    cpus = ObjectField.Checked("cpu_count", check(int), check(int))
+    distro_series = ObjectField.Checked("distro_series", check(str), check(str))
+    memory = ObjectField.Checked("memory", check(int), check(int))
+    osystem = ObjectField.Checked("osystem", check(str), readonly=True)
+    power_state = ObjectField.Checked("power_state", to(PowerState), readonly=True)
 
     # power_type
     # service_set

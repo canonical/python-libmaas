@@ -23,16 +23,15 @@ be converted to a colon-separated string format for easy transport between
 processes.
 """
 
-__all__ = [
-    "Credentials",
-    ]
+__all__ = ["Credentials"]
 
 from collections import namedtuple
 import typing
 
 
 CredentialsBase = namedtuple(
-    "CredentialsBase", ("consumer_key", "token_key", "token_secret"))
+    "CredentialsBase", ("consumer_key", "token_key", "token_secret")
+)
 
 
 class Credentials(CredentialsBase):
@@ -71,7 +70,8 @@ class Credentials(CredentialsBase):
             else:
                 raise ValueError(
                     "Malformed credentials. Expected 3 colon-separated "
-                    "parts, got %r." % (credentials, ))
+                    "parts, got %r." % (credentials,)
+                )
         else:
             parts = list(credentials)
             if len(parts) == 0:
@@ -81,7 +81,8 @@ class Credentials(CredentialsBase):
             else:
                 raise ValueError(
                     "Malformed credentials. Expected 3 parts, "
-                    "got %r." % (credentials, ))
+                    "got %r." % (credentials,)
+                )
 
     def __str__(self):
         return ":".join(self)

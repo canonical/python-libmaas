@@ -18,6 +18,9 @@ test: bin/tox
 integrate: bin/tox
 	@bin/tox -e integrate
 
+format: bin/tox
+	@bin/tox -e format,imports
+
 lint: bin/tox
 	@bin/tox -e lint,imports
 

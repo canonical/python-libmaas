@@ -1,14 +1,8 @@
 """Commands for nodes."""
 
-__all__ = [
-    "register",
-]
+__all__ = ["register"]
 
-from . import (
-    CommandError,
-    OriginPagedTableCommand,
-    tables,
-)
+from . import CommandError, OriginPagedTableCommand, tables
 from ..enum import NodeType
 
 
@@ -17,8 +11,7 @@ class cmd_nodes(OriginPagedTableCommand):
 
     def __init__(self, parser):
         super(cmd_nodes, self).__init__(parser)
-        parser.add_argument("hostname", nargs='*', help=(
-            "Hostname of the node."))
+        parser.add_argument("hostname", nargs="*", help=("Hostname of the node."))
 
     def execute(self, origin, options, target):
         hostnames = None
@@ -33,14 +26,12 @@ class cmd_node(OriginPagedTableCommand):
 
     def __init__(self, parser):
         super(cmd_node, self).__init__(parser)
-        parser.add_argument("hostname", nargs=1, help=(
-            "Hostname of the node."))
+        parser.add_argument("hostname", nargs=1, help=("Hostname of the node."))
 
     def execute(self, origin, options, target):
         nodes = origin.Nodes.read(hostnames=options.hostname)
         if len(nodes) == 0:
-            raise CommandError(
-                "Unable to find node %s." % options.hostname[0])
+            raise CommandError("Unable to find node %s." % options.hostname[0])
         node = nodes[0]
         if node.node_type == NodeType.MACHINE:
             table = tables.MachineDetail(with_type=True)

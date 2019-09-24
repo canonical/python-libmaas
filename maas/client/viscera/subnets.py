@@ -1,14 +1,8 @@
 """Objects for subnets."""
 
-__all__ = [
-    "Subnets",
-    "Subnet",
-]
+__all__ = ["Subnets", "Subnet"]
 
-from typing import (
-    Sequence,
-    Union,
-)
+from typing import Sequence, Union
 
 from . import (
     check,
@@ -32,11 +26,17 @@ class SubnetsType(ObjectType):
         return cls(map(cls._object, data))
 
     async def create(
-            cls, cidr: str, vlan: Union[Vlan, int] = None, *,
-            name: str = None, description: str = None,
-            gateway_ip: str = None, rdns_mode: RDNSMode = None,
-            dns_servers: Union[Sequence[str], str] = None,
-            managed: bool = None):
+        cls,
+        cidr: str,
+        vlan: Union[Vlan, int] = None,
+        *,
+        name: str = None,
+        description: str = None,
+        gateway_ip: str = None,
+        rdns_mode: RDNSMode = None,
+        dns_servers: Union[Sequence[str], str] = None,
+        managed: bool = None
+    ):
         """
         Create a `Subnet` in MAAS.
 
@@ -58,18 +58,14 @@ class SubnetsType(ObjectType):
         :returns: The created Subnet
         :rtype: `Subnet`
         """
-        params = {
-            "cidr": cidr
-        }
+        params = {"cidr": cidr}
 
         if isinstance(vlan, int):
             params["vlan"] = vlan
         elif isinstance(vlan, Vlan):
             params["vlan"] = vlan.id
         else:
-            raise TypeError(
-                "vlan must be Vlan or int, not %s" % (
-                    type(vlan).__class__))
+            raise TypeError("vlan must be Vlan or int, not %s" % (type(vlan).__class__))
         if name is not None:
             params["name"] = name
         if description is not None:
@@ -103,12 +99,10 @@ class SubnetType(ObjectType):
 
 class Subnet(Object, metaclass=SubnetType):
     """A Subnet."""
-    id = ObjectField.Checked(
-        "id", check(int), readonly=True, pk=True)
-    cidr = ObjectField.Checked(
-        "cidr", check(str), readonly=True)
-    name = ObjectField.Checked(
-        "name", check(str))
+
+    id = ObjectField.Checked("id", check(int), readonly=True, pk=True)
+    cidr = ObjectField.Checked("cidr", check(str), readonly=True)
+    name = ObjectField.Checked("name", check(str))
 
     # description is allowed in the create call and displayed in the UI
     # but never returned by the API
@@ -126,21 +120,21 @@ class Subnet(Object, metaclass=SubnetType):
     dns_servers = ObjectField.Checked("dns_servers", check(list))
 
     def __repr__(self):
-        return super(Subnet, self).__repr__(
-            fields={"cidr", "name", "vlan"})
+        return super(Subnet, self).__repr__(fields={"cidr", "name", "vlan"})
 
     async def save(self):
         """Save this subnet."""
-        if 'vlan' in self._changed_data and self._changed_data['vlan']:
+        if "vlan" in self._changed_data and self._changed_data["vlan"]:
             # Update uses the ID of the VLAN, not the VLAN object.
-            self._changed_data['vlan'] = self._changed_data['vlan']['id']
-            if (self._orig_data['vlan'] and
-                    'id' in self._orig_data['vlan'] and
-                    self._changed_data['vlan'] == (
-                        self._orig_data['vlan']['id'])):
+            self._changed_data["vlan"] = self._changed_data["vlan"]["id"]
+            if (
+                self._orig_data["vlan"]
+                and "id" in self._orig_data["vlan"]
+                and self._changed_data["vlan"] == (self._orig_data["vlan"]["id"])
+            ):
                 # VLAN didn't really change, the object was just set to the
                 # same VLAN.
-                del self._changed_data['vlan']
+                del self._changed_data["vlan"]
         await super(Subnet, self).save()
 
     async def delete(self):

@@ -1,18 +1,8 @@
 """Objects for boot sources."""
 
-__all__ = [
-    "BootSource",
-    "BootSources",
-]
+__all__ = ["BootSource", "BootSources"]
 
-from . import (
-    check,
-    Object,
-    ObjectField,
-    ObjectSet,
-    ObjectType,
-    parse_timestamp,
-)
+from . import check, Object, ObjectField, ObjectSet, ObjectType, parse_timestamp
 from ..utils import coalesce
 
 
@@ -29,8 +19,10 @@ class BootSourcesType(ObjectType):
             instance of `io.BytesIO`.
         """
         data = await cls._handler.create(
-            url=url, keyring_filename=coalesce(keyring_filename, ""),
-            keyring_data=coalesce(keyring_data, ""))
+            url=url,
+            keyring_filename=coalesce(keyring_filename, ""),
+            keyring_data=coalesce(keyring_data, ""),
+        )
         return cls._object(data)
 
     async def read(cls):
@@ -44,7 +36,6 @@ class BootSources(ObjectSet, metaclass=BootSourcesType):
 
 
 class BootSourceType(ObjectType):
-
     async def read(cls, id):
         """Get `BootSource` by `id`."""
         data = await cls._handler.read(id=id)
@@ -54,22 +45,21 @@ class BootSourceType(ObjectType):
 class BootSource(Object, metaclass=BootSourceType):
     """A boot source."""
 
-    id = ObjectField.Checked(
-        "id", check(int), readonly=True, pk=True)
-    url = ObjectField.Checked(
-        "url", check(str), check(str))
+    id = ObjectField.Checked("id", check(int), readonly=True, pk=True)
+    url = ObjectField.Checked("url", check(str), check(str))
     keyring_filename = ObjectField.Checked(
-        "keyring_filename", check(str), check(str), default="")
+        "keyring_filename", check(str), check(str), default=""
+    )
     keyring_data = ObjectField.Checked(
-        "keyring_data", check(str), check(str), default="")
-    created = ObjectField.Checked(
-        "created", parse_timestamp, readonly=True)
-    updated = ObjectField.Checked(
-        "updated", parse_timestamp, readonly=True)
+        "keyring_data", check(str), check(str), default=""
+    )
+    created = ObjectField.Checked("created", parse_timestamp, readonly=True)
+    updated = ObjectField.Checked("updated", parse_timestamp, readonly=True)
 
     def __repr__(self):
         return super(BootSource, self).__repr__(
-            fields={"url", "keyring_filename", "keyring_data"})
+            fields={"url", "keyring_filename", "keyring_data"}
+        )
 
     async def delete(self):
         """Delete boot source."""

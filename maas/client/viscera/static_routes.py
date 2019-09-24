@@ -1,18 +1,8 @@
 """Objects for static_routes."""
 
-__all__ = [
-    "StaticRoutes",
-    "StaticRoute",
-]
+__all__ = ["StaticRoutes", "StaticRoute"]
 
-from . import (
-    check,
-    Object,
-    ObjectField,
-    ObjectFieldRelated,
-    ObjectSet,
-    ObjectType,
-)
+from . import check, Object, ObjectField, ObjectFieldRelated, ObjectSet, ObjectType
 from .subnets import Subnet
 from typing import Union
 
@@ -24,8 +14,13 @@ class StaticRoutesType(ObjectType):
         data = await cls._handler.read()
         return cls(map(cls._object, data))
 
-    async def create(cls, destination: Union[int, Subnet],
-                     source: Union[int, Subnet], gateway_ip: str, metric: int):
+    async def create(
+        cls,
+        destination: Union[int, Subnet],
+        source: Union[int, Subnet],
+        gateway_ip: str,
+        metric: int,
+    ):
         """
         Create a `StaticRoute` in MAAS.
 
@@ -39,10 +34,7 @@ class StaticRoutesType(ObjectType):
         :returns: The created StaticRoute
         :rtype: `StaticRoute`
         """
-        params = {
-            "gateway_ip": gateway_ip,
-            "metric": metric,
-        }
+        params = {"gateway_ip": gateway_ip, "metric": metric}
         if isinstance(source, Subnet):
             params["source"] = source.id
         elif isinstance(source, int):
@@ -60,6 +52,7 @@ class StaticRoutes(ObjectSet, metaclass=StaticRoutesType):
 
 class StaticRouteType(ObjectType):
     """Metaclass for `StaticRoute`."""
+
     async def read(cls, id: int):
         """Get a `StaticRoute` by its `id`."""
         data = await cls._handler.read(id=id)
@@ -69,16 +62,11 @@ class StaticRouteType(ObjectType):
 class StaticRoute(Object, metaclass=StaticRouteType):
     """A StaticRoute."""
 
-    id = ObjectField.Checked(
-        "id", check(int), readonly=True, pk=True)
+    id = ObjectField.Checked("id", check(int), readonly=True, pk=True)
     destination = ObjectFieldRelated("destination", "Subnet")
     source = ObjectFieldRelated("source", "Subnet")
-    gateway_ip = ObjectField.Checked(
-        "gateway_ip", check(str),
-    )
-    metric = ObjectField.Checked(
-        "metric", check(int),
-    )
+    gateway_ip = ObjectField.Checked("gateway_ip", check(str))
+    metric = ObjectField.Checked("metric", check(int))
 
     async def delete(self):
         """Delete this StaticRoute."""

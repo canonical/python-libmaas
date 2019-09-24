@@ -1,33 +1,13 @@
 """Tables for representing information from MAAS."""
 
-__all__ = [
-    "FilesTable",
-    "NodesTable",
-    "ProfilesTable",
-    "TagsTable",
-    "UsersTable",
-]
+__all__ = ["FilesTable", "NodesTable", "ProfilesTable", "TagsTable", "UsersTable"]
 
-from operator import (
-    attrgetter,
-    itemgetter
-)
+from operator import attrgetter, itemgetter
 
 from colorclass import Color
 
-from ..enum import (
-    InterfaceType,
-    NodeType,
-    PowerState,
-    RDNSMode,
-)
-from .tabular import (
-    Column,
-    RenderTarget,
-    Table,
-    DetailTable,
-    NestedTableColumn,
-)
+from ..enum import InterfaceType, NodeType, PowerState, RDNSMode
+from .tabular import Column, RenderTarget, Table, DetailTable, NestedTableColumn
 
 
 class NodeTypeColumn(Column):
@@ -49,11 +29,10 @@ class NodeTypeColumn(Column):
 
 
 class NodeArchitectureColumn(Column):
-
     def render(self, target, architecture):
         if target in (RenderTarget.pretty, RenderTarget.plain):
             if architecture:
-                if architecture.endswith('/generic'):
+                if architecture.endswith("/generic"):
                     architecture = architecture[:-8]
             else:
                 architecture = "-"
@@ -61,7 +40,6 @@ class NodeArchitectureColumn(Column):
 
 
 class NodeCPUsColumn(Column):
-
     def render(self, target, cpus):
         # `cpus` is a count of CPUs.
         if target in (RenderTarget.pretty, RenderTarget.plain):
@@ -73,7 +51,6 @@ class NodeCPUsColumn(Column):
 
 
 class NodeMemoryColumn(Column):
-
     def render(self, target, memory):
         # `memory` is in MB.
         if target in (RenderTarget.pretty, RenderTarget.plain):
@@ -115,8 +92,7 @@ class NodeStatusNameColumn(Column):
         if target == RenderTarget.pretty:
             if datum in self.colours:
                 colour = self.colours[datum]
-                return Color("{%s}%s{/%s}" % (
-                    colour, datum, colour))
+                return Color("{%s}%s{/%s}" % (colour, datum, colour))
             else:
                 return datum
         else:
@@ -135,8 +111,7 @@ class NodePowerColumn(Column):
         if target == RenderTarget.pretty:
             if data in self.colours:
                 colour = self.colours[data]
-                return Color("{%s}%s{/%s}" % (
-                    colour, data.value.capitalize(), colour))
+                return Color("{%s}%s{/%s}" % (colour, data.value.capitalize(), colour))
             else:
                 return data.value.capitalize()
         elif target == RenderTarget.plain:
@@ -146,7 +121,6 @@ class NodePowerColumn(Column):
 
 
 class NodeInterfacesColumn(Column):
-
     def render(self, target, data):
         count = 0
         for interface in data:
@@ -156,7 +130,6 @@ class NodeInterfacesColumn(Column):
 
 
 class NodeOwnerColumn(Column):
-
     def render(self, target, data):
         if data is None:
             return super().render(target, "(none)")
@@ -165,7 +138,6 @@ class NodeOwnerColumn(Column):
 
 
 class NodeImageColumn(Column):
-
     def render(self, target, data):
         if data:
             return super().render(target, data)
@@ -174,35 +146,27 @@ class NodeImageColumn(Column):
 
 
 class NodeZoneColumn(Column):
-
     def render(self, target, data):
         return super().render(target, data.name)
 
 
 class NodeResourcePoolColumn(Column):
-
     def render(self, target, data):
         return super().render(target, data.name)
 
 
 class NodesTable(Table):
-
     def __init__(self):
         super().__init__(
-            Column("hostname", "Hostname"),
-            NodeTypeColumn("node_type", "Type"),
+            Column("hostname", "Hostname"), NodeTypeColumn("node_type", "Type")
         )
 
     def get_rows(self, target, nodes):
-        data = (
-            (node.hostname, node.node_type)
-            for node in nodes
-        )
+        data = ((node.hostname, node.node_type) for node in nodes)
         return sorted(data, key=itemgetter(0))
 
 
 class MachinesTable(Table):
-
     def __init__(self):
         super().__init__(
             Column("hostname", "Hostname"),
@@ -235,7 +199,6 @@ class MachinesTable(Table):
 
 
 class MachineDetail(DetailTable):
-
     def __init__(self, with_type=False):
         self.with_type = with_type
         columns = [
@@ -286,7 +249,6 @@ class MachineDetail(DetailTable):
 
 
 class DevicesTable(Table):
-
     def __init__(self):
         super().__init__(
             Column("hostname", "Hostname"),
@@ -304,7 +266,7 @@ class DevicesTable(Table):
                     for interface in device.interfaces
                     for link in interface.links
                     if link.ip_address
-                ]
+                ],
             )
             for device in devices
         )
@@ -312,7 +274,6 @@ class DevicesTable(Table):
 
 
 class DeviceDetail(DetailTable):
-
     def __init__(self, with_type=False):
         self.with_type = with_type
         columns = [
@@ -345,7 +306,6 @@ class DeviceDetail(DetailTable):
 
 
 class ControllersTable(Table):
-
     def __init__(self):
         super().__init__(
             Column("hostname", "Hostname"),
@@ -370,7 +330,6 @@ class ControllersTable(Table):
 
 
 class ControllerDetail(DetailTable):
-
     def __init__(self):
         super().__init__(
             Column("hostname", "Hostname"),
@@ -395,7 +354,6 @@ class ControllerDetail(DetailTable):
 
 
 class TagsTable(Table):
-
     def __init__(self):
         super().__init__(
             Column("name", "Tag name"),
@@ -406,18 +364,14 @@ class TagsTable(Table):
 
     def get_rows(self, target, tags):
         data = (
-            (tag.name, tag.definition, tag.kernel_opts, tag.comment)
-            for tag in tags
+            (tag.name, tag.definition, tag.kernel_opts, tag.comment) for tag in tags
         )
         return sorted(data, key=itemgetter(0))
 
 
 class FilesTable(Table):
-
     def __init__(self):
-        super().__init__(
-            Column("filename", "File name"),
-        )
+        super().__init__(Column("filename", "File name"))
 
     def get_rows(self, target, files):
         data = ((f.filename,) for f in files)
@@ -439,7 +393,6 @@ class UserIsAdminColumn(Column):
 
 
 class UsersTable(Table):
-
     def __init__(self):
         super().__init__(
             Column("username", "User name"),
@@ -453,7 +406,6 @@ class UsersTable(Table):
 
 
 class ProfileActiveColumn(Column):
-
     def render(self, target, is_anonymous):
         if target is RenderTarget.pretty:
             return "✓" if is_anonymous else " "
@@ -464,7 +416,6 @@ class ProfileActiveColumn(Column):
 
 
 class ProfilesTable(Table):
-
     def __init__(self):
         super().__init__(
             Column("name", "Profile"),
@@ -483,10 +434,9 @@ class ProfilesTable(Table):
 
 
 class VIDColumn(Column):
-
     def render(self, target, data):
-        vlan, vlans = data, data._data['fabric'].vlans
-        vlans = sorted(vlans, key=attrgetter('id'))
+        vlan, vlans = data, data._data["fabric"].vlans
+        vlans = sorted(vlans, key=attrgetter("id"))
         if vlans[0] == vlan:
             if vlan.vid == 0:
                 data = "untagged"
@@ -498,7 +448,6 @@ class VIDColumn(Column):
 
 
 class DHCPColumn(Column):
-
     def render(self, target, vlan):
         if vlan.dhcp_on:
             if vlan.primary_rack:
@@ -518,7 +467,6 @@ class DHCPColumn(Column):
 
 
 class SpaceNameColumn(Column):
-
     def render(self, target, space):
         name = space.name
         if name == "undefined":
@@ -527,7 +475,6 @@ class SpaceNameColumn(Column):
 
 
 class SubnetNameColumn(Column):
-
     def render(self, target, subnet):
         name = subnet.cidr
         if subnet.name and subnet.name != name:
@@ -536,19 +483,17 @@ class SubnetNameColumn(Column):
 
 
 class SubnetActiveColumn(Column):
-
     def render(self, target, active):
         if active:
             text = "Active"
         else:
             text = "Disabled"
         if target == RenderTarget.pretty and active:
-            text = Color('{autogreen}Active{/autogreen}')
+            text = Color("{autogreen}Active{/autogreen}")
         return super().render(target, text)
 
 
 class SubnetRDNSModeColumn(Column):
-
     def render(self, target, mode):
         if mode == RDNSMode.DISABLED:
             text = "Disabled"
@@ -563,7 +508,6 @@ class SubnetRDNSModeColumn(Column):
 
 
 class SubnetsTable(Table):
-
     def __init__(self, *, visible_columns=None, fabrics=None):
         self.fabrics = fabrics
         super().__init__(
@@ -571,7 +515,7 @@ class SubnetsTable(Table):
             VIDColumn("vid", "VID"),
             Column("fabric", "Fabric"),
             SpaceNameColumn("space", "Space"),
-            visible_columns=visible_columns
+            visible_columns=visible_columns,
         )
 
     def get_vlan(self, vlan):
@@ -593,12 +537,11 @@ class SubnetsTable(Table):
                 self.get_fabric(subnet.vlan.fabric).name,
                 subnet.vlan.space,
             )
-            for subnet in sorted(subnets, key=attrgetter('cidr'))
+            for subnet in sorted(subnets, key=attrgetter("cidr"))
         )
 
 
 class SubnetDetail(DetailTable):
-
     def __init__(self, *, fabrics=None):
         self.fabrics = fabrics
         super().__init__(
@@ -643,42 +586,36 @@ class SubnetDetail(DetailTable):
 
 
 class VlansTable(Table):
-
     def __init__(self, *, visible_columns=None, fabrics=None, subnets=None):
         self.subnets = subnets
         super().__init__(
             VIDColumn("vid", "VID"),
             DHCPColumn("dhcp", "DHCP"),
             SpaceNameColumn("space", "Space"),
-            NestedTableColumn("subnets", "Subnets", SubnetsTable, None, {
-                'visible_columns': ('name',),
-                'fabrics': fabrics,
-            }),
-            visible_columns=visible_columns
+            NestedTableColumn(
+                "subnets",
+                "Subnets",
+                SubnetsTable,
+                None,
+                {"visible_columns": ("name",), "fabrics": fabrics},
+            ),
+            visible_columns=visible_columns,
         )
 
     def get_subnets(self, vlan):
         """Return the subnets for the `vlan`."""
-        return vlan._origin.Subnets([
-            subnet
-            for subnet in self.subnets
-            if subnet.vlan.id == vlan.id
-        ])
+        return vlan._origin.Subnets(
+            [subnet for subnet in self.subnets if subnet.vlan.id == vlan.id]
+        )
 
     def get_rows(self, target, vlans):
         return (
-            (
-                vlan,
-                vlan,
-                vlan.space,
-                self.get_subnets(vlan)
-            )
-            for vlan in sorted(vlans, key=attrgetter('vid'))
+            (vlan, vlan, vlan.space, self.get_subnets(vlan))
+            for vlan in sorted(vlans, key=attrgetter("vid"))
         )
 
 
 class VlanDetail(DetailTable):
-
     def __init__(self, *, fabrics=None, subnets=None):
         self.fabrics = fabrics
         self.subnets = subnets
@@ -691,10 +628,13 @@ class VlanDetail(DetailTable):
             Column("primary_rack", "Primary rack"),
             Column("secondary_rack", "Secondary rack"),
             SpaceNameColumn("space", "Space"),
-            NestedTableColumn("subnets", "Subnets", SubnetsTable, None, {
-                'visible_columns': ('name',),
-                'fabrics': fabrics,
-            }),
+            NestedTableColumn(
+                "subnets",
+                "Subnets",
+                SubnetsTable,
+                None,
+                {"visible_columns": ("name",), "fabrics": fabrics},
+            ),
         )
 
     def get_fabric(self, vlan):
@@ -704,11 +644,9 @@ class VlanDetail(DetailTable):
 
     def get_subnets(self, vlan):
         """Return the subnets for the `vlan`."""
-        return vlan._origin.Subnets([
-            subnet
-            for subnet in self.subnets
-            if subnet.vlan.id == vlan.id
-        ])
+        return vlan._origin.Subnets(
+            [subnet for subnet in self.subnets if subnet.vlan.id == vlan.id]
+        )
 
     def get_rows(self, target, vlan):
         primary_rack = vlan.primary_rack
@@ -726,61 +664,60 @@ class VlanDetail(DetailTable):
             primary_rack.hostname if primary_rack else None,
             secondary_rack.hostname if secondary_rack else None,
             vlan.space,
-            self.get_subnets(vlan)
+            self.get_subnets(vlan),
         )
 
 
 class FabricsTable(Table):
-
     def __init__(self, *, visible_columns=None, subnets=None):
         super().__init__(
             Column("name", "Fabric"),
-            NestedTableColumn(
-                "vlans", "VLANs", VlansTable, None, {'subnets': subnets}),
-            visible_columns=visible_columns
+            NestedTableColumn("vlans", "VLANs", VlansTable, None, {"subnets": subnets}),
+            visible_columns=visible_columns,
         )
 
     def get_rows(self, target, fabrics):
-        self['vlans'].table_kwargs['fabrics'] = fabrics
+        self["vlans"].table_kwargs["fabrics"] = fabrics
         return (
-            (
-                fabric.name,
-                fabric.vlans
-            )
-            for fabric in sorted(fabrics, key=attrgetter('id'))
+            (fabric.name, fabric.vlans)
+            for fabric in sorted(fabrics, key=attrgetter("id"))
         )
 
 
 class FabricDetail(DetailTable):
-
     def __init__(self, *, fabrics=None, subnets=None):
         super().__init__(
             Column("name", "Name"),
             NestedTableColumn(
-                "vlans", "VLANs", VlansTable, None, {
-                    'fabrics': fabrics,
-                    'subnets': subnets}),
+                "vlans",
+                "VLANs",
+                VlansTable,
+                None,
+                {"fabrics": fabrics, "subnets": subnets},
+            ),
         )
 
     def get_rows(self, target, fabric):
-        return (
-            fabric.name,
-            fabric.vlans,
-        )
+        return (fabric.name, fabric.vlans)
 
 
 class SpacesTable(Table):
-
     def __init__(self, *, visible_columns=None, fabrics=None, subnets=None):
         self.fabrics = fabrics
         super().__init__(
             SpaceNameColumn("name", "Space"),
             NestedTableColumn(
-                "vlans", "VLANs", VlansTable, None, {
-                    'visible_columns': ('vid', 'dhcp', 'subnets'),
-                    'fabrics': fabrics,
-                    'subnets': subnets}),
-            visible_columns=visible_columns
+                "vlans",
+                "VLANs",
+                VlansTable,
+                None,
+                {
+                    "visible_columns": ("vid", "dhcp", "subnets"),
+                    "fabrics": fabrics,
+                    "subnets": subnets,
+                },
+            ),
+            visible_columns=visible_columns,
         )
 
     def get_fabric(self, vlan):
@@ -791,30 +728,32 @@ class SpacesTable(Table):
 
     def get_vlans(self, vlans):
         for vlan in vlans:
-            vlan._data['fabric'] = self.get_fabric(vlan)
+            vlan._data["fabric"] = self.get_fabric(vlan)
         return vlans
 
     def get_rows(self, target, spaces):
         return (
-            (
-                space,
-                self.get_vlans(space.vlans)
-            )
-            for space in sorted(spaces, key=attrgetter('name'))
+            (space, self.get_vlans(space.vlans))
+            for space in sorted(spaces, key=attrgetter("name"))
         )
 
 
 class SpaceDetail(DetailTable):
-
     def __init__(self, *, fabrics=None, subnets=None):
         self.fabrics = fabrics
         super().__init__(
             SpaceNameColumn("name", "Space"),
             NestedTableColumn(
-                "vlans", "VLANs", VlansTable, None, {
-                    'visible_columns': ('vid', 'dhcp', 'subnets'),
-                    'fabrics': fabrics,
-                    'subnets': subnets}),
+                "vlans",
+                "VLANs",
+                VlansTable,
+                None,
+                {
+                    "visible_columns": ("vid", "dhcp", "subnets"),
+                    "fabrics": fabrics,
+                    "subnets": subnets,
+                },
+            ),
         )
 
     def get_fabric(self, vlan):
@@ -825,11 +764,8 @@ class SpaceDetail(DetailTable):
 
     def get_vlans(self, vlans):
         for vlan in vlans:
-            vlan._data['fabric'] = self.get_fabric(vlan)
+            vlan._data["fabric"] = self.get_fabric(vlan)
         return vlans
 
     def get_rows(self, target, space):
-        return (
-            space,
-            self.get_vlans(space.vlans)
-        )
+        return (space, self.get_vlans(space.vlans))

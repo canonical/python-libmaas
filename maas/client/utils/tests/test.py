@@ -31,15 +31,10 @@ from testtools.matchers import (
 from twisted.internet.task import Clock
 
 from ... import utils
-from ...testing import (
-    make_name_without_spaces,
-    make_string,
-    TestCase,
-)
+from ...testing import make_name_without_spaces, make_string, TestCase
 
 
 class TestMAASOAuth(TestCase):
-
     def test_OAuthSigner_sign_request_adds_header(self):
         token_key = make_name_without_spaces("token-key")
         token_secret = make_name_without_spaces("token-secret")
@@ -49,18 +44,23 @@ class TestMAASOAuth(TestCase):
 
         headers = {}
         auth = utils.OAuthSigner(
-            token_key=token_key, token_secret=token_secret,
-            consumer_key=consumer_key, consumer_secret=consumer_secret,
-            realm=realm)
-        auth.sign_request('http://example.com/', "GET", None, headers)
+            token_key=token_key,
+            token_secret=token_secret,
+            consumer_key=consumer_key,
+            consumer_secret=consumer_secret,
+            realm=realm,
+        )
+        auth.sign_request("http://example.com/", "GET", None, headers)
 
-        self.assertIn('Authorization', headers)
+        self.assertIn("Authorization", headers)
         authorization = headers["Authorization"]
         self.assertIn('realm="%s"' % realm, authorization)
         self.assertIn('oauth_token="%s"' % token_key, authorization)
         self.assertIn('oauth_consumer_key="%s"' % consumer_key, authorization)
-        self.assertIn('oauth_signature="%s%%26%s"' % (
-            consumer_secret, token_secret), authorization)
+        self.assertIn(
+            'oauth_signature="%s%%26%s"' % (consumer_secret, token_secret),
+            authorization,
+        )
 
     def test_sign_adds_header(self):
         token_key = make_name_without_spaces("token-key")
@@ -68,10 +68,11 @@ class TestMAASOAuth(TestCase):
         consumer_key = make_name_without_spaces("consumer-key")
 
         headers = {}
-        utils.sign('http://example.com/', headers, (
-            consumer_key, token_key, token_secret))
+        utils.sign(
+            "http://example.com/", headers, (consumer_key, token_key, token_secret)
+        )
 
-        self.assertIn('Authorization', headers)
+        self.assertIn("Authorization", headers)
         authorization = headers["Authorization"]
         self.assertIn('realm="OAuth"', authorization)
         self.assertIn('oauth_token="%s"' % token_key, authorization)
@@ -88,112 +89,194 @@ class TestPayloadPreparation(TestCase):
     scenarios_without_op = (
         # Without data, all requests have an empty request body and no extra
         # headers.
-        ("create",
-         {"method": "POST", "data": [],
-          "expected_uri": uri_base,
-          "expected_body": sentinel.body,
-          "expected_headers": sentinel.headers}),
-        ("read",
-         {"method": "GET", "data": [],
-          "expected_uri": uri_base,
-          "expected_body": None,
-          "expected_headers": []}),
-        ("update",
-         {"method": "PUT", "data": [],
-          "expected_uri": uri_base,
-          "expected_body": sentinel.body,
-          "expected_headers": sentinel.headers}),
-        ("delete",
-         {"method": "DELETE", "data": [],
-          "expected_uri": uri_base,
-          "expected_body": sentinel.body,
-          "expected_headers": sentinel.headers}),
+        (
+            "create",
+            {
+                "method": "POST",
+                "data": [],
+                "expected_uri": uri_base,
+                "expected_body": sentinel.body,
+                "expected_headers": sentinel.headers,
+            },
+        ),
+        (
+            "read",
+            {
+                "method": "GET",
+                "data": [],
+                "expected_uri": uri_base,
+                "expected_body": None,
+                "expected_headers": [],
+            },
+        ),
+        (
+            "update",
+            {
+                "method": "PUT",
+                "data": [],
+                "expected_uri": uri_base,
+                "expected_body": sentinel.body,
+                "expected_headers": sentinel.headers,
+            },
+        ),
+        (
+            "delete",
+            {
+                "method": "DELETE",
+                "data": [],
+                "expected_uri": uri_base,
+                "expected_body": sentinel.body,
+                "expected_headers": sentinel.headers,
+            },
+        ),
         # With data, PUT, POST, and DELETE requests have their body and
         # extra headers prepared by build_multipart_message and
         # encode_multipart_message. For GET requests, the data is
         # encoded into the query string, and both the request body and
         # extra headers are empty.
-        ("create-with-data",
-         {"method": "POST", "data": [("foo", "bar"), ("foo", "baz")],
-          "expected_uri": uri_base,
-          "expected_body": sentinel.body,
-          "expected_headers": sentinel.headers}),
-        ("read-with-data",
-         {"method": "GET", "data": [("foo", "bar"), ("foo", "baz")],
-          "expected_uri": uri_base + "?foo=bar&foo=baz",
-          "expected_body": None,
-          "expected_headers": []}),
-        ("update-with-data",
-         {"method": "PUT", "data": [("foo", "bar"), ("foo", "baz")],
-          "expected_uri": uri_base,
-          "expected_body": sentinel.body,
-          "expected_headers": sentinel.headers}),
-        ("delete-with-data",
-         {"method": "DELETE", "data": [("foo", "bar"), ("foo", "baz")],
-          "expected_uri": uri_base,
-          "expected_body": sentinel.body,
-          "expected_headers": sentinel.headers}),
-        )
+        (
+            "create-with-data",
+            {
+                "method": "POST",
+                "data": [("foo", "bar"), ("foo", "baz")],
+                "expected_uri": uri_base,
+                "expected_body": sentinel.body,
+                "expected_headers": sentinel.headers,
+            },
+        ),
+        (
+            "read-with-data",
+            {
+                "method": "GET",
+                "data": [("foo", "bar"), ("foo", "baz")],
+                "expected_uri": uri_base + "?foo=bar&foo=baz",
+                "expected_body": None,
+                "expected_headers": [],
+            },
+        ),
+        (
+            "update-with-data",
+            {
+                "method": "PUT",
+                "data": [("foo", "bar"), ("foo", "baz")],
+                "expected_uri": uri_base,
+                "expected_body": sentinel.body,
+                "expected_headers": sentinel.headers,
+            },
+        ),
+        (
+            "delete-with-data",
+            {
+                "method": "DELETE",
+                "data": [("foo", "bar"), ("foo", "baz")],
+                "expected_uri": uri_base,
+                "expected_body": sentinel.body,
+                "expected_headers": sentinel.headers,
+            },
+        ),
+    )
 
     # Scenarios for non-ReSTful operations; i.e. with an "op" parameter.
     scenarios_with_op = (
         # Without data, all requests have an empty request body and no extra
         # headers. The operation is encoded into the query string.
-        ("create",
-         {"method": "POST", "data": [],
-          "expected_uri": uri_base + "?op=something",
-          "expected_body": sentinel.body,
-          "expected_headers": sentinel.headers}),
-        ("read",
-         {"method": "GET", "data": [],
-          "expected_uri": uri_base + "?op=something",
-          "expected_body": None,
-          "expected_headers": []}),
-        ("update",
-         {"method": "PUT", "data": [],
-          "expected_uri": uri_base + "?op=something",
-          "expected_body": sentinel.body,
-          "expected_headers": sentinel.headers}),
-        ("delete",
-         {"method": "DELETE", "data": [],
-          "expected_uri": uri_base + "?op=something",
-          "expected_body": sentinel.body,
-          "expected_headers": sentinel.headers}),
+        (
+            "create",
+            {
+                "method": "POST",
+                "data": [],
+                "expected_uri": uri_base + "?op=something",
+                "expected_body": sentinel.body,
+                "expected_headers": sentinel.headers,
+            },
+        ),
+        (
+            "read",
+            {
+                "method": "GET",
+                "data": [],
+                "expected_uri": uri_base + "?op=something",
+                "expected_body": None,
+                "expected_headers": [],
+            },
+        ),
+        (
+            "update",
+            {
+                "method": "PUT",
+                "data": [],
+                "expected_uri": uri_base + "?op=something",
+                "expected_body": sentinel.body,
+                "expected_headers": sentinel.headers,
+            },
+        ),
+        (
+            "delete",
+            {
+                "method": "DELETE",
+                "data": [],
+                "expected_uri": uri_base + "?op=something",
+                "expected_body": sentinel.body,
+                "expected_headers": sentinel.headers,
+            },
+        ),
         # With data, PUT, POST, and DELETE requests have their body and
         # extra headers prepared by build_multipart_message and
         # encode_multipart_message. For GET requests, the data is
         # encoded into the query string, and both the request body and
         # extra headers are empty. The operation is encoded into the
         # query string.
-        ("create-with-data",
-         {"method": "POST", "data": [("foo", "bar"), ("foo", "baz")],
-          "expected_uri": uri_base + "?op=something",
-          "expected_body": sentinel.body,
-          "expected_headers": sentinel.headers}),
-        ("read-with-data",
-         {"method": "GET", "data": [("foo", "bar"), ("foo", "baz")],
-          "expected_uri": uri_base + "?op=something&foo=bar&foo=baz",
-          "expected_body": None,
-          "expected_headers": []}),
-        ("update-with-data",
-         {"method": "PUT", "data": [("foo", "bar"), ("foo", "baz")],
-          "expected_uri": uri_base + "?op=something",
-          "expected_body": sentinel.body,
-          "expected_headers": sentinel.headers}),
-        ("delete-with-data",
-         {"method": "DELETE", "data": [("foo", "bar"), ("foo", "baz")],
-          "expected_uri": uri_base + "?op=something",
-          "expected_body": sentinel.body,
-          "expected_headers": sentinel.headers}),
-        )
+        (
+            "create-with-data",
+            {
+                "method": "POST",
+                "data": [("foo", "bar"), ("foo", "baz")],
+                "expected_uri": uri_base + "?op=something",
+                "expected_body": sentinel.body,
+                "expected_headers": sentinel.headers,
+            },
+        ),
+        (
+            "read-with-data",
+            {
+                "method": "GET",
+                "data": [("foo", "bar"), ("foo", "baz")],
+                "expected_uri": uri_base + "?op=something&foo=bar&foo=baz",
+                "expected_body": None,
+                "expected_headers": [],
+            },
+        ),
+        (
+            "update-with-data",
+            {
+                "method": "PUT",
+                "data": [("foo", "bar"), ("foo", "baz")],
+                "expected_uri": uri_base + "?op=something",
+                "expected_body": sentinel.body,
+                "expected_headers": sentinel.headers,
+            },
+        ),
+        (
+            "delete-with-data",
+            {
+                "method": "DELETE",
+                "data": [("foo", "bar"), ("foo", "baz")],
+                "expected_uri": uri_base + "?op=something",
+                "expected_body": sentinel.body,
+                "expected_headers": sentinel.headers,
+            },
+        ),
+    )
 
     scenarios_without_op = tuple(
         ("%s-without-op" % name, dict(scenario, op=None))
-        for name, scenario in scenarios_without_op)
+        for name, scenario in scenarios_without_op
+    )
 
     scenarios_with_op = tuple(
         ("%s-with-op" % name, dict(scenario, op="something"))
-        for name, scenario in scenarios_with_op)
+        for name, scenario in scenarios_with_op
+    )
 
     scenarios = scenarios_without_op + scenarios_with_op
 
@@ -207,13 +290,13 @@ class TestPayloadPreparation(TestCase):
         # The payload returned is a 3-tuple of (uri, body, headers). Pass
         # `data` as an iterator to ensure that it works with non-sized types.
         payload = utils.prepare_payload(
-            op=self.op, method=self.method,
-            uri=self.uri_base, data=iter(self.data))
+            op=self.op, method=self.method, uri=self.uri_base, data=iter(self.data)
+        )
         expected = (
             Equals(self.expected_uri),
             Equals(self.expected_body),
             Equals(self.expected_headers),
-            )
+        )
         self.assertThat(payload, MatchesListwise(expected))
         # encode_multipart_message, when called, is passed the data
         # unadulterated.
@@ -234,7 +317,8 @@ class TestPayloadPreparationWithFiles(TestCase):
         # open file handle.
         data = [(parameter, partial(filepath.open, "rb"))]
         uri, body, headers = utils.prepare_payload(
-            op=None, method="POST", uri="http://localhost", data=data)
+            op=None, method="POST", uri="http://localhost", data=data
+        )
 
         expected_body_template = """\
             --...
@@ -247,7 +331,10 @@ class TestPayloadPreparationWithFiles(TestCase):
             --...--
             """
         expected_body = expected_body_template % (
-            parameter, parameter, base64.b64encode(contents).decode("ascii"))
+            parameter,
+            parameter,
+            base64.b64encode(contents).decode("ascii"),
+        )
 
         self.assertDocTestMatches(expected_body, body.decode("ascii"))
 
@@ -256,35 +343,33 @@ class TestDocstringParsing(TestCase):
     """Tests for docstring parsing with `parse_docstring`."""
 
     def test_basic(self):
-        self.assertEqual(
-            ("Title", "Body"),
-            utils.parse_docstring("Title\n\nBody"))
+        self.assertEqual(("Title", "Body"), utils.parse_docstring("Title\n\nBody"))
         self.assertEqual(
             ("A longer title", "A longer body"),
-            utils.parse_docstring("A longer title\n\nA longer body"))
+            utils.parse_docstring("A longer title\n\nA longer body"),
+        )
 
     def test_returns_named_tuple(self):
         self.assertThat(
             utils.parse_docstring("Title\n\nBody"),
-            MatchesStructure.byEquality(title="Title", body="Body"))
+            MatchesStructure.byEquality(title="Title", body="Body"),
+        )
 
     def test_no_body(self):
         # parse_docstring returns an empty string when there's no body.
-        self.assertEqual(
-            ("Title", ""),
-            utils.parse_docstring("Title\n\n"))
-        self.assertEqual(
-            ("Title", ""),
-            utils.parse_docstring("Title"))
+        self.assertEqual(("Title", ""), utils.parse_docstring("Title\n\n"))
+        self.assertEqual(("Title", ""), utils.parse_docstring("Title"))
 
     def test_unwrapping(self):
         # parse_docstring unwraps the title paragraph, and dedents the body
         # paragraphs.
         self.assertEqual(
-            ("Title over two lines",
-             "Paragraph over\ntwo lines\n\n"
-             "Another paragraph\nover two lines"),
-            utils.parse_docstring("""
+            (
+                "Title over two lines",
+                "Paragraph over\ntwo lines\n\n" "Another paragraph\nover two lines",
+            ),
+            utils.parse_docstring(
+                """
                 Title over
                 two lines
 
@@ -293,7 +378,9 @@ class TestDocstringParsing(TestCase):
 
                 Another paragraph
                 over two lines
-                """))
+                """
+            ),
+        )
 
     def test_gets_docstring_from_function(self):
         # parse_docstring can extract the docstring when the argument passed
@@ -303,38 +390,37 @@ class TestDocstringParsing(TestCase):
 
             Body.
             """
-        self.assertEqual(
-            ("Title.", "Body."),
-            utils.parse_docstring(example))
+
+        self.assertEqual(("Title.", "Body."), utils.parse_docstring(example))
 
     def test_normalises_whitespace(self):
         # parse_docstring can parse CRLF/CR/LF text, but always emits LF (\n,
         # new-line) separated text.
-        self.assertEqual(
-            ("long title", ""),
-            utils.parse_docstring("long\r\ntitle"))
+        self.assertEqual(("long title", ""), utils.parse_docstring("long\r\ntitle"))
         self.assertEqual(
             ("title", "body1\n\nbody2"),
-            utils.parse_docstring("title\n\nbody1\r\rbody2"))
+            utils.parse_docstring("title\n\nbody1\r\rbody2"),
+        )
 
 
 class TestFunctions(TestCase):
     """Tests for miscellaneous functions in `maas.client.utils`."""
 
     def test_api_url(self):
-        transformations = list({
-            "http://example.com/": "http://example.com/api/2.0/",
-            "http://example.com/foo": "http://example.com/foo/api/2.0/",
-            "http://example.com/foo/": "http://example.com/foo/api/2.0/",
-            "http://example.com/api/7.9": "http://example.com/api/7.9/",
-            "http://example.com/api/7.9/": "http://example.com/api/7.9/",
-            }.items())
+        transformations = list(
+            {
+                "http://example.com/": "http://example.com/api/2.0/",
+                "http://example.com/foo": "http://example.com/foo/api/2.0/",
+                "http://example.com/foo/": "http://example.com/foo/api/2.0/",
+                "http://example.com/api/7.9": "http://example.com/api/7.9/",
+                "http://example.com/api/7.9/": "http://example.com/api/7.9/",
+            }.items()
+        )
         urls = [url for url, url_out in transformations]
         urls_out = [url_out for url, url_out in transformations]
         expected = [
-            AfterPreprocessing(utils.api_url, Equals(url_out))
-            for url_out in urls_out
-            ]
+            AfterPreprocessing(utils.api_url, Equals(url_out)) for url_out in urls_out
+        ]
         self.assertThat(urls, MatchesListwise(expected))
 
     def test_coalesce(self):
@@ -348,19 +434,23 @@ class TestFunctions(TestCase):
 
 
 class TestRetries(TestCase):
-
     def assertRetry(
-            self, clock, observed, expected_elapsed, expected_remaining,
-            expected_wait):
+        self, clock, observed, expected_elapsed, expected_remaining, expected_wait
+    ):
         """Assert that the retry tuple matches the given expectations.
 
         Retry tuples are those returned by `retries`.
         """
-        self.assertThat(observed, MatchesListwise([
-            Equals(expected_elapsed),  # elapsed
-            Equals(expected_remaining),  # remaining
-            Equals(expected_wait),  # wait
-        ]))
+        self.assertThat(
+            observed,
+            MatchesListwise(
+                [
+                    Equals(expected_elapsed),  # elapsed
+                    Equals(expected_remaining),  # remaining
+                    Equals(expected_wait),  # wait
+                ]
+            ),
+        )
 
     def test_yields_elapsed_remaining_and_wait(self):
         # Take control of time.
@@ -459,9 +549,5 @@ class TestRemoveNone(TestCase):
     """Test `remove_None`."""
 
     def test_removes_all_None_values(self):
-        data = {
-            'None': None,
-            'another_None': None,
-            'keep': 'value'
-        }
-        self.assertEquals({'keep': 'value'}, utils.remove_None(data))
+        data = {"None": None, "another_None": None, "keep": "value"}
+        self.assertEquals({"keep": "value"}, utils.remove_None(data))

@@ -1,17 +1,8 @@
 """Objects for users."""
 
-__all__ = [
-    "User",
-    "Users",
-]
+__all__ = ["User", "Users"]
 
-from . import (
-    check,
-    Object,
-    ObjectField,
-    ObjectSet,
-    ObjectType,
-)
+from . import check, Object, ObjectField, ObjectSet, ObjectType
 
 
 class UsersType(ObjectType):
@@ -26,8 +17,11 @@ class UsersType(ObjectType):
         if email is None:
             email = "%s@null.maas.io" % username
         data = await cls._handler.create(
-            username=username, email=email, password=password,
-            is_superuser='1' if is_admin else '0')
+            username=username,
+            email=email,
+            password=password,
+            is_superuser="1" if is_admin else "0",
+        )
         return cls._object(data)
 
     async def read(cls):
@@ -40,7 +34,6 @@ class Users(ObjectSet, metaclass=UsersType):
 
 
 class UserType(ObjectType):
-
     async def read(cls, username):
         data = await cls._handler.read(username=username)
         return cls(data)
@@ -49,17 +42,12 @@ class UserType(ObjectType):
 class User(Object, metaclass=UserType):
     """A user."""
 
-    username = ObjectField.Checked(
-        "username", check(str), check(str), pk=True)
-    email = ObjectField.Checked(
-        "email", check(str), check(str))
-    is_admin = ObjectField.Checked(
-        "is_superuser", check(bool), check(bool))
+    username = ObjectField.Checked("username", check(str), check(str), pk=True)
+    email = ObjectField.Checked("email", check(str), check(str))
+    is_admin = ObjectField.Checked("is_superuser", check(bool), check(bool))
 
     def __repr__(self):
         if self.loaded and self.is_admin:
-            return super(User, self).__repr__(
-                name="Admin", fields={"username"})
+            return super(User, self).__repr__(name="Admin", fields={"username"})
         else:
-            return super(User, self).__repr__(
-                name="User", fields={"username"})
+            return super(User, self).__repr__(name="User", fields={"username"})

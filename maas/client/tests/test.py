@@ -3,19 +3,11 @@
 from inspect import signature
 from unittest.mock import sentinel
 
-from testtools.matchers import (
-    Equals,
-    Is,
-    IsInstance,
-    Not,
-)
+from testtools.matchers import Equals, Is, IsInstance, Not
 
 from .. import facade
 from ... import client
-from ..testing import (
-    AsyncCallableMock,
-    TestCase,
-)
+from ..testing import AsyncCallableMock, TestCase
 from ..viscera import Origin
 
 
@@ -30,9 +22,11 @@ class TestFunctions(TestCase):
         connect = self.patch(Origin, "connect", AsyncCallableMock())
         connect.return_value = sentinel.profile, sentinel.origin
         client_object = client.connect(
-            sentinel.url, apikey=sentinel.apikey, insecure=sentinel.insecure)
+            sentinel.url, apikey=sentinel.apikey, insecure=sentinel.insecure
+        )
         connect.assert_called_once_with(
-            sentinel.url, apikey=sentinel.apikey, insecure=sentinel.insecure)
+            sentinel.url, apikey=sentinel.apikey, insecure=sentinel.insecure
+        )
         self.assertThat(client_object, IsInstance(facade.Client))
         self.assertThat(client_object._origin, Is(sentinel.origin))
 
@@ -44,11 +38,17 @@ class TestFunctions(TestCase):
         login = self.patch(Origin, "login", AsyncCallableMock())
         login.return_value = sentinel.profile, sentinel.origin
         client_object = client.login(
-            sentinel.url, username=sentinel.username,
-            password=sentinel.password, insecure=sentinel.insecure)
+            sentinel.url,
+            username=sentinel.username,
+            password=sentinel.password,
+            insecure=sentinel.insecure,
+        )
         login.assert_called_once_with(
-            sentinel.url, username=sentinel.username,
-            password=sentinel.password, insecure=sentinel.insecure)
+            sentinel.url,
+            username=sentinel.username,
+            password=sentinel.password,
+            insecure=sentinel.insecure,
+        )
         self.assertThat(client_object, IsInstance(facade.Client))
         self.assertThat(client_object._origin, Is(sentinel.origin))
 

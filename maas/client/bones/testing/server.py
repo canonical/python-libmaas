@@ -1,8 +1,6 @@
 """Testing server."""
 
-__all__ = [
-    "ApplicationBuilder",
-]
+__all__ = ["ApplicationBuilder"]
 
 import asyncio
 from collections import defaultdict
@@ -12,10 +10,7 @@ from operator import attrgetter
 import re
 from urllib.parse import urlparse
 
-from aiohttp.multipart import (
-    CONTENT_DISPOSITION,
-    parse_content_disposition,
-)
+from aiohttp.multipart import CONTENT_DISPOSITION, parse_content_disposition
 import aiohttp.web
 from multidict import MultiDict
 
@@ -23,13 +18,13 @@ from . import desc
 
 
 class ApplicationBuilder:
-
     def __init__(self, description):
         super(ApplicationBuilder, self).__init__()
         self._description = desc.Description(description)
         self._application = aiohttp.web.Application()
         self._rootpath, self._basepath, self._version = (
-            self._discover_version_and_paths())
+            self._discover_version_and_paths()
+        )
         self._wire_up_description()
         self._actions = {}
         self._views = {}
@@ -102,8 +97,7 @@ class ApplicationBuilder:
 
     def serve(self):
         """Return an async context manager to serve the built application."""
-        return ApplicationRunner(
-            self._application, self._basepath)
+        return ApplicationRunner(self._application, self._basepath)
 
     @staticmethod
     def _wrap_handler(handler):
@@ -122,6 +116,7 @@ class ApplicationBuilder:
           rendered as JSON.
 
         """
+
         async def wrapper(request):
             # For convenience, read in all multipart parameters.
             assert not hasattr(request, "params")
@@ -158,8 +153,7 @@ class ApplicationBuilder:
                 base, root, version = match.groups()
                 return root, base, version
         else:
-            raise ValueError(
-                "Could not discover version or paths.")
+            raise ValueError("Could not discover version or paths.")
 
     def _wire_up_description(self):
         """Arrange for the API description document to be served.
@@ -170,12 +164,11 @@ class ApplicationBuilder:
         path = "%s/describe/" % self._basepath
 
         def describe(request):
-            description = self._render_description(
-                request.url.with_path(""))
-            description_json = json.dumps(
-                description, indent="  ", sort_keys=True)
+            description = self._render_description(request.url.with_path(""))
+            description_json = json.dumps(description, indent="  ", sort_keys=True)
             return aiohttp.web.Response(
-                text=description_json, content_type="application/json")
+                text=description_json, content_type="application/json"
+            )
 
         self._application.router.add_get(path, describe)
 
@@ -238,8 +231,8 @@ class ApplicationBuilder:
         match = re.match(r"^(anon|auth):(\w+[.]\w+)$", action_name)
         if match is None:
             raise ValueError(
-                "Action should be (anon|auth):Resource.action, got: %s"
-                % (action_name,))
+                "Action should be (anon|auth):Resource.action, got: %s" % (action_name,)
+            )
         else:
             anon_auth, resource_name = match.groups()
             resources = getattr(self._description, anon_auth)
@@ -284,8 +277,7 @@ class ApplicationView:
             handler = self.rest.get(request.method)
 
         if handler is None:
-            raise aiohttp.web.HTTPMethodNotAllowed(
-                request.method, self.allowed_methods)
+            raise aiohttp.web.HTTPMethodNotAllowed(request.method, self.allowed_methods)
         else:
             return await handler(request)
 
@@ -303,10 +295,12 @@ class ApplicationRunner:
         self._handler = self._application.make_handler(loop=self._loop)
         await self._application.startup()
         self._server = await self._loop.create_server(
-            self._handler, host="0.0.0.0", port=0)
+            self._handler, host="0.0.0.0", port=0
+        )
         return "http://%s:%d/%s/" % (
             *self._server.sockets[0].getsockname(),
-            self._basepath.strip("/"))
+            self._basepath.strip("/"),
+        )
 
     async def __aexit__(self, *exc_info):
         self._server.close()
@@ -323,8 +317,7 @@ async def _get_multipart_params(request):
     """
 
     def get_part_name(part):
-        _, params = parse_content_disposition(
-            part.headers.get(CONTENT_DISPOSITION))
+        _, params = parse_content_disposition(part.headers.get(CONTENT_DISPOSITION))
         return params.get("name")
 
     def get_part_data(part):

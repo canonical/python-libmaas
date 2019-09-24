@@ -14,21 +14,13 @@
 
 """Encoding of MIME multipart data."""
 
-__all__ = [
-    'encode_multipart_data',
-    ]
+__all__ = ["encode_multipart_data"]
 
-from collections import (
-    Iterable,
-    Mapping,
-)
+from collections import Iterable, Mapping
 from email.generator import BytesGenerator
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
-from io import (
-    BytesIO,
-    IOBase,
-)
+from io import BytesIO, IOBase
 from itertools import chain
 import mimetypes
 
@@ -62,8 +54,7 @@ def make_string_payload(name, content):
 
 def make_file_payload(name, content):
     payload = MIMEApplication(content.read())
-    payload.add_header(
-        "Content-Disposition", "form-data", name=name, filename=name)
+    payload.add_header("Content-Disposition", "form-data", name=name, filename=name)
     names = name, getattr(content, "name", None)
     payload.set_type(get_content_type(*names))
     return payload
@@ -114,8 +105,7 @@ def make_payloads(name, content):
             for payload in make_payloads(name, part):
                 yield payload
     else:
-        raise AssertionError(
-            "%r is unrecognised: %r" % (name, content))
+        raise AssertionError("%r is unrecognised: %r" % (name, content))
 
 
 def build_multipart_message(data):
