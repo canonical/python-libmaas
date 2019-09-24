@@ -59,7 +59,7 @@ setup(
     ],
     test_suite="maas.client",
     tests_require=[
-        "django >= 1.11, <= 2.2",
+        "django >= 2.2.4, < 3.0",
         "fixtures >= 1.0.0",
         "setuptools",
         "testscenarios",
