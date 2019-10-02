@@ -8,6 +8,13 @@ description: |
 grade: stable
 confinement: strict
 
+slots:
+  maas-cli:
+    interface: content
+    content: maas-cli
+    read:
+      - $SNAP/bin
+
 apps:
   maas-cli:
     command: bin/maas
