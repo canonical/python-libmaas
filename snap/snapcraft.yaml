@@ -1,6 +1,6 @@
 name: maas-cli
 base: core18
-version: '0.6.4'
+version: git
 summary: CLI to communicate with a MAAS region
 description: |
   CLI to communicate with a MAAS region providing total automation of your
