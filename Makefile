@@ -1,4 +1,10 @@
-PYTHON := python3
+python := python3
+snapcraft := SNAPCRAFT_BUILD_INFO=1 /snap/bin/snapcraft
+
+# ---
+
+install-dependencies:
+	if [ -x /usr/bin/snap ]; then sudo snap install --classic snapcraft; fi
 
 # ---
 
@@ -36,6 +42,14 @@ clean:
 
 # ---
 
+snap-clean:
+	$(snapcraft) clean
+
+snap:
+	$(snapcraft)
+
+# ---
+
 README: README.md
 	pandoc --from markdown --to rst --output $@ $^
 
@@ -51,7 +65,7 @@ bin/tox: bin/pip
 	bin/pip install --quiet --ignore-installed tox
 
 bin/python bin/pip:
-	virtualenv --python=$(PYTHON) --quiet $(CURDIR)
+	virtualenv --python=$(python) --quiet $(CURDIR)
 
 bin/mkdocs: bin/pip
 	bin/pip install --quiet --ignore-installed "mkdocs >= 0.14.0"
@@ -74,4 +88,4 @@ pretty: $(api-json)
 
 # ---
 
-.PHONY: develop dist docs docs-to-github test integrate lint clean pretty
+.PHONY: install-dependencies develop dist docs docs-to-github test integrate lint clean pretty snap snap-clean

@@ -1,0 +1,28 @@
+name: maas-cli
+base: core18
+version: git
+summary: CLI to communicate with a MAAS region
+description: |
+  CLI to communicate with a MAAS region providing total automation of your
+  physical servers for amazing data center operational efficiency.
+grade: stable
+confinement: strict
+
+slots:
+  maas-cli:
+    interface: content
+    content: maas-cli
+    read:
+      - $SNAP/lib
+
+apps:
+  maas-cli:
+    command: bin/maas
+    plugs:
+      - home
+      - network
+
+parts:
+  libmaas:
+    plugin: python
+    source: .

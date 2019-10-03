@@ -14,6 +14,7 @@ __all__ = [
 from abc import ABCMeta, abstractmethod
 import argparse
 from importlib import import_module
+import os
 import subprocess
 import sys
 import textwrap
@@ -36,19 +37,19 @@ See https://maas.io/docs for documentation.
 
 Common commands:
 
-    maas login           Log-in to a MAAS.
-    maas switch          Switch the active profile.
-    maas machines        List machines.
-    maas deploy          Allocate and deploy machine.
-    maas release         Release machine.
-    maas fabrics         List fabrics.
-    maas subnets         List subnets.
+    {program} login           Log-in to a MAAS.
+    {program} switch          Switch the active profile.
+    {program} machines        List machines.
+    {program} deploy          Allocate and deploy machine.
+    {program} release         Release machine.
+    {program} fabrics         List fabrics.
+    {program} subnets         List subnets.
 
 Example help commands:
 
-    `maas help`          This help page
-    `maas help commands` Lists all commands
-    `maas help deploy`   Shows help for command 'deploy'
+    `{program} help`          This help page
+    `{program} help commands` Lists all commands
+    `{program} help deploy`   Shows help for command 'deploy'
 """
 
 
@@ -451,7 +452,7 @@ class cmd_help(Command):
 def prepare_parser(program):
     """Create and populate an argument parser."""
     parser = ArgumentParser(
-        description=PROG_DESCRIPTION,
+        description=PROG_DESCRIPTION.format(program=program),
         prog=program,
         formatter_class=HelpFormatter,
         add_help=False,
@@ -511,8 +512,16 @@ def post_mortem(traceback):
     post_mortem(traceback)
 
 
+def program_name_from_env(program):
+    """Return the program name from environment."""
+    if os.environ.get("SNAP_INSTANCE_NAME"):
+        return os.environ.get("SNAP_INSTANCE_NAME")
+    return program
+
+
 def main(argv=sys.argv):
     program, *arguments = argv
+    program = program_name_from_env(program)
     parser, options = None, None
 
     try:
