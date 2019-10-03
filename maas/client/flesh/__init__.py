@@ -516,8 +516,6 @@ def program_name_from_env(program):
     """Return the program name from environment."""
     if os.environ.get("SNAP_INSTANCE_NAME"):
         return os.environ.get("SNAP_INSTANCE_NAME")
-    if os.environ.get("SNAP_NAME"):
-        return os.environ.get("SNAP_NAME")
     return program
 
 
