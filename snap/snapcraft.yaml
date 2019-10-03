@@ -26,3 +26,6 @@ parts:
   libmaas:
     plugin: python
     source: .
+    build-packages:
+      - libffi-dev
+      - libssl-dev
