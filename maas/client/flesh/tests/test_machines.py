@@ -10,13 +10,14 @@ from ...testing import make_name_without_spaces
 from ...viscera.testing import bind
 from ...viscera.machines import Machine, Machines
 from ...viscera.resource_pools import ResourcePool
+from ...viscera.tags import Tag, Tags
 from ...viscera.users import User
 from ...viscera.zones import Zone
 
 
 def make_origin():
     """Make origin for machines."""
-    return bind(Machines, Machine, User, ResourcePool, Zone)
+    return bind(Machines, Machine, User, ResourcePool, Zone, Tag, Tags)
 
 
 class TestMachines(TestCaseWithProfile):
@@ -55,7 +56,7 @@ class TestMachines(TestCaseWithProfile):
         cmd = machines.cmd_machines(parser)
         subparser = machines.cmd_machines.register(parser)
         options = subparser.parse_args([])
-        output = yaml.load(
+        output = yaml.safe_load(
             cmd.execute(origin, options, target=tabular.RenderTarget.yaml)
         )
         self.assertEquals(
@@ -101,3 +102,36 @@ class TestMachines(TestCaseWithProfile):
         options = subparser.parse_args(hostnames)
         cmd.execute(origin, options, target=tabular.RenderTarget.yaml)
         origin.Machines._handler.read.assert_called_once_with(hostname=hostnames)
+
+
+class TestMachine(TestCaseWithProfile):
+    """Tests for `cmd_machine`."""
+
+    def test_machine_details_with_tags(self):
+        origin = make_origin()
+        parser = ArgumentParser()
+        machine_objs = [
+            {
+                "hostname": make_name_without_spaces(),
+                "architecture": "amd64/generic",
+                "status": NodeStatus.READY.value,
+                "status_name": NodeStatus.READY.name,
+                "owner": None,
+                "power_state": PowerState.OFF.value,
+                "cpu_count": 2,
+                "memory": 1024,
+                "pool": {"id": 1, "name": "pool1", "description": "pool1"},
+                "zone": {"id": 1, "name": "zone1", "description": "zone1"},
+                "tag_names": ["tag1", "tag2"],
+                "distro_series": "",
+                "power_type": "Manual",
+            },
+        ]
+        origin.Machines._handler.read.return_value = machine_objs
+        cmd = machines.cmd_machine(parser)
+        subparser = machines.cmd_machine.register(parser)
+        options = subparser.parse_args([machine_objs[0]["hostname"]])
+        output = yaml.safe_load(
+            cmd.execute(origin, options, target=tabular.RenderTarget.yaml)
+        )
+        self.assertEqual(output.get("tags"), "tag1, tag2")

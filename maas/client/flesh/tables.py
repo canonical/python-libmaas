@@ -155,6 +155,14 @@ class NodeResourcePoolColumn(Column):
         return super().render(target, data.name)
 
 
+class NodeTagsColumn(Column):
+    def render(self, target, data):
+        if data:
+            return super().render(target, ", ".join(tag.name for tag in data))
+        else:
+            return ""
+
+
 class NodesTable(Table):
     def __init__(self):
         super().__init__(
@@ -215,7 +223,7 @@ class MachineDetail(DetailTable):
             NodeResourcePoolColumn("pool", "Resource pool"),
             NodeZoneColumn("zone", "Zone"),
             NodeOwnerColumn("owner", "Owner"),
-            Column("tags", "Tags"),
+            NodeTagsColumn("tags", "Tags"),
         ]
         if with_type:
             columns.insert(1, NodeTypeColumn("node_type", "Type"))
