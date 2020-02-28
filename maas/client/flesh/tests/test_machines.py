@@ -1,5 +1,6 @@
 """Tests for `maas.client.flesh.machines`."""
 
+from functools import partial
 from operator import itemgetter
 import yaml
 
@@ -107,12 +108,14 @@ class TestMachines(TestCaseWithProfile):
 class TestMachine(TestCaseWithProfile):
     """Tests for `cmd_machine`."""
 
-    def test_machine_details_with_tags(self):
+    def setUp(self):
+        super().setUp()
         origin = make_origin()
         parser = ArgumentParser()
+        self.hostname = make_name_without_spaces()
         machine_objs = [
             {
-                "hostname": make_name_without_spaces(),
+                "hostname": self.hostname,
                 "architecture": "amd64/generic",
                 "status": NodeStatus.READY.value,
                 "status_name": NodeStatus.READY.name,
@@ -131,7 +134,32 @@ class TestMachine(TestCaseWithProfile):
         cmd = machines.cmd_machine(parser)
         subparser = machines.cmd_machine.register(parser)
         options = subparser.parse_args([machine_objs[0]["hostname"]])
-        yaml_output = yaml.safe_load(
-            cmd.execute(origin, options, target=tabular.RenderTarget.yaml)
-        )
+        self.cmd = partial(cmd.execute, origin, options)
+
+    def test_yaml_machine_details_with_tags(self):
+        yaml_output = yaml.safe_load(self.cmd(target=tabular.RenderTarget.yaml))
         self.assertEqual(yaml_output.get("tags"), ["tag1", "tag2"])
+
+    def test_plain_machine_details_with_tags(self):
+        plain_output = self.cmd(target=tabular.RenderTarget.plain)
+        self.assertEqual(
+            plain_output,
+            f"""\
++---------------+-------------+
+| Hostname      | {self.hostname} |
+| Status        | READY       |
+| Image         | (none)      |
+| Power         | Off         |
+| Power Type    | Manual      |
+| Arch          | amd64       |
+| #CPUs         | 2           |
+| RAM           | 1.0 GB      |
+| Interfaces    | 0 physical  |
+| IP addresses  |             |
+| Resource pool | pool1       |
+| Zone          | zone1       |
+| Owner         | (none)      |
+| Tags          | tag1        |
+|               | tag2        |
++---------------+-------------+""",
+        )
