@@ -22,9 +22,11 @@ class ApplicationBuilder:
         super(ApplicationBuilder, self).__init__()
         self._description = desc.Description(description)
         self._application = aiohttp.web.Application()
-        self._rootpath, self._basepath, self._version = (
-            self._discover_version_and_paths()
-        )
+        (
+            self._rootpath,
+            self._basepath,
+            self._version,
+        ) = self._discover_version_and_paths()
         self._wire_up_description()
         self._actions = {}
         self._views = {}
