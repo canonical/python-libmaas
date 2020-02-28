@@ -131,7 +131,7 @@ class TestMachine(TestCaseWithProfile):
         cmd = machines.cmd_machine(parser)
         subparser = machines.cmd_machine.register(parser)
         options = subparser.parse_args([machine_objs[0]["hostname"]])
-        output = yaml.safe_load(
+        yaml_output = yaml.safe_load(
             cmd.execute(origin, options, target=tabular.RenderTarget.yaml)
         )
-        self.assertEqual(output.get("tags"), "tag1, tag2")
+        self.assertEqual(yaml_output.get("tags"), ["tag1", "tag2"])

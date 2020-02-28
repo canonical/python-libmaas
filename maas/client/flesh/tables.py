@@ -158,7 +158,7 @@ class NodeResourcePoolColumn(Column):
 class NodeTagsColumn(Column):
     def render(self, target, data):
         if data:
-            return super().render(target, ", ".join(tag.name for tag in data))
+            return super().render(target, [tag.name for tag in data])
         else:
             return ""
 
