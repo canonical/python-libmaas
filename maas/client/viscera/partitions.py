@@ -2,6 +2,7 @@
 
 __all__ = ["Partition", "Partitions"]
 
+from typing import Iterable
 from . import check, Object, ObjectField, ObjectFieldRelated, ObjectSet, ObjectType
 from .nodes import Node
 from .block_devices import BlockDevice
@@ -53,6 +54,7 @@ class Partition(Object, metaclass=PartitionType):
     used_for = ObjectField.Checked("used_for", check(str), readonly=True)
 
     filesystem = ObjectFieldRelated("filesystem", "Filesystem", readonly=True)
+    tags = ObjectField.Checked("tags", check(list), check(list))
 
     def __repr__(self):
         return super(Partition, self).__repr__(fields={"path", "size"})
@@ -108,6 +110,25 @@ class Partition(Object, metaclass=PartitionType):
                 id=self.id,
             )
         )
+    async def save(self):
+        """Save this partition."""
+        old_tags = list(self._orig_data["tags"])
+        new_tags = list(self.tags)
+        self._changed_data.pop("tags", None)
+        for tag_name in new_tags:
+            if tag_name not in old_tags:
+                await self._handler.add_tag(
+                    system_id=self.block_device.node.system_id, device_id=self.block_device.id, id=self.id, tag=tag_name
+                )
+            else:
+                old_tags.remove(tag_name)
+        for tag_name in old_tags:
+            await self._handler.remove_tag(
+                system_id=self.block_device.node.system_id, device_id=self.block_device.id,  id=self.id, tag=tag_name
+            )
+        self._orig_data["tags"] = new_tags
+        self._data["tags"] = list(new_tags)
+
 
 
 class PartitionsType(ObjectType):
@@ -132,7 +153,13 @@ class PartitionsType(ObjectType):
         data = await cls._handler.read(system_id=system_id, device_id=block_device)
         return cls(cls._object(item) for item in data)
 
-    async def create(cls, block_device: BlockDevice, size: int):
+    async def create(
+	cls,
+	block_device: BlockDevice,
+	*,
+	size: int,
+	tags: Iterable[str] = None
+    ):
         """
         Create a partition on a block device.
 
@@ -140,6 +167,8 @@ class PartitionsType(ObjectType):
         :type block_device: `BlockDevice`
         :param size: The size of the partition in bytes.
         :type size: `int`
+        :param tags: List of tags to add to the partition.
+        :type tags: sequence of `str`
         """
         params = {}
         if isinstance(block_device, BlockDevice):
@@ -154,7 +183,11 @@ class PartitionsType(ObjectType):
         if not size:
             raise ValueError("size must be provided and greater than zero.")
         params["size"] = size
-        return cls._object(await cls._handler.create(**params))
+        partition = cls._object(await cls._handler.create(**params))
+        if tags:
+            partition.tags = tags
+            await partition.save()
+        return partition
 
 
 class Partitions(ObjectSet, metaclass=PartitionsType):
