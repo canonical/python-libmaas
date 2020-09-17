@@ -373,6 +373,7 @@ class Machine(Node, metaclass=MachineType):
     status_name = ObjectField.Checked("status_name", check(str), readonly=True)
     raids = ObjectFieldRelatedSet("raids", "Raids", reverse=None)
     volume_groups = ObjectFieldRelatedSet("volume_groups", "VolumeGroups", reverse=None)
+    pod = ObjectFieldRelated("pod", "Pod", readonly=True)
 
     async def save(self):
         """Save the machine in MAAS."""
