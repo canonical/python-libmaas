@@ -301,7 +301,7 @@ class ActionAPI:
                 del data[key]
                 for nested_key, nested_value in value.items():
                     data[key + "_" + nested_key] = nested_value
-        for key, value in data.items():
+        for key, value in data.copy().items():
             if key.startswith("_"):
                 data[key[1:]] = data.pop(key)
         response = await self.bind(**params).call(**data)
