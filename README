@@ -2,7 +2,7 @@
 
 Python client API library made especially for [MAAS][].
 
-[![Build Status](https://travis-ci.org/maas/python-libmaas.svg?branch=master)](https://travis-ci.org/maas/python-libmaas)
+[![CI tests](https://github.com/maas/python-libmaas/workflows/CI%20tests/badge.svg)](https://github.com/maas/python-libmaas/actions?query=workflow%3A%22CI+tests%22)
 [![codecov.io](https://codecov.io/github/maas/python-libmaas/coverage.svg?branch=master)](https://codecov.io/github/maas/python-libmaas?branch=master)
 
 
@@ -11,9 +11,9 @@ Python client API library made especially for [MAAS][].
 All the dependencies are declared in `setup.py` so this can be installed
 with [pip](https://pip.pypa.io/). Python 3.5+ is required.
 
-When working from trunk it can be helpful to use `virtualenv`:
+When working from master it can be helpful to use a virtualenv:
 
-    $ virtualenv --python=python3 amc && source amc/bin/activate
+    $ python3 -m venv ve && source ve/bin/activate
     $ pip install git+https://github.com/maas/python-libmaas.git
     $ maas --help
 
