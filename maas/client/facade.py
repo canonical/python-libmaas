@@ -198,6 +198,9 @@ class Client:
             "create": origin.Machines.create,
             "get": origin.Machine.read,
             "list": origin.Machines.read,
+            "release": origin.Machines.release,
+            "unlock": origin.Machines.unlock,
+            "lock": origin.Machines.lock,
             "get_power_parameters_for": origin.Machines.get_power_parameters_for,
         }
 
