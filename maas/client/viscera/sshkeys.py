@@ -23,6 +23,7 @@ class SSHKeysType(ObjectType):
         """
         return cls._object(await cls._handler.create(key=key))
 
+
 class SSHKeys(ObjectSet, metaclass=SSHKeysType):
     """The set of SSH keys stored in MAAS."""
 
