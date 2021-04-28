@@ -23,7 +23,6 @@ class SSHKeysType(ObjectType):
         """
         return cls._object(await cls._handler.create(key=key))
 
-
 class SSHKeys(ObjectSet, metaclass=SSHKeysType):
     """The set of SSH keys stored in MAAS."""
 
@@ -41,3 +40,9 @@ class SSHKey(Object, metaclass=SSHKeyType):
     id = ObjectField.Checked("id", check(int), readonly=True)
     key = ObjectField.Checked("key", check(str), readonly=True)
     keysource = ObjectField.Checked("keysource", check_optional(str), readonly=True)
+
+    async def delete(self):
+        """Delete this key."""
+        await self._handler.delete(
+            id=self.id,
+        )
