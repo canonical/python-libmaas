@@ -70,7 +70,7 @@ class TestControllers(TestCaseWithProfile):
         cmd = controllers.cmd_controllers(parser)
         subparser = controllers.cmd_controllers.register(parser)
         options = subparser.parse_args([])
-        output = yaml.load(
+        output = yaml.safe_load(
             cmd.execute(origin, options, target=tabular.RenderTarget.yaml)
         )
         self.assertEquals(
