@@ -49,7 +49,7 @@ class TestDevices(TestCaseWithProfile):
         cmd = devices.cmd_devices(parser)
         subparser = devices.cmd_devices.register(parser)
         options = subparser.parse_args([])
-        output = yaml.load(
+        output = yaml.safe_load(
             cmd.execute(origin, options, target=tabular.RenderTarget.yaml)
         )
         self.assertEquals(

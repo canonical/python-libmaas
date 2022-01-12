@@ -48,7 +48,7 @@ class TestNodes(TestCaseWithProfile):
         cmd = nodes.cmd_nodes(parser)
         subparser = nodes.cmd_nodes.register(parser)
         options = subparser.parse_args([])
-        output = yaml.load(
+        output = yaml.safe_load(
             cmd.execute(origin, options, target=tabular.RenderTarget.yaml)
         )
         self.assertEquals(
