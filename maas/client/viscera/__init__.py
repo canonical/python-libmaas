@@ -19,7 +19,13 @@ __all__ = [
     "OriginBase",
 ]
 
-from collections import defaultdict, Iterable, Mapping, Sequence
+try:
+    # Python <= 3.9
+    from collections import defaultdict, Iterable, Mapping, Sequence
+except:
+    # Python > 3.9
+    from collections.abc import Iterable ,Mapping ,Sequence
+    from collections import defaultdict
 from copy import copy
 from datetime import datetime
 from functools import wraps

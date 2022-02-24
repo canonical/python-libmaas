@@ -2,7 +2,12 @@
 
 __all__ = ["bind"]
 
-from collections import Mapping
+try:
+    # Python <= 3.9
+    from collections import Mapping
+except:
+    # Python > 3.9
+    from collections.abc import Mapping
 from itertools import chain
 from unittest.mock import Mock
 

@@ -2,7 +2,13 @@
 
 __all__ = ["BootSourceSelection", "BootSourceSelections"]
 
-from collections import Sequence
+try:
+    # Python <= 3.9
+    from collections import Sequence
+except:
+    # Python > 3.9
+    from collections.abc import Sequence
+
 
 from . import check, Object, ObjectField, ObjectFieldRelated, ObjectSet, ObjectType
 from .boot_sources import BootSource
