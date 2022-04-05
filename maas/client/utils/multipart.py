@@ -21,7 +21,7 @@ try:
     from collections import Iterable,Mapping
 except:
     # Python > 3.9
-    from collections.abc import Sequence
+    from collections.abc import Iterable,Mapping
 from email.generator import BytesGenerator
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
