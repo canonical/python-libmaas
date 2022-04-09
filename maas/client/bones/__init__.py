@@ -7,11 +7,12 @@ hence the name "bones".
 __all__ = ["CallError", "SessionAPI"]
 
 import typing
+
 try:
     # Python <= 3.9
     from collections import Iterable, namedtuple
 except:
-        # Python > 3.9
+    # Python > 3.9
     from collections import namedtuple
     from collections.abc import Iterable
 import json
