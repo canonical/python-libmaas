@@ -2,7 +2,13 @@
 
 __all__ = ["Node", "Nodes"]
 
-from collections import Sequence
+try:
+    # Python <= 3.9
+    from collections import Sequence
+except:
+    # Python > 3.9
+    from collections.abc import Sequence
+
 import typing
 
 from . import (

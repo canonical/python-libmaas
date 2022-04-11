@@ -26,7 +26,9 @@ __all__ = [
     "vars_class",
 ]
 
-from collections import Iterable, namedtuple
+
+from collections import namedtuple
+from collections.abc import Iterable
 from functools import lru_cache, partial
 from inspect import cleandoc, getdoc
 from itertools import chain, cycle, repeat
@@ -175,7 +177,7 @@ empty = ""
 docstring = namedtuple("docstring", ("title", "body"))
 
 
-@lru_cache(2 ** 10)
+@lru_cache(2**10)
 def parse_docstring(thing):
     """Parse a Python docstring, or the docstring found on `thing`.
 

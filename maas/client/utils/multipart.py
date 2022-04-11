@@ -16,7 +16,7 @@
 
 __all__ = ["encode_multipart_data"]
 
-from collections import Iterable, Mapping
+from collections.abc import Iterable, Mapping
 from email.generator import BytesGenerator
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
