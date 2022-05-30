@@ -417,7 +417,7 @@ class CallAPI:
 
         def expand(data):
             for name, value in data.items():
-                if isinstance(value, Iterable):
+                if isinstance(value, Iterable) and not isinstance(value, str):
                     for value in value:
                         yield name, value
                 else:
