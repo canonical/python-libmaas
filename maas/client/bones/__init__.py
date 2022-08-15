@@ -525,7 +525,7 @@ def _prefer_json(headers):
 
 
 def _setattr(obj, name, value):
-    """Classic settatr(), also pincushions name if it's a reserved keyword.
+    """Classic setattr(), also pincushions name if it's a reserved keyword.
 
     Although keywords can be used as object names, they cause a syntax error
     upon call. This renders ActionAPIs with names like 'import' unusable, thus
