@@ -53,5 +53,5 @@ jobs:
 
     - name: Test
       run: |
-        tox -e py
+        tox -e py3
         codecov

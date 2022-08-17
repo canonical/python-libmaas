@@ -4,6 +4,7 @@ __all__ = ["Column", "RenderTarget", "Table"]
 
 from abc import ABCMeta, abstractmethod
 import collections
+from collections.abc import Iterable
 import csv
 import enum
 from io import StringIO
@@ -297,9 +298,7 @@ class Column:
         elif target is RenderTarget.json:
             return datum
         elif target is RenderTarget.csv:
-            if isinstance(datum, collections.Iterable) and not isinstance(
-                datum, (str, bytes)
-            ):
+            if isinstance(datum, Iterable) and not isinstance(datum, (str, bytes)):
                 return ",".join(datum)
             else:
                 return datum
@@ -308,9 +307,7 @@ class Column:
                 return ""
             elif isinstance(datum, colorclass.Color):
                 return datum.value_no_colors
-            elif isinstance(datum, collections.Iterable) and not isinstance(
-                datum, (str, bytes)
-            ):
+            elif isinstance(datum, Iterable) and not isinstance(datum, (str, bytes)):
                 return "\n".join(datum)
             else:
                 return str(datum)
@@ -319,9 +316,7 @@ class Column:
                 return ""
             elif isinstance(datum, colorclass.Color):
                 return datum
-            elif isinstance(datum, collections.Iterable) and not isinstance(
-                datum, (str, bytes)
-            ):
+            elif isinstance(datum, Iterable) and not isinstance(datum, (str, bytes)):
                 return "\n".join(datum)
             else:
                 return str(datum)
