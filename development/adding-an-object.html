@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Adding an object - MAAS Client Library & CLI</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Adding an object";
+        var mkdocs_page_input_path = "development/adding-an-object.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <script src="../js/jquery-3.6.0.min.js" defer></script>
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+      <script>hljs.initHighlightingOnLoad();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../index.html" class="icon icon-home"> MAAS Client Library & CLI
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../index.html">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Client</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../client/index.html">Introduction</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../client/nodes.html">Nodes</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../client/networking.html">Networking</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../client/interfaces.html">Interfaces</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../client/events.html">Events</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../client/other.html">Others</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Development</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="releasing.html">Release checklist</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="adding-an-object.html">Adding an object</a>
+    <ul class="current">
+    </ul>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">MAAS Client Library & CLI</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html" class="icon icon-home" alt="Docs"></a> &raquo;</li>
+          <li>Development &raquo;</li>
+      <li>Adding an object</li>
+    <li class="wy-breadcrumbs-aside">
+        <a href="https://github.com/maas/python-libmaas/edit/master/docs/development/adding-an-object.md"
+          class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1>Adding a new object type</h1>
+
+<p>This will show the process by which we can add support for <em>Space</em>
+objects, but it should be roughly applicable to other objects.</p>
+<hr />
+<h2 id="skeleton">Skeleton</h2>
+<p>Start by creating a new file in <em>viscera</em>. Following the example of
+existing objects, name it <code>maas/client/viscera/spaces.py</code> (i.e. plural).</p>
+<blockquote>
+<p>Why <em>viscera</em>? The client we recommend for users is a façade of
+<em>viscera</em>, allowing us to present a simplified interface which mingles
+set-like operations with individual ones. This is friendlier to a new
+developer, but <em>viscera</em> itself keeps the two separate for cleanliness
+of implementation.</p>
+</blockquote>
+<p>Create a skeleton for <em>Space</em> and <em>Spaces</em>:</p>
+<div class="codehilite"><pre><span></span><code><span class="sd">&quot;&quot;&quot;Objects for spaces.&quot;&quot;&quot;</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;Space&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Spaces&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Object</span><span class="p">,</span>
+    <span class="n">ObjectSet</span><span class="p">,</span>
+    <span class="n">ObjectType</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">SpacesType</span><span class="p">(</span><span class="n">ObjectType</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Metaclass for `Spaces`.&quot;&quot;&quot;</span>
+
+
+<span class="k">class</span> <span class="nc">Spaces</span><span class="p">(</span><span class="n">ObjectSet</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">SpacesType</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The set of spaces.&quot;&quot;&quot;</span>
+
+
+<span class="k">class</span> <span class="nc">SpaceType</span><span class="p">(</span><span class="n">ObjectType</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Metaclass for `Space`.&quot;&quot;&quot;</span>
+
+
+<span class="k">class</span> <span class="nc">Space</span><span class="p">(</span><span class="n">Object</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">SpaceType</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A space.&quot;&quot;&quot;</span>
+</code></pre></div>
+
+<p>We create explicit type classes as a place to put class-specific
+information and methods. Most interestingly, methods created on the type
+classes are <em>class</em> methods on instances of the type. For example:</p>
+<div class="codehilite"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">FooType</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
+<span class="gp">... </span>   <span class="k">def</span> <span class="nf">hello</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+<span class="gp">... </span>       <span class="k">return</span> <span class="s2">&quot;Hello, </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">cls</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">Foo</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">FooType</span><span class="p">):</span>
+<span class="gp">... </span>   <span class="k">def</span> <span class="nf">goodbye</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="gp">... </span>       <span class="k">return</span> <span class="s2">&quot;Goodbye, </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Foo</span><span class="o">.</span><span class="n">hello</span><span class="p">()</span>
+<span class="go">&quot;Hello, &lt;class &#39;__main__.Foo&#39;&gt;&quot;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">foo</span> <span class="o">=</span> <span class="n">Foo</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">foo</span><span class="o">.</span><span class="n">goodbye</span><span class="p">()</span>
+<span class="go">&#39;Goodbye, &lt;__main__.Foo object at ...&gt;&#39;</span>
+</code></pre></div>
+
+<p>The difference between using <code>@classmethod</code> and this is that those class
+methods are not available on instances:</p>
+<div class="codehilite"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">foo</span><span class="o">.</span><span class="n">hello</span><span class="p">()</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">AttributeError</span>: <span class="n">&#39;Foo&#39; object has no attribute &#39;hello&#39;</span>
+</code></pre></div>
+
+<p>This keeps the namespace uncluttered, which is good for interactive,
+exploratory development, and it keeps code cleaner too: a class method
+<strong>must</strong> be called via the class.</p>
+<h2 id="getting-this-into-the-default-origin">Getting this into the default <code>Origin</code></h2>
+<p>In <code>maas/client/viscera/__init__.py</code> is the default <code>Origin</code> class. This
+loads object definitions, like those above, and <em>binds</em> them to a
+particular server. More about that later, but for now you need to add
+<code>".spaces"</code> to <code>Origin.__init__</code>:</p>
+<div class="codehilite"><pre><span></span><code><span class="w"> </span>            &quot;.files&quot;,<span class="w"></span>
+<span class="w"> </span>            &quot;.maas&quot;,<span class="w"></span>
+<span class="w"> </span>            &quot;.machines&quot;,<span class="w"></span>
+<span class="gi">+            &quot;.spaces&quot;,</span><span class="w"></span>
+<span class="w"> </span>            &quot;.tags&quot;,<span class="w"></span>
+<span class="w"> </span>            &quot;.users&quot;,<span class="w"></span>
+<span class="w"> </span>            &quot;.version&quot;,<span class="w"></span>
+</code></pre></div>
+
+<h2 id="basic-accessors">Basic accessors</h2>
+<p>Add the following basic accessor method to <code>SpacesType</code>:</p>
+<div class="codehilite"><pre><span></span><code><span class="k">class</span> <span class="nc">SpacesType</span><span class="p">(</span><span class="n">ObjectType</span><span class="p">):</span>
+
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_handler</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_object</span><span class="p">,</span> <span class="n">data</span><span class="p">))</span>
+</code></pre></div>
+
+<p>Let&rsquo;s start working against a real MAAS server:</p>
+<div class="codehilite"><pre><span></span><code><span class="gp">$ </span>bin/maas login my-server http://.../MAAS username p4ssw0rd
+<span class="gp">$ </span>bin/pip install -IU IPython  <span class="c1"># Don&#39;t leave home without it.</span>
+<span class="gp">$ </span>bin/maas shell --viscera
+<span class="go">Welcome to the MAAS shell.</span>
+
+<span class="go">Predefined objects:</span>
+
+<span class="go">  client:</span>
+<span class="go">    A pre-canned client for &#39;madagascar&#39;.</span>
+
+<span class="go">  origin:</span>
+<span class="go">    A pre-canned `viscera` origin for &#39;madagascar&#39;.</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">origin</span><span class="o">.</span><span class="n">Spaces</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+<span class="go">&lt;Spaces length=2 items=[&lt;Space&gt;, &lt;Space&gt;]&gt;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">origin</span><span class="o">.</span><span class="n">Spaces</span><span class="o">.</span><span class="n">_handler</span>
+<span class="go">&lt;Handler Spaces http://.../MAAS/api/2.0/spaces/&gt;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">origin</span><span class="o">.</span><span class="n">Spaces</span><span class="o">.</span><span class="n">_origin</span>
+<span class="go">&lt;maas.client.viscera.Origin at ...&gt;</span>
+</code></pre></div>
+
+<p>The <code>_handler</code> attribute is the <em>bones</em> handler for spaces. We named the
+class &ldquo;Spaces&rdquo; and <code>Origin</code> paired that up with the <em>bones</em> handler of
+the same name. This let us call the lower-level <code>read()</code> method. Try
+calling it now:</p>
+<div class="codehilite"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">origin</span><span class="o">.</span><span class="n">Spaces</span><span class="o">.</span><span class="n">_handler</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+<span class="go">[{&#39;id&#39;: 0,</span>
+<span class="go">  &#39;name&#39;: &#39;space-0&#39;,</span>
+<span class="go">  &#39;resource_uri&#39;: &#39;/MAAS/api/2.0/spaces/0/&#39;,</span>
+<span class="go">  &#39;subnets&#39;: [],</span>
+<span class="go">  &#39;vlans&#39;: []},</span>
+<span class="go"> {&#39;id&#39;: -1,</span>
+<span class="go">  &#39;name&#39;: &#39;undefined&#39;,</span>
+<span class="go">  &#39;resource_uri&#39;: &#39;/MAAS/api/2.0/spaces/undefined/&#39;,</span>
+<span class="go">  &#39;subnets&#39;: [{&#39;active_discovery&#39;: False,</span>
+<span class="go">    &#39;allow_proxy&#39;: True,</span>
+<span class="go">    &#39;cidr&#39;: &#39;192.168.1.0/24&#39;,</span>
+<span class="go">    &#39;dns_servers&#39;: [],</span>
+<span class="go">    &#39;gateway_ip&#39;: &#39;192.168.1.254&#39;,</span>
+<span class="go">    &#39;id&#39;: 1,</span>
+<span class="go">    &#39;managed&#39;: True,</span>
+<span class="go">    &#39;name&#39;: &#39;192.168.1.0/24&#39;,</span>
+<span class="go">    &#39;rdns_mode&#39;: 2,</span>
+<span class="go">    &#39;resource_uri&#39;: &#39;/MAAS/api/2.0/subnets/1/&#39;,</span>
+<span class="go">    &#39;space&#39;: &#39;undefined&#39;,</span>
+<span class="go">    &#39;vlan&#39;: {&#39;dhcp_on&#39;: True,</span>
+<span class="go">     &#39;external_dhcp&#39;: None,</span>
+<span class="go">     &#39;fabric&#39;: &#39;fabric-0&#39;,</span>
+<span class="go">     &#39;fabric_id&#39;: 0,</span>
+<span class="go">     &#39;id&#39;: 5001,</span>
+<span class="go">     &#39;mtu&#39;: 1500,</span>
+<span class="go">     &#39;name&#39;: &#39;untagged&#39;,</span>
+<span class="go">     &#39;primary_rack&#39;: &#39;4y3h7n&#39;,</span>
+<span class="go">     &#39;relay_vlan&#39;: None,</span>
+<span class="go">     &#39;resource_uri&#39;: &#39;/MAAS/api/2.0/vlans/5001/&#39;,</span>
+<span class="go">     &#39;secondary_rack&#39;: &#39;xfaxgw&#39;,</span>
+<span class="go">     &#39;space&#39;: &#39;undefined&#39;,</span>
+<span class="go">     &#39;vid&#39;: 0}}],</span>
+<span class="go">  &#39;vlans&#39;: [{&#39;dhcp_on&#39;: True,</span>
+<span class="go">    &#39;external_dhcp&#39;: None,</span>
+<span class="go">    &#39;fabric&#39;: &#39;fabric-0&#39;,</span>
+<span class="go">    &#39;fabric_id&#39;: 0,</span>
+<span class="go">    &#39;id&#39;: 5001,</span>
+<span class="go">    &#39;mtu&#39;: 1500,</span>
+<span class="go">    &#39;name&#39;: &#39;untagged&#39;,</span>
+<span class="go">    &#39;primary_rack&#39;: &#39;4y3h7n&#39;,</span>
+<span class="go">    &#39;relay_vlan&#39;: None,</span>
+<span class="go">    &#39;resource_uri&#39;: &#39;/MAAS/api/2.0/vlans/5001/&#39;,</span>
+<span class="go">    &#39;secondary_rack&#39;: &#39;xfaxgw&#39;,</span>
+<span class="go">    &#39;space&#39;: &#39;undefined&#39;,</span>
+<span class="go">    &#39;vid&#39;: 0}]}]</span>
+</code></pre></div>
+
+<p>Lots of information!</p>
+<blockquote>
+<p>By the way, many or most of the IO methods in <em>python-libmaas</em> can be
+called interactively or in a script and they work the same as any
+other synchronous or blocking call. Internally, however, they&rsquo;re all
+asynchronous. They&rsquo;re wrapped in such a way that, when called from
+outside of an <em>asyncio</em> event-loop, they block, but inside they work
+just the same as any other asynchronous call.</p>
+</blockquote>
+<p>Let&rsquo;s look at those <code>Space</code> objects:</p>
+<div class="codehilite"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">space</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Spaces</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">dir</span><span class="p">(</span><span class="n">space</span><span class="p">)</span>
+<span class="go">[..., &#39;_data&#39;, &#39;_handler&#39;, &#39;_origin&#39;]</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">space</span><span class="o">.</span><span class="n">_data</span>
+<span class="go">{&#39;id&#39;: 0,</span>
+<span class="go"> &#39;name&#39;: &#39;space-0&#39;,</span>
+<span class="go"> &#39;resource_uri&#39;: &#39;/MAAS/api/2.0/spaces/0/&#39;,</span>
+<span class="go"> &#39;subnets&#39;: [],</span>
+<span class="go"> &#39;vlans&#39;: []}</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">space</span><span class="o">.</span><span class="n">_handler</span>
+<span class="go">&lt;Handler Space http://madagascar.local:5240/MAAS/api/2.0/spaces/{space_id}/&gt;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">space</span><span class="o">.</span><span class="n">_origin</span> <span class="ow">is</span> <span class="n">origin</span>
+<span class="go">True</span>
+</code></pre></div>
+
+<p>The handler has been associated with this object type like it was for
+<code>Spaces</code>, so now&rsquo;s a good time to add another accessor method:</p>
+<div class="codehilite"><pre><span></span><code><span class="k">class</span> <span class="nc">SpaceType</span><span class="p">(</span><span class="n">ObjectType</span><span class="p">):</span>
+
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_handler</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Try it out:</p>
+<div class="codehilite"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">space</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">Space</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">space</span><span class="o">.</span><span class="n">_data</span>
+<span class="go">{&#39;id&#39;: 0,</span>
+<span class="go"> &#39;name&#39;: &#39;space-0&#39;,</span>
+<span class="go"> &#39;resource_uri&#39;: &#39;/MAAS/api/2.0/spaces/0/&#39;,</span>
+<span class="go"> &#39;subnets&#39;: [],</span>
+<span class="go"> &#39;vlans&#39;: []}</span>
+</code></pre></div>
+
+<h2 id="getting-at-the-data">Getting at the data</h2>
+<p>We don&rsquo;t want to work with that <code>_data</code> dictionary, we want attributes:</p>
+<div class="codehilite"><pre><span></span><code><span class="k">class</span> <span class="nc">Space</span><span class="p">(</span><span class="n">Object</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">SpaceType</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A space.&quot;&quot;&quot;</span>
+
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">ObjectField</span><span class="o">.</span><span class="n">Checked</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="n">check</span><span class="p">(</span><span class="nb">int</span><span class="p">),</span> <span class="n">readonly</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">ObjectField</span><span class="o">.</span><span class="n">Checked</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="n">check</span><span class="p">(</span><span class="nb">str</span><span class="p">),</span> <span class="n">readonly</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Try it out in the shell:</p>
+<div class="codehilite"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">space</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">space</span><span class="p">,</span> <span class="n">name</span>
+<span class="go">(0, &#39;space-0&#39;)</span>
+</code></pre></div>
+
+<h2 id="next-steps">Next steps</h2>
+<p>That&rsquo;s enough for now, but there&rsquo;s plenty of ground yet to be covered:</p>
+<ul>
+<li>
+<p>How to work with the information about subnets and VLANs data that was
+  returned.</p>
+</li>
+<li>
+<p>How to create, modify, and delete objects.</p>
+</li>
+<li>
+<p>How to test all of this.</p>
+</li>
+</ul>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="releasing.html" class="btn btn-neutral float-left" title="Release checklist"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/maas/python-libmaas" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="releasing.html" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+  </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme_extra.js" defer></script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>

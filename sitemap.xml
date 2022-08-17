@@ -1,68 +1,48 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-
-    
     <url>
-     <loc>/index.html</loc>
-     <lastmod>2018-05-02</lastmod>
-     <changefreq>daily</changefreq>
+         <loc>None</loc>
+         <lastmod>2022-08-17</lastmod>
+         <changefreq>daily</changefreq>
     </url>
-    
-
-    
-        
     <url>
-     <loc>/client/index.html</loc>
-     <lastmod>2018-05-02</lastmod>
-     <changefreq>daily</changefreq>
+         <loc>None</loc>
+         <lastmod>2022-08-17</lastmod>
+         <changefreq>daily</changefreq>
     </url>
-        
     <url>
-     <loc>/client/nodes/index.html</loc>
-     <lastmod>2018-05-02</lastmod>
-     <changefreq>daily</changefreq>
+         <loc>None</loc>
+         <lastmod>2022-08-17</lastmod>
+         <changefreq>daily</changefreq>
     </url>
-        
     <url>
-     <loc>/client/networking/index.html</loc>
-     <lastmod>2018-05-02</lastmod>
-     <changefreq>daily</changefreq>
+         <loc>None</loc>
+         <lastmod>2022-08-17</lastmod>
+         <changefreq>daily</changefreq>
     </url>
-        
     <url>
-     <loc>/client/interfaces/index.html</loc>
-     <lastmod>2018-05-02</lastmod>
-     <changefreq>daily</changefreq>
+         <loc>None</loc>
+         <lastmod>2022-08-17</lastmod>
+         <changefreq>daily</changefreq>
     </url>
-        
     <url>
-     <loc>/client/events/index.html</loc>
-     <lastmod>2018-05-02</lastmod>
-     <changefreq>daily</changefreq>
+         <loc>None</loc>
+         <lastmod>2022-08-17</lastmod>
+         <changefreq>daily</changefreq>
     </url>
-        
     <url>
-     <loc>/client/other/index.html</loc>
-     <lastmod>2018-05-02</lastmod>
-     <changefreq>daily</changefreq>
+         <loc>None</loc>
+         <lastmod>2022-08-17</lastmod>
+         <changefreq>daily</changefreq>
     </url>
-        
-    
-
-    
-        
     <url>
-     <loc>/development/releasing/index.html</loc>
-     <lastmod>2018-05-02</lastmod>
-     <changefreq>daily</changefreq>
+         <loc>None</loc>
+         <lastmod>2022-08-17</lastmod>
+         <changefreq>daily</changefreq>
     </url>
-        
     <url>
-     <loc>/development/adding-an-object/index.html</loc>
-     <lastmod>2018-05-02</lastmod>
-     <changefreq>daily</changefreq>
+         <loc>None</loc>
+         <lastmod>2022-08-17</lastmod>
+         <changefreq>daily</changefreq>
     </url>
-        
-    
-
 </urlset>
