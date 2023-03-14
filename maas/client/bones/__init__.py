@@ -38,7 +38,7 @@ class SessionAPI:
             # For now just re-raise as SessionError.
             raise SessionError(str(error))
         else:
-            session = cls(description, credentials)
+            session = cls(url, description, credentials)
             session.scheme = urlparse(url).scheme
             session.insecure = insecure
             return session
@@ -49,7 +49,7 @@ class SessionAPI:
 
         :see: `ProfileStore`.
         """
-        session = cls(profile.description, profile.credentials)
+        session = cls(profile.url, profile.description, profile.credentials)
         session.scheme = urlparse(profile.url).scheme
         session.insecure = profile.other.get("insecure", False)
         return session
@@ -75,7 +75,7 @@ class SessionAPI:
         profile = await helpers.login(
             url=url, username=username, password=password, insecure=insecure
         )
-        session = cls(profile.description, profile.credentials)
+        session = cls(url, profile.description, profile.credentials)
         session.scheme = urlparse(url).scheme
         session.insecure = insecure
         return profile, session
@@ -90,7 +90,7 @@ class SessionAPI:
             instance made using the profile.
         """
         profile = await helpers.connect(url=url, apikey=apikey, insecure=insecure)
-        session = cls(profile.description, profile.credentials)
+        session = cls(url, profile.description, profile.credentials)
         session.scheme = urlparse(url).scheme
         session.insecure = insecure
         return profile, session
@@ -100,13 +100,15 @@ class SessionAPI:
     insecure = False
     debug = False
 
-    def __init__(self, description, credentials=None):
+    def __init__(self, url, description, credentials=None):
         """Construct a `SessionAPI`.
 
+        :param url: MAAS URL
         :param description: The description of the remote API. See `fromURL`.
         :param credentials: Credentials for the remote system. Optional.
         """
         super(SessionAPI, self).__init__()
+        self.__url = url
         self.__description = description
         self.__credentials = credentials
         self.__populate()
@@ -116,15 +118,15 @@ class SessionAPI:
         if self.__credentials is None:
             for resource in resources:
                 if resource["anon"] is not None:
-                    handler = HandlerAPI(resource["anon"], resource, self)
+                    handler = HandlerAPI(self.__url, resource["anon"], resource, self)
                     setattr(self, handler.name, handler)
         else:
             for resource in resources:
                 if resource["auth"] is not None:
-                    handler = HandlerAPI(resource["auth"], resource, self)
+                    handler = HandlerAPI(self.__url, resource["auth"], resource, self)
                     setattr(self, handler.name, handler)
                 elif resource["anon"] is not None:
-                    handler = HandlerAPI(resource["anon"], resource, self)
+                    handler = HandlerAPI(self.__url, resource["anon"], resource, self)
                     setattr(self, handler.name, handler)
 
     @property
@@ -154,9 +156,10 @@ class HandlerAPI:
     operations.
     """
 
-    def __init__(self, handler, resource, session):
+    def __init__(self, url, handler, resource, session):
         """Construct a `HandlerAPI`.
 
+        :param url: MAAS URL
         :param handler: The handler description from the overall API
             description document. See `SessionAPI`.
         :param resource: The parent of `handler` in the API description
@@ -164,6 +167,7 @@ class HandlerAPI:
         :param session: The `SessionAPI`.
         """
         super(HandlerAPI, self).__init__()
+        self.__url = url
         self.__handler = handler
         self.__resource = resource
         self.__session = session
@@ -187,7 +191,8 @@ class HandlerAPI:
         This will typically contain replacement patterns; these are
         interpolated in `CallAPI`.
         """
-        return self.__handler["uri"]
+        url = urlparse(self.__url)
+        return f"{url.scheme}://{url.netloc}{self.__handler['path']}"
 
     @property
     def params(self):
