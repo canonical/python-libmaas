@@ -72,8 +72,10 @@ class TestActionAPI_APIVersions(TestCase):
         for name, version, description in testing.api_descriptions
     )
 
+    url = "http://127.0.0.1:8080/MAAS/api/2.0/"
+
     def test__Version_read(self):
-        session = bones.SessionAPI(self.description)
+        session = bones.SessionAPI(self.url, self.description)
         action = session.Version.read
         self.assertThat(
             action,
@@ -91,7 +93,7 @@ class TestActionAPI_APIVersions(TestCase):
         if self.version > (2, 0):
             self.skipTest("Machines.deployment_status only in <= 2.0")
 
-        session = bones.SessionAPI(self.description, ("a", "b", "c"))
+        session = bones.SessionAPI(self.url, self.description, ("a", "b", "c"))
         action = session.Machines.deployment_status
         self.assertThat(
             action,
@@ -106,7 +108,7 @@ class TestActionAPI_APIVersions(TestCase):
         )
 
     def test__Machines_power_parameters(self):
-        session = bones.SessionAPI(self.description, ("a", "b", "c"))
+        session = bones.SessionAPI(self.url, self.description, ("a", "b", "c"))
         action = session.Machines.power_parameters
         self.assertThat(
             action,
@@ -129,9 +131,11 @@ class TestCallAPI_APIVersions(TestCase):
         for name, version, description in testing.api_descriptions
     )
 
+    url = "http://127.0.0.1:8080/MAAS/api/2.0/"
+
     def test__marshals_lists_into_query_as_repeat_parameters(self):
         system_ids = list(str(uuid1()) for _ in range(3))
-        session = bones.SessionAPI(self.description, ("a", "b", "c"))
+        session = bones.SessionAPI(self.url, self.description, ("a", "b", "c"))
         call = session.Machines.power_parameters.bind()
         call.dispatch = Mock()
 
