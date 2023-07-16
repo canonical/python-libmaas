@@ -50,9 +50,11 @@ class TestSSHKey(TestCase):
         self.assertThat(SSHKey.read(id=key_id), Equals(SSHKey(key_dict)))
 
     def test__sshkey_delete(self):
-        """ SSHKeys.read() returns a single SSH key. """
+        """SSHKeys.read() returns a single SSH key."""
         SSHKey = make_origin().SSHKey
         key_id = random.randint(0, 100)
-        ssh_key = SSHKey({"id": key_id, "key": make_string_without_spaces(), "keysource": ""})
+        ssh_key = SSHKey(
+            {"id": key_id, "key": make_string_without_spaces(), "keysource": ""}
+        )
         ssh_key.delete()
         SSHKey._handler.delete.assert_called_once_with(id=key_id)
