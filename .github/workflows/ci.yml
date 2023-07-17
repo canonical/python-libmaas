@@ -10,13 +10,13 @@ on:
 
 jobs:
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
     - name: Repository checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: "3.6"
 
@@ -29,7 +29,7 @@ jobs:
         tox -e lint
 
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
         python-version:
@@ -40,10 +40,10 @@ jobs:
           - "3.10"
     steps:
     - name: Repository checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -53,5 +53,5 @@ jobs:
 
     - name: Test
       run: |
-        tox -e py
+        tox -e py3
         codecov
