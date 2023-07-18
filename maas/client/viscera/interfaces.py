@@ -102,6 +102,8 @@ class Interface(Object, metaclass=InterfaceTypeMeta):
     discovered = ObjectFieldRelatedSet(
         "discovered", "InterfaceDiscoveredLinks", reverse=None
     )
+    interface_speed = ObjectField.Checked("interface_speed", check(int), readonly=True)
+    link_speed = ObjectField.Checked("link_speed", check(int), readonly=True)
 
     def __repr__(self):
         return super(Interface, self).__repr__(fields={"name", "mac_address", "type"})
