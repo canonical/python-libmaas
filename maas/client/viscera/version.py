@@ -2,13 +2,13 @@
 
 __all__ = ["Version"]
 
-from distutils.version import StrictVersion
+from packaging.version import Version as PackagingVersion
 
 from . import Object, ObjectField, ObjectType
 
 
 def parse_version(version):
-    return StrictVersion(version).version
+    return PackagingVersion(version).release
 
 
 class VersionType(ObjectType):
