@@ -54,7 +54,7 @@ setup(
         "colorclass >= 1.2.0",
         "macaroonbakery >= 1.1.3",
         "oauthlib >= 1.0.3",
-        "packaging >= 23.1",
+        "packaging >= 21.3",
         "pymongo >= 3.5.1",  # for bson
         "pytz >= 2014.10",
         "PyYAML >= 3.11",
