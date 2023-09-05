@@ -25,7 +25,7 @@ jobs:
         
     - name: Test latest version
       run: |
-        tox -e py3
+        make test
     
     - uses: actions/checkout@v3
       with:
