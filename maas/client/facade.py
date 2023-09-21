@@ -105,6 +105,20 @@ class Client:
         }
 
     @facade
+    def dnsresources(origin):
+        return {
+            "get": origin.DNSResource.read,
+            "list": origin.DNSResources.read,
+        }
+
+    @facade
+    def dnsresourcerecords(origin):
+        return {
+            "get": origin.DNSResourceRecord.read,
+            "list": origin.DNSResourceRecords.read,
+        }
+
+    @facade
     def domains(origin):
         return {
             "create": origin.Domains.create,
@@ -170,6 +184,12 @@ class Client:
             "create": origin.IPRanges.create,
             "get": origin.IPRange.read,
             "list": origin.IPRanges.read,
+        }
+
+    @facade
+    def ip_addresses(origin):
+        return {
+            "list": origin.IPAddresses.read,
         }
 
     @facade

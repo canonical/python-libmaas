@@ -67,7 +67,7 @@ setup(
         "setuptools",
         "testscenarios",
         "testtools",
-        "Twisted",
+        "Twisted<23.0.0",
     ],
     description="A client API library specially for MAAS.",
     long_description=read('README'),
