@@ -73,7 +73,6 @@ class TestAsynchronousType(TestCase):
         # `Asynchronous` groks class- and static-methods.
 
         class Class(metaclass=maas_async.Asynchronous):
-
             attribute = 123
 
             def imethod(self):

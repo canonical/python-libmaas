@@ -252,7 +252,6 @@ class MAASType(ObjectType):
         await cls.set_config("ntp_server", server)
 
     class StorageLayout(DescriptiveEnum):
-
         FLAT = "flat", "Flat layout"
         LVM = "lvm", "LVM layout"
         BCACHE = "bcache", "Bcache layout"
