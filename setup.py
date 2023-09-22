@@ -40,7 +40,6 @@ setup(
         'Programming Language :: Python :: 3.9',
         'Topic :: Software Development :: Libraries',
     ],
-    # namespace_packages=['maas'],
     packages=find_packages(
         include={"maas", "maas.*"},
         exclude={"*.tests", "*.testing"},
