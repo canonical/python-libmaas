@@ -90,6 +90,8 @@ def make_payloads(name, content):
             yield make_bytes_payload(name, b"false")
     elif isinstance(content, int):
         yield make_bytes_payload(name, b"%d" % content)
+    elif isinstance(content, float):
+        yield make_bytes_payload(name, b"%f" % content)
     elif isinstance(content, bytes):
         yield make_bytes_payload(name, content)
     elif isinstance(content, str):
