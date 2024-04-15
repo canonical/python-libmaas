@@ -203,7 +203,7 @@ class TestMachine(TestCase):
         )
 
     def test__commission_with_no_tests(self):
-        # Regression test for https://github.com/maas/python-libmaas/issues/185
+        # Regression test for https://github.com/canonical/python-libmaas/issues/185
         system_id = make_name_without_spaces("system-id")
         hostname = make_name_without_spaces("hostname")
         data = {

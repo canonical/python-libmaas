@@ -26,7 +26,7 @@ setup(
     name='python-libmaas',
     author='MAAS Developers',
     author_email='maas-devel@lists.launchpad.net',
-    url='https://github.com/maas/python-libmaas',
+    url='https://github.com/canonical/python-libmaas',
     version="0.6.8",
     classifiers=[
         'Development Status :: 3 - Alpha',

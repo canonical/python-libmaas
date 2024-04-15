@@ -2,8 +2,8 @@
 
 Python client API library made especially for [MAAS][].
 
-[![CI tests](https://github.com/maas/python-libmaas/workflows/CI%20tests/badge.svg)](https://github.com/maas/python-libmaas/actions?query=workflow%3A%22CI+tests%22)
-[![codecov.io](https://codecov.io/github/maas/python-libmaas/coverage.svg?branch=master)](https://codecov.io/github/maas/python-libmaas?branch=master)
+[![CI tests](https://github.com/canonical/python-libmaas/workflows/CI%20tests/badge.svg)](https://github.com/canonical/python-libmaas/actions?query=workflow%3A%22CI+tests%22)
+[![codecov.io](https://codecov.io/github/canonical/python-libmaas/coverage.svg?branch=master)](https://codecov.io/github/maas/python-libmaas?branch=master)
 
 
 ## Installation
@@ -14,7 +14,7 @@ with [pip](https://pip.pypa.io/). Python 3.5+ is required.
 When working from master it can be helpful to use a virtualenv:
 
     $ python3 -m venv ve && source ve/bin/activate
-    $ pip install git+https://github.com/maas/python-libmaas.git
+    $ pip install git+https://github.com/canonical/python-libmaas.git
     $ maas --help
 
 Releases are periodically made to [PyPI](https://pypi.python.org/) but,
