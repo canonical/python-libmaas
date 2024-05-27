@@ -480,7 +480,9 @@ class Machine(Node, metaclass=MachineType):
         comment: str = None,
         wait: bool = False,
         install_kvm: bool = False,
-        wait_interval: int = 5
+        wait_interval: int = 5,
+        ephemeral_deploy: bool = False,
+        enable_hw_sync: bool = False
     ):
         """Deploy this machine.
 
@@ -494,6 +496,8 @@ class Machine(Node, metaclass=MachineType):
         :param comment: A comment for the event log.
         :param wait: If specified, wait until the deploy is complete.
         :param wait_interval: How often to poll, defaults to 5 seconds
+        :param ephemeral_deploy: Deploy a machine in Ephemeral mode
+        :param enable_hw_sync: Enables periodic hardware sync
         """
         params = {"system_id": self.system_id}
 
@@ -513,6 +517,11 @@ class Machine(Node, metaclass=MachineType):
             params["hwe_kernel"] = hwe_kernel
         if comment is not None:
             params["comment"] = comment
+        if ephemeral_deploy:
+            params["ephemeral_deploy"] = ephemeral_deploy
+        if enable_hw_sync:
+            params["enable_hw_sync"] = enable_hw_sync
+
         self._reset(await self._handler.deploy(**params))
         if not wait:
             return self

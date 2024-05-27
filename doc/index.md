@@ -27,7 +27,7 @@ until we release a beta all APIs could change.
 Either work from a branch:
 
 ```console
-$ git clone https://github.com/maas/python-libmaas.git
+$ git clone https://github.com/canonical/python-libmaas.git
 $ cd python-libmaas
 $ make
 ```
@@ -37,7 +37,7 @@ Or install with [pip](https://pip.pypa.io/) into a
 
 ```console
 $ virtualenv --python=python3 amc && source amc/bin/activate
-$ pip install git+https://github.com/maas/python-libmaas.git
+$ pip install git+https://github.com/canonical/python-libmaas.git
 ```
 
 Or install from [PyPI](https://pypi.python.org/):

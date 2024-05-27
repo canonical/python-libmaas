@@ -3,7 +3,7 @@ markdown_extensions:
   - codehilite
   - sane_lists
   - smarty
-repo_url: https://github.com/maas/python-libmaas
+repo_url: https://github.com/canonical/python-libmaas
 site_name: MAAS Client Library & CLI
 strict: true
 theme: readthedocs

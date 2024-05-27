@@ -203,7 +203,7 @@ class TestMachine(TestCase):
         )
 
     def test__commission_with_no_tests(self):
-        # Regression test for https://github.com/maas/python-libmaas/issues/185
+        # Regression test for https://github.com/canonical/python-libmaas/issues/185
         system_id = make_name_without_spaces("system-id")
         hostname = make_name_without_spaces("hostname")
         data = {
@@ -257,6 +257,46 @@ class TestMachine(TestCase):
         machine.deploy(install_kvm=True, wait=False)
         machine._handler.deploy.assert_called_once_with(
             system_id=machine.system_id, install_kvm=True
+        )
+
+    def test__deploy_with_ephemeral_deploy(self):
+        system_id = make_name_without_spaces("system-id")
+        hostname = make_name_without_spaces("hostname")
+        data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "status": NodeStatus.READY,
+        }
+        deploying_data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "status": NodeStatus.DEPLOYING,
+        }
+        machine = make_machines_origin().Machine(data)
+        machine._handler.deploy.return_value = deploying_data
+        machine.deploy(ephemeral_deploy=True, wait=False)
+        machine._handler.deploy.assert_called_once_with(
+            system_id=machine.system_id, ephemeral_deploy=True
+        )
+
+    def test__deploy_with_enable_hw_sync(self):
+        system_id = make_name_without_spaces("system-id")
+        hostname = make_name_without_spaces("hostname")
+        data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "status": NodeStatus.READY,
+        }
+        deploying_data = {
+            "system_id": system_id,
+            "hostname": hostname,
+            "status": NodeStatus.DEPLOYING,
+        }
+        machine = make_machines_origin().Machine(data)
+        machine._handler.deploy.return_value = deploying_data
+        machine.deploy(enable_hw_sync=True, wait=False)
+        machine._handler.deploy.assert_called_once_with(
+            system_id=machine.system_id, enable_hw_sync=True
         )
 
     def test__deploy_with_wait_failed(self):

@@ -1,6 +1,6 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: python-libmaas
-Source: https://github.com/maas/python-libmaas
+Source: https://github.com/canonical/python-libmaas
 
 Files: *
 Copyright: 2017-2018 Canonical Ltd.
