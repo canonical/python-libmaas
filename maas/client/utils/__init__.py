@@ -338,7 +338,7 @@ class Spinner:
     Use as a context manager.
     """
 
-    def __init__(self, frames="/-\|", stream=sys.stdout):
+    def __init__(self, frames=r"/-\|", stream=sys.stdout):
         super(Spinner, self).__init__()
         self.frames = frames
         self.stream = stream
