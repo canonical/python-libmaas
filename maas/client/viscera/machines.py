@@ -352,6 +352,9 @@ class Machine(Node, metaclass=MachineType):
     cpus = ObjectField.Checked("cpu_count", check(int), check(int))
     disable_ipv4 = ObjectField.Checked("disable_ipv4", check(bool), check(bool))
     distro_series = ObjectField.Checked("distro_series", check(str), readonly=True)
+    hardware_info = ObjectField.Checked(
+        "hardware_info", check(dict), check(dict), readonly=True
+    )
     hwe_kernel = ObjectField.Checked(
         "hwe_kernel", check_optional(str), check_optional(str)
     )

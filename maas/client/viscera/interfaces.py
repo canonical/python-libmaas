@@ -7,6 +7,7 @@ from typing import Iterable, Union
 
 from . import (
     check,
+    check_optional,
     Object,
     ObjectField,
     ObjectFieldRelated,
@@ -94,6 +95,7 @@ class Interface(Object, metaclass=InterfaceTypeMeta):
     parents = ObjectFieldRelatedSet(
         "parents", "Interfaces", reverse=None, map_func=map_nic_name_to_dict
     )
+    product = ObjectField.Checked("product", check_optional(str), readonly=True)
     children = ObjectFieldRelatedSet(
         "children", "Interfaces", reverse=None, map_func=map_nic_name_to_dict
     )
