@@ -206,6 +206,12 @@ class Client:
         }
 
     @facade
+    def nodes(origin):
+        return {
+            "read": origin.Nodes.read,
+        }
+
+    @facade
     def machines(origin):
         return {
             "allocate": origin.Machines.allocate,
