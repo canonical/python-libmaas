@@ -8,6 +8,8 @@ __all__ = ["CallError", "SessionAPI"]
 
 import typing
 
+from keyword import iskeyword
+
 from collections import namedtuple
 from collections.abc import Iterable
 import json
@@ -177,7 +179,7 @@ class HandlerAPI:
         self.__doc__ = self.__handler["doc"]
         actions = self.__handler["actions"]
         for action in actions:
-            setattr(self, action["name"], ActionAPI(action, self))
+            _setattr(self, action["name"], ActionAPI(action, self))
 
     @property
     def name(self):
@@ -520,3 +522,15 @@ def _prefer_json(headers):
     if not any(header.lower() == "accept" for header in headers):
         headers["Accept"] = "application/json,*/*;q=0.9"
     return headers
+
+
+def _setattr(obj, name, value):
+    """Classic setattr(), also pincushions name if it's a reserved keyword.
+
+    Although keywords can be used as object names, they cause a syntax error
+    upon call. This renders ActionAPIs with names like 'import' unusable, thus
+    we pincushion the names.
+    """
+    if iskeyword(name):
+        name = name + "_"
+    setattr(obj, name, value)
