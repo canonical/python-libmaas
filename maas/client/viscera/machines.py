@@ -62,7 +62,8 @@ class MachinesType(NodesType):
         subarchitecture: str = None,
         min_hwe_kernel: str = None,
         hostname: str = None,
-        domain: typing.Union[int, str] = None
+        domain: typing.Union[int, str] = None,
+        skip_bmc_config: bool = None,
     ):
         """
         Create a new machine.
@@ -84,6 +85,8 @@ class MachinesType(NodesType):
         :type hostname: `str`
         :param domain: The domain for the machine (optional).
         :type domain: `int` or `str`
+        :param skip_bmc_config: Do not re-configure BMC (optional).
+        :type skip_bmc_config: `bool`
         """
         params = {
             "architecture": architecture,
@@ -100,6 +103,8 @@ class MachinesType(NodesType):
             params["hostname"] = hostname
         if domain is not None:
             params["domain"] = domain
+        if skip_bmc_config is not None:
+            params["skip_bmc_config"] = skip_bmc_config
         return cls._object(await cls._handler.create(**params))
 
     async def allocate(
