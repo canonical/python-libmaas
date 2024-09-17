@@ -11,7 +11,6 @@ from .tabular import Column, RenderTarget, Table, DetailTable, NestedTableColumn
 
 
 class NodeTypeColumn(Column):
-
     nice_names = {
         NodeType.MACHINE: "Machine",
         NodeType.DEVICE: "Device",
@@ -68,7 +67,6 @@ class NodeMemoryColumn(Column):
 
 
 class NodeStatusNameColumn(Column):
-
     colours = {
         # "New": "",  # White.
         "Commissioning": "autoyellow",
@@ -100,7 +98,6 @@ class NodeStatusNameColumn(Column):
 
 
 class NodePowerColumn(Column):
-
     colours = {
         PowerState.ON: "autogreen",
         # PowerState.OFF: "",  # White.
@@ -387,7 +384,6 @@ class FilesTable(Table):
 
 
 class UserIsAdminColumn(Column):
-
     yes, no = "Yes", "Np"
     yes_pretty = Color("{autogreen}Yes{/autogreen}")
 

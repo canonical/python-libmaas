@@ -158,7 +158,6 @@ class ObjectType(Asynchronous, metaclass=Asynchronous):
 
 
 class ObjectBasics:
-
     __slots__ = ()
 
     def __dir__(self):

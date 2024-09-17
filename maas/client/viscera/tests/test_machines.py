@@ -906,7 +906,6 @@ class TestMachine(TestCase):
 
 
 class TestMachine_APIVersion(TestCase):
-
     scenarios = tuple(
         (name, dict(version=version, description=description))
         for name, version, description in api_descriptions

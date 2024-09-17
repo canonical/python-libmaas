@@ -1051,7 +1051,6 @@ class TestObjectFieldChecked(TestCase):
         self.assertThat(field.value_to_datum(None, 1), Equals(2))
 
     def test__works_in_place(self):
-
         # Deltas to apply to datums and values.
         datum_to_value_delta = 2
         value_to_datum_delta = 3

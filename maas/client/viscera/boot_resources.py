@@ -38,7 +38,6 @@ def calc_size_and_sha265(content: io.IOBase, chunk_size: int):
 
 
 class BootResourceFileType(enum.Enum):
-
     TGZ = "tgz"
     DDTGZ = "ddtgz"
 

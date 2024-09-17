@@ -17,7 +17,6 @@ import yaml
 
 
 class RenderTarget(enum.Enum):
-
     # Human-readable tabluar output.
     plain = "plain"
     pretty = "pretty"
