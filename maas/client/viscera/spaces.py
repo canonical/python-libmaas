@@ -37,7 +37,6 @@ class Spaces(ObjectSet, metaclass=SpacesType):
 
 
 class SpaceType(ObjectType):
-
     _default_space_id = 0
 
     async def get_default(cls):

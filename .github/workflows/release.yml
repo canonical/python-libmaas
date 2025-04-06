@@ -1,0 +1,52 @@
+name: Release version
+
+on:
+  workflow_dispatch:
+    inputs:
+      newversion:
+        description: 'New version'     
+        required: true
+
+jobs:
+  release-version:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Repository checkout
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.6"
+
+    - name: Install dependencies
+      run: |
+        pip install --upgrade pip tox bump2version
+        
+    - name: Test latest version
+      run: |
+        make test
+    
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - name: 'Get Previous version tag'
+      id: previousversion
+      uses: "WyriHaximus/github-action-get-previous-tag@v1"
+      
+    - name: Bump setup.py version
+      run: |
+        bump2version --current-version ${previousversion} --new-version ${newversion} setup.py
+      
+    - name: Tag latest version
+      uses: EndBug/latest-tag@latest
+      with:
+        tag-name: ${newversion}
+    
+    - name: Update docs
+      run: /
+        make docs-to-github
+
+    - name: Upload to pypi
+      run: /
+        make upload

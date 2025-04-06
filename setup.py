@@ -40,7 +40,6 @@ setup(
         'Programming Language :: Python :: 3.9',
         'Topic :: Software Development :: Libraries',
     ],
-    namespace_packages=['maas'],
     packages=find_packages(
         include={"maas", "maas.*"},
         exclude={"*.tests", "*.testing"},
@@ -58,13 +57,14 @@ setup(
         "pymongo >= 3.5.1",  # for bson
         "pytz >= 2014.10",
         "PyYAML >= 3.11",
+        "setuptools >= 58.2.0",
         "terminaltables >= 2.1.0",
     ],
     test_suite="maas.client",
     tests_require=[
         "django >= 2.2.4, < 3.0",
         "fixtures >= 1.0.0",
-        "setuptools",
+        "setuptools >= 58.2.0",
         "testscenarios",
         "testtools",
         "Twisted<23.0.0",
