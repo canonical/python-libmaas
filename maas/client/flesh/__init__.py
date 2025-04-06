@@ -318,7 +318,7 @@ class OriginCommandBase(Command):
 
 class OriginCommand(OriginCommandBase):
     def __call__(self, options):
-        session = bones.SessionAPI.fromProfileName(options.profile)
+        session = bones.SessionAPI.fromProfileName(options.profile_name)
         origin = viscera.Origin(session)
         return self.execute(origin, options)
 
@@ -328,7 +328,7 @@ class OriginCommand(OriginCommandBase):
 
 class OriginTableCommand(OriginCommandBase, TableCommand):
     def __call__(self, options):
-        session = bones.SessionAPI.fromProfileName(options.profile)
+        session = bones.SessionAPI.fromProfileName(options.profile_name)
         origin = viscera.Origin(session)
         return self.execute(origin, options, target=options.format)
 
