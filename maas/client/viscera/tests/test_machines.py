@@ -955,6 +955,7 @@ class TestMachines(TestCase):
             min_hwe_kernel="hwe-x",
             hostname="new-machine",
             domain="maas",
+            skip_bmc_config=True,
         )
         self.assertThat(observed, IsInstance(Machine))
         Machines._handler.create.assert_called_once_with(
@@ -968,6 +969,7 @@ class TestMachines(TestCase):
             min_hwe_kernel="hwe-x",
             hostname="new-machine",
             domain="maas",
+            skip_bmc_config=True,
         )
 
     def test__allocate(self):
