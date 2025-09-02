@@ -1,4 +1,4 @@
-""" Testing framework for maas.client.viscera """
+"""Testing framework for maas.client.viscera"""
 
 __all__ = ["bind"]
 

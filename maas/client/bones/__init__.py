@@ -337,9 +337,11 @@ class CallError(Exception):
         desc = "%s -> %s (%s)" % (
             desc_for_request,
             desc_for_response,
-            desc_for_content
-            if len(desc_for_content) <= 50
-            else (desc_for_content[:49] + "…"),
+            (
+                desc_for_content
+                if len(desc_for_content) <= 50
+                else (desc_for_content[:49] + "…")
+            ),
         )
         super(CallError, self).__init__(desc)
         self.request = request
