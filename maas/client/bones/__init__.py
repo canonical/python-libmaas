@@ -337,9 +337,11 @@ class CallError(Exception):
         desc = "%s -> %s (%s)" % (
             desc_for_request,
             desc_for_response,
-            desc_for_content
-            if len(desc_for_content) <= 50
-            else (desc_for_content[:49] + "…"),
+            (
+                desc_for_content
+                if len(desc_for_content) <= 50
+                else (desc_for_content[:49] + "…")
+            ),
         )
         super(CallError, self).__init__(desc)
         self.request = request
@@ -460,7 +462,7 @@ class CallAPI:
         library.
         """
         insecure = self.action.handler.session.insecure
-        connector = aiohttp.TCPConnector(verify_ssl=(not insecure))
+        connector = aiohttp.TCPConnector(ssl=(not insecure))
         session = aiohttp.ClientSession(connector=connector)
         async with session:
             response = await session.request(

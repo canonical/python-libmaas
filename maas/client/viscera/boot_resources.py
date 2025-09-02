@@ -184,7 +184,7 @@ class BootResourcesType(ObjectType):
         uploaded_size = 0
 
         insecure = cls._handler.session.insecure
-        connector = aiohttp.TCPConnector(verify_ssl=(not insecure))
+        connector = aiohttp.TCPConnector(ssl=(not insecure))
         session = aiohttp.ClientSession(connector=connector)
 
         async with session:

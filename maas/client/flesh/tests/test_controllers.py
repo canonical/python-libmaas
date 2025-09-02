@@ -73,7 +73,7 @@ class TestControllers(TestCaseWithProfile):
         output = yaml.safe_load(
             cmd.execute(origin, options, target=tabular.RenderTarget.yaml)
         )
-        self.assertEquals(
+        self.assertEqual(
             [
                 {"name": "hostname", "title": "Hostname"},
                 {"name": "node_type", "title": "Type"},
@@ -93,7 +93,7 @@ class TestControllers(TestCaseWithProfile):
             }
             for controller in racks + regions
         }
-        self.assertEquals(
+        self.assertEqual(
             sorted(controller_output.values(), key=itemgetter("hostname")),
             output["data"],
         )

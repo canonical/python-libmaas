@@ -1,4 +1,4 @@
-""" Custom errors for libmaas """
+"""Custom errors for libmaas"""
 
 __all__ = ["MAASException", "OperationNotAllowed"]
 

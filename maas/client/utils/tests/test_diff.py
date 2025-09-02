@@ -26,13 +26,13 @@ class TestCalculateDictDiff(TestCase):
     def test_calcs_no_difference(self):
         orig_data = {"key1": "value1", "key2": "value2"}
         new_data = copy.deepcopy(orig_data)
-        self.assertEquals({}, calculate_dict_diff(orig_data, new_data))
+        self.assertEqual({}, calculate_dict_diff(orig_data, new_data))
 
     def test_calcs_changed_value(self):
         orig_data = {"key1": "value1", "key2": "value2"}
         new_data = copy.deepcopy(orig_data)
         new_data["key2"] = "new_value"
-        self.assertEquals(
+        self.assertEqual(
             {"key2": "new_value"}, calculate_dict_diff(orig_data, new_data)
         )
 
@@ -40,13 +40,13 @@ class TestCalculateDictDiff(TestCase):
         orig_data = {"key1": "value1", "key2": "value2"}
         new_data = copy.deepcopy(orig_data)
         del new_data["key2"]
-        self.assertEquals({"key2": ""}, calculate_dict_diff(orig_data, new_data))
+        self.assertEqual({"key2": ""}, calculate_dict_diff(orig_data, new_data))
 
     def test_calcs_changes_and_deleted(self):
         orig_data = {"key1": "value1", "key2": "value2"}
         new_data = copy.deepcopy(orig_data)
         new_data["key1"] = "new_value"
         del new_data["key2"]
-        self.assertEquals(
+        self.assertEqual(
             {"key1": "new_value", "key2": ""}, calculate_dict_diff(orig_data, new_data)
         )

@@ -87,7 +87,7 @@ class TestBootSources(TestCase):
         ]
 
         sources = BootSources.read()
-        self.assertEquals(2, len(sources))
+        self.assertEqual(2, len(sources))
 
     def test__create_calls_create_with_keyring_filename(self):
         source_id = random.randint(0, 100)

@@ -27,7 +27,7 @@ class TestFiles(TestCase):
         origin.Files._handler.read.return_value = data
 
         resources = origin.Files.read()
-        self.assertEquals(2, len(resources))
+        self.assertEqual(2, len(resources))
         self.assertThat(resources, IsInstance(origin.Files))
         self.assertThat(resources, AllMatch(IsInstance(origin.File)))
         self.assertThat(

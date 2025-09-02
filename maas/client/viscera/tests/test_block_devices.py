@@ -63,7 +63,7 @@ class TestBlockDevices(TestCase):
     def test__read_bad_node_type(self):
         BlockDevices = make_origin().BlockDevices
         error = self.assertRaises(TypeError, BlockDevices.read, random.randint(0, 100))
-        self.assertEquals("node must be a Node or str, not int", str(error))
+        self.assertEqual("node must be a Node or str, not int", str(error))
 
     def test__read_with_system_id(self):
         BlockDevices = make_origin().BlockDevices
@@ -114,7 +114,7 @@ class TestBlockDevices(TestCase):
             size=(4096 * 1024),
             block_size=512,
         )
-        self.assertEquals("node must be a Node or str, not int", str(error))
+        self.assertEqual("node must be a Node or str, not int", str(error))
 
     def test__create_missing_size(self):
         BlockDevices = make_origin().BlockDevices
@@ -127,7 +127,7 @@ class TestBlockDevices(TestCase):
             serial="QEMU0001",
             block_size=512,
         )
-        self.assertEquals("size must be provided and greater than zero.", str(error))
+        self.assertEqual("size must be provided and greater than zero.", str(error))
 
     def test__create_negative_size(self):
         BlockDevices = make_origin().BlockDevices
@@ -141,7 +141,7 @@ class TestBlockDevices(TestCase):
             size=-1,
             block_size=512,
         )
-        self.assertEquals("size must be provided and greater than zero.", str(error))
+        self.assertEqual("size must be provided and greater than zero.", str(error))
 
     def test__create_missing_block_size(self):
         BlockDevices = make_origin().BlockDevices
@@ -155,7 +155,7 @@ class TestBlockDevices(TestCase):
             size=(4096 * 1024),
             block_size=None,
         )
-        self.assertEquals(
+        self.assertEqual(
             "block_size must be provided and greater than zero.", str(error)
         )
 
@@ -171,7 +171,7 @@ class TestBlockDevices(TestCase):
             size=(4096 * 1024),
             block_size=-1,
         )
-        self.assertEquals(
+        self.assertEqual(
             "block_size must be provided and greater than zero.", str(error)
         )
 
@@ -185,7 +185,7 @@ class TestBlockDevices(TestCase):
             model="QEMU",
             size=(4096 * 1024),
         )
-        self.assertEquals("serial must be provided when model is provided.", str(error))
+        self.assertEqual("serial must be provided when model is provided.", str(error))
 
     def test__create_serial_requires_model(self):
         BlockDevices = make_origin().BlockDevices
@@ -197,7 +197,7 @@ class TestBlockDevices(TestCase):
             serial="QEMU0001",
             size=(4096 * 1024),
         )
-        self.assertEquals("model must be provided when serial is provided.", str(error))
+        self.assertEqual("model must be provided when serial is provided.", str(error))
 
     def test__create_requires_model_and_serial_or_id_path(self):
         BlockDevices = make_origin().BlockDevices
@@ -208,7 +208,7 @@ class TestBlockDevices(TestCase):
             "sda",
             size=(4096 * 1024),
         )
-        self.assertEquals(
+        self.assertEqual(
             "Either model/serial is provided or id_path must be provided.", str(error)
         )
 
@@ -278,7 +278,7 @@ class TestBlockDevice(TestCase):
         error = self.assertRaises(
             TypeError, BlockDevice.read, random.randint(0, 100), random.randint(0, 100)
         )
-        self.assertEquals("node must be a Node or str, not int", str(error))
+        self.assertEqual("node must be a Node or str, not int", str(error))
 
     def test__read_with_system_id(self):
         BlockDevice = make_origin().BlockDevice

@@ -51,7 +51,7 @@ class TestNodes(TestCaseWithProfile):
         output = yaml.safe_load(
             cmd.execute(origin, options, target=tabular.RenderTarget.yaml)
         )
-        self.assertEquals(
+        self.assertEqual(
             [
                 {"name": "hostname", "title": "Hostname"},
                 {"name": "node_type", "title": "Type"},
@@ -65,7 +65,7 @@ class TestNodes(TestCaseWithProfile):
             ],
             key=itemgetter("hostname"),
         )
-        self.assertEquals(nodes_output, output["data"])
+        self.assertEqual(nodes_output, output["data"])
 
     def test_calls_handler_with_hostnames(self):
         origin = make_origin()

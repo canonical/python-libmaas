@@ -754,7 +754,7 @@ class TestMachine(TestCase):
         machine._handler.query_power_state.return_value = query_data
         result = machine.query_power_state()
         self.assertIsInstance(result, PowerState)
-        self.assertEquals(PowerState.ON, result)
+        self.assertEqual(PowerState.ON, result)
         self.assertEqual(PowerState.ON, machine.power_state)
 
     def test__get_details(self):
@@ -778,7 +778,7 @@ class TestMachine(TestCase):
             machine.system_id, return_value=return_val
         )
         data = machine.get_details()
-        self.assertItemsEqual(["lldp", "lshw"], data.keys())
+        self.assertCountEqual(["lldp", "lshw"], data.keys())
         lldp = ElementTree.fromstring(data["lldp"])
         lshw = ElementTree.fromstring(data["lshw"])
         assert IsInstance(lldp, ElementTree)
