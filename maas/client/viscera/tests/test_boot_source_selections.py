@@ -134,12 +134,12 @@ class TestBootSources(TestCase):
         ]
 
         selections = BootSourceSelections.read(source)
-        self.assertEquals(2, len(selections))
-        self.assertEquals(
+        self.assertEqual(2, len(selections))
+        self.assertEqual(
             origin.BootSource(source.id, {"bootsourceselection": selections[0]}),
             selections[0].boot_source,
         )
-        self.assertEquals(
+        self.assertEqual(
             origin.BootSource(source.id, {"bootsourceselection": selections[1]}),
             selections[1].boot_source,
         )

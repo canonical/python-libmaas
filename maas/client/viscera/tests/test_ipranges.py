@@ -51,7 +51,7 @@ class TestIPRanges(TestCase):
             type=make_string_without_spaces(),
             comment=comment,
         )
-        self.assertEquals("type must be an IPRangeType, not str", str(error))
+        self.assertEqual("type must be an IPRangeType, not str", str(error))
 
     def test__ipranges_read(self):
         """IPRanges.read() returns a list of IPRanges."""

@@ -480,7 +480,7 @@ class TestObject(TestCase):
         object_pk = randint(0, 20)
         object_a = object_type(object_pk)
         self.assertFalse(object_a.loaded)
-        self.assertEquals(object_pk, object_a.pk)
+        self.assertEqual(object_pk, object_a.pk)
 
     def test__can_access_alt_pk_attributes_when_unloaded(self):
         object_type = type(
@@ -495,7 +495,7 @@ class TestObject(TestCase):
         object_alt_pk = randint(0, 20)
         object_a = object_type({"alt_pk_d": object_alt_pk, "__incomplete__": True})
         self.assertFalse(object_a.loaded)
-        self.assertEquals(object_alt_pk, object_a.alt_pk)
+        self.assertEqual(object_alt_pk, object_a.alt_pk)
 
     def test__can_access_attributes_when_loaded(self):
         object_type = type(
@@ -507,7 +507,7 @@ class TestObject(TestCase):
         object_name = make_name("name")
         object_a = object_type({"pk_d": object_pk, "name": object_name})
         self.assertTrue(object_a.loaded)
-        self.assertEquals(object_name, object_a.name)
+        self.assertEqual(object_name, object_a.name)
 
     def test__equal_when_data_matches(self):
         data = {"key": make_name("value")}
@@ -1210,7 +1210,7 @@ class TestObjectFieldRelatedSet(TestCase):
         ObjectFieldRelatedSet("name", ObjectSet)
 
     def test_datum_to_value_returns_empty_list_on_None(self):
-        self.assertEquals(
+        self.assertEqual(
             ObjectFieldRelatedSet("name", "class").datum_to_value(object(), None), []
         )
 
@@ -1232,7 +1232,7 @@ class TestObjectFieldRelatedSet(TestCase):
         field = ObjectFieldRelatedSet("related_ids", "RelObjectSet")
         rel_ids = range(5)
         rel_object_set = field.datum_to_value(instance, rel_ids)
-        self.assertEquals(5, len(rel_object_set))
+        self.assertEqual(5, len(rel_object_set))
         self.assertIsInstance(rel_object_set[0], rel_object_type)
         self.assertFalse(rel_object_set[0].loaded)
         self.assertThat(
@@ -1253,7 +1253,7 @@ class TestObjectFieldRelatedSet(TestCase):
         field = ObjectFieldRelatedSet("related_ids", "RelObjectSet", reverse="reverse")
         rel_ids = range(5)
         rel_object_set = field.datum_to_value(instance, rel_ids)
-        self.assertEquals(5, len(rel_object_set))
+        self.assertEqual(5, len(rel_object_set))
         self.assertIsInstance(rel_object_set[0], rel_object_type)
         self.assertFalse(rel_object_set[0].loaded)
         self.assertThat(
@@ -1273,7 +1273,7 @@ class TestObjectFieldRelatedSet(TestCase):
         field = ObjectFieldRelatedSet("related_ids", "RelObjectSet", reverse=None)
         rel_ids = range(5)
         rel_object_set = field.datum_to_value(instance, rel_ids)
-        self.assertEquals(5, len(rel_object_set))
+        self.assertEqual(5, len(rel_object_set))
         self.assertIsInstance(rel_object_set[0], rel_object_type)
         self.assertFalse(rel_object_set[0].loaded)
         self.assertThat(rel_object_set[0]._data, Equals({"pk_d": rel_ids[0]}))
@@ -1297,7 +1297,7 @@ class TestObjectFieldRelatedSet(TestCase):
         rel_ids = range(5)
         rel_object_set = field.datum_to_value(instance, rel_ids)
         rel_object_set.create()
-        self.assertEquals(
+        self.assertEqual(
             "RelObjectSet.Managed#InstObject", type(rel_object_set).__name__
         )
         self.assertThat(create_mock.call_args_list, Equals([call(instance)]))

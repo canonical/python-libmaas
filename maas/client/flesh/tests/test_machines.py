@@ -60,7 +60,7 @@ class TestMachines(TestCaseWithProfile):
         output = yaml.safe_load(
             cmd.execute(origin, options, target=tabular.RenderTarget.yaml)
         )
-        self.assertEquals(
+        self.assertEqual(
             [
                 {"name": "hostname", "title": "Hostname"},
                 {"name": "power", "title": "Power"},
@@ -91,7 +91,7 @@ class TestMachines(TestCaseWithProfile):
             ],
             key=itemgetter("hostname"),
         )
-        self.assertEquals(machines_output, output["data"])
+        self.assertEqual(machines_output, output["data"])
 
     def test_calls_handler_with_hostnames(self):
         origin = make_origin()

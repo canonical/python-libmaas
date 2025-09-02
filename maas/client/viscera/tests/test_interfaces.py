@@ -54,7 +54,7 @@ class TestInterfaces(TestCase):
     def test__read_bad_node_type(self):
         Interfaces = make_origin().Interfaces
         error = self.assertRaises(TypeError, Interfaces.read, random.randint(0, 100))
-        self.assertEquals("node must be a Node or str, not int", str(error))
+        self.assertEqual("node must be a Node or str, not int", str(error))
 
     def test__read_with_system_id(self):
         Interfaces = make_origin().Interfaces
@@ -95,7 +95,7 @@ class TestInterfaces(TestCase):
     def test__create_bad_node_type(self):
         Interfaces = make_origin().Interfaces
         error = self.assertRaises(TypeError, Interfaces.create, random.randint(0, 100))
-        self.assertEquals("node must be a Node or str, not int", str(error))
+        self.assertEqual("node must be a Node or str, not int", str(error))
 
     def test__create_bad_vlan_type(self):
         Interfaces = make_origin().Interfaces
@@ -105,7 +105,7 @@ class TestInterfaces(TestCase):
             make_string_without_spaces(),
             vlan=make_string_without_spaces(),
         )
-        self.assertEquals("vlan must be a Vlan or int, not str", str(error))
+        self.assertEqual("vlan must be a Vlan or int, not str", str(error))
 
     def test__create_bad_interface_type_type(self):
         Interfaces = make_origin().Interfaces
@@ -115,16 +115,14 @@ class TestInterfaces(TestCase):
             make_string_without_spaces(),
             interface_type=make_string_without_spaces(),
         )
-        self.assertEquals(
-            "interface_type must be an InterfaceType, not str", str(error)
-        )
+        self.assertEqual("interface_type must be an InterfaceType, not str", str(error))
 
     def test__create_physical_requires_mac_address(self):
         Interfaces = make_origin().Interfaces
         error = self.assertRaises(
             ValueError, Interfaces.create, make_string_without_spaces()
         )
-        self.assertEquals("mac_address required for physical interface", str(error))
+        self.assertEqual("mac_address required for physical interface", str(error))
 
     def test__create_physical_with_all_values(self):
         origin = make_origin()
@@ -220,7 +218,7 @@ class TestInterfaces(TestCase):
             name=make_string_without_spaces(),
             parent=make_string_without_spaces(),
         )
-        self.assertEquals("use parents not parent for bond interface", str(error))
+        self.assertEqual("use parents not parent for bond interface", str(error))
 
     def test__create_bond_fails_parents_not_iterable(self):
         Interfaces = make_origin().Interfaces
@@ -232,7 +230,7 @@ class TestInterfaces(TestCase):
             name=make_string_without_spaces(),
             parents=random.randint(1, 20),
         )
-        self.assertEquals("parents must be a iterable, not int", str(error))
+        self.assertEqual("parents must be a iterable, not int", str(error))
 
     def test__create_bond_fails_parents_is_not_Interface_or_int(self):
         Interfaces = make_origin().Interfaces
@@ -244,7 +242,7 @@ class TestInterfaces(TestCase):
             name=make_string_without_spaces(),
             parents=[make_string_without_spaces()],
         )
-        self.assertEquals("parent[0] must be an Interface or int, not str", str(error))
+        self.assertEqual("parent[0] must be an Interface or int, not str", str(error))
 
     def test__create_bond_fails_name_missing(self):
         Interfaces = make_origin().Interfaces
@@ -255,7 +253,7 @@ class TestInterfaces(TestCase):
             InterfaceType.BOND,
             parents=[random.randint(1, 20)],
         )
-        self.assertEquals("name is required for bond interface", str(error))
+        self.assertEqual("name is required for bond interface", str(error))
 
     def test__create_bond_with_all_values(self):
         origin = make_origin()
@@ -395,7 +393,7 @@ class TestInterfaces(TestCase):
             InterfaceType.VLAN,
             parents=[make_string_without_spaces()],
         )
-        self.assertEquals("use parent not parents for VLAN interface", str(error))
+        self.assertEqual("use parent not parents for VLAN interface", str(error))
 
     def test__create_vlan_fails_without_parent(self):
         Interfaces = make_origin().Interfaces
@@ -405,7 +403,7 @@ class TestInterfaces(TestCase):
             make_string_without_spaces(),
             InterfaceType.VLAN,
         )
-        self.assertEquals("parent is required for VLAN interface", str(error))
+        self.assertEqual("parent is required for VLAN interface", str(error))
 
     def test__create_vlan_fails_parent_wrong_type(self):
         Interfaces = make_origin().Interfaces
@@ -416,7 +414,7 @@ class TestInterfaces(TestCase):
             InterfaceType.VLAN,
             parent=make_string_without_spaces(),
         )
-        self.assertEquals("parent must be an Interface or int, not str", str(error))
+        self.assertEqual("parent must be an Interface or int, not str", str(error))
 
     def test__create_vlan_fails_without_vlan(self):
         Interfaces = make_origin().Interfaces
@@ -427,7 +425,7 @@ class TestInterfaces(TestCase):
             InterfaceType.VLAN,
             parent=random.randint(1, 10),
         )
-        self.assertEquals("vlan is required for VLAN interface", str(error))
+        self.assertEqual("vlan is required for VLAN interface", str(error))
 
     def test__create_vlan_with_all_values(self):
         origin = make_origin()
@@ -517,7 +515,7 @@ class TestInterfaces(TestCase):
             InterfaceType.BRIDGE,
             parents=[make_string_without_spaces()],
         )
-        self.assertEquals("use parent not parents for bridge interface", str(error))
+        self.assertEqual("use parent not parents for bridge interface", str(error))
 
     def test__create_bridge_fails_without_parent(self):
         Interfaces = make_origin().Interfaces
@@ -527,7 +525,7 @@ class TestInterfaces(TestCase):
             make_string_without_spaces(),
             InterfaceType.BRIDGE,
         )
-        self.assertEquals("parent is required for bridge interface", str(error))
+        self.assertEqual("parent is required for bridge interface", str(error))
 
     def test__create_bridge_fails_parent_wrong_type(self):
         Interfaces = make_origin().Interfaces
@@ -538,7 +536,7 @@ class TestInterfaces(TestCase):
             InterfaceType.BRIDGE,
             parent=make_string_without_spaces(),
         )
-        self.assertEquals("parent must be an Interface or int, not str", str(error))
+        self.assertEqual("parent must be an Interface or int, not str", str(error))
 
     def test__create_bridge_fails_missing_name(self):
         Interfaces = make_origin().Interfaces
@@ -549,7 +547,7 @@ class TestInterfaces(TestCase):
             InterfaceType.BRIDGE,
             parent=random.randint(1, 10),
         )
-        self.assertEquals("name is required for bridge interface", str(error))
+        self.assertEqual("name is required for bridge interface", str(error))
 
     def test__create_bridge_with_all_values(self):
         origin = make_origin()
@@ -664,7 +662,7 @@ class TestInterfaces(TestCase):
             make_string_without_spaces(),
             InterfaceType.UNKNOWN,
         )
-        self.assertEquals(
+        self.assertEqual(
             "cannot create an interface of type: %s" % InterfaceType.UNKNOWN, str(error)
         )
 
@@ -679,7 +677,7 @@ class TestInterfaces(TestCase):
             {"system_id": system_id, "id": random.randint(0, 100), "name": "eth1"}
         )
         interfaces = Interfaces([eth0_Interface, eth1_Interface])
-        self.assertEquals(
+        self.assertEqual(
             {"eth0": eth0_Interface, "eth1": eth1_Interface}, interfaces.by_name
         )
 
@@ -695,7 +693,7 @@ class TestInterfaces(TestCase):
         )
         interfaces = Interfaces([eth0_Interface, eth1_Interface])
         eth0 = interfaces.get_by_name("eth0")
-        self.assertEquals(eth0, eth0_Interface)
+        self.assertEqual(eth0, eth0_Interface)
 
 
 class TestInterface(TestCase):
@@ -741,7 +739,7 @@ class TestInterface(TestCase):
         error = self.assertRaises(
             TypeError, Interface.read, random.randint(0, 100), random.randint(0, 100)
         )
-        self.assertEquals("node must be a Node or str, not int", str(error))
+        self.assertEqual("node must be a Node or str, not int", str(error))
 
     def test__interface_save_tags(self):
         Interface = make_origin().Interface
@@ -952,7 +950,7 @@ class TestInterface(TestCase):
         Interface._handler.disconnect.assert_called_once_with(
             system_id=system_id, id=interface_data["id"]
         )
-        self.assertEquals([], list(interface.links))
+        self.assertEqual([], list(interface.links))
 
     def test__interface_links_create_raises_TypeError_no_Interface(self):
         origin = make_origin()
@@ -960,7 +958,7 @@ class TestInterface(TestCase):
         error = self.assertRaises(
             TypeError, InterfaceLinks.create, random.randint(0, 1000), LinkMode.AUTO
         )
-        self.assertEquals("interface must be an Interface, not int", str(error))
+        self.assertEqual("interface must be an Interface, not int", str(error))
 
     def test__interface_links_create_raises_TypeError_no_LinkMode(self):
         origin = make_origin()
@@ -971,7 +969,7 @@ class TestInterface(TestCase):
         error = self.assertRaises(
             TypeError, InterfaceLinks.create, interface, LinkMode.AUTO.value
         )
-        self.assertEquals("mode must be a LinkMode, not str", str(error))
+        self.assertEqual("mode must be a LinkMode, not str", str(error))
 
     def test__interface_links_create_raises_TypeError_no_Subnet(self):
         origin = make_origin()
@@ -986,7 +984,7 @@ class TestInterface(TestCase):
             LinkMode.AUTO,
             subnet=make_string_without_spaces(),
         )
-        self.assertEquals("subnet must be a Subnet or int, not str", str(error))
+        self.assertEqual("subnet must be a Subnet or int, not str", str(error))
 
     def test__interface_links_create_raises_ValueError_AUTO_no_Subnet(self):
         origin = make_origin()
@@ -997,7 +995,7 @@ class TestInterface(TestCase):
         error = self.assertRaises(
             ValueError, InterfaceLinks.create, interface, LinkMode.AUTO
         )
-        self.assertEquals("subnet is required for %s" % LinkMode.AUTO, str(error))
+        self.assertEqual("subnet is required for %s" % LinkMode.AUTO, str(error))
 
     def test__interface_links_create_raises_ValueError_STATIC_no_Subnet(self):
         origin = make_origin()
@@ -1008,7 +1006,7 @@ class TestInterface(TestCase):
         error = self.assertRaises(
             ValueError, InterfaceLinks.create, interface, LinkMode.STATIC
         )
-        self.assertEquals("subnet is required for %s" % LinkMode.STATIC, str(error))
+        self.assertEqual("subnet is required for %s" % LinkMode.STATIC, str(error))
 
     def test__interface_links_create_raises_ValueError_LINK_UP_gateway(self):
         origin = make_origin()
@@ -1023,7 +1021,7 @@ class TestInterface(TestCase):
             LinkMode.LINK_UP,
             default_gateway=True,
         )
-        self.assertEquals(
+        self.assertEqual(
             "cannot set as default_gateway for %s" % LinkMode.LINK_UP, str(error)
         )
 
@@ -1040,7 +1038,7 @@ class TestInterface(TestCase):
             LinkMode.DHCP,
             default_gateway=True,
         )
-        self.assertEquals(
+        self.assertEqual(
             "cannot set as default_gateway for %s" % LinkMode.DHCP, str(error)
         )
 

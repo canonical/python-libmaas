@@ -220,7 +220,7 @@ class TestVlan(TestCase):
         self.assertThat(vlan.relay_vlan.id, Equals(relay_vlan.id))
 
     def test__vlan_update_relay_vlan_with_integer_id(self):
-        self.skip("see https://github.com/canonical/python-libmaas/issues/180")
+        self.skipTest("see https://github.com/canonical/python-libmaas/issues/180")
         origin = make_origin()
         Vlan = origin.Vlan
         Vlan._handler.params = ["fabric_id", "vid"]

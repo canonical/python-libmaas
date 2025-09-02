@@ -92,7 +92,7 @@ class TestBcaches(TestCase):
     def test__read_bad_node_type(self):
         Bcaches = make_origin().Bcaches
         error = self.assertRaises(TypeError, Bcaches.read, random.randint(0, 100))
-        self.assertEquals("node must be a Node or str, not int", str(error))
+        self.assertEqual("node must be a Node or str, not int", str(error))
 
     def test__read_with_system_id(self):
         Bcaches = make_origin().Bcaches
@@ -158,7 +158,7 @@ class TestBcaches(TestCase):
             random.randint(0, 100),
             CacheMode.WRITETHROUGH,
         )
-        self.assertEquals("node must be a Node or str, not int", str(error))
+        self.assertEqual("node must be a Node or str, not int", str(error))
 
     def test__create_bad_cache_device_type(self):
         Bcaches = make_origin().Bcaches
@@ -171,7 +171,7 @@ class TestBcaches(TestCase):
             random.randint(0, 100),
             CacheMode.WRITETHROUGH,
         )
-        self.assertEquals(
+        self.assertEqual(
             "backing_device must be a BlockDevice or Partition, not int", str(error)
         )
 
@@ -187,7 +187,7 @@ class TestBcaches(TestCase):
             make_string_without_spaces(),
             CacheMode.WRITETHROUGH,
         )
-        self.assertEquals(
+        self.assertEqual(
             "cache_set must be a BcacheCacheSet or int, not str", str(error)
         )
 
@@ -203,7 +203,7 @@ class TestBcaches(TestCase):
             random.randint(0, 100),
             "writethrough",
         )
-        self.assertEquals("cache_mode must be a CacheMode, not str", str(error))
+        self.assertEqual("cache_mode must be a CacheMode, not str", str(error))
 
     def test__create_with_block_device(self):
         origin = make_origin()
@@ -257,7 +257,7 @@ class TestBcache(TestCase):
         error = self.assertRaises(
             TypeError, Bcache.read, random.randint(0, 100), random.randint(0, 100)
         )
-        self.assertEquals("node must be a Node or str, not int", str(error))
+        self.assertEqual("node must be a Node or str, not int", str(error))
 
     def test__read_with_system_id(self):
         Bcache = make_origin().Bcache

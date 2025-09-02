@@ -153,21 +153,21 @@ class TestBootResources(TestCase):
         ]
 
         resources = BootResources.read()
-        self.assertEquals(2, len(resources))
+        self.assertEqual(2, len(resources))
 
     def test__start_import(self):
         BootResources = make_origin().BootResources
         import_action = getattr(BootResources._handler, "import")
         import_action.return_value = sentinel.result
 
-        self.assertEquals(sentinel.result, BootResources.start_import())
+        self.assertEqual(sentinel.result, BootResources.start_import())
         import_action.assert_called_once_with()
 
     def test__stop_import(self):
         BootResources = make_origin().BootResources
         BootResources._handler.stop_import.return_value = sentinel.result
 
-        self.assertEquals(sentinel.result, BootResources.stop_import())
+        self.assertEqual(sentinel.result, BootResources.stop_import())
         BootResources._handler.stop_import.assert_called_once_with()
 
     def test__create_raises_ValueError_when_name_missing_slash(self):
@@ -175,7 +175,7 @@ class TestBootResources(TestCase):
 
         buf = io.BytesIO(b"")
         error = self.assertRaises(ValueError, BootResources.create, "", "", buf)
-        self.assertEquals("name must be in format os/release; missing '/'", str(error))
+        self.assertEqual("name must be in format os/release; missing '/'", str(error))
 
     def test__create_raises_ValueError_when_architecture_missing_slash(self):
         BootResources = make_origin().BootResources
@@ -184,7 +184,7 @@ class TestBootResources(TestCase):
         error = self.assertRaises(
             ValueError, BootResources.create, "os/release", "", buf
         )
-        self.assertEquals(
+        self.assertEqual(
             "architecture must be in format arch/subarch; missing '/'", str(error)
         )
 
@@ -196,7 +196,7 @@ class TestBootResources(TestCase):
         error = self.assertRaises(
             ValueError, BootResources.create, "os/release", "arch/subarch", buf
         )
-        self.assertEquals("content must be readable", str(error))
+        self.assertEqual("content must be readable", str(error))
 
     def test__create_raises_ValueError_when_content_cannot_seek(self):
         BootResources = make_origin().BootResources
@@ -206,7 +206,7 @@ class TestBootResources(TestCase):
         error = self.assertRaises(
             ValueError, BootResources.create, "os/release", "arch/subarch", buf
         )
-        self.assertEquals("content must be seekable", str(error))
+        self.assertEqual("content must be seekable", str(error))
 
     def test__create_raises_ValueError_when_chunk_size_is_zero(self):
         BootResources = make_origin().BootResources
@@ -220,7 +220,7 @@ class TestBootResources(TestCase):
             buf,
             chunk_size=0,
         )
-        self.assertEquals("chunk_size must be greater than 0, not 0", str(error))
+        self.assertEqual("chunk_size must be greater than 0, not 0", str(error))
 
     def test__create_raises_ValueError_when_chunk_size_is_less_than_zero(self):
         BootResources = make_origin().BootResources
@@ -234,7 +234,7 @@ class TestBootResources(TestCase):
             buf,
             chunk_size=-1,
         )
-        self.assertEquals("chunk_size must be greater than 0, not -1", str(error))
+        self.assertEqual("chunk_size must be greater than 0, not -1", str(error))
 
     def test__create_calls_create_on_handler_does_nothing_if_complete(self):
         resource_id = random.randint(0, 100)
@@ -432,14 +432,14 @@ class TestBootResources(TestCase):
             )
             for i in range(0, len(data), chunk_size)
         ]
-        self.assertEquals(calls, put.call_args_list)
+        self.assertEqual(calls, put.call_args_list)
 
         # Check that progress handler was called on each chunk.
         calls = [
             call(len(data[: chunk_size + i]) / len(data))
             for i in range(0, len(data), chunk_size)
         ]
-        self.assertEquals(calls, progress_handler.call_args_list)
+        self.assertEqual(calls, progress_handler.call_args_list)
 
     def test__create_raises_CallError_on_chunk_upload_failure(self):
         resource_id = random.randint(0, 100)

@@ -550,4 +550,4 @@ class TestRemoveNone(TestCase):
 
     def test_removes_all_None_values(self):
         data = {"None": None, "another_None": None, "keep": "value"}
-        self.assertEquals({"keep": "value"}, utils.remove_None(data))
+        self.assertEqual({"keep": "value"}, utils.remove_None(data))

@@ -36,7 +36,7 @@ class TestBcacheCacheSets(TestCase):
         error = self.assertRaises(
             TypeError, BcacheCacheSets.read, random.randint(0, 100)
         )
-        self.assertEquals("node must be a Node or str, not int", str(error))
+        self.assertEqual("node must be a Node or str, not int", str(error))
 
     def test__read_with_system_id(self):
         BcacheCacheSets = make_origin().BcacheCacheSets
@@ -87,7 +87,7 @@ class TestBcacheCacheSets(TestCase):
             random.randint(0, 100),
             origin.BlockDevice({}),
         )
-        self.assertEquals("node must be a Node or str, not int", str(error))
+        self.assertEqual("node must be a Node or str, not int", str(error))
 
     def test__create_bad_cache_device_type(self):
         BcacheCacheSets = make_origin().BcacheCacheSets
@@ -97,7 +97,7 @@ class TestBcacheCacheSets(TestCase):
             make_string_without_spaces(),
             random.randint(0, 100),
         )
-        self.assertEquals(
+        self.assertEqual(
             "cache_device must be a BlockDevice or Partition, not int", str(error)
         )
 
@@ -141,7 +141,7 @@ class TestBcacheCacheSet(TestCase):
             random.randint(0, 100),
             random.randint(0, 100),
         )
-        self.assertEquals("node must be a Node or str, not int", str(error))
+        self.assertEqual("node must be a Node or str, not int", str(error))
 
     def test__read_with_system_id(self):
         BcacheCacheSet = make_origin().BcacheCacheSet

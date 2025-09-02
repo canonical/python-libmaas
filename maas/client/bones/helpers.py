@@ -40,7 +40,7 @@ async def fetch_api_description(
 ):
     """Fetch the API description from the remote MAAS instance."""
     url_describe = urljoin(_ensure_url_string(url), "describe/")
-    connector = aiohttp.TCPConnector(verify_ssl=(not insecure))
+    connector = aiohttp.TCPConnector(ssl=(not insecure))
     session = aiohttp.ClientSession(connector=connector)
     async with session, session.get(url_describe) as response:
         if response.status != HTTPStatus.OK:
@@ -270,11 +270,11 @@ async def authenticate(url, username, password, *, insecure=False):
         if response.status != HTTPStatus.OK:
             raise RemoteError(
                 "{0} -> {1.status} {1.reason}".format(
-                    response.url_obj.human_repr(), response
+                    response.url.human_repr(), response
                 )
             )
 
-    connector = aiohttp.TCPConnector(verify_ssl=(not insecure))
+    connector = aiohttp.TCPConnector(ssl=(not insecure))
     session = aiohttp.ClientSession(connector=connector)
     async with session:
         # Check that this server supports `authenticate-api`.
