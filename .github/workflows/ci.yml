@@ -10,7 +10,7 @@ on:
 
 jobs:
   lint:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
     - name: Repository checkout
       uses: actions/checkout@v3
@@ -18,7 +18,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: "3.6"
+        python-version: "3.7"
 
     - name: Install dependencies
       run: |
@@ -29,21 +29,22 @@ jobs:
         tox -e lint
 
   test:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version:
-          - "3.6"
           - "3.7"
           - "3.8"
           - "3.9"
           - "3.10"
+          - "3.11"
+          - "3.12"
     steps:
     - name: Repository checkout
       uses: actions/checkout@v3
 
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
